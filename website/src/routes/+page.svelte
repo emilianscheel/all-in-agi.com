@@ -116,10 +116,10 @@
 	<div class="section-wrap faq-wrap">
 		<div use:reveal><h2 class="section-title">FAQ</h2></div>
 		<div class="faq-list">
-			<details><summary>Müssen alle coden können?</summary><p>Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam. Wir schneiden die Challenges auf verschiedene Skill Levels zu.</p></details>
-			<details><summary>Welche Tools nutzt ihr?</summary><p>Aktuelle AI Coding Agents und Dev Tools, abgestimmt auf Ihre IT- und Security-Vorgaben. Den konkreten Tool Stack legen wir im Prep Call fest.</p></details>
-			<details><summary>Wie bleiben Daten geschützt?</summary><p>Tools, Zugänge und Datenklassen werden vorab mit IT und Security geklärt. Gebaut wird nur in der vereinbarten Umgebung.</p></details>
-			<details><summary>Was braucht es vor Ort?</summary><p>Einen großen Raum, stabiles WLAN und motivierte Builder. Fehlende Präsentationstechnik bringen wir mit.</p></details>
+			<details><summary>Müssen alle coden können?</summary><div class="faq-answer"><div><p>Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam. Wir schneiden die Challenges auf verschiedene Skill Levels zu.</p></div></div></details>
+			<details><summary>Welche Tools nutzt ihr?</summary><div class="faq-answer"><div><p>Aktuelle AI Coding Agents und Dev Tools, abgestimmt auf Ihre IT- und Security-Vorgaben. Den konkreten Tool Stack legen wir im Prep Call fest.</p></div></div></details>
+			<details><summary>Wie bleiben Daten geschützt?</summary><div class="faq-answer"><div><p>Tools, Zugänge und Datenklassen werden vorab mit IT und Security geklärt. Gebaut wird nur in der vereinbarten Umgebung.</p></div></div></details>
+			<details><summary>Was braucht es vor Ort?</summary><div class="faq-answer"><div><p>Einen großen Raum, stabiles WLAN und motivierte Builder. Fehlende Präsentationstechnik bringen wir mit.</p></div></div></details>
 		</div>
 	</div>
 </section>
