@@ -2,12 +2,15 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
 	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
+	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
+	import { availablePrepCallDates, normalizeAvailabilitySlots, prepCallDateBounds, prepCallSlotsForDate } from '$lib/prep-call';
 	import { reveal } from '$lib/motion';
 
 	let capacity = $state<Capacity>(15);
@@ -19,6 +22,8 @@
 	let phone = $state('');
 	let preferredEventDate = $state('');
 	let consultationSlot = $state('');
+	let consultationMode = $state<'quick' | 'custom'>('quick');
+	let customConsultationDate = $state('');
 	let address = $state<EventAddress>({ label: '', street: '', postalCode: '', city: '', country: 'Deutschland' });
 	let addressQuery = $state('');
 	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
@@ -29,6 +34,7 @@
 	let mapMarker: MapLibreMarker | undefined;
 	let addressAbort: AbortController | undefined;
 	let addressDebounce: ReturnType<typeof setTimeout> | undefined;
+	let mapReadyTimeout: ReturnType<typeof setTimeout> | undefined;
 	let slots = $state<string[]>([]);
 	let slotsLoading = $state(true);
 	let demoMode = $state(false);
@@ -38,8 +44,11 @@
 	let price = $derived(getPrice(capacity, venueProvided));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
+	let prepCallDates = $derived(availablePrepCallDates(slots));
+	let customConsultationSlots = $derived(prepCallSlotsForDate(slots, customConsultationDate));
 
 	const { min: minEventDate, max: maxEventDate } = eventDateBounds();
+	const { min: minPrepCallDate, max: maxPrepCallDate } = prepCallDateBounds();
 
 	async function loadAvailability() {
 		slotsLoading = true;
@@ -50,7 +59,9 @@
 			const response = await fetch(`/api/availability?start=${start}&end=${endDate.toISOString().slice(0, 10)}&tz=Europe/Berlin`);
 			const result = await response.json();
 			if (!response.ok) throw new Error(result.message ?? 'Verfügbarkeit konnte nicht geladen werden.');
-			slots = result.slots;
+			slots = normalizeAvailabilitySlots(Array.isArray(result.slots) ? result.slots : []);
+			if (consultationSlot && !slots.includes(consultationSlot)) consultationSlot = '';
+			if (customConsultationDate && !availablePrepCallDates(slots).includes(customConsultationDate)) customConsultationDate = '';
 			demoMode = Boolean(result.demo);
 		} catch (error) {
 			slots = [];
@@ -63,6 +74,14 @@
 	async function initializeMap() {
 		try {
 			const maplibregl = await import('maplibre-gl');
+			const revealMap = () => {
+				if (mapStatus !== 'loading') return;
+				if (mapReadyTimeout) clearTimeout(mapReadyTimeout);
+				requestAnimationFrame(() => {
+					map?.resize();
+					mapStatus = 'ready';
+				});
+			};
 			map = new maplibregl.Map({
 				container: mapContainer,
 				style: 'https://tiles.openfreemap.org/styles/positron',
@@ -73,10 +92,28 @@
 				pitchWithRotate: false,
 				dragRotate: false
 			});
-			map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
-			map.once('load', () => (mapStatus = 'ready'));
-			map.once('error', () => (mapStatus = 'error'));
+			map.once('styledata', revealMap);
+			mapReadyTimeout = setTimeout(() => {
+				if (mapStatus === 'loading') mapStatus = 'error';
+			}, 10000);
 		} catch { mapStatus = 'error'; }
+	}
+
+	function selectQuickSlot(slot: string) {
+		consultationMode = 'quick';
+		customConsultationDate = '';
+		consultationSlot = slot;
+	}
+
+	function selectCustomMode() {
+		if (consultationMode === 'custom') return;
+		consultationMode = 'custom';
+		consultationSlot = '';
+	}
+
+	function selectCustomDate(date: string) {
+		customConsultationDate = date;
+		consultationSlot = '';
 	}
 
 	function updateSuggestions() {
@@ -141,7 +178,7 @@
 			const response = await fetch('/api/book', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(config) });
 			const result = await response.json();
 			if (!response.ok) {
-				if (response.status === 409) { consultationSlot = ''; await loadAvailability(); }
+				if (response.status === 409) { consultationSlot = ''; customConsultationDate = ''; consultationMode = 'quick'; await loadAvailability(); }
 				throw new Error(result.message ?? 'Die Buchung konnte nicht abgeschlossen werden.');
 			}
 			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({ ...config, ...price, booking: result }));
@@ -153,6 +190,7 @@
 	onMount(() => { loadAvailability(); initializeMap(); });
 	onDestroy(() => {
 		if (addressDebounce) clearTimeout(addressDebounce);
+		if (mapReadyTimeout) clearTimeout(mapReadyTimeout);
 		addressAbort?.abort();
 		mapMarker?.remove();
 		map?.remove();
@@ -229,7 +267,31 @@
 			</div></section>
 
 			<section class="config-section" use:reveal><h2>30 min Prep Call</h2>
-				{#if slotsLoading}<p class="slot-status">Freie Termine werden geladen …</p>{:else if slots.length === 0}<p class="slot-status">Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.</p><button class="button-secondary" type="button" onclick={loadAvailability}>Neu laden</button>{:else}<div class="slots">{#each slots as slot}<button type="button" class:selected={consultationSlot === slot} class="slot" onclick={() => (consultationSlot = slot)}>{formatDate(slot, true)} Uhr</button>{/each}</div>{/if}
+				{#if slotsLoading}
+					<p class="slot-status">Freie Termine werden geladen …</p>
+				{:else if slots.length === 0}
+					<p class="slot-status">Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.</p>
+					<button class="button-secondary" type="button" onclick={loadAvailability}>Neu laden</button>
+				{:else}
+					<div class="slots">
+						{#each slots.slice(0, -1).slice(0, 15) as slot}<button type="button" class:selected={consultationMode === 'quick' && consultationSlot === slot} class="slot" aria-pressed={consultationMode === 'quick' && consultationSlot === slot} onclick={() => selectQuickSlot(slot)}>{formatDate(slot, true)} Uhr</button>{/each}
+						<button type="button" class:selected={consultationMode === 'custom'} class="slot custom-slot" aria-pressed={consultationMode === 'custom'} onclick={selectCustomMode}>Custom</button>
+					</div>
+					{#if consultationMode === 'custom'}
+						<div class="custom-prep-call" transition:slide={{ duration: 320 }}>
+							<EventDateCalendar
+								value={customConsultationDate}
+								minValue={minPrepCallDate}
+								maxValue={maxPrepCallDate}
+								availableDates={prepCallDates}
+								calendarLabel="Datum für den Prep Call"
+								emptyText="Bitte wählen Sie einen verfügbaren Tag."
+								onchange={selectCustomDate}
+							/>
+							<PrepCallTimePicker date={customConsultationDate} slots={customConsultationSlots} value={consultationSlot} onchange={(slot) => (consultationSlot = slot)} />
+						</div>
+					{/if}
+				{/if}
 			</section>
 
 			<section class="config-section" use:reveal><div class="summary-box">

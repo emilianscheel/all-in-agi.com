@@ -1,6 +1,7 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
+import { normalizeAvailabilitySlots } from '$lib/prep-call';
 
 function demoSlots() {
 	const slots: string[] = [];
@@ -34,7 +35,7 @@ export async function GET({ url, fetch }) {
 		const response = await fetch(calUrl, { headers: { Authorization: `Bearer ${token}`, 'cal-api-version': '2024-09-04' } });
 		const result = await response.json();
 		if (!response.ok) return json({ message: 'Die Verfügbarkeit konnte nicht geladen werden.' }, { status: response.status });
-		const slots = Object.values(result.data ?? {}).flatMap((values) => (values as Array<{ start?: string } | string>).map((value) => typeof value === 'string' ? value : value.start).filter((value): value is string => Boolean(value))).slice(0, 16);
+		const slots = normalizeAvailabilitySlots(Object.values(result.data ?? {}).flatMap((values) => (values as Array<{ start?: string } | string>).map((value) => typeof value === 'string' ? value : value.start).filter((value): value is string => Boolean(value))));
 		return json({ slots, demo: false });
 	} catch { return json({ message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar.' }, { status: 502 }); }
 }

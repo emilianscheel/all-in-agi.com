@@ -7,11 +7,17 @@
 		value = '',
 		minValue,
 		maxValue,
+		availableDates,
+		calendarLabel = 'Wunschtermin für den Hackathon',
+		emptyText = 'Bitte wählen Sie einen Wunschtermin.',
 		onchange
 	}: {
 		value?: string;
 		minValue: string;
 		maxValue: string;
+		availableDates?: string[];
+		calendarLabel?: string;
+		emptyText?: string;
 		onchange: (value: string) => void;
 	} = $props();
 
@@ -19,6 +25,7 @@
 	let minimum = $derived(parseDate(minValue));
 	let maximum = $derived(parseDate(maxValue));
 	let years = $derived(Array.from({ length: maximum.year - minimum.year + 1 }, (_, index) => minimum.year + index));
+	let availableDateSet = $derived(availableDates ? new Set(availableDates) : undefined);
 </script>
 
 <div class="event-date-picker">
@@ -34,7 +41,8 @@
 		weekStartsOn={1}
 		weekdayFormat="short"
 		fixedWeeks
-		calendarLabel="Wunschtermin für den Hackathon"
+		{calendarLabel}
+		isDateDisabled={(date) => availableDateSet ? !availableDateSet.has(date.toString()) : false}
 	>
 		{#snippet children({ months, weekdays })}
 			<Calendar.Header class="calendar-header">
@@ -72,6 +80,6 @@
 		{/snippet}
 	</Calendar.Root>
 	<p class="calendar-selection" aria-live="polite">
-		{value ? `Ausgewählt: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`))}` : 'Bitte wählen Sie einen Wunschtermin.'}
+		{value ? `Ausgewählt: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`))}` : emptyText}
 	</p>
 </div>
