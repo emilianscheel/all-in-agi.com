@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /buchen/erfolg
+Disallow: /impressum
+Disallow: /datenschutz
+
+Sitemap: https://werksprung.de/sitemap.xml
