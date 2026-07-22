@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href="/brand/binoculars.svg" type="image/svg+xml" />
+	<link rel="icon" href="/brand/binoculars.svg?v=2" type="image/svg+xml" sizes="any" />
 	<meta name="theme-color" content="#ffffff" />
 </svelte:head>
 
