@@ -9,7 +9,7 @@ bun install
 bun run dev
 ```
 
-Ohne Umgebungsvariablen läuft die Kalenderstrecke in der lokalen Entwicklung in einem gekennzeichneten Demo-Modus. Ohne MapTiler-Key zeigt die Karte einen Setup-Zustand; die Adresse bleibt manuell editierbar.
+Ohne Umgebungsvariablen läuft die Cal.com-Terminbuchung in der lokalen Entwicklung in einem gekennzeichneten Demo-Modus. Karte und Adresssuche benötigen keinen API-Key.
 
 ## Integrationen
 
@@ -17,13 +17,24 @@ Ohne Umgebungsvariablen läuft die Kalenderstrecke in der lokalen Entwicklung in
 
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
 - `CAL_EVENT_TYPE_ID`: ID des 30-minütigen Cal.com Event Types
-- `PUBLIC_MAPTILER_API_KEY`: domainbeschränkter öffentlicher MapTiler-Key für Kartenstil und deutsche Adresssuche
+
+Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Adresssuche nutzt die öffentliche Photon-Instanz. Photon hat keine Verfügbarkeitsgarantie; deshalb bleiben alle Adressfelder immer manuell editierbar.
+
+## Produkt-Assets
+
+Die Tool-Icons werden lokal ausgeliefert und stammen aus offiziellen Quellen:
+
+- Codex: OpenAI Codex-Produktseite / offizielles OpenAI-App-Icon
+- Claude Code: offizielles Claude-App-Icon von `claude.com`
+- Cursor: offizielles Cursor Brand Kit, Variante `APP_ICON_25D_DARK`
+
+Die Marken gehören ihren jeweiligen Inhabern und werden lediglich zur Benennung der im Hackathon nutzbaren Tools gezeigt.
 
 ## Vor einem Livegang zwingend erledigen
 
 - Betreiberangaben im Impressum ergänzen und rechtlich prüfen
-- vollständige Datenschutzerklärung für Hosting, Cal.com, MapTiler und MapLibre bereitstellen
-- Domain im MapTiler-Key freigeben und Kartenstil sowie Geocoding testen
+- vollständige Datenschutzerklärung für Hosting, Cal.com, OpenFreeMap, Photon und MapLibre bereitstellen
+- OpenFreeMap-Kartenstil und Photon-Fallback im Zielhosting testen
 - Cal.com Event Type, Zeitzone, Verfügbarkeit und Bestätigungs-E-Mails prüfen
 - finale Domain in Sitemap, strukturierten Daten und Social-Metadaten bestätigen
 - WERKSPRUNG Wort-/Bildmarke rechtlich prüfen

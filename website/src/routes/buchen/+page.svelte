@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import { env } from '$env/dynamic/public';
 	import { onDestroy, onMount } from 'svelte';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
 	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress } from '$lib/booking';
-	import { mapTilerFeatureLabel, normalizeMapTilerAddress, type MapTilerFeature } from '$lib/maptiler';
+	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
+	import { eventDateBounds } from '$lib/event-date';
+	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import { reveal } from '$lib/motion';
 
 	let capacity = $state<Capacity>(15);
@@ -20,8 +21,9 @@
 	let consultationSlot = $state('');
 	let address = $state<EventAddress>({ label: '', street: '', postalCode: '', city: '', country: 'Deutschland' });
 	let addressQuery = $state('');
-	let suggestions = $state<Array<{ label: string; feature: MapTilerFeature }>>([]);
-	let mapStatus = $state<'missing-key' | 'loading' | 'ready' | 'error'>('loading');
+	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
+	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
+	let mapStatus = $state<'loading' | 'ready' | 'error'>('loading');
 	let mapContainer: HTMLDivElement;
 	let map: MapLibreMap | undefined;
 	let mapMarker: MapLibreMarker | undefined;
@@ -37,11 +39,7 @@
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
 
-	const tomorrow = new Date(Date.now() + 86_400_000);
-	const minEventDate = tomorrow.toISOString().slice(0, 10);
-	const maxDateObject = new Date();
-	maxDateObject.setFullYear(maxDateObject.getFullYear() + 1);
-	const maxEventDate = maxDateObject.toISOString().slice(0, 10);
+	const { min: minEventDate, max: maxEventDate } = eventDateBounds();
 
 	async function loadAvailability() {
 		slotsLoading = true;
@@ -63,13 +61,11 @@
 	}
 
 	async function initializeMap() {
-		const apiKey = env.PUBLIC_MAPTILER_API_KEY;
-		if (!apiKey) return void (mapStatus = 'missing-key');
 		try {
 			const maplibregl = await import('maplibre-gl');
 			map = new maplibregl.Map({
 				container: mapContainer,
-				style: `https://api.maptiler.com/maps/base-v4/style.json?key=${encodeURIComponent(apiKey)}`,
+				style: 'https://tiles.openfreemap.org/styles/positron',
 				center: [10.4515, 51.1657],
 				zoom: 5.2,
 				attributionControl: false,
@@ -85,36 +81,45 @@
 
 	function updateSuggestions() {
 		if (addressDebounce) clearTimeout(addressDebounce);
+		addressAbort?.abort();
 		const query = addressQuery.trim();
-		if (query.length < 3) return void (suggestions = []);
+		if (query.length < 3) {
+			suggestions = [];
+			searchStatus = 'idle';
+			return;
+		}
 		addressDebounce = setTimeout(() => searchAddress(query), 250);
 	}
 
 	async function searchAddress(query: string) {
-		const apiKey = env.PUBLIC_MAPTILER_API_KEY;
-		if (!apiKey) return void (suggestions = []);
 		addressAbort?.abort();
 		addressAbort = new AbortController();
+		searchStatus = 'loading';
 		try {
 			const params = new URLSearchParams({
-				key: apiKey,
-				country: 'de',
-				language: 'de',
-				autocomplete: 'true',
-				limit: '5',
-				types: 'address,road,poi,place,postal_code'
+				q: query,
+				countrycode: 'DE',
+				lang: 'de',
+				limit: '5'
 			});
-			const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${params}`, { signal: addressAbort.signal });
+			const response = await fetch(`https://photon.komoot.io/api?${params}`, { signal: addressAbort.signal });
 			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
-			const result = await response.json() as { features?: MapTilerFeature[] };
-			suggestions = (result.features ?? []).map((feature) => ({ label: mapTilerFeatureLabel(feature), feature })).filter((suggestion) => suggestion.label);
-		} catch (error) { if ((error as Error).name !== 'AbortError') suggestions = []; }
+			const result = await response.json() as { features?: PhotonFeature[] };
+			suggestions = (result.features ?? []).map((feature) => ({ label: photonFeatureLabel(feature), feature })).filter((suggestion) => suggestion.label);
+			searchStatus = suggestions.length ? 'idle' : 'empty';
+		} catch (error) {
+			if ((error as Error).name !== 'AbortError') {
+				suggestions = [];
+				searchStatus = 'error';
+			}
+		}
 	}
 
-	function selectSuggestion(suggestion: { label: string; feature: MapTilerFeature }) {
+	function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
 		addressQuery = suggestion.label;
 		suggestions = [];
-		address = normalizeMapTilerAddress(suggestion.feature);
+		searchStatus = 'idle';
+		address = normalizePhotonAddress(suggestion.feature);
 		if (!map || address.longitude === undefined || address.latitude === undefined) return;
 		import('maplibre-gl').then((maplibregl) => {
 			mapMarker?.remove();
@@ -169,7 +174,7 @@
 				{#if mapStatus !== 'ready'}
 					<div class="map-status">
 						<span class="map-status-icon">⌖</span>
-						{mapStatus === 'loading' ? 'Kartenvorschau wird geladen …' : mapStatus === 'missing-key' ? 'Kartenvorschau · API-Key ergänzen' : 'Kartenvorschau ist gerade nicht verfügbar'}
+						{mapStatus === 'loading' ? 'Kartenvorschau wird geladen …' : 'Kartenvorschau ist gerade nicht verfügbar'}
 					</div>
 				{/if}
 				<article class="event-card" aria-live="polite">
@@ -207,14 +212,14 @@
 			<section class="config-section" use:reveal>
 				<h2>Event address.</h2>
 				<div class="field-grid">
-					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}</div>
+					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby="address-search-status" aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : searchStatus === 'error' ? 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.' : 'Optionale Suche mit manueller Eingabe als Fallback.'}</p></div>
 					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
 					<div class="field"><label for="postal">Postleitzahl</label><input id="postal" inputmode="numeric" autocomplete="postal-code" bind:value={address.postalCode} /></div>
 					<div class="field"><label for="city">Ort</label><input id="city" autocomplete="address-level2" bind:value={address.city} /></div>
 				</div>
 			</section>
 
-			<section class="config-section" use:reveal><h2>Event date.</h2><div class="field"><label for="event-date">Wunschtermin</label><input id="event-date" type="date" min={minEventDate} max={maxEventDate} bind:value={preferredEventDate} /></div></section>
+			<section class="config-section" use:reveal><h2>Event date.</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
 
 			<section class="config-section" use:reveal><h2>Kontakt.</h2><div class="field-grid">
 				<div class="field full"><label for="company">Unternehmen</label><input id="company" autocomplete="organization" bind:value={companyName} /></div>

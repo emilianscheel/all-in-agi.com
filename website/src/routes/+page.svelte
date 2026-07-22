@@ -1,6 +1,26 @@
 <script lang="ts">
 	import { CalendarClock, Mail, Phone } from 'lucide-svelte';
+	import { Accordion } from 'bits-ui';
 	import { reveal } from '$lib/motion';
+
+	const faqs = [
+		{
+			question: 'Müssen alle coden können?',
+			answer: 'Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam. Wir schneiden die Challenges auf verschiedene Skill Levels zu.'
+		},
+		{
+			question: 'Welche Tools nutzt ihr?',
+			answer: 'Aktuelle AI Coding Agents und Dev Tools, abgestimmt auf Ihre IT- und Security-Vorgaben. Den konkreten Tool Stack legen wir im Prep Call fest.'
+		},
+		{
+			question: 'Wie bleiben Daten geschützt?',
+			answer: 'Tools, Zugänge und Datenklassen werden vorab mit IT und Security geklärt. Gebaut wird nur in der vereinbarten Umgebung.'
+		},
+		{
+			question: 'Was braucht es vor Ort?',
+			answer: 'Einen großen Raum, stabiles WLAN und motivierte Builder. Fehlende Präsentationstechnik bringen wir mit.'
+		}
+	];
 
 	const schema = {
 		'@context': 'https://schema.org',
@@ -24,9 +44,8 @@
 
 <section class="hero">
 	<div class="hero-copy" use:reveal>
-		<p class="eyebrow">Agentic Engineering Hackathon</p>
 		<h1 class="display-title">Your Team Can Just Build Things</h1>
-		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen</p>
+		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on bei einem Hackathon bei Ihnen vor Ort erleben</p>
 		<div class="hero-actions">
 			<a class="button-primary" href="/buchen">Hackathon planen</a>
 			<a class="button-secondary" href="#format">Format ansehen</a>
@@ -47,12 +66,13 @@
 <section class="feature-stage" aria-labelledby="tools-title">
 	<div class="feature-stage-inner" use:reveal={{ group: true }}>
 		<div>
-			<p class="eyebrow">Hands-on by design</p>
 			<h2 id="tools-title" class="section-title">Neue Tools werden<br />durch Bauen verständlich.</h2>
 			<p>Teams erleben AI Coding Agents, Agentic Workflows und Rapid Prototyping direkt an Problemen aus dem eigenen Unternehmen.</p>
 		</div>
-		<div class="tool-line" aria-label="Themenschwerpunkte">
-			<span>AI Coding Agents</span><span>Agentic Workflows</span><span>Rapid Prototyping</span><span>Demo Day</span>
+		<div class="tool-logos" aria-label="Tools, die im Hackathon eingesetzt werden können">
+			<div class="tool-logo"><img src="/images/tools/codex.webp" alt="Codex App-Icon" /><span>Codex</span></div>
+			<div class="tool-logo"><img src="/images/tools/claude-code.png" alt="Claude Code App-Icon" /><span>Claude Code</span></div>
+			<div class="tool-logo"><img src="/images/tools/cursor.png" alt="Cursor App-Icon" /><span>Cursor</span></div>
 		</div>
 		<div class="metric-row">
 			<div class="metric"><b>70%</b><span>Build Time</span></div>
@@ -115,12 +135,16 @@
 <section>
 	<div class="section-wrap faq-wrap">
 		<div use:reveal><h2 class="section-title">FAQ</h2></div>
-		<div class="faq-list">
-			<details><summary>Müssen alle coden können?</summary><div class="faq-answer"><div><p>Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam. Wir schneiden die Challenges auf verschiedene Skill Levels zu.</p></div></div></details>
-			<details><summary>Welche Tools nutzt ihr?</summary><div class="faq-answer"><div><p>Aktuelle AI Coding Agents und Dev Tools, abgestimmt auf Ihre IT- und Security-Vorgaben. Den konkreten Tool Stack legen wir im Prep Call fest.</p></div></div></details>
-			<details><summary>Wie bleiben Daten geschützt?</summary><div class="faq-answer"><div><p>Tools, Zugänge und Datenklassen werden vorab mit IT und Security geklärt. Gebaut wird nur in der vereinbarten Umgebung.</p></div></div></details>
-			<details><summary>Was braucht es vor Ort?</summary><div class="faq-answer"><div><p>Einen großen Raum, stabiles WLAN und motivierte Builder. Fehlende Präsentationstechnik bringen wir mit.</p></div></div></details>
-		</div>
+		<Accordion.Root class="faq-list" type="multiple">
+			{#each faqs as faq, index}
+				<Accordion.Item class="faq-item" value={`faq-${index}`}>
+					<Accordion.Header class="faq-header">
+						<Accordion.Trigger class="faq-trigger">{faq.question}<span class="faq-symbol" aria-hidden="true"></span></Accordion.Trigger>
+					</Accordion.Header>
+					<Accordion.Content class="faq-answer"><div><p>{faq.answer}</p></div></Accordion.Content>
+				</Accordion.Item>
+			{/each}
+		</Accordion.Root>
 	</div>
 </section>
 

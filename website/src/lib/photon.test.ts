@@ -1,18 +1,19 @@
 import { describe, expect, test } from 'bun:test';
-import { normalizeMapTilerAddress } from './maptiler';
+import { normalizePhotonAddress } from './photon';
 
-describe('MapTiler address normalization', () => {
+describe('Photon address normalization', () => {
 	test('normalizes a typical German address feature', () => {
-		expect(normalizeMapTilerAddress({
-			id: 'address.123',
-			text: 'Invalidenstraße',
-			address: '117',
-			place_name: 'Invalidenstraße 117, 10115 Berlin, Deutschland',
-			center: [13.3769, 52.5282],
-			context: [
-				{ id: 'postal_code.10115', text: '10115' },
-				{ id: 'place.berlin', text: 'Berlin' }
-			]
+		expect(normalizePhotonAddress({
+			type: 'Feature',
+			geometry: { type: 'Point', coordinates: [13.3769, 52.5282] },
+			properties: {
+				name: 'Invalidenstraße 117',
+				street: 'Invalidenstraße',
+				housenumber: '117',
+				postcode: '10115',
+				city: 'Berlin',
+				country: 'Deutschland'
+			}
 		})).toEqual({
 			label: 'Invalidenstraße 117, 10115 Berlin, Deutschland',
 			street: 'Invalidenstraße 117',
@@ -25,11 +26,11 @@ describe('MapTiler address normalization', () => {
 	});
 
 	test('keeps incomplete results manually editable', () => {
-		expect(normalizeMapTilerAddress({
-			text: 'Werkstraße',
-			geometry: { coordinates: [8.68, 50.11] }
+		expect(normalizePhotonAddress({
+			geometry: { coordinates: [8.68, 50.11] },
+			properties: { name: 'Werkstraße' }
 		})).toEqual({
-			label: 'Werkstraße',
+			label: 'Werkstraße, Deutschland',
 			street: 'Werkstraße',
 			postalCode: '',
 			city: '',

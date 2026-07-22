@@ -13,7 +13,7 @@
 <header class="site-header">
 	<nav class="nav-inner" aria-label="Hauptnavigation">
 		<a class="brand-mark" href="/" aria-label="WERKSPRUNG Startseite">
-			<Binoculars size={25} strokeWidth={2.1} aria-hidden="true" />
+			<Binoculars size={21} strokeWidth={2.1} aria-hidden="true" />
 		</a>
 		<div class="nav-links">
 			<a href="/#format">Format</a>
