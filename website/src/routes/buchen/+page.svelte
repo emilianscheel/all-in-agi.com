@@ -2,8 +2,11 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import 'maplibre-gl/dist/maplibre-gl.css';
+	import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
 	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress } from '$lib/booking';
+	import { mapTilerFeatureLabel, normalizeMapTilerAddress, type MapTilerFeature } from '$lib/maptiler';
 	import { reveal } from '$lib/motion';
 
 	let capacity = $state<Capacity>(15);
@@ -17,12 +20,13 @@
 	let consultationSlot = $state('');
 	let address = $state<EventAddress>({ label: '', street: '', postalCode: '', city: '', country: 'Deutschland' });
 	let addressQuery = $state('');
-	let suggestions = $state<Array<{ label: string; raw: unknown }>>([]);
-	let mapStatus = $state<'missing-token' | 'loading' | 'ready' | 'error'>('loading');
-	let map: any = $state();
-	let mapSearch: any = $state();
-	let mapMarker: any = $state();
+	let suggestions = $state<Array<{ label: string; feature: MapTilerFeature }>>([]);
+	let mapStatus = $state<'missing-key' | 'loading' | 'ready' | 'error'>('loading');
+	let mapContainer: HTMLDivElement;
+	let map: MapLibreMap | undefined;
+	let mapMarker: MapLibreMarker | undefined;
 	let addressAbort: AbortController | undefined;
+	let addressDebounce: ReturnType<typeof setTimeout> | undefined;
 	let slots = $state<string[]>([]);
 	let slotsLoading = $state(true);
 	let demoMode = $state(false);
@@ -58,65 +62,65 @@
 		}
 	}
 
-	function loadMapKit() {
-		const token = env.PUBLIC_MAPKIT_TOKEN;
-		if (!token) return void (mapStatus = 'missing-token');
-		if ((window as any).mapkit) return initializeMapKit(token);
-		mapStatus = 'loading';
-		const script = document.createElement('script');
-		script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js';
-		script.crossOrigin = 'anonymous';
-		script.async = true;
-		script.onload = () => initializeMapKit(token);
-		script.onerror = () => (mapStatus = 'error');
-		document.head.appendChild(script);
-	}
-
-	function initializeMapKit(token: string) {
+	async function initializeMap() {
+		const apiKey = env.PUBLIC_MAPTILER_API_KEY;
+		if (!apiKey) return void (mapStatus = 'missing-key');
 		try {
-			const mk = (window as any).mapkit;
-			if (!mk) throw new Error('MapKit nicht verfügbar');
-			mk.init({ authorizationCallback: (done: (value: string) => void) => done(token), language: 'de' });
-			map = new mk.Map('mapkit-map', { showsCompass: mk.FeatureVisibility?.Hidden, showsZoomControl: false, showsMapTypeControl: false, isRotationEnabled: false, colorScheme: mk.Map.ColorSchemes?.Light });
-			mapSearch = new mk.Search({ includePointsOfInterest: false, includeAddresses: true, limitToCountries: 'DE' });
-			mapStatus = 'ready';
+			const maplibregl = await import('maplibre-gl');
+			map = new maplibregl.Map({
+				container: mapContainer,
+				style: `https://api.maptiler.com/maps/base-v4/style.json?key=${encodeURIComponent(apiKey)}`,
+				center: [10.4515, 51.1657],
+				zoom: 5.2,
+				attributionControl: false,
+				maplibreLogo: false,
+				pitchWithRotate: false,
+				dragRotate: false
+			});
+			map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
+			map.once('load', () => (mapStatus = 'ready'));
+			map.once('error', () => (mapStatus = 'error'));
 		} catch { mapStatus = 'error'; }
 	}
 
-	async function updateSuggestions() {
-		if (!mapSearch || addressQuery.trim().length < 3) return void (suggestions = []);
+	function updateSuggestions() {
+		if (addressDebounce) clearTimeout(addressDebounce);
+		const query = addressQuery.trim();
+		if (query.length < 3) return void (suggestions = []);
+		addressDebounce = setTimeout(() => searchAddress(query), 250);
+	}
+
+	async function searchAddress(query: string) {
+		const apiKey = env.PUBLIC_MAPTILER_API_KEY;
+		if (!apiKey) return void (suggestions = []);
 		addressAbort?.abort();
 		addressAbort = new AbortController();
 		try {
-			const response = await mapSearch.autocomplete(addressQuery, { limitToCountries: 'DE', includePointsOfInterest: false, signal: addressAbort.signal });
-			suggestions = (response.results ?? []).slice(0, 5).map((result: any) => ({ label: (result.displayLines ?? []).join(', '), raw: result }));
+			const params = new URLSearchParams({
+				key: apiKey,
+				country: 'de',
+				language: 'de',
+				autocomplete: 'true',
+				limit: '5',
+				types: 'address,road,poi,place,postal_code'
+			});
+			const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${params}`, { signal: addressAbort.signal });
+			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
+			const result = await response.json() as { features?: MapTilerFeature[] };
+			suggestions = (result.features ?? []).map((feature) => ({ label: mapTilerFeatureLabel(feature), feature })).filter((suggestion) => suggestion.label);
 		} catch (error) { if ((error as Error).name !== 'AbortError') suggestions = []; }
 	}
 
-	async function selectSuggestion(suggestion: { label: string; raw: unknown }) {
+	function selectSuggestion(suggestion: { label: string; feature: MapTilerFeature }) {
 		addressQuery = suggestion.label;
 		suggestions = [];
-		try {
-			const response = await mapSearch.search(suggestion.raw, { limitToCountries: 'DE' });
-			const place = response.places?.[0];
-			if (!place) return;
-			const formatted = place.formattedAddress ?? suggestion.label;
-			address = {
-				label: formatted,
-				street: [place.address?.thoroughfare, place.address?.subThoroughfare].filter(Boolean).join(' ') || formatted.split(',')[0] || '',
-				postalCode: place.address?.postCode ?? place.address?.postalCode ?? '',
-				city: place.address?.locality ?? place.address?.postTown ?? '',
-				country: 'Deutschland', latitude: place.coordinate?.latitude, longitude: place.coordinate?.longitude
-			};
-			if (map && place.coordinate) {
-				const mk = (window as any).mapkit;
-				if (mapMarker) map.removeAnnotation(mapMarker);
-				mapMarker = new mk.MarkerAnnotation(place.coordinate, { color: '#111111', title: companyName || 'WERKSPRUNG' });
-				map.addAnnotation(mapMarker);
-				map.setCenterAnimated(place.coordinate);
-				map.setCameraDistanceAnimated(5500);
-			}
-		} catch { mapStatus = 'error'; }
+		address = normalizeMapTilerAddress(suggestion.feature);
+		if (!map || address.longitude === undefined || address.latitude === undefined) return;
+		import('maplibre-gl').then((maplibregl) => {
+			mapMarker?.remove();
+			mapMarker = new maplibregl.Marker({ color: '#ff4f18' }).setLngLat([address.longitude!, address.latitude!]).addTo(map!);
+			map?.flyTo({ center: [address.longitude!, address.latitude!], zoom: 14, duration: 850 });
+		});
 	}
 
 	function buildConfiguration(): BookingConfiguration {
@@ -141,10 +145,16 @@
 		finally { submitting = false; }
 	}
 
-	onMount(() => { loadAvailability(); loadMapKit(); });
+	onMount(() => { loadAvailability(); initializeMap(); });
+	onDestroy(() => {
+		if (addressDebounce) clearTimeout(addressDebounce);
+		addressAbort?.abort();
+		mapMarker?.remove();
+		map?.remove();
+	});
 </script>
 
-<svelte:head><title>AI Coding Hackathon planen — WERKSPRUNG</title><meta name="description" content="Planen Sie Teamgröße, Location und Wunschtermin für Ihren WERKSPRUNG AI Coding Hackathon." /></svelte:head>
+<svelte:head><title>Hackathon planen — Agentic Engineering Hackathon</title><meta name="description" content="Planen Sie Teamgröße, Location und Wunschtermin für Ihren Agentic Engineering Hackathon." /></svelte:head>
 
 <div class="config-page">
 	<header class="config-intro">
@@ -155,18 +165,18 @@
 	<div class="config-layout">
 		<div class="preview-column">
 			<div class="map-shell" aria-label="Vorschau des Veranstaltungsorts">
-				<div id="mapkit-map"></div>
+				<div class="map-canvas" bind:this={mapContainer}></div>
 				{#if mapStatus !== 'ready'}
 					<div class="map-status">
 						<span class="map-status-icon">⌖</span>
-						{mapStatus === 'loading' ? 'Apple Maps wird geladen …' : mapStatus === 'missing-token' ? 'Apple Maps · Token lokal ergänzen' : 'Apple Maps ist gerade nicht verfügbar'}
+						{mapStatus === 'loading' ? 'Kartenvorschau wird geladen …' : mapStatus === 'missing-key' ? 'Kartenvorschau · API-Key ergänzen' : 'Kartenvorschau ist gerade nicht verfügbar'}
 					</div>
 				{/if}
 				<article class="event-card" aria-live="polite">
-					<div class="event-card-top"><div><p class="tiny">WERKSPRUNG · AI Coding Hackathon</p><h2>{companyName || 'Ihr Unternehmen'}</h2></div><div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
-					<p class="event-address">{eventAddressLabel || 'Event Location auswählen'}</p>
+					<div class="event-card-top">{#if companyName.trim()}<h2>{companyName}</h2>{/if}<div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
+					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
 					<div class="event-details">
-						<div class="event-detail"><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>
+						{#if preferredEventDate}<div class="event-detail"><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>{/if}
 						<div class="event-detail"><small>Team</small><b>Bis {capacity} Personen</b></div>
 						<div class="event-detail"><small>Location</small><b>{venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
@@ -197,7 +207,7 @@
 			<section class="config-section" use:reveal>
 				<h2>Event address.</h2>
 				<div class="field-grid">
-					<div class="field full address-search-wrap"><label for="address-search">Search with Apple Maps</label><input id="address-search" autocomplete="off" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}</div>
+					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}</div>
 					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
 					<div class="field"><label for="postal">Postleitzahl</label><input id="postal" inputmode="numeric" autocomplete="postal-code" bind:value={address.postalCode} /></div>
 					<div class="field"><label for="city">Ort</label><input id="city" autocomplete="address-level2" bind:value={address.city} /></div>
@@ -218,7 +228,7 @@
 			</section>
 
 			<section class="config-section" use:reveal><div class="summary-box">
-				<div class="summary-row"><span>AI Coding Hackathon · {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
+				<div class="summary-row"><span>Agentic Engineering Hackathon · {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
 				<div class="summary-row"><span>{venueProvided ? 'Eigene Location' : 'Location organisiert'}</span><b>{price.venueSurcharge ? formatPrice(price.venueSurcharge) : 'Inklusive'}</b></div>
 				<div class="summary-row"><span>Travel & Demo Setup</span><b>Inklusive</b></div>
 				<div class="summary-row total"><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>

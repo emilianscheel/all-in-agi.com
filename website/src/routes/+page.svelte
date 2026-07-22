@@ -1,19 +1,20 @@
 <script lang="ts">
+	import { CalendarClock, Mail, Phone } from 'lucide-svelte';
 	import { reveal } from '$lib/motion';
 
 	const schema = {
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: 'WERKSPRUNG',
-		description: 'AI Coding Hackathons für etablierte Unternehmen in Deutschland.',
+		description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
 		url: 'https://werksprung.de'
 	};
 </script>
 
 <svelte:head>
-	<title>WERKSPRUNG — AI Coding Hackathons</title>
-	<meta name="description" content="Ein Tag, an dem Ihr Team aktuelle AI Coding Tools kennenlernt, echte Challenges löst und funktionierende Prototypen shippt." />
-	<meta property="og:title" content="WERKSPRUNG — AI Coding Hackathons" />
+	<title>Agentic Engineering Hackathon</title>
+	<meta name="description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen" />
+	<meta property="og:title" content="Agentic Engineering Hackathon" />
 	<meta property="og:description" content="From prompt to prototype. In one day." />
 	<meta property="og:image" content="/images/werksprung-event.webp" />
 	<meta property="og:type" content="website" />
@@ -25,7 +26,7 @@
 	<div class="hero-copy" use:reveal>
 		<p class="eyebrow">Agentic Engineering Hackathon</p>
 		<h1 class="display-title">Your Team Can Just Build Things</h1>
-		<p class="lede">Ihr Team entdeckt AI Coding Agents und moderne Dev Workflows, löst echte Challenges und shippt funktionierende Prototypen.</p>
+		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen</p>
 		<div class="hero-actions">
 			<a class="button-primary" href="/buchen">Hackathon planen</a>
 			<a class="button-secondary" href="#format">Format ansehen</a>
@@ -73,19 +74,6 @@
 	</div>
 </section>
 
-<section id="ergebnis">
-	<div class="section-wrap">
-		<div use:reveal>
-			<h2 class="section-title">Am Ende läuft etwas.</h2>
-		</div>
-		<div class="outcomes-grid" use:reveal={{ group: true }}>
-			<article class="outcome"><span class="outcome-index">1</span><h3>Working Prototypes</h3><p>Greifbare Lösungen für reale Use Cases.</p></article>
-			<article class="outcome"><span class="outcome-index">2</span><h3>AI Champions</h3><p>Kolleg:innen mit eigener Build Experience.</p></article>
-			<article class="outcome"><span class="outcome-index">3</span><h3>Next Steps</h3><p>Priorisierte Ideen für den nächsten Sprint.</p></article>
-		</div>
-	</div>
-</section>
-
 <section id="preis" class="pricing">
 	<div class="section-wrap">
 
@@ -94,7 +82,33 @@
 			<article class="price-card featured"><span class="tag">Most popular</span><h3>Bis 30 Personen</h3><strong>4.500 €</strong><span>netto</span><ul><li>2 Facilitators</li><li>Challenge Design</li><li>Demo Day & Follow-up</li></ul></article>
 			<article class="price-card"><h3>Bis 50 Personen</h3><strong>6.500 €</strong><span>netto</span><ul><li>3 Facilitators</li><li>Challenge Design</li><li>Demo Day & Follow-up</li></ul></article>
 		</div>
-		<div class="section-action"><a class="button-primary" href="/buchen">Hackathon planen</a></div>
+		<div class="section-action"><a class="button-primary" href="/buchen">Hackathon planen</a><a class="button-secondary" href="#kontakt">Kontakt aufnehmen</a></div>
+	</div>
+</section>
+
+<section id="kontakt" class="contact-section">
+	<div class="section-wrap">
+		<div use:reveal><h2 class="section-title">Kontakt</h2></div>
+		<div class="contact-grid" use:reveal={{ group: true }}>
+			<article class="contact-card">
+				<Mail size={46} strokeWidth={1.7} aria-hidden="true" />
+				<h3>E-Mail</h3>
+				<p>Für Fragen, Ideen und einen ersten Austausch.</p>
+				<a href="mailto:emilian.scheel@gmail.com">emilian.scheel@gmail.com <span aria-hidden="true">›</span></a>
+			</article>
+			<article class="contact-card">
+				<Phone size={46} strokeWidth={1.7} aria-hidden="true" />
+				<h3>Telefon</h3>
+				<p>Direkt über Ihren Hackathon sprechen.</p>
+				<a href="tel:+4915257257750">0152 57257750 <span aria-hidden="true">›</span></a>
+			</article>
+			<article class="contact-card">
+				<CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
+				<h3>Intro Call</h3>
+				<p>30 Minuten für Use Cases, Tool Stack und Setup.</p>
+				<a href="/buchen">Termin auswählen <span aria-hidden="true">›</span></a>
+			</article>
+		</div>
 	</div>
 </section>
 

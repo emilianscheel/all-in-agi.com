@@ -8,7 +8,7 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 
 ## Positionierung
 
-**Kategorie:** AI Coding Hackathons
+**Kategorie:** Agentic Engineering Hackathons
 
 **Zielgruppe:** CTOs, CIOs, Engineering- und Digitalverantwortliche in etablierten Unternehmen mit 500–10.000 Mitarbeitenden.
 
@@ -21,11 +21,11 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 ## Produktarchitektur
 
 - **Absender:** WERKSPRUNG
-- **Produkt:** AI Coding Hackathon
+- **Produkt:** Agentic Engineering Hackathon
 - **Deskriptor:** Ein Tag von Challenge bis Working Prototype
 
 > WERKSPRUNG presents  
-> **AI CODING HACKATHON**  
+> **AGENTIC ENGINEERING HACKATHON**  
 > From prompt to prototype. In one day.
 
 Keine Bronze-, Silver- oder Enterprise-Pakete. Keine Untermarken.
@@ -43,7 +43,7 @@ WERKSPRUNG spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademi
 
 **Sagen:**
 
-- „Am Ende läuft etwas.“
+- „Build what’s next."
 - „Ein echter Prototyp schlägt hundert Folien.“
 - „Ihre Leute bauen. Wir schaffen den Rahmen.“
 - „Neue Tools werden durch Bauen verständlich.“
@@ -59,7 +59,7 @@ WERKSPRUNG spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademi
 
 ### Logo
 
-Das Zeichen kombiniert ein kantiges **W** mit einer vorwärts springenden Form. Es darf allein als Event-Badge oder zusammen mit der Wortmarke verwendet werden.
+Das schwarze Lucide-Icon **Binoculars** steht für neue Sichtweisen, Exploration und den Blick auf das technisch Machbare. In der App erscheint es alleinstehend in Navbar und Favicon.
 
 ### Farben
 
@@ -69,7 +69,7 @@ Das Zeichen kombiniert ein kantiges **W** mit einer vorwärts springenden Form. 
 - **System Grey** — `#A6A39C`
 - **White** — `#FFFFFF`
 
-Das Icon-Logo ist ausschließlich schwarz. Orange wird sparsam für CTAs, Auswahlzustände und Fortschritt eingesetzt.
+Das Binoculars-Icon ist ausschließlich schwarz. Orange wird sparsam für CTAs, Auswahlzustände und Fortschritt eingesetzt.
 
 ### Typografie
 
@@ -87,7 +87,7 @@ Echte Menschen beim Arbeiten: Hände an Tastaturen, Gespräch am Bildschirm, unf
 
 **BUILD WHAT’S NEXT.**
 
-Der AI Coding Hackathon für etablierte Unternehmen. Teams lernen aktuelle Coding Agents kennen, lösen echte Challenges und präsentieren ihre Working Prototypes noch am selben Tag.
+Der Agentic Engineering Hackathon für etablierte Unternehmen. Teams lernen aktuelle Coding Agents kennen, lösen echte Challenges und präsentieren ihre Working Prototypes noch am selben Tag.
 
 **CTA:** Hackathon planen
 
