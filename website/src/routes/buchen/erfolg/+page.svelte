@@ -59,7 +59,6 @@
 		</div>
 		<section class="success-panel" aria-labelledby="success-title">
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
-			<p class="eyebrow">Termin bestätigt</p>
 			<h1 id="success-title">Erstgespräch gebucht</h1>
 			{#if summary}
 				<p class="success-date">{formatDate(summary.booking.start || summary.consultationSlot, true)} Uhr</p>

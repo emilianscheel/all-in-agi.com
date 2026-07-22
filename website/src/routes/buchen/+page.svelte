@@ -217,7 +217,7 @@
 <div class="config-page">
 	<header class="config-intro">
 		<div use:reveal><h1>Hackathon planen</h1></div>
-		<div class="price-pill">Ab 2.500 € netto · Anreise inklusive</div>
+		<div class="price-pill">Ab 3.500 € netto · Anreise inklusive</div>
 	</header>
 	{#if planError}<div class="plan-error" role="alert">{planError} <a href="/buchen">Neuen Plan starten</a></div>{/if}
 
@@ -315,7 +315,7 @@
 
 			<section class="config-section" use:reveal><div class="summary-box overview-box">
 				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
-				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span>{#if !venueProvided}<b>{formatPrice(price.venueSurcharge)}</b>{/if}</div>
+				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span><b>{venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)}</b></div>
 				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small>{equipmentLabel}</span><b>Inklusive</b></div>
 				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
 				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}

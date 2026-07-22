@@ -24,15 +24,15 @@ const validConfiguration: BookingConfiguration = {
 
 describe('price calculation', () => {
 	test.each([
-		[15, true, 'pizza', 3000],
-		[15, true, 'custom', 3500],
-		[15, true, 'none', 2500],
-		[30, false, 'pizza', 5500],
-		[30, false, 'custom', 6000],
-		[30, false, 'none', 5000],
-		[50, true, 'pizza', 6500],
-		[50, true, 'custom', 7000],
-		[50, true, 'none', 6000]
+		[15, true, 'pizza', 4000],
+		[15, true, 'custom', 4500],
+		[15, true, 'none', 3500],
+		[30, false, 'pizza', 6000],
+		[30, false, 'custom', 6500],
+		[30, false, 'none', 5500],
+		[50, true, 'pizza', 6000],
+		[50, true, 'custom', 6500],
+		[50, true, 'none', 5500]
 	] as const)('%p people, venue=%p, lunch=%p totals %p', (capacity, venueProvided, lunch, total) => {
 		expect(getPrice(capacity, venueProvided, lunch).totalPrice).toBe(total);
 	});

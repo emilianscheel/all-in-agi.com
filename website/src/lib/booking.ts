@@ -28,9 +28,9 @@ export interface BookingConfiguration {
 }
 
 export const CAPACITY_PRICES: Record<Capacity, number> = {
-	15: 3000,
-	30: 4500,
-	50: 6500
+	15: 4000,
+	30: 5000,
+	50: 6000
 };
 
 export const VENUE_SURCHARGE = 1000;
