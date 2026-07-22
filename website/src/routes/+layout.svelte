@@ -5,8 +5,9 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href="/brand/binoculars.svg?v=2" type="image/svg+xml" sizes="any" />
-	<meta name="theme-color" content="#ffffff" />
+	<link rel="icon" href="/brand/binoculars.svg?v=3" type="image/svg+xml" sizes="any" />
+	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
 <a class="skip-link" href="#main">Zum Inhalt springen</a>

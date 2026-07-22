@@ -29,7 +29,9 @@ describe('encrypted plan tokens', () => {
 
 	test('rejects tampered tokens', async () => {
 		const token = await encryptPlan(plan);
-		expect(decryptPlan(`${token.slice(0, -1)}x`)).rejects.toThrow('Ungültiger Plan-Link.');
+		const [iv, ciphertext] = token.split('.');
+		const tampered = `${iv}.${ciphertext[0] === 'A' ? 'B' : 'A'}${ciphertext.slice(1)}`;
+		expect(decryptPlan(tampered)).rejects.toThrow('Ungültiger Plan-Link.');
 	});
 
 	test('rejects a token encrypted with another secret', async () => {
