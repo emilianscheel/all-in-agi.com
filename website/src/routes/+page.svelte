@@ -48,7 +48,7 @@
 		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on bei einem Hackathon bei Ihnen vor Ort erleben</p>
 		<div class="hero-actions">
 			<a class="button-primary" href="/buchen">Hackathon planen</a>
-			<a class="button-secondary" href="#format">Format ansehen</a>
+			<a class="button-secondary" href="#format">Agenda ansehen</a>
 		</div>
 	</div>
 	<div class="hero-image">
@@ -56,33 +56,7 @@
 	</div>
 </section>
 
-<section id="format" class="manifesto">
-	<div class="section-wrap compact-copy" use:reveal>
-		<h2 class="section-title">Ein Tag. Echte Use Cases.<br />Live Demos am Abend.</h2>
-		<p class="section-subtitle">Kein Slide Deck-Marathon. Nach einer kurzen Live Demo geht es direkt in den Build Sprint.</p>
-	</div>
-</section>
-
-<section class="feature-stage" aria-labelledby="tools-title">
-	<div class="feature-stage-inner" use:reveal={{ group: true }}>
-		<div>
-			<h2 id="tools-title" class="section-title">Neue Tools werden<br />durch Bauen verständlich.</h2>
-			<p>Teams erleben AI Coding Agents, Agentic Workflows und Rapid Prototyping direkt an Problemen aus dem eigenen Unternehmen.</p>
-		</div>
-		<div class="tool-logos" aria-label="Tools, die im Hackathon eingesetzt werden können">
-			<div class="tool-logo"><img src="/images/tools/codex.webp" alt="Codex App-Icon" /><span>Codex</span></div>
-			<div class="tool-logo"><img src="/images/tools/claude-code.png" alt="Claude Code App-Icon" /><span>Claude Code</span></div>
-			<div class="tool-logo"><img src="/images/tools/cursor.png" alt="Cursor App-Icon" /><span>Cursor</span></div>
-		</div>
-		<div class="metric-row">
-			<div class="metric"><b>70%</b><span>Build Time</span></div>
-			<div class="metric"><b>1 Tag</b><span>Challenge bis Prototype</span></div>
-			<div class="metric"><b>3–10</b><span>interdisziplinäre Teams</span></div>
-		</div>
-	</div>
-</section>
-
-<section id="ablauf" class="agenda">
+<section id="format" class="agenda">
 	<div class="section-wrap">
 
 		<div class="agenda-grid agenda-grid-four" use:reveal={{ group: true }}>

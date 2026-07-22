@@ -20,16 +20,6 @@ Ohne Umgebungsvariablen läuft die Cal.com-Terminbuchung in der lokalen Entwickl
 
 Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Adresssuche nutzt die öffentliche Photon-Instanz. Photon hat keine Verfügbarkeitsgarantie; deshalb bleiben alle Adressfelder immer manuell editierbar.
 
-## Produkt-Assets
-
-Die Tool-Icons werden lokal ausgeliefert und stammen aus offiziellen Quellen:
-
-- Codex: OpenAI Codex-Produktseite / offizielles OpenAI-App-Icon
-- Claude Code: offizielles Claude-App-Icon von `claude.com`
-- Cursor: offizielles Cursor Brand Kit, Variante `APP_ICON_25D_DARK`
-
-Die Marken gehören ihren jeweiligen Inhabern und werden lediglich zur Benennung der im Hackathon nutzbaren Tools gezeigt.
-
 ## Vor einem Livegang zwingend erledigen
 
 - Betreiberangaben im Impressum ergänzen und rechtlich prüfen

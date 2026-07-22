@@ -192,25 +192,25 @@
 
 		<form class="config-form" onsubmit={(event) => { event.preventDefault(); submitBooking(); }} novalidate>
 			<section class="config-section" use:reveal>
-				<h2>Team size.</h2>
+				<h2>Team size</h2>
 				<div class="option-grid three">
 					{#each [15, 30, 50] as size}<label class:selected={capacity === size} class="choice"><input type="radio" name="capacity" value={size} checked={capacity === size} onchange={() => (capacity = size as Capacity)} /><b>{size} Personen</b><small>{size === 15 ? 'Kompaktes Team' : size === 30 ? 'Mehrere Build-Teams' : 'Großer Demo Day'}</small><span class="choice-price">{formatPrice(CAPACITY_PRICES[size as Capacity])}</span></label>{/each}
 				</div>
 			</section>
 
-			<section class="config-section" use:reveal><h2>Location.</h2><div class="option-grid">
+			<section class="config-section" use:reveal><h2>Location</h2><div class="option-grid">
 				<label class:selected={venueProvided} class="choice"><input type="radio" name="venue" checked={venueProvided} onchange={() => (venueProvided = true)} /><b>Eigener Conference Room</b><small>Platz für Teams, stabiles WLAN, großer Screen.</small><span class="choice-price">Inklusive</span></label>
 				<label class:selected={!venueProvided} class="choice"><input type="radio" name="venue" checked={!venueProvided} onchange={() => (venueProvided = false)} /><b>Location organisieren lassen</b><small>Passender Raum nahe Ihrer Wunschadresse.</small><span class="choice-price">+ 1.000 €</span></label>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>Demo setup.</h2><div class="option-grid three">
+			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid three">
 				<label class:selected={equipment === 'projector'} class="choice"><input type="radio" name="equipment" checked={equipment === 'projector'} onchange={() => (equipment = 'projector')} /><b>Projector</b><small>Vorhanden.</small></label>
 				<label class:selected={equipment === 'tv'} class="choice"><input type="radio" name="equipment" checked={equipment === 'tv'} onchange={() => (equipment = 'tv')} /><b>Display</b><small>Großer Screen.</small></label>
 				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
 			</div></section>
 
 			<section class="config-section" use:reveal>
-				<h2>Event address.</h2>
+				<h2>Event address</h2>
 				<div class="field-grid">
 					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby="address-search-status" aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : searchStatus === 'error' ? 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.' : 'Optionale Suche mit manueller Eingabe als Fallback.'}</p></div>
 					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
@@ -219,16 +219,16 @@
 				</div>
 			</section>
 
-			<section class="config-section" use:reveal><h2>Event date.</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
+			<section class="config-section" use:reveal><h2>Event date</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
 
-			<section class="config-section" use:reveal><h2>Kontakt.</h2><div class="field-grid">
+			<section class="config-section" use:reveal><h2>Kontakt</h2><div class="field-grid">
 				<div class="field full"><label for="company">Unternehmen</label><input id="company" autocomplete="organization" bind:value={companyName} /></div>
 				<div class="field full"><label for="contact">Ansprechperson</label><input id="contact" autocomplete="name" bind:value={contactName} /></div>
 				<div class="field"><label for="email">E-Mail-Adresse</label><input id="email" type="email" autocomplete="email" bind:value={email} /></div>
 				<div class="field"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>30 min Prep Call.</h2>
+			<section class="config-section" use:reveal><h2>30 min Prep Call</h2>
 				{#if slotsLoading}<p class="slot-status">Freie Termine werden geladen …</p>{:else if slots.length === 0}<p class="slot-status">Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.</p><button class="button-secondary" type="button" onclick={loadAvailability}>Neu laden</button>{:else}<div class="slots">{#each slots as slot}<button type="button" class:selected={consultationSlot === slot} class="slot" onclick={() => (consultationSlot = slot)}>{formatDate(slot, true)} Uhr</button>{/each}</div>{/if}
 			</section>
 

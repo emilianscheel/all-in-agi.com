@@ -16,8 +16,7 @@
 			<Binoculars size={21} strokeWidth={2.1} aria-hidden="true" />
 		</a>
 		<div class="nav-links">
-			<a href="/#format">Format</a>
-			<a href="/#ablauf">Agenda</a>
+			<a href="/#format">Agenda</a>
 			<a href="/#preis">Preis</a>
 			<a href="/#kontakt">Kontakt</a>
 		</div>
@@ -29,7 +28,6 @@
 
 <footer class="site-footer">
 	<div class="footer-inner">
-		<span>© {new Date().getFullYear()} WERKSPRUNG · Agentic Engineering Hackathons</span>
 		<div class="footer-links">
 			<a href="/impressum">Impressum</a>
 			<a href="/datenschutz">Datenschutz</a>
