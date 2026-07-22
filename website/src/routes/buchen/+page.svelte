@@ -315,14 +315,14 @@
 
 			<section class="config-section" use:reveal><div class="summary-box overview-box">
 				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
-				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Eigene Location' : 'Location organisiert'}</span><b>{price.venueSurcharge ? formatPrice(price.venueSurcharge) : 'Inklusive'}</b></div>
+				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span>{#if !venueProvided}<b>{formatPrice(price.venueSurcharge)}</b>{/if}</div>
 				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small>{equipmentLabel}</span><b>Inklusive</b></div>
 				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
 				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}
 				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
 				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>Winner Poster</small>Auszeichnung für das Gewinnerteam</span><b>Inklusive</b></div>
-				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>Event-Fotos</small>Dokumentation des Hackathon-Tages</span><b>Inklusive</b></div>
-				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>Cookies</small>Snacks während des gesamten Events</span><b>Inklusive</b></div>
+				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>Event-Fotos</small>Dokumentation des Tages</span><b>Inklusive</b></div>
+				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>Snacks</small>Cookies</span><b>Inklusive</b></div>
 				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span><small>Anreise</small>Innerhalb Deutschlands</span><b>Inklusive</b></div>
 				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>
 			</div>
