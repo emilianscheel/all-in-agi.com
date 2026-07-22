@@ -45,7 +45,7 @@
 <section class="hero">
 	<div class="hero-copy" use:reveal>
 		<h1 class="display-title">Your Team Can Just Build Things</h1>
-		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on bei einem Hackathon bei Ihnen vor Ort erleben</p>
+		<p class="lede">Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben</p>
 		<div class="hero-actions">
 			<a class="button-primary" href="/buchen">Hackathon planen</a>
 			<a class="button-secondary" href="#format">Agenda ansehen</a>
