@@ -24,7 +24,7 @@
 <section class="hero">
 	<div class="hero-copy" use:reveal>
 		<p class="eyebrow">Agentic Engineering Hackathon</p>
-		<h1 class="display-title">Build what’s next.</h1>
+		<h1 class="display-title">Your Team Can Just Build Things</h1>
 		<p class="lede">Ihr Team entdeckt AI Coding Agents und moderne Dev Workflows, löst echte Challenges und shippt funktionierende Prototypen.</p>
 		<div class="hero-actions">
 			<a class="button-primary" href="/buchen">Hackathon planen</a>
