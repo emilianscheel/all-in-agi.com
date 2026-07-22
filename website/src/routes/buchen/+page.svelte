@@ -281,8 +281,8 @@
 			<section class="config-section" use:reveal><h2>Kontakt</h2><div class="field-grid">
 				<div class="field full"><label for="company">Unternehmen</label><input id="company" autocomplete="organization" bind:value={companyName} /></div>
 				<div class="field full"><label for="contact">Ansprechperson</label><input id="contact" autocomplete="name" bind:value={contactName} /></div>
-				<div class="field"><label for="email">E-Mail-Adresse</label><input id="email" type="email" autocomplete="email" bind:value={email} /></div>
-				<div class="field"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
+				<div class="field full"><label for="email">E-Mail-Adresse</label><input id="email" type="email" autocomplete="email" bind:value={email} /></div>
+				<div class="field full"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
 			</div></section>
 
 			<section class="config-section" use:reveal><h2>30 min Prep Call</h2>
@@ -320,10 +320,10 @@
 				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
 				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}
 				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
-				<div class="summary-row"><Award size={18} aria-hidden="true" /><span>Winner Poster</span><b>Inklusive</b></div>
-				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span>Event-Fotos</span><b>Inklusive</b></div>
-				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span>Cookies</span><b>Inklusive</b></div>
-				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span>Anreise innerhalb Deutschlands</span><b>Inklusive</b></div>
+				<div class="summary-row benefit-row"><Award size={18} aria-hidden="true" /><span><strong>Winner Poster</strong><small>Auszeichnung für das Gewinnerteam</small></span><b>Inklusive</b></div>
+				<div class="summary-row benefit-row"><Camera size={18} aria-hidden="true" /><span><strong>Event-Fotos</strong><small>Dokumentation des Hackathon-Tages</small></span><b>Inklusive</b></div>
+				<div class="summary-row benefit-row"><Cookie size={18} aria-hidden="true" /><span><strong>Cookies</strong><small>Snacks während des gesamten Events</small></span><b>Inklusive</b></div>
+				<div class="summary-row benefit-row"><Plane size={18} aria-hidden="true" /><span><strong>Anreise innerhalb Deutschlands</strong><small>Ohne zusätzlichen Travel-Aufschlag</small></span><b>Inklusive</b></div>
 				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
