@@ -1,5 +1,6 @@
 export type Capacity = 15 | 30 | 50;
 export type Equipment = 'projector' | 'tv' | 'none';
+export type Lunch = 'pizza' | 'custom' | 'none';
 
 export interface EventAddress {
 	label: string;
@@ -15,6 +16,8 @@ export interface BookingConfiguration {
 	capacity: Capacity;
 	venueProvided: boolean;
 	equipment: Equipment;
+	lunch: Lunch;
+	customLunch: string;
 	companyName: string;
 	contactName: string;
 	email: string;
@@ -31,11 +34,14 @@ export const CAPACITY_PRICES: Record<Capacity, number> = {
 };
 
 export const VENUE_SURCHARGE = 1000;
+export const CUSTOM_LUNCH_SURCHARGE = 500;
+export const NO_LUNCH_DISCOUNT = -500;
 
-export function getPrice(capacity: Capacity, venueProvided: boolean) {
+export function getPrice(capacity: Capacity, venueProvided: boolean, lunch: Lunch = 'pizza') {
 	const basePrice = CAPACITY_PRICES[capacity];
 	const venueSurcharge = venueProvided ? 0 : VENUE_SURCHARGE;
-	return { basePrice, venueSurcharge, totalPrice: basePrice + venueSurcharge };
+	const lunchAdjustment = lunch === 'custom' ? CUSTOM_LUNCH_SURCHARGE : lunch === 'none' ? NO_LUNCH_DISCOUNT : 0;
+	return { basePrice, venueSurcharge, lunchAdjustment, totalPrice: basePrice + venueSurcharge + lunchAdjustment };
 }
 
 export function formatPrice(value: number) {
@@ -74,5 +80,6 @@ export function validateConfiguration(config: BookingConfiguration) {
 		errors.push('Bitte wählen Sie einen zukünftigen Event-Wunschtermin.');
 	}
 	if (!config.consultationSlot) errors.push('Bitte wählen Sie einen Termin für das Erstgespräch.');
+	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push('Bitte beschreiben Sie Ihren Catering-Wunsch.');
 	return errors;
 }

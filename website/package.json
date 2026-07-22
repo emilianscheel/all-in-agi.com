@@ -27,6 +27,7 @@
 		"bits-ui": "^2.18.1",
 		"lucide-svelte": "^1.0.1",
 		"maplibre-gl": "^5.24.0",
-		"motion": "^12.42.2"
+		"motion": "^12.42.2",
+		"pdf-lib": "^1.17.1"
 	}
 }

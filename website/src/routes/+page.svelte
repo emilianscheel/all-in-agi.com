@@ -76,6 +76,7 @@
 			<article class="price-card featured"><span class="tag">Most popular</span><h3>Bis 30 Personen</h3><strong>4.500 €</strong><span>netto</span><ul><li>2 Facilitators</li><li>Challenge Design</li><li>Demo Day & Follow-up</li></ul></article>
 			<article class="price-card"><h3>Bis 50 Personen</h3><strong>6.500 €</strong><span>netto</span><ul><li>3 Facilitators</li><li>Challenge Design</li><li>Demo Day & Follow-up</li></ul></article>
 		</div>
+		<p class="pricing-note">Pizza Lunch inklusive · Ohne Lunch −500 € · Custom Catering +500 €</p>
 		<div class="section-action"><a class="button-primary" href="/buchen">Hackathon planen</a><a class="button-secondary" href="#kontakt">Kontakt aufnehmen</a></div>
 	</div>
 </section>

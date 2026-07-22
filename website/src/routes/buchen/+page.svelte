@@ -1,21 +1,25 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import 'maplibre-gl/dist/maplibre-gl.css';
-	import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
-	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress } from '$lib/booking';
+	import { Award, CalendarDays, Camera, Cookie, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Users, Clock3 } from 'lucide-svelte';
+	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress, type Lunch } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
 	import { availablePrepCallDates, normalizeAvailabilitySlots, prepCallDateBounds, prepCallSlotsForDate } from '$lib/prep-call';
+	import type { SharedPlanV1 } from '$lib/shared-plan';
 	import { reveal } from '$lib/motion';
+	import MapPreview from '$lib/MapPreview.svelte';
+	import SharePlanButton from '$lib/SharePlanButton.svelte';
 
 	let capacity = $state<Capacity>(15);
 	let venueProvided = $state(true);
 	let equipment = $state<Equipment>('projector');
+	let lunch = $state<Lunch>('pizza');
+	let customLunch = $state('');
 	let companyName = $state('');
 	let contactName = $state('');
 	let email = $state('');
@@ -28,20 +32,20 @@
 	let addressQuery = $state('');
 	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
 	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
-	let mapStatus = $state<'loading' | 'ready' | 'error'>('loading');
-	let mapContainer: HTMLDivElement;
-	let map: MapLibreMap | undefined;
-	let mapMarker: MapLibreMarker | undefined;
 	let addressAbort: AbortController | undefined;
 	let addressDebounce: ReturnType<typeof setTimeout> | undefined;
-	let mapReadyTimeout: ReturnType<typeof setTimeout> | undefined;
+	let planAbort: AbortController | undefined;
+	let planDebounce: ReturnType<typeof setTimeout> | undefined;
+	let planHydrated = $state(false);
+	let planToken = $state('');
+	let planError = $state('');
 	let slots = $state<string[]>([]);
 	let slotsLoading = $state(true);
 	let demoMode = $state(false);
 	let submitting = $state(false);
 	let errors = $state<string[]>([]);
 
-	let price = $derived(getPrice(capacity, venueProvided));
+	let price = $derived(getPrice(capacity, venueProvided, lunch));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
 	let prepCallDates = $derived(availablePrepCallDates(slots));
@@ -69,34 +73,6 @@
 		} finally {
 			slotsLoading = false;
 		}
-	}
-
-	async function initializeMap() {
-		try {
-			const maplibregl = await import('maplibre-gl');
-			const revealMap = () => {
-				if (mapStatus !== 'loading') return;
-				if (mapReadyTimeout) clearTimeout(mapReadyTimeout);
-				requestAnimationFrame(() => {
-					map?.resize();
-					mapStatus = 'ready';
-				});
-			};
-			map = new maplibregl.Map({
-				container: mapContainer,
-				style: 'https://tiles.openfreemap.org/styles/positron',
-				center: [10.4515, 51.1657],
-				zoom: 5.2,
-				attributionControl: false,
-				maplibreLogo: false,
-				pitchWithRotate: false,
-				dragRotate: false
-			});
-			map.once('styledata', revealMap);
-			mapReadyTimeout = setTimeout(() => {
-				if (mapStatus === 'loading') mapStatus = 'error';
-			}, 10000);
-		} catch { mapStatus = 'error'; }
 	}
 
 	function selectQuickSlot(slot: string) {
@@ -157,17 +133,56 @@
 		suggestions = [];
 		searchStatus = 'idle';
 		address = normalizePhotonAddress(suggestion.feature);
-		if (!map || address.longitude === undefined || address.latitude === undefined) return;
-		import('maplibre-gl').then((maplibregl) => {
-			mapMarker?.remove();
-			mapMarker = new maplibregl.Marker({ color: '#ff4f18' }).setLngLat([address.longitude!, address.latitude!]).addTo(map!);
-			map?.flyTo({ center: [address.longitude!, address.latitude!], zoom: 14, duration: 850 });
-		});
 	}
 
 	function buildConfiguration(): BookingConfiguration {
-		return { capacity, venueProvided, equipment, companyName, contactName, email, phone, address, preferredEventDate, consultationSlot };
+		return { capacity, venueProvided, equipment, lunch, customLunch: lunch === 'custom' ? customLunch : '', companyName, contactName, email, phone, address, preferredEventDate, consultationSlot };
 	}
+
+	function buildSharedPlan(): SharedPlanV1 {
+		return { v: 1, ...buildConfiguration(), consultationMode, customConsultationDate };
+	}
+
+	function applySharedPlan(plan: SharedPlanV1) {
+		capacity = plan.capacity; venueProvided = plan.venueProvided; equipment = plan.equipment; lunch = plan.lunch; customLunch = plan.customLunch;
+		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; address = plan.address;
+		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
+		preferredEventDate = plan.preferredEventDate; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
+	}
+
+	async function encodePlan(plan = buildSharedPlan(), updateUrl = true) {
+		if (!browser) return '';
+		planAbort?.abort(); planAbort = new AbortController();
+		const response = await fetch('/api/plan-token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(plan), signal: planAbort.signal });
+		const result = await response.json();
+		if (!response.ok) throw new Error(result.message ?? 'Plan-Link konnte nicht erstellt werden.');
+		planToken = result.token;
+		const path = `/buchen/${planToken}`;
+		if (updateUrl) replaceState(path, {});
+		return `${location.origin}${path}`;
+	}
+
+	function schedulePlanUrl(plan: SharedPlanV1) {
+		if (!browser || !planHydrated) return;
+		if (planDebounce) clearTimeout(planDebounce);
+		planDebounce = setTimeout(() => encodePlan(plan).catch((error) => { if ((error as Error).name !== 'AbortError') planError = (error as Error).message; }), 400);
+	}
+
+	async function hydratePlanFromUrl() {
+		const token = location.pathname.match(/^\/buchen\/([^/]+)$/)?.[1];
+		if (!token) return;
+		const response = await fetch(`/api/plan-token/${encodeURIComponent(token)}`);
+		const result = await response.json();
+		if (!response.ok) { planError = result.message ?? 'Ungültiger Plan-Link.'; return; }
+		planToken = token; applySharedPlan(result.plan);
+	}
+
+	async function getShareUrl() {
+		if (planDebounce) clearTimeout(planDebounce);
+		return encodePlan(buildSharedPlan());
+	}
+
+	$effect(() => { schedulePlanUrl(buildSharedPlan()); });
 
 	async function submitBooking() {
 		const config = buildConfiguration();
@@ -181,40 +196,34 @@
 				if (response.status === 409) { consultationSlot = ''; customConsultationDate = ''; consultationMode = 'quick'; await loadAvailability(); }
 				throw new Error(result.message ?? 'Die Buchung konnte nicht abgeschlossen werden.');
 			}
-			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({ ...config, ...price, booking: result }));
+			const planUrl = await getShareUrl();
+			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({ ...config, ...price, booking: result, planUrl }));
 			await goto('/buchen/erfolg');
 		} catch (error) { errors = [error instanceof Error ? error.message : 'Die Buchung konnte nicht abgeschlossen werden.']; }
 		finally { submitting = false; }
 	}
 
-	onMount(() => { loadAvailability(); initializeMap(); });
+	onMount(async () => { await hydratePlanFromUrl(); planHydrated = true; await loadAvailability(); schedulePlanUrl(buildSharedPlan()); });
 	onDestroy(() => {
 		if (addressDebounce) clearTimeout(addressDebounce);
-		if (mapReadyTimeout) clearTimeout(mapReadyTimeout);
+		if (planDebounce) clearTimeout(planDebounce);
 		addressAbort?.abort();
-		mapMarker?.remove();
-		map?.remove();
+		planAbort?.abort();
 	});
 </script>
 
-<svelte:head><title>Hackathon planen — Agentic Engineering Hackathon</title><meta name="description" content="Planen Sie Teamgröße, Location und Wunschtermin für Ihren Agentic Engineering Hackathon." /></svelte:head>
+<svelte:head><title>Hackathon planen — Agentic Engineering Hackathon</title><meta name="description" content="Planen Sie Teamgröße, Location und Wunschtermin für Ihren Agentic Engineering Hackathon." /><meta name="robots" content="noindex,nofollow" /></svelte:head>
 
 <div class="config-page">
 	<header class="config-intro">
 		<div use:reveal><h1>Hackathon planen</h1></div>
-		<div class="price-pill">Ab 3.000 € netto · Anreise inklusive</div>
+		<div class="price-pill">Ab 2.500 € netto · Anreise inklusive</div>
 	</header>
+	{#if planError}<div class="plan-error" role="alert">{planError} <a href="/buchen">Neuen Plan starten</a></div>{/if}
 
 	<div class="config-layout">
 		<div class="preview-column">
-			<div class="map-shell" aria-label="Vorschau des Veranstaltungsorts">
-				<div class="map-canvas" bind:this={mapContainer}></div>
-				{#if mapStatus !== 'ready'}
-					<div class="map-status">
-						<span class="map-status-icon">⌖</span>
-						{mapStatus === 'loading' ? 'Kartenvorschau wird geladen …' : 'Kartenvorschau ist gerade nicht verfügbar'}
-					</div>
-				{/if}
+			<MapPreview latitude={address.latitude} longitude={address.longitude}>
 				<article class="event-card" aria-live="polite">
 					<div class="event-card-top">{#if companyName.trim()}<h2>{companyName}</h2>{/if}<div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
 					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
@@ -225,7 +234,7 @@
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
 					</div>
 				</article>
-			</div>
+			</MapPreview>
 		</div>
 
 		<form class="config-form" onsubmit={(event) => { event.preventDefault(); submitBooking(); }} novalidate>
@@ -247,10 +256,20 @@
 				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
 			</div></section>
 
+			<section class="config-section" use:reveal><h2>Lunch</h2>
+				<div class="option-grid three">
+					<label class:selected={lunch === 'pizza'} class="choice"><input type="radio" name="lunch" checked={lunch === 'pizza'} onchange={() => (lunch = 'pizza')} /><b>Pizza</b><small>Der Hackathon-Klassiker.</small><span class="choice-price">Inklusive</span></label>
+					<label class:selected={lunch === 'custom'} class="choice"><input type="radio" name="lunch" checked={lunch === 'custom'} onchange={() => (lunch = 'custom')} /><b>Custom</b><small>Catering nach Wunsch.</small><span class="choice-price">+ 500 €</span></label>
+					<label class:selected={lunch === 'none'} class="choice"><input type="radio" name="lunch" checked={lunch === 'none'} onchange={() => (lunch = 'none')} /><b>No lunch</b><small>Ohne Catering.</small><span class="choice-price">− 500 €</span></label>
+				</div>
+				{#if lunch === 'custom'}<div class="custom-lunch" transition:slide={{ duration: 300 }}><div class="field"><label for="custom-lunch">Catering-Wunsch</label><input id="custom-lunch" maxlength="160" placeholder="z. B. vegetarische Bowls oder Buffet" bind:value={customLunch} /></div></div>{/if}
+				<p class="section-note">{lunch === 'none' ? 'Kein Catering eingeplant.' : 'Wir organisieren das Catering für Sie.'}</p>
+			</section>
+
 			<section class="config-section" use:reveal>
 				<h2>Event address</h2>
 				<div class="field-grid">
-					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby="address-search-status" aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : searchStatus === 'error' ? 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.' : 'Optionale Suche mit manueller Eingabe als Fallback.'}</p></div>
+					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby={searchStatus === 'idle' ? undefined : 'address-search-status'} aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}{#if searchStatus !== 'idle'}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>{/if}</div>
 					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
 					<div class="field"><label for="postal">Postleitzahl</label><input id="postal" inputmode="numeric" autocomplete="postal-code" bind:value={address.postalCode} /></div>
 					<div class="field"><label for="city">Ort</label><input id="city" autocomplete="address-level2" bind:value={address.city} /></div>
@@ -288,20 +307,28 @@
 								emptyText="Bitte wählen Sie einen verfügbaren Tag."
 								onchange={selectCustomDate}
 							/>
-							<PrepCallTimePicker date={customConsultationDate} slots={customConsultationSlots} value={consultationSlot} onchange={(slot) => (consultationSlot = slot)} />
+							{#if customConsultationDate}<div transition:slide={{ duration: 280 }}><PrepCallTimePicker date={customConsultationDate} slots={customConsultationSlots} value={consultationSlot} onchange={(slot) => (consultationSlot = slot)} /></div>{/if}
 						</div>
 					{/if}
 				{/if}
 			</section>
 
-			<section class="config-section" use:reveal><div class="summary-box">
-				<div class="summary-row"><span>Agentic Engineering Hackathon · {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
-				<div class="summary-row"><span>{venueProvided ? 'Eigene Location' : 'Location organisiert'}</span><b>{price.venueSurcharge ? formatPrice(price.venueSurcharge) : 'Inklusive'}</b></div>
-				<div class="summary-row"><span>Travel & Demo Setup</span><b>Inklusive</b></div>
-				<div class="summary-row total"><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>
+			<section class="config-section" use:reveal><div class="summary-box overview-box">
+				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
+				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Eigene Location' : 'Location organisiert'}</span><b>{price.venueSurcharge ? formatPrice(price.venueSurcharge) : 'Inklusive'}</b></div>
+				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small>{equipmentLabel}</span><b>Inklusive</b></div>
+				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
+				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}
+				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
+				<div class="summary-row"><Award size={18} aria-hidden="true" /><span>Winner Poster</span><b>Inklusive</b></div>
+				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span>Event-Fotos</span><b>Inklusive</b></div>
+				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span>Cookies</span><b>Inklusive</b></div>
+				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span>Anreise innerhalb Deutschlands</span><b>Inklusive</b></div>
+				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
 			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Erstgespräch buchen'}</button>
+			<SharePlanButton getUrl={getShareUrl} />
 			</section>
 		</form>
 	</div>

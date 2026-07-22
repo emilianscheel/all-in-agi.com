@@ -5,6 +5,8 @@ const validConfiguration: BookingConfiguration = {
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
+	lunch: 'pizza',
+	customLunch: '',
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -22,14 +24,17 @@ const validConfiguration: BookingConfiguration = {
 
 describe('price calculation', () => {
 	test.each([
-		[15, true, 3000],
-		[30, true, 4500],
-		[50, true, 6500],
-		[15, false, 4000],
-		[30, false, 5500],
-		[50, false, 7500]
-	] as const)('%p people, venue=%p totals %p', (capacity, venueProvided, total) => {
-		expect(getPrice(capacity, venueProvided).totalPrice).toBe(total);
+		[15, true, 'pizza', 3000],
+		[15, true, 'custom', 3500],
+		[15, true, 'none', 2500],
+		[30, false, 'pizza', 5500],
+		[30, false, 'custom', 6000],
+		[30, false, 'none', 5000],
+		[50, true, 'pizza', 6500],
+		[50, true, 'custom', 7000],
+		[50, true, 'none', 6000]
+	] as const)('%p people, venue=%p, lunch=%p totals %p', (capacity, venueProvided, lunch, total) => {
+		expect(getPrice(capacity, venueProvided, lunch).totalPrice).toBe(total);
 	});
 });
 
@@ -50,5 +55,11 @@ describe('booking validation', () => {
 			consultationSlot: ''
 		});
 		expect(errors).toHaveLength(7);
+	});
+
+	test('requires a description only for custom lunch', () => {
+		expect(validateConfiguration({ ...validConfiguration, lunch: 'custom', customLunch: '' })).toContain('Bitte beschreiben Sie Ihren Catering-Wunsch.');
+		expect(validateConfiguration({ ...validConfiguration, lunch: 'custom', customLunch: 'Vegetarische Bowls' })).toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, lunch: 'none', customLunch: 'ignored' })).toEqual([]);
 	});
 });

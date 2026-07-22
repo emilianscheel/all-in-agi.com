@@ -11,11 +11,15 @@ export async function POST({ request, fetch }) {
 	const token = env.CAL_API_KEY;
 	const eventTypeId = Number(env.CAL_EVENT_TYPE_ID);
 	if (!token || !eventTypeId) {
-		if (dev) return json({ status: 'success', demo: true, uid: `demo-${Date.now()}` }, { status: 201 });
+		if (dev) {
+			const start = new Date(config.consultationSlot);
+			const end = new Date(start.getTime() + 30 * 60_000);
+			return json({ status: 'success', demo: true, uid: `demo-${Date.now()}`, icsUid: `demo-${Date.now()}@werksprung.de`, title: 'WERKSPRUNG Prep Call', start: start.toISOString(), end: end.toISOString(), meetingUrl: '' }, { status: 201 });
+		}
 		return json({ message: 'Die Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.' }, { status: 503 });
 	}
-	const price = getPrice(config.capacity, config.venueProvided);
-	const metadata: Record<string, string> = { company: config.companyName, capacity: String(config.capacity), preferredEventDate: config.preferredEventDate, venueProvided: String(config.venueProvided), equipment: config.equipment, address: [config.address.street, config.address.postalCode, config.address.city].join(', '), totalPrice: String(price.totalPrice) };
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch);
+	const metadata: Record<string, string> = { company: config.companyName, capacity: String(config.capacity), preferredEventDate: config.preferredEventDate, venueProvided: String(config.venueProvided), equipment: config.equipment, lunch: config.lunch, customLunch: config.lunch === 'custom' ? config.customLunch : '', address: [config.address.street, config.address.postalCode, config.address.city].join(', '), totalPrice: String(price.totalPrice) };
 	try {
 		const response = await fetch('https://api.cal.com/v2/bookings', {
 			method: 'POST', headers: { Authorization: `Bearer ${token}`, 'cal-api-version': '2026-02-25', 'content-type': 'application/json' },
@@ -26,6 +30,6 @@ export async function POST({ request, fetch }) {
 			const conflict = response.status === 409 || /slot|available|conflict/i.test(JSON.stringify(result));
 			return json({ message: conflict ? 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Slot.' : 'Das Erstgespräch konnte nicht gebucht werden.' }, { status: conflict ? 409 : response.status });
 		}
-		return json({ status: 'success', demo: false, uid: result.data?.uid, start: result.data?.start }, { status: 201 });
+		return json({ status: 'success', demo: false, uid: result.data?.uid, icsUid: result.data?.icsUid, title: result.data?.title, start: result.data?.start, end: result.data?.end, meetingUrl: result.data?.meetingUrl ?? result.data?.location ?? '' }, { status: 201 });
 	} catch { return json({ message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar.' }, { status: 502 }); }
 }

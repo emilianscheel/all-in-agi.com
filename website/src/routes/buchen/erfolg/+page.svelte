@@ -1,10 +1,84 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { formatDate, formatPrice } from '$lib/booking';
-	let summary: any = $state(null);
-	onMount(() => { const raw = sessionStorage.getItem('werksprung-booking'); if (raw) summary = JSON.parse(raw); });
+	import { CalendarPlus, Check, Download } from 'lucide-svelte';
+	import MapPreview from '$lib/MapPreview.svelte';
+	import SharePlanButton from '$lib/SharePlanButton.svelte';
+	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
+	import { formatDate, type BookingConfiguration } from '$lib/booking';
+
+	type SuccessSummary = BookingConfiguration & {
+		booking: BookingResultSummary;
+		planUrl: string;
+	};
+
+	let summary = $state<SuccessSummary | null>(null);
+	let downloadState = $state<'idle' | 'loading' | 'error'>('idle');
+
+	onMount(() => {
+		try {
+			const raw = sessionStorage.getItem('werksprung-booking');
+			if (raw) summary = JSON.parse(raw) as SuccessSummary;
+		} catch { summary = null; }
+	});
+
+	function downloadBlob(blob: Blob, filename: string) {
+		const href = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = href;
+		link.download = filename;
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(href), 1_000);
+	}
+
+	async function downloadPlan() {
+		if (!summary) return;
+		downloadState = 'loading';
+		try {
+			const response = await fetch('/api/plan-pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(summary) });
+			if (!response.ok) throw new Error('PDF error');
+			downloadBlob(await response.blob(), 'werksprung-hackathon-plan.pdf');
+			downloadState = 'idle';
+		} catch { downloadState = 'error'; }
+	}
+
+	function downloadCalendar() {
+		if (!summary) return;
+		downloadBlob(new Blob([createPrepCallIcs(summary, summary.booking)], { type: 'text/calendar;charset=utf-8' }), 'werksprung-prep-call.ics');
+	}
 </script>
-<svelte:head><title>Erstgespräch gebucht — WERKSPRUNG</title><meta name="robots" content="noindex" /></svelte:head>
-<div class="simple-page"><div class="simple-card"><div class="success-mark" aria-hidden="true">✓</div><p class="eyebrow">Termin bestätigt</p><h1>Der erste Schritt ist gemacht.</h1><p>Ihr Erstgespräch ist gebucht. Wir prüfen Ihre Konfiguration gemeinsam und bestätigen anschließend den passenden Event-Termin.</p>
-	{#if summary}<div class="summary-box" style="margin-top:30px"><div class="summary-row"><span>Unternehmen</span><b>{summary.companyName}</b></div><div class="summary-row"><span>Erstgespräch</span><b>{formatDate(summary.consultationSlot, true)} Uhr</b></div><div class="summary-row"><span>Event-Wunschtermin</span><b>{formatDate(summary.preferredEventDate)}</b></div><div class="summary-row"><span>Teamgröße</span><b>Bis {summary.capacity} Personen</b></div><div class="summary-row total"><span>Event-Konfiguration</span><b>{formatPrice(summary.totalPrice)} netto</b></div></div>{:else}<p class="placeholder-alert">Die Buchungszusammenfassung ist in dieser Browsersitzung nicht mehr verfügbar. Die Kalenderbestätigung enthält Ihren Gesprächstermin.</p>{/if}
-	<a class="button-primary" style="margin-top:28px" href="/">Zur Startseite</a></div></div>
+
+<svelte:head>
+	<title>Erstgespräch gebucht — WERKSPRUNG</title>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
+<div class="success-page">
+	<div class="success-layout">
+		<div class="success-map">
+			<MapPreview latitude={summary?.address.latitude} longitude={summary?.address.longitude} />
+		</div>
+		<section class="success-panel" aria-labelledby="success-title">
+			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
+			<p class="eyebrow">Termin bestätigt</p>
+			<h1 id="success-title">Erstgespräch gebucht</h1>
+			{#if summary}
+				<p class="success-date">{formatDate(summary.booking.start || summary.consultationSlot, true)} Uhr</p>
+				<p>Der nächste Schritt steht. Laden Sie Ihren Hackathon-Plan herunter oder teilen Sie ihn direkt mit Ihrem Team.</p>
+				<div class="success-actions">
+					<SharePlanButton getUrl={async () => summary?.planUrl || location.href} />
+					<button class="button-primary action-button" type="button" onclick={downloadPlan} disabled={downloadState === 'loading'}>
+						<Download size={18} aria-hidden="true" />{downloadState === 'loading' ? 'Plan wird erstellt …' : downloadState === 'error' ? 'Download erneut versuchen' : 'Plan herunterladen'}
+					</button>
+					<button class="button-secondary action-button" type="button" onclick={downloadCalendar}>
+						<CalendarPlus size={18} aria-hidden="true" />Kalenderereignis hinzufügen
+					</button>
+				</div>
+			{:else}
+				<p>Die Buchungszusammenfassung ist in dieser Browsersitzung nicht mehr verfügbar.</p>
+				<div class="success-actions">
+					<a class="button-primary action-button" href="/buchen">Neuen Hackathon planen</a>
+				</div>
+			{/if}
+		</section>
+	</div>
+</div>
