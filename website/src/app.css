@@ -319,6 +319,15 @@ img { display: block; max-width: 100%; }
 .success-panel .success-date { color: var(--ink) !important; font-size: 22px !important; font-weight: 600; }
 .success-actions { margin-top: 28px; display: flex; flex-direction: column; }
 .success-actions .action-button { min-height: 50px; }
+.detail-layout { align-items: start; }
+.detail-map { position: sticky; top: 72px; height: calc(100svh - 102px); }
+.detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.detail-heading .success-mark { margin-bottom: 0; }
+.detail-status { padding: 8px 12px; border-radius: 99px; background: color-mix(in srgb, var(--orange) 12%, var(--card)); color: var(--orange-dark); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.detail-id { margin: 28px 0 12px !important; color: var(--orange) !important; font-size: 13px !important; font-weight: 700; letter-spacing: .1em; }
+.detail-panel { justify-content: flex-start; padding: clamp(36px, 5vw, 64px); }
+.detail-panel h1 { font-size: clamp(40px, 4.8vw, 62px); }
+.detail-overview { margin-top: 42px; }
 
 @media (prefers-color-scheme: dark) {
 	:root {
@@ -378,6 +387,7 @@ img { display: block; max-width: 100%; }
 	.success-layout { grid-template-columns: 1fr; }
 	.success-map .map-shell { height: 480px; min-height: 0; }
 	.success-panel { min-height: 580px; }
+	.detail-map { position: static; height: auto; }
 }
 
 @media (max-width: 640px) {

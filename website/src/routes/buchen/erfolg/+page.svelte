@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { CalendarPlus, Check, Download } from 'lucide-svelte';
+	import { ArrowRight, CalendarPlus, Check, Download } from 'lucide-svelte';
 	import MapPreview from '$lib/MapPreview.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
@@ -9,6 +9,8 @@
 	type SuccessSummary = BookingConfiguration & {
 		booking: BookingResultSummary;
 		planUrl: string;
+		hackathonId?: string;
+		detailUrl?: string;
 	};
 
 	let summary = $state<SuccessSummary | null>(null);
@@ -64,8 +66,13 @@
 				<p class="success-date">{formatDate(summary.booking.start || summary.consultationSlot, true)} Uhr</p>
 				<p>Der nächste Schritt steht. Laden Sie Ihren Hackathon-Plan herunter oder teilen Sie ihn direkt mit Ihrem Team.</p>
 				<div class="success-actions">
+					{#if summary.hackathonId}
+						<a class="button-primary action-button" href={summary.detailUrl || `/${summary.hackathonId}`}>
+							<ArrowRight size={18} aria-hidden="true" />Hackathon-Details öffnen
+						</a>
+					{/if}
 					<SharePlanButton getUrl={async () => summary?.planUrl || location.href} />
-					<button class="button-primary action-button" type="button" onclick={downloadPlan} disabled={downloadState === 'loading'}>
+					<button class="button-secondary action-button" type="button" onclick={downloadPlan} disabled={downloadState === 'loading'}>
 						<Download size={18} aria-hidden="true" />{downloadState === 'loading' ? 'Plan wird erstellt …' : downloadState === 'error' ? 'Download erneut versuchen' : 'Plan herunterladen'}
 					</button>
 					<button class="button-secondary action-button" type="button" onclick={downloadCalendar}>

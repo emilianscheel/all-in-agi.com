@@ -31,7 +31,8 @@ function dateLabel(value: string, withTime = false) {
 	return new Intl.DateTimeFormat('de-DE', { dateStyle: withTime ? undefined : 'long', weekday: withTime ? 'short' : undefined, day: withTime ? '2-digit' : undefined, month: withTime ? 'short' : undefined, hour: withTime ? '2-digit' : undefined, minute: withTime ? '2-digit' : undefined, timeZone: 'Europe/Berlin' }).format(date);
 }
 
-export async function createPlanPdf(config: BookingConfiguration) {
+export async function createPlanPdf(config: BookingConfiguration, options: { includeContact?: boolean } = {}) {
+	const includeContact = options.includeContact ?? true;
 	const pdf = await PDFDocument.create();
 	const page = pdf.addPage([595.28, 841.89]);
 	const regular = await pdf.embedFont(StandardFonts.Helvetica);
@@ -82,12 +83,18 @@ export async function createPlanPdf(config: BookingConfiguration) {
 		y -= label === 'Inklusive' ? 42 : 31;
 	}
 
-	page.drawText('Kontakt', { x: left, y: 350, font: bold, size: 17, color: ink });
-	page.drawRectangle({ x: left, y: 245, width: 499, height: 80, color: surface });
-	drawWrapped(page, config.contactName, 66, 298, 210, bold, 12, ink, 1);
-	drawWrapped(page, config.email, 66, 277, 210, regular, 10, muted, 1);
-	drawWrapped(page, config.phone, 324, 298, 205, bold, 12, ink, 1);
-	page.drawText('Ansprechperson für den Hackathon', { x: 324, y: 277, font: regular, size: 10, color: muted });
+	if (includeContact) {
+		page.drawText('Kontakt', { x: left, y: 350, font: bold, size: 17, color: ink });
+		page.drawRectangle({ x: left, y: 245, width: 499, height: 80, color: surface });
+		drawWrapped(page, config.contactName, 66, 298, 210, bold, 12, ink, 1);
+		drawWrapped(page, config.email, 66, 277, 210, regular, 10, muted, 1);
+		drawWrapped(page, config.phone, 324, 298, 205, bold, 12, ink, 1);
+		page.drawText('Ansprechperson für den Hackathon', { x: 324, y: 277, font: regular, size: 10, color: muted });
+	} else {
+		page.drawText('Geteilter Plan', { x: left, y: 350, font: bold, size: 17, color: ink });
+		page.drawRectangle({ x: left, y: 265, width: 499, height: 60, color: surface });
+		drawWrapped(page, 'Kontaktdaten sind in der geteilten Ansicht aus Datenschutzgründen ausgeblendet.', 66, 298, 463, regular, 11, muted, 2);
+	}
 
 	page.drawLine({ start: { x: left, y: 206 }, end: { x: right, y: 206 }, thickness: 1, color: rgb(.88, .88, .9) });
 	page.drawText('Preisübersicht', { x: left, y: 178, font: bold, size: 11, color: ink });

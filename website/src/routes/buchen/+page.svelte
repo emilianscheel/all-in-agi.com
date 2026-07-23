@@ -233,7 +233,14 @@
 				throw new Error(result.message ?? 'Die Buchung konnte nicht abgeschlossen werden.');
 			}
 			const planUrl = await getShareUrl();
-			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({ ...config, ...price, booking: result, planUrl }));
+			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({
+				...config,
+				...price,
+				booking: result,
+				planUrl,
+				hackathonId: result.hackathonId,
+				detailUrl: result.detailUrl
+			}));
 			await goto('/buchen/erfolg');
 		} catch (error) { errors = [error instanceof Error ? error.message : 'Die Buchung konnte nicht abgeschlossen werden.']; }
 		finally { submitting = false; }
