@@ -61,8 +61,8 @@
 
 		<div class="agenda-grid agenda-grid-four" use:reveal={{ group: true }}>
 			<article class="agenda-card"><span class="time">09:00</span><h3>Kickoff</h3><p>Live Demo, Tool Stack, Teams und Challenges.</p></article>
-			<article class="agenda-card"><span class="time">10:00</span><h3>Build Sprint</h3><p>Von Problem und User Flow zum ersten Working Prototype.</p></article>
-			<article class="agenda-card"><span class="time">12:30</span><h3>Pizza & Iterate</h3><p>Gemeinsamer Lunch, Feedback und zweiter Build Sprint.</p></article>
+			<article class="agenda-card"><span class="time">09:30</span><h3>Build Sprint</h3><p>Von Problem und User Flow zum ersten Working Prototype.</p></article>
+			<article class="agenda-card"><span class="time">13:00</span><h3>Pizza & Iterate</h3><p>Gemeinsamer Lunch, Feedback und zweiter Build Sprint.</p></article>
 			<article class="agenda-card"><span class="time">16:30</span><h3>Live Demo</h3><p>Problem, Lösung, How its used and build</p></article>
 		</div>
 	</div>
@@ -87,19 +87,19 @@
 			<article class="contact-card">
 				<Mail size={46} strokeWidth={1.7} aria-hidden="true" />
 				<h3>E-Mail</h3>
-				<p>Für Fragen, Ideen und einen ersten Austausch.</p>
+				<p>Jederzeit.</p>
 				<a href="mailto:emilian.scheel@gmail.com">emilian.scheel@gmail.com <span aria-hidden="true">›</span></a>
 			</article>
 			<article class="contact-card">
 				<Phone size={46} strokeWidth={1.7} aria-hidden="true" />
 				<h3>Telefon</h3>
-				<p>Direkt über Ihren Hackathon sprechen.</p>
+				<p>Jederzeit oder schneller Rückruf.</p>
 				<a href="tel:+4915257257750">0152 57257750 <span aria-hidden="true">›</span></a>
 			</article>
 			<article class="contact-card">
 				<CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
 				<h3>Intro Call</h3>
-				<p>30 Minuten für Use Cases, Tool Stack und Setup.</p>
+				<p>60 Minuten für für alle Fragen. Unverbindlich.</p>
 				<a href="/buchen">Termin auswählen <span aria-hidden="true">›</span></a>
 			</article>
 		</div>
