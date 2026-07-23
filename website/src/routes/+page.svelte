@@ -5,6 +5,7 @@
 	import { reveal } from '$lib/motion';
 
 	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
+	const carouselRepeats = [0, 1, 2, 3];
 	const carouselLabel = `Coding Tools im Hackathon: ${carouselTools.map((tool) => tool.label).join(', ')}`;
 
 	const faqs = [
@@ -62,23 +63,24 @@
 
 <section class="manifesto" aria-labelledby="manifesto-title">
 	<div class="manifesto-content" use:reveal>
-		<h2 id="manifesto-title">Aus neuen Möglichkeiten werden funktionierende Prototypen.</h2>
-		<div class="manifesto-negations" aria-label="Kein Seminar, keine Fortbildung, kein Workshop">
-			<span>Kein Seminar</span>
-			<span>Keine Fortbildung</span>
-			<span>Kein Workshop</span>
-		</div>
-		<p>Ihr Team erprobt aktuelle AI Coding Tools direkt in der Praxis und entwickelt an einem Tag gemeinsam einen funktionierenden Prototyp – fokussiert, kollaborativ und mit Freude am Bauen.</p>
+		<h2 id="manifesto-title">Keine weitere Fortbildung.</h2>
+		<p>Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen AI Coding Tools.</p>
 	</div>
 	<div class="tool-carousel" role="img" aria-label={carouselLabel}>
-		<div class="tool-carousel-track" aria-hidden="true">
-			{#each [0, 1] as copy}
-				<div class:duplicate={copy === 1} class="tool-carousel-group">
-					{#each carouselTools as tool}
-						<img src={tool.icon} alt="" width="96" height="96" />
-					{/each}
-				</div>
-			{/each}
+		<div class="tool-carousel-window">
+			<div class="tool-carousel-track" aria-hidden="true">
+				{#each [0, 1] as copy}
+					<div class:duplicate={copy === 1} class="tool-carousel-group">
+						{#each carouselRepeats as repetition}
+							<div class:duplicate-set={repetition > 0} class="tool-carousel-set">
+								{#each carouselTools as tool}
+									<img src={tool.icon} alt="" width="96" height="96" />
+								{/each}
+							</div>
+						{/each}
+					</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 </section>
