@@ -16,7 +16,7 @@ Ohne Umgebungsvariablen läuft die Cal.com-Terminbuchung in der lokalen Entwickl
 `.env.example` nach `.env` kopieren und ergänzen:
 
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
-- `CAL_EVENT_TYPE_ID`: ID des 30-minütigen Cal.com Event Types
+- `CAL_EVENT_TYPE_ID`: ID des 60-minütigen Cal.com Event Types
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
 
 In der lokalen Entwicklung wird ein festes Development-Secret verwendet. Im Live-Betrieb verweigert die App das Erstellen und Öffnen von Plan-Links ohne eigenes Secret. Plan-Links enthalten die vollständige Konfiguration inklusive Kontakt- und Adressdaten; jede Person mit dem Link kann diese Daten nach dem Öffnen sehen. Eine Rotation des Secrets macht bestehende Links ungültig.

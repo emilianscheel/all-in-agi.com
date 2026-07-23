@@ -31,7 +31,7 @@ export async function GET({ url, fetch }) {
 	if (!start || !end) return json({ message: 'Start- und Enddatum fehlen.' }, { status: 400 });
 	try {
 		const calUrl = new URL('https://api.cal.com/v2/slots');
-		for (const [key, value] of Object.entries({ eventTypeId, start, end, timeZone: url.searchParams.get('tz') ?? 'Europe/Berlin', duration: '30' })) calUrl.searchParams.set(key, value);
+		for (const [key, value] of Object.entries({ eventTypeId, start, end, timeZone: url.searchParams.get('tz') ?? 'Europe/Berlin', duration: '60' })) calUrl.searchParams.set(key, value);
 		const response = await fetch(calUrl, { headers: { Authorization: `Bearer ${token}`, 'cal-api-version': '2024-09-04' } });
 		const result = await response.json();
 		if (!response.ok) return json({ message: 'Die Verfügbarkeit konnte nicht geladen werden.' }, { status: response.status });

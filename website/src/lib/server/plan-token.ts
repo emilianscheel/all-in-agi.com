@@ -1,4 +1,4 @@
-import { isSharedPlan, type SharedPlanV1 } from '$lib/shared-plan';
+import { isSharedPlan, toSharedPlanV2, type SharedPlan } from '$lib/shared-plan';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -25,7 +25,7 @@ async function encryptionKey(secretOverride?: string) {
 	return crypto.subtle.importKey('raw', digest, 'AES-GCM', false, ['encrypt', 'decrypt']);
 }
 
-export async function encryptPlan(plan: SharedPlanV1, secretOverride?: string) {
+export async function encryptPlan(plan: SharedPlan, secretOverride?: string) {
 	if (!isSharedPlan(plan)) throw new Error('Ungültige Plandaten.');
 	const payload = encoder.encode(JSON.stringify(plan));
 	if (payload.byteLength > MAX_PAYLOAD_BYTES) throw new Error('Der Plan ist zu umfangreich.');
@@ -41,7 +41,7 @@ export async function decryptPlan(token: string, secretOverride?: string) {
 		const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64Url(ivPart) }, await encryptionKey(secretOverride), fromBase64Url(cipherPart));
 		const plan = JSON.parse(decoder.decode(plaintext));
 		if (!isSharedPlan(plan)) throw new Error('Ungültiger Plan-Link.');
-		return plan;
+		return toSharedPlanV2(plan);
 	} catch {
 		throw new Error('Ungültiger Plan-Link.');
 	}

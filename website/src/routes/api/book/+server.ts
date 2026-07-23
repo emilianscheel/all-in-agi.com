@@ -1,6 +1,6 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { getPrice, validateConfiguration, type BookingConfiguration } from '$lib/booking';
+import { bookingMetadata, validateConfiguration, type BookingConfiguration } from '$lib/booking';
 import { json } from '@sveltejs/kit';
 
 export async function POST({ request, fetch }) {
@@ -13,13 +13,12 @@ export async function POST({ request, fetch }) {
 	if (!token || !eventTypeId) {
 		if (dev) {
 			const start = new Date(config.consultationSlot);
-			const end = new Date(start.getTime() + 30 * 60_000);
+			const end = new Date(start.getTime() + 60 * 60_000);
 			return json({ status: 'success', demo: true, uid: `demo-${Date.now()}`, icsUid: `demo-${Date.now()}@werksprung.de`, title: 'WERKSPRUNG Prep Call', start: start.toISOString(), end: end.toISOString(), meetingUrl: '' }, { status: 201 });
 		}
 		return json({ message: 'Die Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.' }, { status: 503 });
 	}
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch);
-	const metadata: Record<string, string> = { company: config.companyName, capacity: String(config.capacity), preferredEventDate: config.preferredEventDate, venueProvided: String(config.venueProvided), equipment: config.equipment, lunch: config.lunch, customLunch: config.lunch === 'custom' ? config.customLunch : '', address: [config.address.street, config.address.postalCode, config.address.city].join(', '), totalPrice: String(price.totalPrice) };
+	const metadata = bookingMetadata(config);
 	try {
 		const response = await fetch('https://api.cal.com/v2/bookings', {
 			method: 'POST', headers: { Authorization: `Bearer ${token}`, 'cal-api-version': '2026-02-25', 'content-type': 'application/json' },

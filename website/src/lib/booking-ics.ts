@@ -19,7 +19,7 @@ function utcDate(value: string) {
 
 export function createPrepCallIcs(config: BookingConfiguration, booking: BookingResultSummary) {
 	const start = new Date(booking.start || config.consultationSlot);
-	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 30 * 60_000);
+	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 60 * 60_000);
 	return [
 		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WERKSPRUNG//Prep Call//DE', 'CALSCALE:GREGORIAN',
 		'BEGIN:VEVENT',

@@ -3,14 +3,14 @@
 	import { goto, replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { Award, CalendarDays, Camera, Cookie, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Users, Clock3 } from 'lucide-svelte';
-	import { CAPACITY_PRICES, formatDate, formatPrice, getPrice, validateConfiguration, type BookingConfiguration, type Capacity, type Equipment, type EventAddress, type Lunch } from '$lib/booking';
+	import { Award, CalendarDays, Camera, Check, Code2, Cookie, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Users, Clock3 } from 'lucide-svelte';
+	import { CAPACITY_PRICES, CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
 	import { availablePrepCallDates, normalizeAvailabilitySlots, prepCallDateBounds, prepCallSlotsForDate } from '$lib/prep-call';
-	import type { SharedPlanV1 } from '$lib/shared-plan';
+	import type { SharedPlanV2 } from '$lib/shared-plan';
 	import { reveal } from '$lib/motion';
 	import MapPreview from '$lib/MapPreview.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
@@ -20,6 +20,9 @@
 	let equipment = $state<Equipment>('projector');
 	let lunch = $state<Lunch>('pizza');
 	let customLunch = $state('');
+	let toolProvision = $state<ToolProvision | null>(null);
+	let codingTools = $state<CodingTool[]>([]);
+	let customCodingTool = $state('');
 	let companyName = $state('');
 	let contactName = $state('');
 	let email = $state('');
@@ -45,9 +48,10 @@
 	let submitting = $state(false);
 	let errors = $state<string[]>([]);
 
-	let price = $derived(getPrice(capacity, venueProvided, lunch));
+	let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
+	let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
 	let prepCallDates = $derived(availablePrepCallDates(slots));
 	let customConsultationSlots = $derived(prepCallSlotsForDate(slots, customConsultationDate));
 
@@ -90,6 +94,10 @@
 	function selectCustomDate(date: string) {
 		customConsultationDate = date;
 		consultationSlot = '';
+	}
+
+	function toggleCodingTool(tool: CodingTool) {
+		codingTools = codingTools.includes(tool) ? codingTools.filter((selected) => selected !== tool) : [...codingTools, tool];
 	}
 
 	function updateSuggestions() {
@@ -136,15 +144,32 @@
 	}
 
 	function buildConfiguration(): BookingConfiguration {
-		return { capacity, venueProvided, equipment, lunch, customLunch: lunch === 'custom' ? customLunch : '', companyName, contactName, email, phone, address, preferredEventDate, consultationSlot };
+		return {
+			capacity,
+			venueProvided,
+			equipment,
+			lunch,
+			customLunch: lunch === 'custom' ? customLunch : '',
+			toolProvision,
+			codingTools,
+			customCodingTool: codingTools.includes('custom') ? customCodingTool : '',
+			companyName,
+			contactName,
+			email,
+			phone,
+			address,
+			preferredEventDate,
+			consultationSlot
+		};
 	}
 
-	function buildSharedPlan(): SharedPlanV1 {
-		return { v: 1, ...buildConfiguration(), consultationMode, customConsultationDate };
+	function buildSharedPlan(): SharedPlanV2 {
+		return { v: 2, ...buildConfiguration(), consultationMode, customConsultationDate };
 	}
 
-	function applySharedPlan(plan: SharedPlanV1) {
+	function applySharedPlan(plan: SharedPlanV2) {
 		capacity = plan.capacity; venueProvided = plan.venueProvided; equipment = plan.equipment; lunch = plan.lunch; customLunch = plan.customLunch;
+		toolProvision = plan.toolProvision; codingTools = plan.codingTools; customCodingTool = plan.customCodingTool;
 		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; address = plan.address;
 		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
 		preferredEventDate = plan.preferredEventDate; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
@@ -162,7 +187,7 @@
 		return `${location.origin}${path}`;
 	}
 
-	function schedulePlanUrl(plan: SharedPlanV1) {
+	function schedulePlanUrl(plan: SharedPlanV2) {
 		if (!browser || !planHydrated) return;
 		if (planDebounce) clearTimeout(planDebounce);
 		planDebounce = setTimeout(() => encodePlan(plan).catch((error) => { if ((error as Error).name !== 'AbortError') planError = (error as Error).message; }), 400);
@@ -250,20 +275,47 @@
 				<label class:selected={!venueProvided} class="choice"><input type="radio" name="venue" checked={!venueProvided} onchange={() => (venueProvided = false)} /><b>Location organisieren lassen</b><small>Passender Raum nahe Ihrer Wunschadresse.</small><span class="choice-price">+ 1.000 €</span></label>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid three">
+			<section class="config-section tools-section" use:reveal><h2>Tools</h2>
+				<div class="option-grid tools-mode-grid">
+					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => (toolProvision = 'existing')} /><b>Wir haben Agentic Coding Tools</b><small>Der vorhandene Tool Stack wird genutzt.</small><span class="choice-price">Inklusive</span></label>
+					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => (toolProvision = 'needed')} /><b>Wir brauchen welche für den Tag</b><small>Wir stellen die ausgewählten Tools bereit.</small><span class="choice-price">+ 500 €</span></label>
+				</div>
+				{#if toolProvision}
+					<div class="coding-tools" transition:slide={{ duration: 300 }}>
+						<p>Welche Coding Tools werden eingesetzt?</p>
+						<div class="coding-tool-list">
+							{#each CODING_TOOLS as tool}
+								<label class="coding-tool-option">
+									<input type="checkbox" checked={codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
+									<span class="round-checkbox" aria-hidden="true">{#if codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
+									<span>{tool.label}</span>
+								</label>
+							{/each}
+						</div>
+						{#if codingTools.includes('custom')}
+							<div class="custom-tool" transition:slide={{ duration: 280 }}>
+								<div class="field"><label for="custom-coding-tool">Individuelles Coding Tool</label><input id="custom-coding-tool" maxlength="160" placeholder="z. B. internes Agent Framework" bind:value={customCodingTool} /></div>
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</section>
+
+			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid three demo-setup-grid">
 				<label class:selected={equipment === 'projector'} class="choice"><input type="radio" name="equipment" checked={equipment === 'projector'} onchange={() => (equipment = 'projector')} /><b>Projector</b><small>Vorhanden.</small></label>
 				<label class:selected={equipment === 'tv'} class="choice"><input type="radio" name="equipment" checked={equipment === 'tv'} onchange={() => (equipment = 'tv')} /><b>Display</b><small>Großer Screen.</small></label>
 				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
 			</div></section>
 
 			<section class="config-section" use:reveal><h2>Lunch</h2>
-				<div class="option-grid three">
+				<div class="option-grid lunch-grid">
 					<label class:selected={lunch === 'pizza'} class="choice"><input type="radio" name="lunch" checked={lunch === 'pizza'} onchange={() => (lunch = 'pizza')} /><b>Pizza</b><small>Der Hackathon-Klassiker.</small><span class="choice-price">Inklusive</span></label>
 					<label class:selected={lunch === 'custom'} class="choice"><input type="radio" name="lunch" checked={lunch === 'custom'} onchange={() => (lunch = 'custom')} /><b>Custom</b><small>Catering nach Wunsch.</small><span class="choice-price">+ 500 €</span></label>
-					<label class:selected={lunch === 'none'} class="choice"><input type="radio" name="lunch" checked={lunch === 'none'} onchange={() => (lunch = 'none')} /><b>No lunch</b><small>Ohne Catering.</small><span class="choice-price">− 500 €</span></label>
+					<label class:selected={lunch === 'none'} class="choice"><input type="radio" name="lunch" checked={lunch === 'none'} onchange={() => (lunch = 'none')} /><b>No lunch</b><small>Ohne Mahlzeit.</small><span class="choice-price">− 500 €</span></label>
+					<label class:selected={lunch === 'self-organized'} class="choice"><input type="radio" name="lunch" checked={lunch === 'self-organized'} onchange={() => (lunch = 'self-organized')} /><b>Selbstorganisiert</b><small>Sie kümmern sich um das Essen.</small><span class="choice-price">− 500 €</span></label>
 				</div>
 				{#if lunch === 'custom'}<div class="custom-lunch" transition:slide={{ duration: 300 }}><div class="field"><label for="custom-lunch">Catering-Wunsch</label><input id="custom-lunch" maxlength="160" placeholder="z. B. vegetarische Bowls oder Buffet" bind:value={customLunch} /></div></div>{/if}
-				<p class="section-note">{lunch === 'none' ? 'Kein Catering eingeplant.' : 'Wir organisieren das Catering für Sie.'}</p>
+				<p class="section-note">{lunch === 'none' ? 'Keine Mahlzeit eingeplant.' : lunch === 'self-organized' ? 'Das Catering wird von Ihnen organisiert.' : 'Wir organisieren das Catering für Sie.'}</p>
 			</section>
 
 			<section class="config-section" use:reveal>
@@ -285,7 +337,7 @@
 				<div class="field full"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>30 min Prep Call</h2>
+			<section class="config-section" use:reveal><h2>60 min Prep Call</h2>
 				{#if slotsLoading}
 					<p class="slot-status">Freie Termine werden geladen …</p>
 				{:else if slots.length === 0}
@@ -316,10 +368,11 @@
 			<section class="config-section" use:reveal><div class="summary-box overview-box">
 				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
 				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span><b>{venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)}</b></div>
+				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{toolProvision === 'needed' ? 'Wir brauchen Tools für den Tag' : 'Wir haben bereits Tools'}</small>{codingToolLabels.join(', ') || 'Noch keine Tools ausgewählt'}</span><b>{price.toolsAdjustment ? `+ ${formatPrice(price.toolsAdjustment)}` : 'Inklusive'}</b></div>{/if}
 				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small>{equipmentLabel}</span><b>Inklusive</b></div>
 				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
 				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}
-				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
+				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
 				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>Winner Poster</small>Auszeichnung für das Gewinnerteam</span><b>Inklusive</b></div>
 				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>Event-Fotos</small>Dokumentation des Tages</span><b>Inklusive</b></div>
 				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>Snacks</small>Cookies</span><b>Inklusive</b></div>

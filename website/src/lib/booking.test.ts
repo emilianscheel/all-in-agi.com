@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { getPrice, validateConfiguration, type BookingConfiguration } from './booking';
+import { bookingMetadata, getPrice, validateConfiguration, type BookingConfiguration } from './booking';
 
 const validConfiguration: BookingConfiguration = {
 	capacity: 15,
@@ -7,6 +7,9 @@ const validConfiguration: BookingConfiguration = {
 	equipment: 'projector',
 	lunch: 'pizza',
 	customLunch: '',
+	toolProvision: 'existing',
+	codingTools: ['codex'],
+	customCodingTool: '',
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -27,6 +30,7 @@ describe('price calculation', () => {
 		[15, true, 'pizza', 4000],
 		[15, true, 'custom', 4500],
 		[15, true, 'none', 3500],
+		[15, true, 'self-organized', 3500],
 		[30, false, 'pizza', 6000],
 		[30, false, 'custom', 6500],
 		[30, false, 'none', 5500],
@@ -35,6 +39,11 @@ describe('price calculation', () => {
 		[50, true, 'none', 5500]
 	] as const)('%p people, venue=%p, lunch=%p totals %p', (capacity, venueProvided, lunch, total) => {
 		expect(getPrice(capacity, venueProvided, lunch).totalPrice).toBe(total);
+	});
+
+	test('adds the tool surcharge only when tools are needed', () => {
+		expect(getPrice(15, true, 'self-organized', 'needed')).toMatchObject({ lunchAdjustment: -500, toolsAdjustment: 500, totalPrice: 4000 });
+		expect(getPrice(15, true, 'pizza', 'existing')).toMatchObject({ toolsAdjustment: 0, totalPrice: 4000 });
 	});
 });
 
@@ -61,5 +70,29 @@ describe('booking validation', () => {
 		expect(validateConfiguration({ ...validConfiguration, lunch: 'custom', customLunch: '' })).toContain('Bitte beschreiben Sie Ihren Catering-Wunsch.');
 		expect(validateConfiguration({ ...validConfiguration, lunch: 'custom', customLunch: 'Vegetarische Bowls' })).toEqual([]);
 		expect(validateConfiguration({ ...validConfiguration, lunch: 'none', customLunch: 'ignored' })).toEqual([]);
+	});
+
+	test('requires a tool mode and at least one valid tool', () => {
+		expect(validateConfiguration({ ...validConfiguration, toolProvision: null })).toContain('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.');
+		expect(validateConfiguration({ ...validConfiguration, codingTools: [] })).toContain('Bitte wählen Sie mindestens ein Coding Tool.');
+		expect(validateConfiguration({ ...validConfiguration, codingTools: ['custom'], customCodingTool: '' })).toContain('Bitte geben Sie das individuelle Coding Tool an.');
+		expect(validateConfiguration({ ...validConfiguration, codingTools: ['codex', 'custom'], customCodingTool: 'Internes Tool' })).toEqual([]);
+	});
+});
+
+describe('booking metadata', () => {
+	test('includes normalized coding tools and the tools surcharge in the total', () => {
+		const metadata = bookingMetadata({
+			...validConfiguration,
+			toolProvision: 'needed',
+			codingTools: ['codex', 'custom'],
+			customCodingTool: 'Internes Tool'
+		});
+		expect(metadata).toMatchObject({
+			toolProvision: 'needed',
+			codingTools: 'Codex, Internes Tool',
+			customCodingTool: 'Internes Tool',
+			totalPrice: '4500'
+		});
 	});
 });

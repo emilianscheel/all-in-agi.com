@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
-import { formatPrice, getPrice, type BookingConfiguration } from './booking';
+import { formatPrice, getPrice, selectedCodingToolLabels, type BookingConfiguration } from './booking';
 
 function safeText(value: unknown) {
 	return String(value ?? '').replace(/[–—−]/g, '-').replace(/·/g, '-').replace(/[^\x20-\x7e\xa0-\xff€]/g, '?');
@@ -40,7 +40,7 @@ export async function createPlanPdf(config: BookingConfiguration) {
 	const ink = rgb(.11, .11, .12);
 	const muted = rgb(.43, .43, .45);
 	const surface = rgb(.96, .96, .97);
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
 	const left = 48;
 	const right = 547;
 
@@ -57,14 +57,22 @@ export async function createPlanPdf(config: BookingConfiguration) {
 	drawWrapped(page, `${config.address.street}, ${config.address.postalCode} ${config.address.city}`, 66, 589, 210, regular, 10, muted, 2);
 	page.drawText('PREP CALL', { x: 324, y: 657, font: bold, size: 9, color: muted });
 	page.drawText(dateLabel(config.consultationSlot, true), { x: 324, y: 635, font: bold, size: 13, color: ink });
-	page.drawText('30 Minuten - Europe/Berlin', { x: 324, y: 612, font: regular, size: 10, color: muted });
+	page.drawText('60 Minuten - Europe/Berlin', { x: 324, y: 612, font: regular, size: 10, color: muted });
 
 	page.drawText('Konfiguration', { x: left, y: 526, font: bold, size: 17, color: ink });
-	const lunchLabel = config.lunch === 'pizza' ? 'Pizza - inklusive' : config.lunch === 'none' ? 'No lunch - 500 EUR' : `${config.customLunch} - +500 EUR`;
+	const lunchLabel = config.lunch === 'pizza'
+		? 'Pizza - inklusive'
+		: config.lunch === 'custom'
+			? `${config.customLunch} - +500 EUR`
+			: config.lunch === 'self-organized'
+				? 'Selbstorganisiert - 500 EUR'
+				: 'No lunch - 500 EUR';
+	const toolsLabel = `${config.toolProvision === 'needed' ? 'Für den Tag benötigt' : 'Bereits vorhanden'}: ${selectedCodingToolLabels(config).join(', ')}`;
 	const rows = [
 		['Location', config.venueProvided ? 'Eigene Location' : 'Von WERKSPRUNG organisiert'],
 		['Demo Setup', config.equipment === 'projector' ? 'Projector' : config.equipment === 'tv' ? 'Display' : 'Screen wird mitgebracht'],
 		['Lunch', lunchLabel],
+		['Coding Tools', toolsLabel],
 		['Inklusive', 'Winner Poster, Event-Fotos, Cookies und Anreise in Deutschland']
 	];
 	let y = 495;
@@ -84,7 +92,8 @@ export async function createPlanPdf(config: BookingConfiguration) {
 	page.drawLine({ start: { x: left, y: 206 }, end: { x: right, y: 206 }, thickness: 1, color: rgb(.88, .88, .9) });
 	page.drawText('Preisübersicht', { x: left, y: 178, font: bold, size: 11, color: ink });
 	page.drawText(`Basis ${formatPrice(price.basePrice)}  |  Location ${price.venueSurcharge ? `+${formatPrice(price.venueSurcharge)}` : 'inklusive'}  |  Lunch ${price.lunchAdjustment === 0 ? 'inklusive' : `${price.lunchAdjustment > 0 ? '+' : '-'}${formatPrice(Math.abs(price.lunchAdjustment))}`}`, { x: left, y: 157, font: regular, size: 10, color: muted });
-	page.drawText(`Gesamt ${formatPrice(price.totalPrice)} netto`, { x: left, y: 124, font: bold, size: 18, color: orange });
+	page.drawText(`Coding Tools ${price.toolsAdjustment ? `+${formatPrice(price.toolsAdjustment)}` : 'inklusive'}`, { x: left, y: 141, font: regular, size: 10, color: muted });
+	page.drawText(`Gesamt ${formatPrice(price.totalPrice)} netto`, { x: left, y: 110, font: bold, size: 18, color: orange });
 	page.drawText(`Planungsstand ${new Intl.DateTimeFormat('de-DE').format(new Date())}`, { x: left, y: 54, font: regular, size: 9, color: muted });
 	page.drawText('werksprung.de', { x: right - regular.widthOfTextAtSize('werksprung.de', 9), y: 54, font: regular, size: 9, color: muted });
 	return pdf.save();

@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { Binoculars } from 'lucide-svelte';
+	import { onMount } from 'svelte';
+	import { installGlobalHaptics } from '$lib/haptics';
 	import '../app.css';
 	let { children } = $props();
+
+	onMount(installGlobalHaptics);
 </script>
 
 <svelte:head>
