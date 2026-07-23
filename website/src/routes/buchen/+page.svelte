@@ -277,8 +277,8 @@
 
 			<section class="config-section tools-section" use:reveal><h2>Tools</h2>
 				<div class="option-grid tools-mode-grid">
-					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => (toolProvision = 'existing')} /><b>Wir haben Agentic Coding Tools</b><small>Der vorhandene Tool Stack wird genutzt.</small><span class="choice-price">Inklusive</span></label>
-					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => (toolProvision = 'needed')} /><b>Wir brauchen welche für den Tag</b><small>Wir stellen die ausgewählten Tools bereit.</small><span class="choice-price">+ 500 €</span></label>
+					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => (toolProvision = 'existing')} /><b>Wir haben Agentic Coding Tools</b><span class="choice-price">Inklusive</span></label>
+					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => (toolProvision = 'needed')} /><b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span></label>
 				</div>
 				{#if toolProvision}
 					<div class="coding-tools" transition:slide={{ duration: 300 }}>
