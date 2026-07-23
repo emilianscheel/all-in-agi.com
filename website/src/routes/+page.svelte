@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { CalendarClock, CircleMinus, Lightbulb, Mail, Phone, Pizza, Presentation, Users, Utensils } from 'lucide-svelte';
 	import { Accordion } from 'bits-ui';
+	import { CODING_TOOLS } from '$lib/booking';
 	import { reveal } from '$lib/motion';
+
+	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
+	const carouselLabel = `Coding Tools im Hackathon: ${carouselTools.map((tool) => tool.label).join(', ')}`;
 
 	const faqs = [
 		{
@@ -57,16 +61,24 @@
 </section>
 
 <section class="manifesto" aria-labelledby="manifesto-title">
-	<div class="manifesto-panel" use:reveal>
+	<div class="manifesto-content" use:reveal>
+		<h2 id="manifesto-title">Aus neuen Möglichkeiten werden funktionierende Prototypen.</h2>
 		<div class="manifesto-negations" aria-label="Kein Seminar, keine Fortbildung, kein Workshop">
-			<span>Kein <s>Seminar</s></span>
-			<span>Keine <s>Fortbildung</s></span>
-			<span>Kein <s>Workshop</s></span>
+			<span>Kein Seminar</span>
+			<span>Keine Fortbildung</span>
+			<span>Kein Workshop</span>
 		</div>
-		<div class="manifesto-copy">
-			<p class="eyebrow">Learning by doing</p>
-			<h2 id="manifesto-title">Einfach mal etwas Krasses bauen.</h2>
-			<p>Kein Frontalunterricht und keine Theorie um der Theorie willen. In diesem Learning-by-Doing-Hackathon probiert Ihr Team neue Tools aus, entwickelt gemeinsam eine Idee und baut an einem Tag einen funktionierenden Prototyp – aus Neugier, mit Tempo und vor allem mit Spaß am Machen.</p>
+		<p>Ihr Team erprobt aktuelle AI Coding Tools direkt in der Praxis und entwickelt an einem Tag gemeinsam einen funktionierenden Prototyp – fokussiert, kollaborativ und mit Freude am Bauen.</p>
+	</div>
+	<div class="tool-carousel" role="img" aria-label={carouselLabel}>
+		<div class="tool-carousel-track" aria-hidden="true">
+			{#each [0, 1] as copy}
+				<div class:duplicate={copy === 1} class="tool-carousel-group">
+					{#each carouselTools as tool}
+						<img src={tool.icon} alt="" width="96" height="96" />
+					{/each}
+				</div>
+			{/each}
 		</div>
 	</div>
 </section>
