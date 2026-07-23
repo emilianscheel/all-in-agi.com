@@ -4,7 +4,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { Award, CalendarDays, Camera, Check, Code2, Cookie, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Users, Clock3 } from 'lucide-svelte';
-	import { CAPACITY_PRICES, CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
+	import { CAPACITY_PRICES, CODING_TOOLS, PROVIDED_CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
@@ -52,6 +52,9 @@
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
 	let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
+	let visibleCodingTools = $derived(toolProvision === 'needed'
+		? PROVIDED_CODING_TOOLS.map((id) => CODING_TOOLS.find((tool) => tool.id === id)!)
+		: CODING_TOOLS);
 	let prepCallDates = $derived(availablePrepCallDates(slots));
 	let customConsultationSlots = $derived(prepCallSlotsForDate(slots, customConsultationDate));
 
@@ -98,6 +101,14 @@
 
 	function toggleCodingTool(tool: CodingTool) {
 		codingTools = codingTools.includes(tool) ? codingTools.filter((selected) => selected !== tool) : [...codingTools, tool];
+	}
+
+	function selectToolProvision(provision: ToolProvision) {
+		toolProvision = provision;
+		if (provision === 'needed') {
+			codingTools = codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool));
+			customCodingTool = '';
+		}
 	}
 
 	function updateSuggestions() {
@@ -169,7 +180,7 @@
 
 	function applySharedPlan(plan: SharedPlanV2) {
 		capacity = plan.capacity; venueProvided = plan.venueProvided; equipment = plan.equipment; lunch = plan.lunch; customLunch = plan.customLunch;
-		toolProvision = plan.toolProvision; codingTools = plan.codingTools; customCodingTool = plan.customCodingTool;
+		toolProvision = plan.toolProvision; codingTools = plan.toolProvision === 'needed' ? plan.codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool)) : plan.codingTools; customCodingTool = plan.toolProvision === 'needed' ? '' : plan.customCodingTool;
 		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; address = plan.address;
 		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
 		preferredEventDate = plan.preferredEventDate; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
@@ -277,14 +288,14 @@
 
 			<section class="config-section tools-section" use:reveal><h2>Tools</h2>
 				<div class="option-grid tools-mode-grid">
-					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => (toolProvision = 'existing')} /><b>Wir haben Agentic Coding Tools</b><span class="choice-price">Inklusive</span></label>
-					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => (toolProvision = 'needed')} /><b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span></label>
+					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => selectToolProvision('existing')} /><b>Wir haben Agentic Coding Tools</b><span class="choice-price">Inklusive</span></label>
+					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => selectToolProvision('needed')} /><b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span></label>
 				</div>
 				{#if toolProvision}
 					<div class:has-custom-tool={codingTools.includes('custom')} class="coding-tools" transition:slide={{ duration: 300 }}>
 						<p>{toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?'}</p>
 						<div class="coding-tool-list">
-							{#each CODING_TOOLS as tool}
+							{#each visibleCodingTools as tool}
 								<label class="coding-tool-option">
 									<input type="checkbox" checked={codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
 									<span class="round-checkbox" aria-hidden="true">{#if codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>

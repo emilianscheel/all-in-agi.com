@@ -3,6 +3,7 @@ export type Equipment = 'projector' | 'tv' | 'none';
 export type Lunch = 'pizza' | 'custom' | 'none' | 'self-organized';
 export type ToolProvision = 'existing' | 'needed';
 export type CodingTool = 'github-copilot' | 'codex' | 'claude-code' | 'cursor' | 'devin' | 'opencode' | 'antigravity' | 'custom';
+export const PROVIDED_CODING_TOOLS: CodingTool[] = ['codex', 'cursor', 'claude-code'];
 
 export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?: string }> = [
 	{ id: 'github-copilot', label: 'GitHub Copilot', icon: '/images/coding-tools/github-copilot.png' },
@@ -131,6 +132,7 @@ export function validateConfiguration(config: BookingConfiguration) {
 	const validCodingTools = new Set(CODING_TOOLS.map(({ id }) => id));
 	if (!codingTools.length) errors.push('Bitte wählen Sie mindestens ein Coding Tool.');
 	else if (codingTools.some((tool) => !validCodingTools.has(tool))) errors.push('Die Auswahl der Coding Tools ist ungültig.');
+	else if (config.toolProvision === 'needed' && codingTools.some((tool) => !PROVIDED_CODING_TOOLS.includes(tool))) errors.push('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.');
 	if (codingTools.includes('custom') && !config.customCodingTool?.trim()) errors.push('Bitte geben Sie das individuelle Coding Tool an.');
 	return errors;
 }

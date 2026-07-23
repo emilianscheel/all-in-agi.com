@@ -77,6 +77,8 @@ describe('booking validation', () => {
 		expect(validateConfiguration({ ...validConfiguration, codingTools: [] })).toContain('Bitte wählen Sie mindestens ein Coding Tool.');
 		expect(validateConfiguration({ ...validConfiguration, codingTools: ['custom'], customCodingTool: '' })).toContain('Bitte geben Sie das individuelle Coding Tool an.');
 		expect(validateConfiguration({ ...validConfiguration, codingTools: ['codex', 'custom'], customCodingTool: 'Internes Tool' })).toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, toolProvision: 'needed', codingTools: ['devin'] })).toContain('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.');
+		expect(validateConfiguration({ ...validConfiguration, toolProvision: 'needed', codingTools: ['codex', 'cursor', 'claude-code'] })).toEqual([]);
 	});
 });
 
