@@ -56,6 +56,21 @@
 	</div>
 </section>
 
+<section class="manifesto" aria-labelledby="manifesto-title">
+	<div class="manifesto-panel" use:reveal>
+		<div class="manifesto-negations" aria-label="Kein Seminar, keine Fortbildung, kein Workshop">
+			<span>Kein <s>Seminar</s></span>
+			<span>Keine <s>Fortbildung</s></span>
+			<span>Kein <s>Workshop</s></span>
+		</div>
+		<div class="manifesto-copy">
+			<p class="eyebrow">Learning by doing</p>
+			<h2 id="manifesto-title">Einfach mal etwas Krasses bauen.</h2>
+			<p>Kein Frontalunterricht und keine Theorie um der Theorie willen. In diesem Learning-by-Doing-Hackathon probiert Ihr Team neue Tools aus, entwickelt gemeinsam eine Idee und baut an einem Tag einen funktionierenden Prototyp – aus Neugier, mit Tempo und vor allem mit Spaß am Machen.</p>
+		</div>
+	</div>
+</section>
+
 <section id="format" class="agenda">
 	<div class="section-wrap">
 

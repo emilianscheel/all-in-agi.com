@@ -281,14 +281,15 @@
 					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => (toolProvision = 'needed')} /><b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span></label>
 				</div>
 				{#if toolProvision}
-					<div class="coding-tools" transition:slide={{ duration: 300 }}>
+					<div class:has-custom-tool={codingTools.includes('custom')} class="coding-tools" transition:slide={{ duration: 300 }}>
 						<p>{toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?'}</p>
 						<div class="coding-tool-list">
 							{#each CODING_TOOLS as tool}
 								<label class="coding-tool-option">
 									<input type="checkbox" checked={codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
 									<span class="round-checkbox" aria-hidden="true">{#if codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
-									<span>{tool.label}</span>
+									<span class="coding-tool-label">{tool.label}</span>
+									{#if tool.icon}<img class="coding-tool-icon" src={tool.icon} alt="" width="30" height="30" loading="lazy" decoding="async" aria-hidden="true" />{/if}
 								</label>
 							{/each}
 						</div>

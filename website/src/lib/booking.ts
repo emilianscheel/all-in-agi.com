@@ -4,14 +4,14 @@ export type Lunch = 'pizza' | 'custom' | 'none' | 'self-organized';
 export type ToolProvision = 'existing' | 'needed';
 export type CodingTool = 'github-copilot' | 'codex' | 'claude-code' | 'cursor' | 'devin' | 'opencode' | 'antigravity' | 'custom';
 
-export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string }> = [
-	{ id: 'github-copilot', label: 'GitHub Copilot' },
-	{ id: 'codex', label: 'Codex' },
-	{ id: 'claude-code', label: 'Claude Code' },
-	{ id: 'cursor', label: 'Cursor' },
-	{ id: 'devin', label: 'Devin' },
-	{ id: 'opencode', label: 'opencode' },
-	{ id: 'antigravity', label: 'Antigravity' },
+export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?: string }> = [
+	{ id: 'github-copilot', label: 'GitHub Copilot', icon: '/images/coding-tools/github-copilot.png' },
+	{ id: 'codex', label: 'Codex', icon: '/images/coding-tools/codex.png' },
+	{ id: 'claude-code', label: 'Claude Code', icon: '/images/coding-tools/claude-code.png' },
+	{ id: 'cursor', label: 'Cursor', icon: '/images/coding-tools/cursor.png' },
+	{ id: 'devin', label: 'Devin', icon: '/images/coding-tools/devin.png' },
+	{ id: 'opencode', label: 'opencode', icon: '/images/coding-tools/opencode.png' },
+	{ id: 'antigravity', label: 'Antigravity', icon: '/images/coding-tools/antigravity.png' },
 	{ id: 'custom', label: 'Custom' }
 ];
 
