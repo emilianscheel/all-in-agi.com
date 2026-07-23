@@ -8,7 +8,7 @@ const INTERACTIVE_SELECTOR = [
 	'[data-calendar-day]'
 ].join(',');
 
-function createIosHapticSwitch() {
+function createVirtualHapticSwitch() {
 	const wrapper = document.createElement('span');
 	const input = document.createElement('input');
 	const label = document.createElement('label');
@@ -33,11 +33,18 @@ function createIosHapticSwitch() {
 	});
 	wrapper.append(input, label);
 	document.body.append(wrapper);
-	return { wrapper, label };
+	return {
+		wrapper,
+		trigger() {
+			// WebKit gives switch controls native haptics on supported iPhones.
+			// Activating the associated virtual label keeps the user gesture intact.
+			label.click();
+		}
+	};
 }
 
 export function installGlobalHaptics() {
-	const iosSwitch = createIosHapticSwitch();
+	const virtualSwitch = createVirtualHapticSwitch();
 
 	function haptic() {
 		try {
@@ -45,7 +52,7 @@ export function installGlobalHaptics() {
 				navigator.vibrate(10);
 				return;
 			}
-			iosSwitch.label.click();
+			virtualSwitch.trigger();
 		} catch {
 			// Haptics are progressive enhancement and may be blocked by the browser or OS.
 		}
@@ -62,6 +69,6 @@ export function installGlobalHaptics() {
 	document.addEventListener('pointerup', onPointerUp, { capture: true, passive: true });
 	return () => {
 		document.removeEventListener('pointerup', onPointerUp, { capture: true });
-		iosSwitch.wrapper.remove();
+		virtualSwitch.wrapper.remove();
 	};
 }

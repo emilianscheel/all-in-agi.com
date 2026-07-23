@@ -282,7 +282,7 @@
 				</div>
 				{#if toolProvision}
 					<div class="coding-tools" transition:slide={{ duration: 300 }}>
-						<p>Welche Coding Tools werden eingesetzt?</p>
+						<p>{toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?'}</p>
 						<div class="coding-tool-list">
 							{#each CODING_TOOLS as tool}
 								<label class="coding-tool-option">
