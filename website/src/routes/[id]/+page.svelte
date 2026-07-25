@@ -100,6 +100,10 @@
 	}
 
 	function openEditor(section: EditSection) {
+		if (activeSection === section) {
+			cancelEditor();
+			return;
+		}
 		draft = configurationFromHackathon(hackathon);
 		prepCallMode = 'quick';
 		customPrepCallDate = '';
@@ -162,18 +166,27 @@
 
 	async function copyHackathonId() {
 		try {
+			let copied = false;
 			if (navigator.clipboard?.writeText) {
-				await navigator.clipboard.writeText(hackathon.id);
-			} else {
+				try {
+					await navigator.clipboard.writeText(hackathon.id);
+					copied = true;
+				} catch {
+					copied = false;
+				}
+			}
+			if (!copied) {
 				const input = document.createElement('textarea');
 				input.value = hackathon.id;
 				input.style.position = 'fixed';
+				input.style.pointerEvents = 'none';
 				input.style.opacity = '0';
 				document.body.append(input);
 				input.select();
-				document.execCommand('copy');
+				copied = document.execCommand('copy');
 				input.remove();
 			}
+			if (!copied) throw new Error('Copy failed');
 			idCopied = true;
 			window.setTimeout(() => (idCopied = false), 1_600);
 		} catch {
@@ -210,9 +223,11 @@
 		<section class="success-panel detail-panel" aria-labelledby="detail-title">
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
 			<div class="detail-id-row">
-				<p class="detail-id">{hackathon.id}</p>
-				<button class:copied={idCopied} class="detail-id-copy" type="button" aria-label={idCopied ? 'Hackathon-ID kopiert' : 'Hackathon-ID kopieren'} onclick={copyHackathonId}>
-					{#if idCopied}<Check size={16} strokeWidth={2.4} aria-hidden="true" />{:else}<Copy size={15} strokeWidth={2} aria-hidden="true" />{/if}
+				<button class:copied={idCopied} class="detail-id-copy-button" type="button" aria-label={idCopied ? 'Hackathon-ID kopiert' : 'Hackathon-ID kopieren'} onclick={copyHackathonId}>
+					<span class="detail-id">{hackathon.id}</span>
+					<span class="detail-id-copy" aria-hidden="true">
+						{#if idCopied}<Check size={16} strokeWidth={2.4} />{:else}<Copy size={15} strokeWidth={2} />{/if}
+					</span>
 				</button>
 			</div>
 			<h1 id="detail-title">Hackathon für {hackathon.companyName}</h1>

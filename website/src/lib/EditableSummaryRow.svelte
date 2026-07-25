@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
-	import { Pencil } from 'lucide-svelte';
+	import { Pencil, X } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -43,11 +43,12 @@
 			<button
 				class="summary-edit-button"
 				type="button"
-				aria-label={`${label} bearbeiten`}
+				aria-label={active ? `${label} schließen` : `${label} bearbeiten`}
 				aria-expanded={active}
 				onclick={onedit}
 			>
-				<Pencil size={16} strokeWidth={2} aria-hidden="true" />
+				<Pencil class="summary-edit-pencil" size={16} strokeWidth={2} aria-hidden="true" />
+				<X class="summary-edit-close" size={17} strokeWidth={2} aria-hidden="true" />
 			</button>
 		{/if}
 	</div>
