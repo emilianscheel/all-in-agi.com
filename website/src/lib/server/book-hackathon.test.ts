@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { BookingConfiguration } from '$lib/booking';
-import { completeHackathonBooking, type BookingPersistence } from './book-hackathon';
+import {
+	completeHackathonBooking,
+	completeHackathonBookingWithConfirmation,
+	type BookingPersistence
+} from './book-hackathon';
 
 const configuration: BookingConfiguration = {
 	capacity: 15,
@@ -96,5 +100,48 @@ describe('booking persistence orchestration', () => {
 			return confirmed;
 		}, failingStore)).rejects.toThrow('database unavailable');
 		expect(log).toEqual(['pending', 'provider', 'confirm-failed']);
+	});
+
+	test('attempts confirmation email only after persistence is confirmed', async () => {
+		const log: string[] = [];
+		const result = await completeHackathonBookingWithConfirmation(
+			configuration,
+			async () => {
+				log.push('provider');
+				return confirmed;
+			},
+			async (id) => {
+				log.push(`email:${id}`);
+				return { messageId: 'message-1' };
+			},
+			store(log)
+		);
+		expect(log).toEqual(['pending', 'provider', 'confirmed', 'email:HAA-AAA-AAA']);
+		expect(result).toMatchObject({
+			id: 'HAA-AAA-AAA',
+			confirmationEmailSent: true,
+			confirmationEmailDelivery: { messageId: 'message-1' }
+		});
+	});
+
+	test('keeps a confirmed booking successful when email delivery fails', async () => {
+		const log: string[] = [];
+		const result = await completeHackathonBookingWithConfirmation(
+			configuration,
+			async () => {
+				log.push('provider');
+				return confirmed;
+			},
+			async () => {
+				log.push('email-failed');
+				throw new Error('provider unavailable');
+			},
+			store(log)
+		);
+		expect(log).toEqual(['pending', 'provider', 'confirmed', 'email-failed']);
+		expect(result.confirmationEmailSent).toBe(false);
+		if (!result.confirmationEmailSent) {
+			expect(result.confirmationEmailError).toBeInstanceOf(Error);
+		}
 	});
 });

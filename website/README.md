@@ -32,6 +32,8 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
 - `CAL_EVENT_TYPE_ID`: ID des 60-minütigen Cal.com Event Types
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account-ID für den E-Mail-Versand
+- `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
 - `DATABASE_URL`: serverseitige PostgreSQL-Verbindung für Hackathon-Buchungen
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`: lokale Container-Konfiguration
@@ -44,6 +46,8 @@ Gebuchte Hackathons werden dauerhaft in PostgreSQL gespeichert und erhalten eine
 Das Drizzle-Schema liegt unter `src/lib/server/db/schema.ts`; generierte und geprüfte SQL-Migrationen werden im Ordner `drizzle/` versioniert. Schemaänderungen werden mit `bun run db:generate` erzeugt und mit `bun run db:migrate` angewendet.
 
 Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Adresssuche nutzt die öffentliche Photon-Instanz. Photon hat keine Verfügbarkeitsgarantie; deshalb bleiben alle Adressfelder immer manuell editierbar.
+
+Nach einer bestätigten Buchung versendet der Server eine reine Text-E-Mail über Cloudflare Email Service. Absender und Antwortadresse sind `go@all-in-agi.com`. Die E-Mail enthält den öffentlichen Buchungslink sowie den datenschutzreduzierten PDF-Plan und den Vorbereitungstermin als Anhänge. Ein Fehler beim E-Mail-Versand macht die bereits bestätigte Cal.com- und Datenbankbuchung nicht rückgängig.
 
 ## Vor einem Livegang zwingend erledigen
 

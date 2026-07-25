@@ -32,6 +32,7 @@
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { eventDateBounds } from '$lib/event-date';
 	import { formatDate, formatPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration } from '$lib/booking';
+	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
 	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
@@ -65,6 +66,7 @@
 		codingTools: draft.codingTools,
 		customCodingTool: draft.customCodingTool
 	});
+	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.booking));
 
 	function configurationFromHackathon(value: typeof data.hackathon): BookingConfiguration {
 		return {
@@ -85,6 +87,10 @@
 			preferredEventDate: value.preferredEventDate,
 			consultationSlot: value.consultationSlot
 		};
+	}
+
+	function overviewRow(id: BookingOverviewRowId) {
+		return overviewRows.find((row) => row.id === id)!;
 	}
 
 	function updateDraftOptions(patch: Partial<OptionValues>) {
@@ -208,35 +214,35 @@
 				<EditableSummaryRow icon={MessageSquareText} label="Ihre Nachricht" value={hackathon.message || 'Keine Nachricht hinterlegt'} status={hackathon.message ? 'Vorhanden' : 'Optional'} active={activeSection === 'message'} {saving} error={activeSection === 'message' ? editError : ''} onedit={() => openEditor('message')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<MessageField value={draft.message} onchange={(message) => (draft = { ...draft, message })} id="detail-message" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Users} label="Team" value={`Bis ${hackathon.capacity} Personen`} status={formatPrice(hackathon.price.basePrice)} active={activeSection === 'capacity'} {saving} error={activeSection === 'capacity' ? editError : ''} onedit={() => openEditor('capacity')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Users} label={overviewRow('team').label} value={overviewRow('team').value} status={overviewRow('team').status} active={activeSection === 'capacity'} {saving} error={activeSection === 'capacity' ? editError : ''} onedit={() => openEditor('capacity')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="capacity" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-capacity" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={MapPin} label="Location" value={hackathon.venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'} status={hackathon.venueProvided ? 'Inklusive' : formatPrice(hackathon.price.venueSurcharge)} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={MapPin} label={overviewRow('location').label} value={overviewRow('location').value} status={overviewRow('location').status} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="venue" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-venue" />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={MapPinned} label="Veranstaltungsadresse" value={eventAddressLabel} status="Geplant" active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<AddressEditor value={draft.address} onchange={(address) => (draft = { ...draft, address })} idPrefix="detail-address" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Code2} label={hackathon.toolProvision === 'needed' ? 'Tools für den Tag' : 'Tools vorhanden'} value={codingToolLabels.join(', ')} status={hackathon.price.toolsAdjustment ? `+ ${formatPrice(hackathon.price.toolsAdjustment)}` : 'Inklusive'} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Code2} label={overviewRow('tools').label} value={overviewRow('tools').value} status={overviewRow('tools').status} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="tools" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-tools" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Monitor} label="Demo Setup" value={equipmentLabel} status="Inklusive" active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Monitor} label={overviewRow('equipment').label} value={overviewRow('equipment').value} status={overviewRow('equipment').status} active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="equipment" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-equipment" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={CalendarDays} label="Event Date" value={formatDate(hackathon.preferredEventDate)} status="Geplant" active={activeSection === 'event-date'} {saving} error={activeSection === 'event-date' ? editError : ''} onedit={() => openEditor('event-date')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={CalendarDays} label={overviewRow('event-date').label} value={overviewRow('event-date').value} status={overviewRow('event-date').status} active={activeSection === 'event-date'} {saving} error={activeSection === 'event-date' ? editError : ''} onedit={() => openEditor('event-date')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<EventDateCalendar value={draft.preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(preferredEventDate) => (draft = { ...draft, preferredEventDate })} />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Clock3} label="Prep Call" value={`${formatDate(hackathon.booking.start || hackathon.consultationSlot, true)} Uhr`} status="Gebucht" active={activeSection === 'prep-call'} {saving} error={activeSection === 'prep-call' ? editError : ''} onedit={() => openEditor('prep-call')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Clock3} label={overviewRow('prep-call').label} value={overviewRow('prep-call').value} status={overviewRow('prep-call').status} active={activeSection === 'prep-call'} {saving} error={activeSection === 'prep-call' ? editError : ''} onedit={() => openEditor('prep-call')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<PrepCallEditor value={draft.consultationSlot} mode={prepCallMode} customDate={customPrepCallDate} onchange={(consultationSlot) => (draft = { ...draft, consultationSlot })} onmodechange={(value) => (prepCallMode = value)} oncustomdatechange={(value) => (customPrepCallDate = value)} />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Pizza} label="Lunch" value={hackathon.lunch === 'pizza' ? 'Pizza' : hackathon.lunch === 'custom' ? hackathon.customLunch : hackathon.lunch === 'self-organized' ? 'Selbstorganisiert' : 'No lunch'} status={hackathon.price.lunchAdjustment ? `${hackathon.price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(hackathon.price.lunchAdjustment))}` : 'Inklusive'} active={activeSection === 'lunch'} {saving} error={activeSection === 'lunch' ? editError : ''} onedit={() => openEditor('lunch')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Pizza} label={overviewRow('lunch').label} value={overviewRow('lunch').value} status={overviewRow('lunch').status} active={activeSection === 'lunch'} {saving} error={activeSection === 'lunch' ? editError : ''} onedit={() => openEditor('lunch')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="lunch" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-lunch" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Award} label="Winner Poster" value="Auszeichnung für das Gewinnerteam" status="Inklusive" />
-				<EditableSummaryRow icon={Camera} label="Event-Fotos" value="Dokumentation des Tages" status="Inklusive" />
-				<EditableSummaryRow icon={Cookie} label="Snacks" value="Cookies" status="Inklusive" />
-				<EditableSummaryRow icon={Plane} label="Anreise" value="Innerhalb Deutschlands" status="Inklusive" />
-				<EditableSummaryRow icon={ReceiptEuro} label="Gesamt" value="Gesamt" status={`${formatPrice(hackathon.price.totalPrice)} netto`} total />
+				<EditableSummaryRow icon={Award} label={overviewRow('winner-poster').label} value={overviewRow('winner-poster').value} status={overviewRow('winner-poster').status} />
+				<EditableSummaryRow icon={Camera} label={overviewRow('event-photos').label} value={overviewRow('event-photos').value} status={overviewRow('event-photos').status} />
+				<EditableSummaryRow icon={Cookie} label={overviewRow('snacks').label} value={overviewRow('snacks').value} status={overviewRow('snacks').status} />
+				<EditableSummaryRow icon={Plane} label={overviewRow('travel').label} value={overviewRow('travel').value} status={overviewRow('travel').status} />
+				<EditableSummaryRow icon={ReceiptEuro} label={overviewRow('total').label} value={overviewRow('total').value} status={overviewRow('total').status} total />
 			</div>
 		</section>
 	</div>

@@ -34,3 +34,30 @@ export async function completeHackathonBooking(
 	await store.confirm(id, booking);
 	return { id, booking };
 }
+
+export async function completeHackathonBookingWithConfirmation<T>(
+	config: BookingConfiguration,
+	bookPrepCall: (config: BookingConfiguration) => Promise<ConfirmedBooking>,
+	sendConfirmation: (
+		id: string,
+		config: BookingConfiguration,
+		booking: ConfirmedBooking
+	) => Promise<T>,
+	store: BookingPersistence = persistence
+) {
+	const result = await completeHackathonBooking(config, bookPrepCall, store);
+	try {
+		const confirmationEmailDelivery = await sendConfirmation(result.id, config, result.booking);
+		return {
+			...result,
+			confirmationEmailSent: true as const,
+			confirmationEmailDelivery
+		};
+	} catch (confirmationEmailError) {
+		return {
+			...result,
+			confirmationEmailSent: false as const,
+			confirmationEmailError
+		};
+	}
+}

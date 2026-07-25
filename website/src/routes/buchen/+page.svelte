@@ -4,6 +4,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { Apple, Award, Beef, CakeSlice, CalendarDays, Camera, Clock3, Code2, Coffee, Cookie, Drumstick, Fish, IceCreamBowl, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Salad, Sandwich, Soup, Utensils, UtensilsCrossed, Users } from 'lucide-svelte';
 	import { PROVIDED_CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
+	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import AnimatedValue from '$lib/AnimatedValue.svelte';
@@ -93,6 +94,7 @@
 		codingTools,
 		customCodingTool
 	});
+	let overviewRows = $derived(bookingOverviewRows(buildConfiguration()));
 
 	const { min: minEventDate, max: maxEventDate } = eventDateBounds();
 
@@ -177,6 +179,10 @@
 			preferredEventDate,
 			consultationSlot
 		};
+	}
+
+	function overviewRow(id: BookingOverviewRowId) {
+		return overviewRows.find((row) => row.id === id)!;
 	}
 
 	function buildSharedPlan(): SharedPlanV3 {
@@ -430,18 +436,18 @@
 			<section class="config-section" use:reveal><h2>Ihre Nachricht</h2><MessageField value={message} onchange={(value) => (message = value)} id="booking-message" /></section>
 
 			<section class="config-section" use:reveal><div class="summary-box overview-box" bind:this={overviewCard}>
-				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small><AnimatedValue value={`Bis ${capacity} Personen`} /></span><b><AnimatedValue value={formatPrice(price.basePrice)} /></b></div>
-				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small><AnimatedValue value={venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'} /></span><b><AnimatedValue value={venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)} /></b></div>
-				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{toolProvision === 'needed' ? 'Wir brauchen Tools für den Tag' : 'Wir haben bereits Tools'}</small><AnimatedValue value={codingToolLabels.join(', ') || 'Noch keine Tools ausgewählt'} /></span><b><AnimatedValue value={price.toolsAdjustment ? `+ ${formatPrice(price.toolsAdjustment)}` : 'Inklusive'} /></b></div>{/if}
-				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small><AnimatedValue value={equipmentLabel} /></span><b>Inklusive</b></div>
-				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small><AnimatedValue value={formatDate(preferredEventDate)} /></span><b>Geplant</b></div>{/if}
-				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small><AnimatedValue value={`${formatDate(consultationSlot, true)} Uhr`} /></span><b>Gebucht</b></div>{/if}
-				<div class="summary-row"><LunchIcon size={18} aria-hidden="true" /><span><small>Lunch</small><AnimatedValue value={lunchPreviewLabel} /></span><b><AnimatedValue value={price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'} /></b></div>
-				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>Winner Poster</small>Auszeichnung für das Gewinnerteam</span><b>Inklusive</b></div>
-				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>Event-Fotos</small>Dokumentation des Tages</span><b>Inklusive</b></div>
-				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>Snacks</small>Cookies</span><b>Inklusive</b></div>
-				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span><small>Anreise</small>Innerhalb Deutschlands</span><b>Inklusive</b></div>
-				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b><AnimatedValue value={`${formatPrice(price.totalPrice)} netto`} /></b></div>
+				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>{overviewRow('team').label}</small><AnimatedValue value={overviewRow('team').value} /></span><b><AnimatedValue value={overviewRow('team').status} /></b></div>
+				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>{overviewRow('location').label}</small><AnimatedValue value={overviewRow('location').value} /></span><b><AnimatedValue value={overviewRow('location').status} /></b></div>
+				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{overviewRow('tools').label}</small><AnimatedValue value={overviewRow('tools').value} /></span><b><AnimatedValue value={overviewRow('tools').status} /></b></div>{/if}
+				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>{overviewRow('equipment').label}</small><AnimatedValue value={overviewRow('equipment').value} /></span><b>{overviewRow('equipment').status}</b></div>
+				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>{overviewRow('event-date').label}</small><AnimatedValue value={overviewRow('event-date').value} /></span><b>{overviewRow('event-date').status}</b></div>{/if}
+				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>{overviewRow('prep-call').label}</small><AnimatedValue value={overviewRow('prep-call').value} /></span><b>{overviewRow('prep-call').status}</b></div>{/if}
+				<div class="summary-row"><LunchIcon size={18} aria-hidden="true" /><span><small>{overviewRow('lunch').label}</small><AnimatedValue value={overviewRow('lunch').value} /></span><b><AnimatedValue value={overviewRow('lunch').status} /></b></div>
+				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>{overviewRow('winner-poster').label}</small>{overviewRow('winner-poster').value}</span><b>{overviewRow('winner-poster').status}</b></div>
+				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>{overviewRow('event-photos').label}</small>{overviewRow('event-photos').value}</span><b>{overviewRow('event-photos').status}</b></div>
+				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>{overviewRow('snacks').label}</small>{overviewRow('snacks').value}</span><b>{overviewRow('snacks').status}</b></div>
+				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span><small>{overviewRow('travel').label}</small>{overviewRow('travel').value}</span><b>{overviewRow('travel').status}</b></div>
+				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>{overviewRow('total').value}</span><b><AnimatedValue value={overviewRow('total').status} /></b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
 			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Erstgespräch buchen'}</button>
