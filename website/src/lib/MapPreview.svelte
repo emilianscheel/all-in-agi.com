@@ -32,7 +32,17 @@
 			};
 			colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
 			colorScheme.addEventListener('change', updateMapTheme);
-			map = new maplibregl.Map({ container, style: mapStyle(colorScheme.matches), center: [10.4515, 51.1657], zoom: 5.2, attributionControl: false, maplibreLogo: false, pitchWithRotate: false, dragRotate: false });
+			map = new maplibregl.Map({
+				container,
+				style: mapStyle(colorScheme.matches),
+				center: [10.4515, 51.1657],
+				zoom: 5.2,
+				attributionControl: false,
+				maplibreLogo: false,
+				pitchWithRotate: false,
+				dragRotate: false,
+				scrollZoom: false
+			});
 			map.on('styleimagemissing', provideMissingStyleImage);
 			map.once('styledata', reveal);
 			readyTimeout = setTimeout(() => { if (status === 'loading') status = 'error'; }, 10_000);

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { installGlobalHaptics } from '$lib/haptics';
-	import '@fontsource-variable/instrument-sans';
+	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children } = $props();
 

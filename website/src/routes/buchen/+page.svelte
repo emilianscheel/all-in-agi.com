@@ -334,11 +334,34 @@
 	</header>
 	{#if planError}<div class="plan-error" role="alert">{planError} <a href="/buchen">Neuen Plan starten</a></div>{/if}
 
-	<div class="config-layout">
-		<div class="preview-column">
-			<MapPreview latitude={address.latitude} longitude={address.longitude}>
-				<article
-					class="event-card"
+		<div class="config-layout">
+			<div class="preview-column">
+				<MapPreview latitude={address.latitude} longitude={address.longitude}>
+					<div class="map-address-search">
+						<div class="field address-search-wrap">
+							<label for="map-address-search">Adresse suchen</label>
+							<input
+								id="map-address-search"
+								autocomplete="off"
+								aria-describedby={searchStatus === 'idle' ? undefined : 'map-address-search-status'}
+								aria-autocomplete="list"
+								aria-controls="map-address-suggestions"
+								placeholder="Straße, Ort oder Unternehmen"
+								bind:value={addressQuery}
+								oninput={updateSuggestions}
+							/>
+							{#if suggestions.length}
+								<ul id="map-address-suggestions" class="suggestions">
+									{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}
+								</ul>
+							{/if}
+							{#if searchStatus !== 'idle'}
+								<p id="map-address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>
+							{/if}
+						</div>
+					</div>
+					<article
+						class="event-card"
 					bind:this={eventCard}
 					style:opacity={previewOpacity}
 					aria-label="Konfigurationsvorschau"
