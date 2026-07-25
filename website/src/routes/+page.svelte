@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CalendarClock, CircleMinus, Lightbulb, Mail, Phone, Pizza, Presentation, Users, Utensils } from 'lucide-svelte';
+	import { onMount } from 'svelte';
+	import { CalendarClock, Lightbulb, Mail, MapPin, Phone, Pizza, Presentation, Users } from 'lucide-svelte';
 	import { Accordion } from 'bits-ui';
 	import { CODING_TOOLS } from '$lib/booking';
 	import { reveal } from '$lib/motion';
@@ -34,6 +35,33 @@
 		description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
 		url: 'https://all-in-agi.com'
 	};
+
+	onMount(() => {
+		const heroCopy = document.querySelector<HTMLElement>('.hero-copy');
+		const root = document.documentElement;
+		let frame: number | undefined;
+
+		function updateMobileNavCta() {
+			frame = undefined;
+			root.classList.toggle('mobile-nav-cta-visible', Boolean(heroCopy && heroCopy.getBoundingClientRect().bottom <= 44));
+		}
+
+		function scheduleMobileNavCtaUpdate() {
+			if (frame !== undefined) return;
+			frame = requestAnimationFrame(updateMobileNavCta);
+		}
+
+		window.addEventListener('scroll', scheduleMobileNavCtaUpdate, { passive: true });
+		window.addEventListener('resize', scheduleMobileNavCtaUpdate, { passive: true });
+		updateMobileNavCta();
+
+		return () => {
+			if (frame !== undefined) cancelAnimationFrame(frame);
+			window.removeEventListener('scroll', scheduleMobileNavCtaUpdate);
+			window.removeEventListener('resize', scheduleMobileNavCtaUpdate);
+			root.classList.remove('mobile-nav-cta-visible');
+		};
+	});
 </script>
 
 <svelte:head>
@@ -94,8 +122,8 @@
 		decoding="async"
 	/>
 	<div class="adoption-gap-inner">
-		<div class="adoption-gap-copy" use:reveal>
-			<h2 id="adoption-gap-title">Vom Wollen ins Machen.</h2>
+			<div class="adoption-gap-copy" use:reveal>
+				<h2 id="adoption-gap-title">Aus Ambition wird Anwendung.</h2>
 			<p class="adoption-gap-conclusion">
 				Der beste Weg, die Adaptionslücke zu schließen: ein Hackathon, bei dem das Team gemeinsam
 				baut, ausprobiert.
@@ -129,7 +157,7 @@
 			<article class="agenda-card"><span class="time">09:00</span><h3>Kickoff</h3><p>Live Demo, Tool Stack, Teams und Challenges.</p></article>
 			<article class="agenda-card"><span class="time">09:30</span><h3>Build Sprint</h3><p>Von Problem und User Flow zum ersten Working Prototype.</p></article>
 			<article class="agenda-card"><span class="time">13:00</span><h3>Pizza</h3><p>Gemeinsamer Lunch, Feedback und zweiter Build Sprint.</p></article>
-			<article class="agenda-card"><span class="time">16:30</span><h3>Live Demo</h3><p>Problem, Lösung, How its used and build</p></article>
+			<article class="agenda-card"><span class="time">16:30</span><h3>Demo Session</h3><p>Problem, Lösung, How its used and build</p></article>
 		</div>
 	</div>
 </section>
@@ -138,9 +166,9 @@
 	<div class="section-wrap">
 
 		<div class="pricing-grid" use:reveal={{ group: true }}>
-			<article class="price-card"><h3>Bis 15 Personen</h3><strong>4.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitator</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Day & Follow-up</li><li><Pizza size={17} />Pizza Lunch inklusive</li><li><CircleMinus size={17} />Ohne Lunch −500 €</li><li><Utensils size={17} />Custom Catering +500 €</li></ul></article>
-			<article class="price-card featured"><span class="tag">Most popular</span><h3>Bis 30 Personen</h3><strong>5.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitators</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Day & Follow-up</li><li><Pizza size={17} />Pizza Lunch inklusive</li><li><CircleMinus size={17} />Ohne Lunch −500 €</li><li><Utensils size={17} />Custom Catering +500 €</li></ul></article>
-			<article class="price-card"><h3>Bis 50 Personen</h3><strong>6.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitators</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Day & Follow-up</li><li><Pizza size={17} />Pizza Lunch inklusive</li><li><CircleMinus size={17} />Ohne Lunch −500 €</li><li><Utensils size={17} />Custom Catering +500 €</li></ul></article>
+			<article class="price-card"><h3>Bis 15 Personen</h3><strong>4.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitator</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Session & Follow-up</li><li><Pizza size={17} />Pizza & Cookies inklusive</li><li><MapPin size={17} />Vor Ort oder organisierter Location</li></ul></article>
+			<article class="price-card featured"><span class="tag">Most popular</span><h3>Bis 30 Personen</h3><strong>5.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitators</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Session & Follow-up</li><li><Pizza size={17} />Pizza & Cookies inklusive</li><li><MapPin size={17} />Vor Ort oder organisierter Location</li></ul></article>
+			<article class="price-card"><h3>Bis 50 Personen</h3><strong>6.000 €</strong><span>netto</span><ul><li><Users size={17} />2 Facilitators</li><li><Lightbulb size={17} />Challenge Design</li><li><Presentation size={17} />Demo Session & Follow-up</li><li><Pizza size={17} />Pizza & Cookies inklusive</li><li><MapPin size={17} />Vor Ort oder organisierter Location</li></ul></article>
 		</div>
 		<div class="section-action"><a class="button-primary" href="/buchen">Hackathon planen</a><a class="button-secondary" href="#kontakt">Kontakt aufnehmen</a></div>
 	</div>
