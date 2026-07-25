@@ -7,10 +7,47 @@ type ContainerInfo = {
 	configuration?: { id?: string };
 };
 
-function requiredEnv(name: string, fallback?: string) {
-	const value = Bun.env[name] || fallback;
-	if (!value) throw new Error(`${name} fehlt in .env.`);
-	return value;
+export type DatabaseUrlConfig =
+	| { url: URL; isLocal: false }
+	| { url: URL; isLocal: true; user: string; password: string; database: string; port: string };
+
+function decodedUrlPart(value: string, label: string) {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		throw new Error(`${label} in DATABASE_URL ist ungültig kodiert.`);
+	}
+}
+
+export function databaseConfigFromUrl(value: string | undefined): DatabaseUrlConfig {
+	if (!value) throw new Error('DATABASE_URL fehlt in .env.');
+
+	let url: URL;
+	try {
+		url = new URL(value);
+	} catch {
+		throw new Error('DATABASE_URL ist keine gültige URL.');
+	}
+	if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
+		throw new Error('DATABASE_URL muss mit postgres:// oder postgresql:// beginnen.');
+	}
+
+	const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
+	if (!isLocal) return { url, isLocal };
+
+	const user = decodedUrlPart(url.username, 'Der Benutzername');
+	const password = decodedUrlPart(url.password, 'Das Passwort');
+	const database = decodedUrlPart(url.pathname.replace(/^\/+/, ''), 'Der Datenbankname');
+	const port = url.port || '5432';
+	if (!user || !password || !database) {
+		throw new Error('Lokale DATABASE_URL muss Benutzername, Passwort und Datenbankname enthalten.');
+	}
+	const numericPort = Number(port);
+	if (!Number.isInteger(numericPort) || numericPort < 1 || numericPort > 65_535) {
+		throw new Error('Der Port in DATABASE_URL ist ungültig.');
+	}
+
+	return { url, isLocal, user, password, database, port };
 }
 
 async function run(args: string[], capture = false) {
@@ -56,10 +93,12 @@ async function waitUntilReady(user: string, database: string) {
 }
 
 export async function startDatabase() {
-	const user = requiredEnv('POSTGRES_USER', 'all-in-agi');
-	const password = requiredEnv('POSTGRES_PASSWORD', 'all-in-agi_local_dev');
-	const database = requiredEnv('POSTGRES_DB', 'all-in-agi');
-	const port = requiredEnv('POSTGRES_PORT', '5432');
+	const config = databaseConfigFromUrl(Bun.env.DATABASE_URL);
+	if (!config.isLocal) {
+		console.log(`DATABASE_URL verwendet ${config.url.hostname}; der lokale PostgreSQL-Start wird übersprungen.`);
+		return;
+	}
+	const { user, password, database, port } = config;
 
 	const system = await run(['system', 'start'], true);
 	if (system.exitCode !== 0 && !/already|running/i.test(`${system.stdout} ${system.stderr}`)) {

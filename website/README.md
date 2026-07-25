@@ -9,7 +9,7 @@ bun install
 bun run dev
 ```
 
-`bun run dev` startet PostgreSQL über Apples `container` CLI, wendet offene Drizzle-Migrationen an und startet danach den SvelteKit-Entwicklungsserver. Dafür werden ein Mac mit Apple Silicon, die installierte und initialisierte [`container` CLI](https://github.com/apple/container) sowie die Werte aus `.env.example` benötigt.
+`bun run dev` startet für eine lokale `DATABASE_URL` PostgreSQL über Apples `container` CLI, wendet offene Drizzle-Migrationen an und startet danach den SvelteKit-Entwicklungsserver. Dafür werden ein Mac mit Apple Silicon, die installierte und initialisierte [`container` CLI](https://github.com/apple/container) sowie die Werte aus `.env.example` benötigt. Zeigt `DATABASE_URL` auf einen externen Host, wird kein lokaler Container gestartet.
 
 Die lokale Datenbank läuft als `postgres:17-alpine` unter dem Namen `all-in-agi-postgres`, ist nur über `127.0.0.1:5432` erreichbar und speichert ihre Daten dauerhaft im Volume `all-in-agi-postgres-data`.
 
@@ -35,8 +35,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account-ID für den E-Mail-Versand
 - `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
-- `DATABASE_URL`: serverseitige PostgreSQL-Verbindung für Hackathon-Buchungen
-- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`: lokale Container-Konfiguration
+- `DATABASE_URL`: einzige PostgreSQL-Konfiguration für Anwendung, Drizzle und lokale Entwicklung; der lokale Container übernimmt daraus Benutzername, Passwort, Datenbankname und Port
 - `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`: für eine spätere Better-Auth-Integration reserviert; aktuell noch nicht verwendet
 
 In der lokalen Entwicklung wird ein festes Development-Secret verwendet. Im Live-Betrieb verweigert die App das Erstellen und Öffnen von Plan-Links ohne eigenes Secret. Plan-Links enthalten die vollständige Konfiguration inklusive Kontakt- und Adressdaten; jede Person mit dem Link kann diese Daten nach dem Öffnen sehen. Eine Rotation des Secrets macht bestehende Links ungültig.
