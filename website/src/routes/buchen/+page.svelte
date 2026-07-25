@@ -52,6 +52,8 @@
 	let eventCard: HTMLElement;
 	let overviewCard: HTMLDivElement;
 	let previewOpacity = $state(1);
+	let mapHeight = $state<number | undefined>();
+	let mapExpandedHeight = $state<number | undefined>();
 	let previewFadeFrame: number | undefined;
 	let reducedMotion: MediaQueryList | undefined;
 	let debouncedCustomLunch = $state('');
@@ -283,6 +285,13 @@
 
 	function updatePreviewFade() {
 		previewFadeFrame = undefined;
+		const collapsedHeight = Math.max(570, Math.min(window.innerHeight * 0.7, 720));
+		const expandedHeight = Math.max(650, Math.min(window.innerHeight - 96, 920));
+		const expansionProgress = Math.max(0, Math.min(1, window.scrollY / 170));
+		const easedExpansion = expansionProgress * expansionProgress * (3 - 2 * expansionProgress);
+		mapExpandedHeight = expandedHeight;
+		mapHeight = collapsedHeight + (expandedHeight - collapsedHeight) * easedExpansion;
+
 		if (!overviewCard) return;
 		const overviewTop = overviewCard.getBoundingClientRect().top;
 		const fadeStart = window.innerHeight;
@@ -335,11 +344,16 @@
 	{#if planError}<div class="plan-error" role="alert">{planError} <a href="/buchen">Neuen Plan starten</a></div>{/if}
 
 		<div class="config-layout">
-			<div class="preview-column">
+			<div
+				class="preview-column"
+				style={mapHeight === undefined || mapExpandedHeight === undefined
+					? undefined
+					: `--map-height:${mapHeight}px;--map-expanded-height:${mapExpandedHeight}px`}
+			>
 				<MapPreview latitude={address.latitude} longitude={address.longitude}>
 					<div class="map-address-search">
 						<div class="field address-search-wrap">
-							<label for="map-address-search">Adresse suchen</label>
+							<label class="visually-hidden" for="map-address-search">Adresse suchen</label>
 							<input
 								id="map-address-search"
 								autocomplete="off"

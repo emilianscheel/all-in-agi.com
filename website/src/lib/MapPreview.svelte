@@ -9,6 +9,7 @@
 	let marker: MapLibreMarker | undefined;
 	let readyTimeout: ReturnType<typeof setTimeout> | undefined;
 	let colorScheme: MediaQueryList | undefined;
+	let resizeObserver: ResizeObserver | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	const mapStyle = (dark: boolean) => `https://tiles.openfreemap.org/styles/${dark ? 'dark' : 'positron'}`;
 
@@ -45,6 +46,8 @@
 			});
 			map.on('styleimagemissing', provideMissingStyleImage);
 			map.once('styledata', reveal);
+			resizeObserver = new ResizeObserver(() => map?.resize());
+			resizeObserver.observe(container);
 			readyTimeout = setTimeout(() => { if (status === 'loading') status = 'error'; }, 10_000);
 		} catch { status = 'error'; }
 	}
@@ -59,7 +62,7 @@
 
 	$effect(() => { latitude; longitude; updatePosition(); });
 	onMount(initialize);
-	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); marker?.remove(); map?.remove(); });
+	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); marker?.remove(); map?.remove(); });
 </script>
 
 <div class="map-shell" aria-label="Vorschau des Veranstaltungsorts">
