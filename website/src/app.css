@@ -63,7 +63,7 @@ img { display: block; max-width: 100%; }
 	border-bottom: 1px solid var(--nav-border);
 }
 .nav-inner { max-width: 1180px; height: 44px; margin: 0 auto; padding: 0 30px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.brand-mark { height: 32px; display: inline-flex; align-items: center; gap: 8px; justify-self: start; }
+.brand-mark { height: 32px; display: inline-flex; align-items: center; gap: 8px; justify-self: start; transform: translateY(-3.25px); }
 .brand-icon { width: 27px; height: 23px; display: grid; place-items: center; flex: none; }
 .brand-mark img { width: 34px; height: 34px; max-width: none; object-fit: contain; transform: translateY(.63px); }
 .brand-wordmark {

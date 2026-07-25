@@ -287,7 +287,12 @@
 		previewFadeFrame = undefined;
 		const expandedHeight = Math.max(646, Math.min(window.innerHeight - 100, 916));
 		const collapsedHeight = Math.min(expandedHeight, Math.max(570, Math.min(window.innerHeight * 0.7, 720)) + 50);
-		const expansionProgress = Math.max(0, Math.min(1, window.scrollY / 150));
+		const expansionStartScroll = 0;
+		const expansionDistance = expandedHeight - collapsedHeight;
+		const expansionEndScroll = expansionStartScroll + expansionDistance;
+		const expansionProgress = expansionDistance === 0
+			? 1
+			: Math.max(0, Math.min(1, (window.scrollY - expansionStartScroll) / (expansionEndScroll - expansionStartScroll)));
 		const easedExpansion = expansionProgress * expansionProgress * (3 - 2 * expansionProgress);
 		mapExpandedHeight = expandedHeight;
 		mapHeight = collapsedHeight + (expandedHeight - collapsedHeight) * easedExpansion;
