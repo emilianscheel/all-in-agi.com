@@ -34,7 +34,11 @@
 			textNode.style.opacity = '1';
 			textNode.style.color = '';
 		}
-		if (strikeNode) strikeNode.style.transform = 'scaleX(0)';
+		if (strikeNode) {
+			strikeNode.style.transform = 'scaleX(0)';
+			strikeNode.style.backgroundColor = '';
+			strikeNode.style.opacity = '1';
+		}
 	}
 
 	function completeImmediately() {
@@ -90,11 +94,15 @@
 		}
 
 		const currentColor = getComputedStyle(textNode).color;
-		const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-		const strike = animate(strikeNode, { scaleX: [0, 1] }, { duration: 0.26, ease: [0.22, 1, 0.36, 1] });
+		const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--replacement-muted').trim();
+		const strike = animate(
+			strikeNode,
+			{ scaleX: [0, 1], backgroundColor: [currentColor, mutedColor] },
+			{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }
+		);
 		const fade = animate(
 			textNode,
-			{ opacity: [1, 0.28], color: [currentColor, mutedColor] },
+			{ color: [currentColor, mutedColor] },
 			{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }
 		);
 		controls = [strike, fade];

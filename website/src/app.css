@@ -7,6 +7,7 @@
 	--page: #fff;
 	--ink: #1d1d1f;
 	--muted: #6e6e73;
+	--replacement-muted: #a1a1a6;
 	--secondary-ink: #4f4f53;
 	--line: #d2d2d7;
 	--soft-line: #e8e8ed;
@@ -278,7 +279,7 @@ img { display: block; max-width: 100%; }
 .animated-value { display: inline; }
 .animated-value-visual { position: relative; display: inline-block; min-height: 1em; }
 .animated-value-text { transition: none; }
-.animated-value-strike { position: absolute; z-index: 1; left: -.04em; right: -.04em; top: 52%; height: 1.5px; border-radius: 99px; background: currentColor; pointer-events: none; transform: scaleX(0); transform-origin: left center; }
+.animated-value-strike { position: absolute; z-index: 1; left: -.04em; right: -.04em; top: 52%; height: 2px; border-radius: 99px; background: currentColor; pointer-events: none; transform: scaleX(0); transform-origin: left center; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 
 .config-form { min-width: 0; display: flex; flex-direction: column; gap: 62px; }
@@ -405,6 +406,7 @@ img { display: block; max-width: 100%; }
 		--page: #000;
 		--ink: #f5f5f7;
 		--muted: #a1a1a6;
+		--replacement-muted: #8e8e93;
 		--secondary-ink: #d2d2d7;
 		--line: #424245;
 		--soft-line: #303033;
