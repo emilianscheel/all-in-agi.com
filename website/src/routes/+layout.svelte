@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { installGlobalHaptics } from '$lib/haptics';
+	import '@fontsource-variable/instrument-sans';
 	import '../app.css';
 	let { children } = $props();
 
@@ -17,7 +18,14 @@
 <header class="site-header">
 	<nav class="nav-inner" aria-label="Hauptnavigation">
 		<a class="brand-mark" href="/" aria-label="ALL-IN-AGI Startseite">
-			<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" aria-hidden="true" />
+			<span class="brand-icon" aria-hidden="true">
+				<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
+			</span>
+			<span class="brand-wordmark" aria-hidden="true">
+				{#each [...'ALL IN AGI'] as character, index}
+					<span class="brand-character" style={`--char-index: ${index}`}>{character === ' ' ? '\u00a0' : character}</span>
+				{/each}
+			</span>
 		</a>
 		<div class="nav-links">
 			<a href="/#format">Agenda</a>
