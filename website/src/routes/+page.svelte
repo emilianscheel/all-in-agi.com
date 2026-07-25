@@ -40,7 +40,7 @@
 	<title>Agentic Engineering Hackathon</title>
 	<meta name="description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen" />
 	<meta property="og:title" content="Agentic Engineering Hackathon" />
-	<meta property="og:description" content="From prompt to prototype. In one day." />
+	<meta property="og:description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben." />
 	<meta property="og:image" content="/images/werksprung-event.webp" />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary_large_image" />
