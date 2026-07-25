@@ -1,5 +1,5 @@
 import fontkit from '@pdf-lib/fontkit';
-import instrumentSansUrl from '@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff';
+import instrumentSansAsset from '@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff?inline';
 import {
 	PDFDocument,
 	StandardFonts,
@@ -8,7 +8,7 @@ import {
 	type PDFFont,
 	type PDFPage
 } from 'pdf-lib';
-import logoUrl from '../../static/brand/all-in-agi-logo.png';
+import logoAsset from '../../static/brand/all-in-agi-logo.png?inline';
 import { formatPrice, getPrice, type BookingConfiguration } from './booking';
 import { bookingOverviewRows } from './booking-overview';
 import type { BookingResultSummary } from './booking-ics';
@@ -123,22 +123,33 @@ function longDateLabel(value: string, withTime = false) {
 
 let brandAssets: Promise<{ logo: Uint8Array; instrumentSans: Uint8Array }> | undefined;
 
-async function readAsset(asset: string) {
-	if (typeof Bun !== 'undefined') {
-		return Bun.file(asset).arrayBuffer();
+function decodeDataUrl(asset: string) {
+	const comma = asset.indexOf(',');
+	if (comma === -1) throw new Error('Invalid bundled PDF asset.');
+	const metadata = asset.slice(0, comma);
+	const encoded = asset.slice(comma + 1);
+	if (!metadata.endsWith(';base64')) {
+		return new TextEncoder().encode(decodeURIComponent(encoded));
 	}
-	const { read } = await import('$app/server');
-	return read(asset).arrayBuffer();
+	if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(encoded, 'base64'));
+
+	const binary = atob(encoded);
+	return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function readBundledAsset(asset: string) {
+	if (asset.startsWith('data:')) return decodeDataUrl(asset);
+	if (typeof Bun !== 'undefined') {
+		return new Uint8Array(await Bun.file(asset).arrayBuffer());
+	}
+	throw new Error('PDF asset was not bundled as an inline data URL.');
 }
 
 function loadBrandAssets() {
 	brandAssets ??= Promise.all([
-		readAsset(logoUrl),
-		readAsset(instrumentSansUrl)
-	]).then(([logo, instrumentSans]) => ({
-		logo: new Uint8Array(logo),
-		instrumentSans: new Uint8Array(instrumentSans)
-	}));
+		readBundledAsset(logoAsset),
+		readBundledAsset(instrumentSansAsset)
+	]).then(([logo, instrumentSans]) => ({ logo, instrumentSans }));
 	return brandAssets;
 }
 
