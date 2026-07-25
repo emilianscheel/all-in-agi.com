@@ -47,11 +47,18 @@
 	let demoMode = $state(false);
 	let submitting = $state(false);
 	let errors = $state<string[]>([]);
+	let eventCard: HTMLElement;
+	let overviewCard: HTMLDivElement;
+	let previewOpacity = $state(1);
+	let previewFadeFrame: number | undefined;
+	let reducedMotion: MediaQueryList | undefined;
 
 	let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
 	let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
+	let toolsPreviewLabel = $derived(toolProvision ? codingToolLabels.join(', ') || 'Noch keine ausgewählt' : 'Noch offen');
+	let lunchPreviewLabel = $derived(lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch.trim() || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'Ohne Lunch');
 	let visibleCodingTools = $derived(toolProvision === 'needed'
 		? PROVIDED_CODING_TOOLS.map((id) => CODING_TOOLS.find((tool) => tool.id === id)!)
 		: CODING_TOOLS);
@@ -246,10 +253,43 @@
 		finally { submitting = false; }
 	}
 
-	onMount(async () => { await hydratePlanFromUrl(); planHydrated = true; await loadAvailability(); schedulePlanUrl(buildSharedPlan()); });
+	function updatePreviewFade() {
+		previewFadeFrame = undefined;
+		if (!overviewCard) return;
+		const overviewTop = overviewCard.getBoundingClientRect().top;
+		const fadeStart = window.innerHeight;
+		const fadeEnd = window.innerHeight * 0.62;
+		if (reducedMotion?.matches) {
+			previewOpacity = overviewTop < fadeStart ? 0 : 1;
+			return;
+		}
+		const progress = (fadeStart - overviewTop) / (fadeStart - fadeEnd);
+		previewOpacity = Math.max(0, Math.min(1, 1 - progress));
+	}
+
+	function schedulePreviewFade() {
+		if (previewFadeFrame !== undefined) return;
+		previewFadeFrame = requestAnimationFrame(updatePreviewFade);
+	}
+
+	onMount(async () => {
+		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		window.addEventListener('scroll', schedulePreviewFade, { passive: true });
+		window.addEventListener('resize', schedulePreviewFade, { passive: true });
+		reducedMotion.addEventListener('change', schedulePreviewFade);
+		schedulePreviewFade();
+		await hydratePlanFromUrl();
+		planHydrated = true;
+		await loadAvailability();
+		schedulePlanUrl(buildSharedPlan());
+	});
 	onDestroy(() => {
 		if (addressDebounce) clearTimeout(addressDebounce);
 		if (planDebounce) clearTimeout(planDebounce);
+		if (previewFadeFrame !== undefined) cancelAnimationFrame(previewFadeFrame);
+		window.removeEventListener('scroll', schedulePreviewFade);
+		window.removeEventListener('resize', schedulePreviewFade);
+		reducedMotion?.removeEventListener('change', schedulePreviewFade);
 		addressAbort?.abort();
 		planAbort?.abort();
 	});
@@ -267,14 +307,24 @@
 	<div class="config-layout">
 		<div class="preview-column">
 			<MapPreview latitude={address.latitude} longitude={address.longitude}>
-				<article class="event-card" aria-live="polite">
-					<div class="event-card-top">{#if companyName.trim()}<h2>{companyName}</h2>{/if}<div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
-					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
+				<article
+					class="event-card"
+					bind:this={eventCard}
+					style:opacity={previewOpacity}
+					aria-label="Konfigurationsvorschau"
+					aria-live="polite"
+					aria-hidden={previewOpacity <= 0.01}
+				>
+					<div class="event-card-top"><h2>{companyName.trim() || 'Ihr Hackathon'}</h2><div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
+					<p class:event-address-placeholder={!eventAddressLabel} class="event-address">{eventAddressLabel || 'Event-Adresse noch offen'}</p>
 					<div class="event-details">
-						{#if preferredEventDate}<div class="event-detail"><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>{/if}
+						<div class="event-detail"><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>
 						<div class="event-detail"><small>Team</small><b>Bis {capacity} Personen</b></div>
 						<div class="event-detail"><small>Location</small><b>{venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
+						<div class="event-detail"><small>Tools</small><b>{toolsPreviewLabel}</b></div>
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
+						<div class="event-detail"><small>Lunch</small><b>{lunchPreviewLabel}</b></div>
+						<div class="event-detail"><small>Prep Call</small><b>{consultationSlot ? `${formatDate(consultationSlot, true)} Uhr` : 'Noch offen'}</b></div>
 					</div>
 				</article>
 			</MapPreview>
@@ -384,7 +434,7 @@
 				{/if}
 			</section>
 
-			<section class="config-section" use:reveal><div class="summary-box overview-box">
+			<section class="config-section" use:reveal><div class="summary-box overview-box" bind:this={overviewCard}>
 				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
 				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span><b>{venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)}</b></div>
 				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{toolProvision === 'needed' ? 'Wir brauchen Tools für den Tag' : 'Wir haben bereits Tools'}</small>{codingToolLabels.join(', ') || 'Noch keine Tools ausgewählt'}</span><b>{price.toolsAdjustment ? `+ ${formatPrice(price.toolsAdjustment)}` : 'Inklusive'}</b></div>{/if}
