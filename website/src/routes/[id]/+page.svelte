@@ -9,6 +9,7 @@
 		Clock3,
 		Code2,
 		Contact,
+		Copy,
 		Cookie,
 		Download,
 		MapPin,
@@ -45,6 +46,7 @@
 	let activeSection = $state<EditSection | null>(null);
 	let saving = $state(false);
 	let editError = $state('');
+	let idCopied = $state(false);
 	let prepCallMode = $state<'quick' | 'custom'>('quick');
 	let customPrepCallDate = $state('');
 	let draft = $state<BookingConfiguration>(configurationFromHackathon(initialHackathon));
@@ -157,6 +159,27 @@
 	async function getDetailUrl() {
 		return location.href;
 	}
+
+	async function copyHackathonId() {
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(hackathon.id);
+			} else {
+				const input = document.createElement('textarea');
+				input.value = hackathon.id;
+				input.style.position = 'fixed';
+				input.style.opacity = '0';
+				document.body.append(input);
+				input.select();
+				document.execCommand('copy');
+				input.remove();
+			}
+			idCopied = true;
+			window.setTimeout(() => (idCopied = false), 1_600);
+		} catch {
+			idCopied = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -185,11 +208,13 @@
 		</div>
 
 		<section class="success-panel detail-panel" aria-labelledby="detail-title">
-			<div class="detail-heading">
-				<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
-				<span class="detail-status">Bestätigt</span>
+			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
+			<div class="detail-id-row">
+				<p class="detail-id">{hackathon.id}</p>
+				<button class:copied={idCopied} class="detail-id-copy" type="button" aria-label={idCopied ? 'Hackathon-ID kopiert' : 'Hackathon-ID kopieren'} onclick={copyHackathonId}>
+					{#if idCopied}<Check size={16} strokeWidth={2.4} aria-hidden="true" />{:else}<Copy size={15} strokeWidth={2} aria-hidden="true" />{/if}
+				</button>
 			</div>
-			<p class="detail-id">{hackathon.id}</p>
 			<h1 id="detail-title">Hackathon für {hackathon.companyName}</h1>
 			<p class="success-date">{formatDate(hackathon.preferredEventDate)}</p>
 
