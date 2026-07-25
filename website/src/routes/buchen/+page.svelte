@@ -285,9 +285,9 @@
 
 	function updatePreviewFade() {
 		previewFadeFrame = undefined;
-		const collapsedHeight = Math.max(570, Math.min(window.innerHeight * 0.7, 720));
-		const expandedHeight = Math.max(650, Math.min(window.innerHeight - 96, 920));
-		const expansionProgress = Math.max(0, Math.min(1, window.scrollY / 170));
+		const expandedHeight = Math.max(646, Math.min(window.innerHeight - 100, 916));
+		const collapsedHeight = Math.min(expandedHeight, Math.max(570, Math.min(window.innerHeight * 0.7, 720)) + 50);
+		const expansionProgress = Math.max(0, Math.min(1, window.scrollY / 150));
 		const easedExpansion = expansionProgress * expansionProgress * (3 - 2 * expansionProgress);
 		mapExpandedHeight = expandedHeight;
 		mapHeight = collapsedHeight + (expandedHeight - collapsedHeight) * easedExpansion;
