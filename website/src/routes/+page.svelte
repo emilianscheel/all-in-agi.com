@@ -85,6 +85,45 @@
 	</div>
 </section>
 
+<section class="adoption-gap" aria-labelledby="adoption-gap-title">
+	<img
+		class="adoption-gap-image"
+		src="/images/ai-adoption-hackathon.webp"
+		alt=""
+		loading="lazy"
+		decoding="async"
+	/>
+	<div class="adoption-gap-inner">
+		<div class="adoption-gap-copy" use:reveal>
+			<p class="adoption-gap-eyebrow">Die KI-Adoptionslücke</p>
+			<h2 id="adoption-gap-title">Vom Wollen ins Machen.</h2>
+			<p class="adoption-gap-conclusion">
+				Der beste Weg, diese Lücke zu schließen: ein Hackathon, bei dem das Team gemeinsam
+				baut, ausprobiert und am selben Tag funktionierende Prototypen präsentiert.
+			</p>
+			<p class="adoption-gap-source">
+				Quelle:
+				<a
+					href="https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers"
+					target="_blank"
+					rel="noreferrer"
+				>Celonis Process Optimization Report, März 2026</a>
+			</p>
+		</div>
+
+		<dl class="adoption-gap-stats" use:reveal={{ group: true }}>
+			<div class="adoption-gap-stat">
+				<dt><strong>85</strong><span>%</span></dt>
+				<dd>wollen in den nächsten zwei bis drei Jahren zum Agentic Enterprise werden.</dd>
+			</div>
+			<div class="adoption-gap-stat">
+				<dt><strong>17</strong><span>%</span></dt>
+				<dd>der Unternehmen im DACH-Raum nutzen bereits AI Agents.</dd>
+			</div>
+		</dl>
+	</div>
+</section>
+
 <section id="format" class="agenda">
 	<div class="section-wrap">
 
