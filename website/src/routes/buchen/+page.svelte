@@ -3,12 +3,14 @@
 	import { goto, replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { Award, CalendarDays, Camera, Check, Code2, Cookie, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Users, Clock3 } from 'lucide-svelte';
+	import { Apple, Award, Beef, CakeSlice, CalendarDays, Camera, Check, Clock3, Code2, Coffee, Cookie, Drumstick, Fish, IceCreamBowl, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Salad, Sandwich, Soup, Utensils, UtensilsCrossed, Users } from 'lucide-svelte';
 	import { CAPACITY_PRICES, CODING_TOOLS, PROVIDED_CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
+	import AnimatedValue from '$lib/AnimatedValue.svelte';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
+	import { lunchIconKind } from '$lib/lunch-icon';
 	import { availablePrepCallDates, normalizeAvailabilitySlots, prepCallDateBounds, prepCallSlotsForDate } from '$lib/prep-call';
 	import type { SharedPlanV2 } from '$lib/shared-plan';
 	import { reveal } from '$lib/motion';
@@ -52,13 +54,31 @@
 	let previewOpacity = $state(1);
 	let previewFadeFrame: number | undefined;
 	let reducedMotion: MediaQueryList | undefined;
+	let debouncedCustomLunch = $state('');
+	let customLunchDebounce: ReturnType<typeof setTimeout> | undefined;
 
 	let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
 	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
 	let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
 	let toolsPreviewLabel = $derived(toolProvision ? codingToolLabels.join(', ') || 'Noch keine ausgewählt' : 'Noch offen');
-	let lunchPreviewLabel = $derived(lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch.trim() || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'Ohne Lunch');
+	let lunchPreviewLabel = $derived(lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? debouncedCustomLunch || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'Ohne Lunch');
+	let selectedLunchIconKind = $derived(lunchIconKind(lunch, debouncedCustomLunch));
+	let LunchIcon = $derived({
+		pizza: Pizza,
+		'utensils-crossed': UtensilsCrossed,
+		utensils: Utensils,
+		soup: Soup,
+		salad: Salad,
+		sandwich: Sandwich,
+		fish: Fish,
+		beef: Beef,
+		drumstick: Drumstick,
+		cake: CakeSlice,
+		'ice-cream': IceCreamBowl,
+		coffee: Coffee,
+		apple: Apple
+	}[selectedLunchIconKind]);
 	let visibleCodingTools = $derived(toolProvision === 'needed'
 		? PROVIDED_CODING_TOOLS.map((id) => CODING_TOOLS.find((tool) => tool.id === id)!)
 		: CODING_TOOLS);
@@ -67,6 +87,14 @@
 
 	const { min: minEventDate, max: maxEventDate } = eventDateBounds();
 	const { min: minPrepCallDate, max: maxPrepCallDate } = prepCallDateBounds();
+
+	$effect(() => {
+		const nextCustomLunch = customLunch.trim();
+		if (customLunchDebounce) clearTimeout(customLunchDebounce);
+		customLunchDebounce = setTimeout(() => {
+			debouncedCustomLunch = nextCustomLunch;
+		}, 280);
+	});
 
 	async function loadAvailability() {
 		slotsLoading = true;
@@ -286,6 +314,7 @@
 	onDestroy(() => {
 		if (addressDebounce) clearTimeout(addressDebounce);
 		if (planDebounce) clearTimeout(planDebounce);
+		if (customLunchDebounce) clearTimeout(customLunchDebounce);
 		if (previewFadeFrame !== undefined) cancelAnimationFrame(previewFadeFrame);
 		window.removeEventListener('scroll', schedulePreviewFade);
 		window.removeEventListener('resize', schedulePreviewFade);
@@ -312,19 +341,18 @@
 					bind:this={eventCard}
 					style:opacity={previewOpacity}
 					aria-label="Konfigurationsvorschau"
-					aria-live="polite"
 					aria-hidden={previewOpacity <= 0.01}
 				>
-					<div class="event-card-top"><h2>{companyName.trim() || 'Ihr Hackathon'}</h2><div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
+					<div class="event-card-top"><h2>{companyName.trim() || 'Ihr Hackathon'}</h2><div class="event-card-price"><AnimatedValue value={formatPrice(price.totalPrice)} /></div></div>
 					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
 					<div class="event-details">
-						<div class:event-detail-unselected={!preferredEventDate} class="event-detail" aria-hidden={!preferredEventDate}><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>
-						<div class="event-detail"><small>Team</small><b>Bis {capacity} Personen</b></div>
-						<div class="event-detail"><small>Location</small><b>{venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
-						<div class:event-detail-unselected={!toolProvision || !codingToolLabels.length} class="event-detail" aria-hidden={!toolProvision || !codingToolLabels.length}><small>Tools</small><b>{toolsPreviewLabel}</b></div>
-						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
-						<div class="event-detail"><small>Lunch</small><b>{lunchPreviewLabel}</b></div>
-						<div class:event-detail-unselected={!consultationSlot} class="event-detail" aria-hidden={!consultationSlot}><small>Prep Call</small><b>{consultationSlot ? `${formatDate(consultationSlot, true)} Uhr` : 'Noch offen'}</b></div>
+						<div class:event-detail-unselected={!preferredEventDate} class="event-detail" aria-hidden={!preferredEventDate}><small>Event Date</small><b><AnimatedValue value={formatDate(preferredEventDate)} active={Boolean(preferredEventDate)} /></b></div>
+						<div class="event-detail"><small>Team</small><b><AnimatedValue value={`Bis ${capacity} Personen`} /></b></div>
+						<div class="event-detail"><small>Location</small><b><AnimatedValue value={venueProvided ? 'Eigener Raum' : 'Von uns organisiert'} /></b></div>
+						<div class:event-detail-unselected={!toolProvision || !codingToolLabels.length} class="event-detail" aria-hidden={!toolProvision || !codingToolLabels.length}><small>Tools</small><b><AnimatedValue value={toolsPreviewLabel} active={Boolean(toolProvision && codingToolLabels.length)} /></b></div>
+						<div class="event-detail"><small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b></div>
+						<div class="event-detail"><small>Lunch</small><b><AnimatedValue value={lunchPreviewLabel} /></b></div>
+						<div class:event-detail-unselected={!consultationSlot} class="event-detail" aria-hidden={!consultationSlot}><small>Prep Call</small><b><AnimatedValue value={consultationSlot ? `${formatDate(consultationSlot, true)} Uhr` : 'Noch offen'} active={Boolean(consultationSlot)} /></b></div>
 					</div>
 				</article>
 			</MapPreview>
@@ -435,18 +463,18 @@
 			</section>
 
 			<section class="config-section" use:reveal><div class="summary-box overview-box" bind:this={overviewCard}>
-				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small>Bis {capacity} Personen</span><b>{formatPrice(price.basePrice)}</b></div>
-				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small>{venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'}</span><b>{venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)}</b></div>
-				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{toolProvision === 'needed' ? 'Wir brauchen Tools für den Tag' : 'Wir haben bereits Tools'}</small>{codingToolLabels.join(', ') || 'Noch keine Tools ausgewählt'}</span><b>{price.toolsAdjustment ? `+ ${formatPrice(price.toolsAdjustment)}` : 'Inklusive'}</b></div>{/if}
-				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small>{equipmentLabel}</span><b>Inklusive</b></div>
-				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small>{formatDate(preferredEventDate)}</span><b>Geplant</b></div>{/if}
-				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small>{formatDate(consultationSlot, true)} Uhr</span><b>Gebucht</b></div>{/if}
-				<div class="summary-row"><Pizza size={18} aria-hidden="true" /><span><small>Lunch</small>{lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? customLunch || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'No lunch'}</span><b>{price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'}</b></div>
+				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small><AnimatedValue value={`Bis ${capacity} Personen`} /></span><b><AnimatedValue value={formatPrice(price.basePrice)} /></b></div>
+				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>Location</small><AnimatedValue value={venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert'} /></span><b><AnimatedValue value={venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)} /></b></div>
+				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{toolProvision === 'needed' ? 'Wir brauchen Tools für den Tag' : 'Wir haben bereits Tools'}</small><AnimatedValue value={codingToolLabels.join(', ') || 'Noch keine Tools ausgewählt'} /></span><b><AnimatedValue value={price.toolsAdjustment ? `+ ${formatPrice(price.toolsAdjustment)}` : 'Inklusive'} /></b></div>{/if}
+				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>Demo Setup</small><AnimatedValue value={equipmentLabel} /></span><b>Inklusive</b></div>
+				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>Event Date</small><AnimatedValue value={formatDate(preferredEventDate)} /></span><b>Geplant</b></div>{/if}
+				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>Prep Call</small><AnimatedValue value={`${formatDate(consultationSlot, true)} Uhr`} /></span><b>Gebucht</b></div>{/if}
+				<div class="summary-row"><LunchIcon size={18} aria-hidden="true" /><span><small>Lunch</small><AnimatedValue value={lunchPreviewLabel} /></span><b><AnimatedValue value={price.lunchAdjustment ? `${price.lunchAdjustment > 0 ? '+' : '−'} ${formatPrice(Math.abs(price.lunchAdjustment))}` : 'Inklusive'} /></b></div>
 				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>Winner Poster</small>Auszeichnung für das Gewinnerteam</span><b>Inklusive</b></div>
 				<div class="summary-row"><Camera size={18} aria-hidden="true" /><span><small>Event-Fotos</small>Dokumentation des Tages</span><b>Inklusive</b></div>
 				<div class="summary-row"><Cookie size={18} aria-hidden="true" /><span><small>Snacks</small>Cookies</span><b>Inklusive</b></div>
 				<div class="summary-row"><Plane size={18} aria-hidden="true" /><span><small>Anreise</small>Innerhalb Deutschlands</span><b>Inklusive</b></div>
-				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b>{formatPrice(price.totalPrice)} netto</b></div>
+				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>Gesamt</span><b><AnimatedValue value={`${formatPrice(price.totalPrice)} netto`} /></b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
 			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Erstgespräch buchen'}</button>
