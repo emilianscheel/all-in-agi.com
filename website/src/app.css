@@ -287,7 +287,7 @@ img { display: block; max-width: 100%; }
 .config-section h2 span { color: var(--control-border); font-weight: 600; }
 .option-grid { display: grid; gap: 12px; }
 .option-grid.three { grid-template-columns: repeat(3, 1fr); }
-.lunch-grid, .tools-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.demo-setup-grid, .lunch-grid, .tools-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .choice { position: relative; isolation: isolate; overflow: hidden; min-height: 112px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; border: 1.5px solid var(--control-border); border-radius: 15px; background: linear-gradient(180deg, color-mix(in srgb, var(--control) 90%, var(--line)) 0%, var(--control) 34%, var(--control) 100%); cursor: pointer; text-align: left; transition: border-color .18s ease; }
 .choice::before { height: 42%; background: linear-gradient(180deg, rgba(255,255,255,.58), transparent); opacity: .72; }
 .choice:hover { border-color: var(--ink); }
@@ -457,7 +457,7 @@ img { display: block; max-width: 100%; }
 	.contact-card { min-height: 330px; }
 	.config-intro { padding-left: 22px; padding-right: 22px; }
 	.config-layout { grid-template-columns: 1fr; padding: 0 18px 80px; gap: 48px; }
-	.preview-column { position: relative; top: auto; }
+	.config-layout > .preview-column { display: none; }
 	.map-shell { height: 620px; }
 	.success-page { padding: 18px; }
 	.success-layout { grid-template-columns: 1fr; }

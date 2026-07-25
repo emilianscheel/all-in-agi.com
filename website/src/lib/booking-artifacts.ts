@@ -71,7 +71,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: { inc
 	const toolsLabel = `${config.toolProvision === 'needed' ? 'Für den Tag benötigt' : 'Bereits vorhanden'}: ${selectedCodingToolLabels(config).join(', ')}`;
 	const rows = [
 		['Location', config.venueProvided ? 'Eigene Location' : 'Von ALL-IN-AGI organisiert'],
-		['Demo Setup', config.equipment === 'projector' ? 'Projector' : config.equipment === 'tv' ? 'Display' : 'Screen wird mitgebracht'],
+		['Demo Setup', config.equipment === 'none' ? 'Screen wird mitgebracht' : 'Projector / Display'],
 		['Lunch', lunchLabel],
 		['Coding Tools', toolsLabel],
 		['Inklusive', 'Winner Poster, Event-Fotos, Cookies und Anreise in Deutschland']

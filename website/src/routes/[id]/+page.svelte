@@ -27,7 +27,7 @@
 		hackathon.address.street,
 		[hackathon.address.postalCode, hackathon.address.city].filter(Boolean).join(' ')
 	].filter(Boolean).join(', '));
-	let equipmentLabel = $derived(hackathon.equipment === 'projector' ? 'Projector' : hackathon.equipment === 'tv' ? 'Display' : 'Provided by us');
+	let equipmentLabel = $derived(hackathon.equipment === 'none' ? 'Provided by us' : 'Projector / Display');
 	let codingToolLabels = $derived(selectedCodingToolLabels(hackathon));
 
 	async function getDetailUrl() {

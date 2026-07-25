@@ -8,51 +8,29 @@ const INTERACTIVE_SELECTOR = [
 	'[data-calendar-day]'
 ].join(',');
 
-function createVirtualHapticSwitch() {
-	const wrapper = document.createElement('span');
-	const input = document.createElement('input');
+function triggerVirtualHapticSwitch() {
 	const label = document.createElement('label');
-	const id = `all-in-agi-haptic-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+	const input = document.createElement('input');
 
-	input.id = id;
 	input.type = 'checkbox';
 	input.setAttribute('switch', '');
 	input.tabIndex = -1;
 	input.setAttribute('aria-hidden', 'true');
-	label.htmlFor = id;
-	wrapper.setAttribute('aria-hidden', 'true');
-	Object.assign(wrapper.style, {
-		position: 'fixed',
-		left: '-10000px',
-		top: '0',
-		width: '1px',
-		height: '1px',
-		overflow: 'hidden',
-		opacity: '0',
-		pointerEvents: 'none'
-	});
-	wrapper.append(input, label);
-	document.body.append(wrapper);
-	return {
-		wrapper,
-		trigger() {
-			// WebKit gives switch controls native haptics on supported iPhones.
-			// Activating the associated virtual label keeps the user gesture intact.
-			label.click();
-		}
-	};
+	label.setAttribute('aria-hidden', 'true');
+	label.style.display = 'none';
+	label.append(input);
+	document.head.append(label);
+	label.click();
+	label.remove();
 }
 
 export function installGlobalHaptics() {
-	const virtualSwitch = createVirtualHapticSwitch();
-
 	function haptic() {
 		try {
-			if (typeof navigator.vibrate === 'function') {
-				navigator.vibrate(10);
-				return;
-			}
-			virtualSwitch.trigger();
+			if (typeof navigator.vibrate === 'function' && navigator.vibrate(10)) return;
+			// Safari on iPhone has no Vibration API, but its native switch control
+			// produces haptic feedback when its wrapping label is activated.
+			triggerVirtualHapticSwitch();
 		} catch {
 			// Haptics are progressive enhancement and may be blocked by the browser or OS.
 		}
@@ -69,6 +47,5 @@ export function installGlobalHaptics() {
 	document.addEventListener('pointerup', onPointerUp, { capture: true, passive: true });
 	return () => {
 		document.removeEventListener('pointerup', onPointerUp, { capture: true });
-		virtualSwitch.wrapper.remove();
 	};
 }

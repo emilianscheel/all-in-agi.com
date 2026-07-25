@@ -59,7 +59,7 @@
 
 	let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision));
 	let eventAddressLabel = $derived([address.street, [address.postalCode, address.city].filter(Boolean).join(' ')].filter(Boolean).join(', '));
-	let equipmentLabel = $derived(equipment === 'projector' ? 'Projector' : equipment === 'tv' ? 'Display' : 'Provided by us');
+	let equipmentLabel = $derived(equipment === 'none' ? 'Provided by us' : 'Projector / Display');
 	let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
 	let toolsPreviewLabel = $derived(toolProvision ? codingToolLabels.join(', ') || 'Noch keine ausgewählt' : 'Noch offen');
 	let lunchPreviewLabel = $derived(lunch === 'pizza' ? 'Pizza' : lunch === 'custom' ? debouncedCustomLunch || 'Custom Catering' : lunch === 'self-organized' ? 'Selbstorganisiert' : 'Ohne Lunch');
@@ -312,6 +312,7 @@
 		schedulePlanUrl(buildSharedPlan());
 	});
 	onDestroy(() => {
+		if (!browser) return;
 		if (addressDebounce) clearTimeout(addressDebounce);
 		if (planDebounce) clearTimeout(planDebounce);
 		if (customLunchDebounce) clearTimeout(customLunchDebounce);
@@ -398,9 +399,8 @@
 				{/if}
 			</section>
 
-			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid three demo-setup-grid">
-				<label class:selected={equipment === 'projector'} class="choice"><input type="radio" name="equipment" checked={equipment === 'projector'} onchange={() => (equipment = 'projector')} /><b>Projector</b><small>Vorhanden.</small></label>
-				<label class:selected={equipment === 'tv'} class="choice"><input type="radio" name="equipment" checked={equipment === 'tv'} onchange={() => (equipment = 'tv')} /><b>Display</b><small>Großer Screen.</small></label>
+			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid demo-setup-grid">
+				<label class:selected={equipment !== 'none'} class="choice"><input type="radio" name="equipment" checked={equipment !== 'none'} onchange={() => (equipment = 'projector')} /><b>Projector / Display</b><small>Großer Screen vorhanden.</small></label>
 				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
 			</div></section>
 
