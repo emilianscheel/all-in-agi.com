@@ -150,6 +150,46 @@ describe('booking confirmation email', () => {
 		expect(result.organizer).toMatchObject({ sent: true, status: 'queued' });
 	});
 
+	test('accepts display-name status entries and message-id-only responses', async () => {
+		const result = await sendBookingConfirmationEmails(input, {
+			accountId: 'account-123',
+			apiToken: 'secret-token',
+			fetch: async (_url, init) => {
+				const body = JSON.parse(String(init?.body));
+				if (body.to.address === config.email) {
+					return Response.json({
+						success: true,
+						result: {
+							delivered: [`${body.to.name} <${body.to.address}>`],
+							queued: [],
+							permanent_bounces: [],
+							message_id: 'message-customer'
+						}
+					});
+				}
+				return Response.json({
+					success: true,
+					result: {
+						delivered: [],
+						queued: [],
+						permanent_bounces: [],
+						message_id: 'message-organizer'
+					}
+				});
+			}
+		});
+		expect(result.customer).toMatchObject({
+			sent: true,
+			status: 'delivered',
+			messageId: 'message-customer'
+		});
+		expect(result.organizer).toMatchObject({
+			sent: true,
+			status: 'accepted',
+			messageId: 'message-organizer'
+		});
+	});
+
 	test('reports missing credentials without making a request', async () => {
 		let fetchCalled = false;
 		const result = await sendBookingConfirmationEmails(input, {

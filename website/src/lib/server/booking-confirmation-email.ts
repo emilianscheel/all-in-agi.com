@@ -35,7 +35,7 @@ export type BookingConfirmationAttempt =
 	| {
 			role: BookingConfirmationRecipientRole;
 			sent: true;
-			status: 'delivered' | 'queued';
+			status: 'delivered' | 'queued' | 'accepted';
 			messageId?: string;
 	  }
 	| {
@@ -271,13 +271,19 @@ async function sendPreparedBookingConfirmation(
 		// Preserve the HTTP status even when an upstream error body is not JSON.
 	}
 	const providerError = result.errors?.[0];
-	const delivered = result.result?.delivered?.includes(recipient.address) ?? false;
-	const queued = result.result?.queued?.includes(recipient.address) ?? false;
+	// Each request contains exactly one recipient. Cloudflare can return the mailbox
+	// with its display name, so comparing the status entry to the bare address is
+	// unnecessarily strict. A message ID is also evidence that Cloudflare accepted
+	// the message when the immediate delivery arrays are still empty.
+	const delivered = (result.result?.delivered?.length ?? 0) > 0;
+	const queued = (result.result?.queued?.length ?? 0) > 0;
+	const permanentlyBounced = (result.result?.permanent_bounces?.length ?? 0) > 0;
+	const accepted = Boolean(result.result?.message_id);
 	if (
 		!response.ok
 		|| result.success !== true
-		|| (!delivered && !queued)
-		|| (result.result?.permanent_bounces?.length ?? 0) > 0
+		|| (!delivered && !queued && !accepted)
+		|| permanentlyBounced
 	) {
 		throw new BookingConfirmationEmailError(
 			providerError?.message ?? 'Cloudflare hat die Buchungsbestätigung nicht angenommen.',
@@ -294,7 +300,7 @@ async function sendPreparedBookingConfirmation(
 		role,
 		sent: true,
 		messageId: result.result?.message_id,
-		status: delivered ? 'delivered' : 'queued'
+		status: delivered ? 'delivered' : queued ? 'queued' : 'accepted'
 	};
 }
 
