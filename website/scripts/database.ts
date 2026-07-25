@@ -50,6 +50,16 @@ export function databaseConfigFromUrl(value: string | undefined): DatabaseUrlCon
 	return { url, isLocal, user, password, database, port };
 }
 
+export function databaseUrlForMigrations(value: string | undefined) {
+	const url = new URL(databaseConfigFromUrl(value).url);
+	const minimumMessageLevel = '-c client_min_messages=warning';
+	const currentOptions = url.searchParams.get('options')?.trim();
+	if (!currentOptions?.includes('client_min_messages=warning')) {
+		url.searchParams.set('options', currentOptions ? `${currentOptions} ${minimumMessageLevel}` : minimumMessageLevel);
+	}
+	return url.toString();
+}
+
 async function run(args: string[], capture = false) {
 	const executable = Bun.which('container');
 	if (!executable) {
