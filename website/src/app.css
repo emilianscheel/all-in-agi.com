@@ -130,7 +130,7 @@ img { display: block; max-width: 100%; }
 
 .adoption-gap {
 	position: relative; isolation: isolate; overflow: hidden;
-	min-height: 680px; margin: 12px; border-radius: 28px;
+	min-height: 680px; margin: 0; border-radius: 0;
 	background: #171514; color: #fff;
 }
 .adoption-gap-image {
@@ -147,7 +147,7 @@ img { display: block; max-width: 100%; }
 }
 .adoption-gap-inner {
 	width: 100%; max-width: 1120px; min-height: 680px; margin: 0 auto;
-	padding: clamp(68px, 8vw, 108px) 40px;
+	padding: clamp(68px, 8vw, 108px) 40px 0;
 	display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(340px, .8fr);
 	align-items: center; gap: clamp(56px, 8vw, 104px);
 }
@@ -472,14 +472,14 @@ img { display: block; max-width: 100%; }
 	.tool-carousel-window { -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); }
 	.tool-carousel-set { gap: 28px; padding-right: 28px; }
 	.tool-carousel img { width: 46px; height: 46px; }
-	.adoption-gap { min-height: 0; margin: 8px; border-radius: 22px; }
+	.adoption-gap { min-height: 0; margin: 0; border-radius: 0; }
 	.adoption-gap-image { object-position: 48% center; }
 	.adoption-gap::after {
 		background:
 			linear-gradient(180deg, rgba(14,13,12,.88) 0%, rgba(14,13,12,.76) 54%, rgba(14,13,12,.9) 100%),
 			linear-gradient(90deg, rgba(14,13,12,.34), rgba(14,13,12,.68));
 	}
-	.adoption-gap-inner { min-height: 0; padding: 70px 24px; gap: 46px; }
+	.adoption-gap-inner { min-height: 0; padding: 70px 24px 0; gap: 46px; }
 	.adoption-gap h2 { font-size: clamp(46px, 13vw, 60px); }
 	.adoption-gap-conclusion { font-size: 18px; }
 	.adoption-gap-source { margin-top: 28px; }

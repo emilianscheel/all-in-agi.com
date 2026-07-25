@@ -95,14 +95,12 @@
 	/>
 	<div class="adoption-gap-inner">
 		<div class="adoption-gap-copy" use:reveal>
-			<p class="adoption-gap-eyebrow">Die KI-Adoptionslücke</p>
 			<h2 id="adoption-gap-title">Vom Wollen ins Machen.</h2>
 			<p class="adoption-gap-conclusion">
-				Der beste Weg, diese Lücke zu schließen: ein Hackathon, bei dem das Team gemeinsam
-				baut, ausprobiert und am selben Tag funktionierende Prototypen präsentiert.
+				Der beste Weg, die Adaptionslücke zu schließen: ein Hackathon, bei dem das Team gemeinsam
+				baut, ausprobiert.
 			</p>
 			<p class="adoption-gap-source">
-				Quelle:
 				<a
 					href="https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers"
 					target="_blank"
