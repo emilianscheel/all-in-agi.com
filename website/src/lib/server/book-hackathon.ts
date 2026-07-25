@@ -47,17 +47,15 @@ export async function completeHackathonBookingWithConfirmation<T>(
 ) {
 	const result = await completeHackathonBooking(config, bookPrepCall, store);
 	try {
-		const confirmationEmailDelivery = await sendConfirmation(result.id, config, result.booking);
+		const confirmationDelivery = await sendConfirmation(result.id, config, result.booking);
 		return {
 			...result,
-			confirmationEmailSent: true as const,
-			confirmationEmailDelivery
+			confirmationDelivery
 		};
-	} catch (confirmationEmailError) {
+	} catch (confirmationDeliveryError) {
 		return {
 			...result,
-			confirmationEmailSent: false as const,
-			confirmationEmailError
+			confirmationDeliveryError
 		};
 	}
 }

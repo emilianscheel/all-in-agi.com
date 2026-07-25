@@ -4,7 +4,7 @@ import type { BookingConfiguration } from '$lib/booking';
 import {
 	bookingDetailUrl,
 	buildBookingConfirmationText,
-	sendBookingConfirmationEmail
+	sendBookingConfirmationEmails
 } from './booking-confirmation-email';
 
 const config: BookingConfiguration = {
@@ -45,6 +45,18 @@ const input = {
 	}
 };
 
+function acceptedResponse(address: string, status: 'delivered' | 'queued' = 'delivered') {
+	return Response.json({
+		success: true,
+		result: {
+			delivered: status === 'delivered' ? [address] : [],
+			queued: status === 'queued' ? [address] : [],
+			permanent_bounces: [],
+			message_id: `message-${address}`
+		}
+	});
+}
+
 describe('booking confirmation email', () => {
 	test('builds the exact plain-text confirmation structure', () => {
 		const text = buildBookingConfirmationText(input);
@@ -58,45 +70,57 @@ describe('booking confirmation email', () => {
 		expect(bookingDetailUrl(input.id)).toBe('https://all-in-agi.com/HAA-AAA-AAA');
 	});
 
-	test('sends both generated attachments through the Cloudflare REST API', async () => {
-		let requestedUrl = '';
-		let requestedInit: RequestInit | undefined;
-		const result = await sendBookingConfirmationEmail(input, {
+	test('sends customer and organizer copies with the same generated attachments', async () => {
+		const requests: Array<{ url: string; init?: RequestInit }> = [];
+		const result = await sendBookingConfirmationEmails(input, {
 			accountId: 'account-123',
 			apiToken: 'secret-token',
 			fetch: async (url, init) => {
-				requestedUrl = String(url);
-				requestedInit = init;
-				return Response.json({
-					success: true,
-					result: {
-						delivered: [config.email],
-						queued: [],
-						permanent_bounces: [],
-						message_id: 'message-123'
-					}
-				});
+				requests.push({ url: String(url), init });
+				const body = JSON.parse(String(init?.body));
+				return acceptedResponse(body.to.address);
 			}
 		});
 
-		expect(result).toEqual({ messageId: 'message-123', status: 'delivered' });
-		expect(requestedUrl).toBe(
-			'https://api.cloudflare.com/client/v4/accounts/account-123/email/sending/send'
-		);
-		expect(new Headers(requestedInit?.headers).get('authorization')).toBe('Bearer secret-token');
-		const body = JSON.parse(String(requestedInit?.body));
-		expect(body).toMatchObject({
+		expect(result.customer).toMatchObject({
+			role: 'customer',
+			sent: true,
+			status: 'delivered'
+		});
+		expect(result.organizer).toMatchObject({
+			role: 'organizer',
+			sent: true,
+			status: 'delivered'
+		});
+		expect(requests).toHaveLength(2);
+		for (const request of requests) {
+			expect(request.url).toBe(
+				'https://api.cloudflare.com/client/v4/accounts/account-123/email/sending/send'
+			);
+			expect(new Headers(request.init?.headers).get('authorization')).toBe('Bearer secret-token');
+		}
+
+		const bodies = requests.map((request) => JSON.parse(String(request.init?.body)));
+		const customerBody = bodies.find((body) => body.to.address === config.email);
+		const organizerBody = bodies.find((body) => body.to.address === 'go@all-in-agi.com');
+		expect(customerBody).toMatchObject({
 			from: { address: 'go@all-in-agi.com', name: 'ALL IN AGI' },
 			reply_to: { address: 'go@all-in-agi.com', name: 'ALL IN AGI' },
 			to: { address: 'ada@example.com', name: 'Ada Beispiel' },
 			subject: 'Buchungsbestätigung HAA-AAA-AAA',
 			headers: { 'X-Booking-ID': 'HAA-AAA-AAA' }
 		});
-		expect(body.html).toBeUndefined();
-		expect(body.attachments.map((attachment: { filename: string; type: string }) => ({
-			filename: attachment.filename,
-			type: attachment.type
-		}))).toEqual([
+		expect(organizerBody.to).toEqual({ address: 'go@all-in-agi.com', name: 'ALL IN AGI' });
+		expect(organizerBody.text).toBe(customerBody.text);
+		expect(organizerBody.subject).toBe(customerBody.subject);
+		expect(organizerBody.attachments).toEqual(customerBody.attachments);
+		expect(customerBody.html).toBeUndefined();
+		expect(customerBody.attachments.map(
+			(attachment: { filename: string; type: string }) => ({
+				filename: attachment.filename,
+				type: attachment.type
+			})
+		)).toEqual([
 			{
 				filename: 'all-in-agi-prep-call-HAA-AAA-AAA.ics',
 				type: 'text/calendar; charset=utf-8'
@@ -106,90 +130,162 @@ describe('booking confirmation email', () => {
 				type: 'application/pdf'
 			}
 		]);
-		const calendar = Buffer.from(body.attachments[0].content, 'base64').toString('utf8');
+		const calendar = Buffer.from(customerBody.attachments[0].content, 'base64').toString('utf8');
 		expect(calendar).toContain('LOCATION:https://meet.example.com/booking-1');
 		expect(calendar).toContain('UID:booking-1@all-in-agi.com');
-		const pdfBytes = Buffer.from(body.attachments[1].content, 'base64');
+		const pdfBytes = Buffer.from(customerBody.attachments[1].content, 'base64');
 		expect((await PDFDocument.load(pdfBytes)).getPageCount()).toBe(1);
 	});
 
-	test('accepts a queued response', async () => {
-		const result = await sendBookingConfirmationEmail(input, {
+	test('accepts queued responses for both recipients', async () => {
+		const result = await sendBookingConfirmationEmails(input, {
 			accountId: 'account-123',
 			apiToken: 'secret-token',
-			fetch: async () => Response.json({
-				success: true,
-				result: {
-					delivered: [],
-					queued: [config.email],
-					permanent_bounces: [],
-					message_id: 'message-queued'
-				}
-			})
+			fetch: async (_url, init) => {
+				const body = JSON.parse(String(init?.body));
+				return acceptedResponse(body.to.address, 'queued');
+			}
 		});
-		expect(result.status).toBe('queued');
+		expect(result.customer).toMatchObject({ sent: true, status: 'queued' });
+		expect(result.organizer).toMatchObject({ sent: true, status: 'queued' });
 	});
 
-	test('rejects missing credentials before making a request', async () => {
-		await expect(sendBookingConfirmationEmail(input, {
+	test('reports missing credentials without making a request', async () => {
+		let fetchCalled = false;
+		const result = await sendBookingConfirmationEmails(input, {
 			accountId: '',
 			apiToken: '',
 			fetch: async () => {
-				throw new Error('must not be called');
+				fetchCalled = true;
+				return Response.json({});
 			}
-		})).rejects.toMatchObject({
-			name: 'BookingConfirmationEmailError',
-			providerCode: 'configuration_missing'
+		});
+		expect(fetchCalled).toBe(false);
+		expect(result.customer).toMatchObject({
+			sent: false,
+			error: {
+				stage: 'configuration',
+				providerCode: 'configuration_missing'
+			}
+		});
+		expect(result.organizer).toMatchObject({
+			sent: false,
+			error: { stage: 'configuration' }
 		});
 	});
 
-	test('reports authentication and permanent-bounce failures', async () => {
-		await expect(sendBookingConfirmationEmail(input, {
-			accountId: 'account-123',
-			apiToken: 'bad-token',
-			fetch: async () => Response.json({
-				success: false,
-				errors: [{ code: 10101, message: 'unauthorized' }],
-				result: null
-			}, { status: 401 })
-		})).rejects.toMatchObject({ status: 401, providerCode: 10101 });
-
-		await expect(sendBookingConfirmationEmail(input, {
+	test('reports attachment preparation failures with the original cause', async () => {
+		let fetchCalled = false;
+		const result = await sendBookingConfirmationEmails(input, {
 			accountId: 'account-123',
 			apiToken: 'secret-token',
-			fetch: async () => Response.json({
-				success: true,
-				result: {
-					delivered: [],
-					queued: [],
-					permanent_bounces: [config.email],
-					message_id: 'message-bounced'
-				}
-			})
-		})).rejects.toMatchObject({
-			providerCode: 'delivery_not_accepted',
-			messageId: 'message-bounced'
+			createPdf: async () => {
+				throw new Error('font asset missing');
+			},
+			fetch: async () => {
+				fetchCalled = true;
+				return Response.json({});
+			}
+		});
+		expect(fetchCalled).toBe(false);
+		expect(result.customer).toMatchObject({
+			sent: false,
+			error: {
+				stage: 'attachments',
+				providerCode: 'attachment_generation_failed',
+				causeName: 'Error',
+				causeMessage: 'font asset missing'
+			}
+		});
+		expect(result.organizer).toMatchObject({
+			sent: false,
+			error: { stage: 'attachments' }
 		});
 	});
 
-	test('reports oversized payloads and network failures safely', async () => {
-		await expect(sendBookingConfirmationEmail(input, {
+	test('keeps recipient delivery attempts independent', async () => {
+		const result = await sendBookingConfirmationEmails(input, {
+			accountId: 'account-123',
+			apiToken: 'secret-token',
+			fetch: async (_url, init) => {
+				const body = JSON.parse(String(init?.body));
+				if (body.to.address === 'go@all-in-agi.com') {
+					return Response.json({
+						success: false,
+						errors: [{ code: 10101, message: 'unauthorized' }],
+						result: null
+					}, { status: 401 });
+				}
+				return acceptedResponse(body.to.address);
+			}
+		});
+		expect(result.customer).toMatchObject({ sent: true, status: 'delivered' });
+		expect(result.organizer).toMatchObject({
+			sent: false,
+			error: { stage: 'provider', status: 401, providerCode: 10101 }
+		});
+	});
+
+	test('reports permanent bounces as provider failures', async () => {
+		const result = await sendBookingConfirmationEmails(input, {
+			accountId: 'account-123',
+			apiToken: 'secret-token',
+			fetch: async (_url, init) => {
+				const body = JSON.parse(String(init?.body));
+				return Response.json({
+					success: true,
+					result: {
+						delivered: [],
+						queued: [],
+						permanent_bounces: [body.to.address],
+						message_id: 'message-bounced'
+					}
+				});
+			}
+		});
+		expect(result.customer).toMatchObject({
+			sent: false,
+			error: {
+				stage: 'provider',
+				providerCode: 'delivery_not_accepted',
+				messageId: 'message-bounced'
+			}
+		});
+		expect(result.organizer).toMatchObject({ sent: false, error: { stage: 'provider' } });
+	});
+
+	test('reports oversized payloads and network failures by stage', async () => {
+		const oversized = await sendBookingConfirmationEmails(input, {
 			accountId: 'account-123',
 			apiToken: 'secret-token',
 			maxMessageBytes: 1,
 			fetch: async () => Response.json({})
-		})).rejects.toMatchObject({ providerCode: 'message_too_big' });
+		});
+		expect(oversized.customer).toMatchObject({
+			sent: false,
+			error: { stage: 'serialization', providerCode: 'message_too_big' }
+		});
+		expect(oversized.organizer).toMatchObject({
+			sent: false,
+			error: { stage: 'serialization', providerCode: 'message_too_big' }
+		});
 
-		await expect(sendBookingConfirmationEmail(input, {
+		const network = await sendBookingConfirmationEmails(input, {
 			accountId: 'account-123',
 			apiToken: 'secret-token',
 			fetch: async () => {
-				throw new Error('private network detail');
+				throw new TypeError('fetch failed');
 			}
-		})).rejects.toEqual(
-			expect.objectContaining({
-				providerCode: 'network_error'
-			})
-		);
+		});
+		expect(network.customer).toMatchObject({
+			sent: false,
+			error: {
+				stage: 'network',
+				providerCode: 'network_error',
+				causeName: 'TypeError',
+				causeMessage: 'fetch failed'
+			}
+		});
+		expect(network.organizer).toMatchObject({ sent: false, error: { stage: 'network' } });
 	});
 });

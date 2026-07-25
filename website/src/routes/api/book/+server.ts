@@ -4,9 +4,55 @@ import { completeHackathonBookingWithConfirmation } from '$lib/server/book-hacka
 import { bookPrepCall, BookingProviderError } from '$lib/server/cal-booking';
 import {
 	BookingConfirmationEmailError,
-	sendBookingConfirmationEmail
+	sendBookingConfirmationEmails,
+	type BookingConfirmationAttempt,
+	type BookingConfirmationRecipientRole
 } from '$lib/server/booking-confirmation-email';
 import { json } from '@sveltejs/kit';
+
+function logConfirmationAttempt(hackathonId: string, attempt: BookingConfirmationAttempt) {
+	if (attempt.sent) {
+		console.info('Booking confirmation email accepted', {
+			hackathonId,
+			recipientRole: attempt.role,
+			status: attempt.status,
+			messageId: attempt.messageId
+		});
+		return;
+	}
+
+	const error = attempt.error;
+	console.error('Booking confirmation email failed', {
+		hackathonId,
+		recipientRole: attempt.role,
+		stage: error.stage,
+		status: error.status,
+		providerCode: error.providerCode,
+		messageId: error.messageId,
+		causeName: error.causeName,
+		causeMessage: error.causeMessage
+	});
+}
+
+function unexpectedFailure(
+	role: BookingConfirmationRecipientRole,
+	error: unknown
+): BookingConfirmationAttempt {
+	return {
+		role,
+		sent: false,
+		error: error instanceof BookingConfirmationEmailError
+			? error
+			: new BookingConfirmationEmailError(
+					'Der Versand der Buchungsbestätigung ist unerwartet fehlgeschlagen.',
+					{
+						stage: 'provider',
+						providerCode: 'unexpected_error',
+						cause: error
+					}
+				)
+	};
+}
 
 export async function POST({ request, fetch }) {
 	let config: BookingConfiguration;
@@ -21,37 +67,26 @@ export async function POST({ request, fetch }) {
 			config,
 			(bookingConfig) => bookPrepCall(bookingConfig, fetch, dev),
 			(id, bookingConfig, booking) =>
-				sendBookingConfirmationEmail({ id, config: bookingConfig, booking }, { fetch })
+				sendBookingConfirmationEmails({ id, config: bookingConfig, booking }, { fetch })
 		);
-		const { id, booking, confirmationEmailSent } = result;
-		if (result.confirmationEmailSent) {
-			const delivery = result.confirmationEmailDelivery;
-			console.info('Booking confirmation email accepted', {
-				hackathonId: id,
-				status: delivery.status,
-				messageId: delivery.messageId
-			});
+		const { id, booking } = result;
+		let customerAttempt: BookingConfirmationAttempt;
+		let organizerAttempt: BookingConfirmationAttempt;
+		if ('confirmationDelivery' in result) {
+			customerAttempt = result.confirmationDelivery.customer;
+			organizerAttempt = result.confirmationDelivery.organizer;
 		} else {
-			const error = result.confirmationEmailError;
-			if (error instanceof BookingConfirmationEmailError) {
-				console.error('Booking confirmation email failed', {
-					hackathonId: id,
-					status: error.status,
-					providerCode: error.providerCode,
-					messageId: error.messageId
-				});
-			} else {
-				console.error('Booking confirmation email failed', {
-					hackathonId: id,
-					errorName: error instanceof Error ? error.name : 'UnknownError'
-				});
-			}
+			customerAttempt = unexpectedFailure('customer', result.confirmationDeliveryError);
+			organizerAttempt = unexpectedFailure('organizer', result.confirmationDeliveryError);
 		}
+		logConfirmationAttempt(id, customerAttempt);
+		logConfirmationAttempt(id, organizerAttempt);
 		return json({
 			...booking,
 			hackathonId: id,
 			detailUrl: `/${id}`,
-			confirmationEmailSent
+			confirmationEmailSent: customerAttempt.sent,
+			organizerConfirmationEmailSent: organizerAttempt.sent
 		}, { status: 201 });
 	} catch (error) {
 		if (error instanceof BookingProviderError) return json({ message: error.message }, { status: error.status });

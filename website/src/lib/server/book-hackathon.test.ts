@@ -119,8 +119,7 @@ describe('booking persistence orchestration', () => {
 		expect(log).toEqual(['pending', 'provider', 'confirmed', 'email:HAA-AAA-AAA']);
 		expect(result).toMatchObject({
 			id: 'HAA-AAA-AAA',
-			confirmationEmailSent: true,
-			confirmationEmailDelivery: { messageId: 'message-1' }
+			confirmationDelivery: { messageId: 'message-1' }
 		});
 	});
 
@@ -139,9 +138,9 @@ describe('booking persistence orchestration', () => {
 			store(log)
 		);
 		expect(log).toEqual(['pending', 'provider', 'confirmed', 'email-failed']);
-		expect(result.confirmationEmailSent).toBe(false);
-		if (!result.confirmationEmailSent) {
-			expect(result.confirmationEmailError).toBeInstanceOf(Error);
+		expect(result).not.toHaveProperty('confirmationDelivery');
+		if ('confirmationDeliveryError' in result) {
+			expect(result.confirmationDeliveryError).toBeInstanceOf(Error);
 		}
 	});
 });
