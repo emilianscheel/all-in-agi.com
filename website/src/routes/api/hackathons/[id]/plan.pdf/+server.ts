@@ -12,7 +12,7 @@ export async function GET({ params }) {
 	return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), {
 		headers: {
 			'content-type': 'application/pdf',
-			'content-disposition': `attachment; filename="werksprung-hackathon-${id}.pdf"`,
+			'content-disposition': `attachment; filename="all-in-agi-hackathon-${id}.pdf"`,
 			'cache-control': 'private, no-store'
 		}
 	});

@@ -46,7 +46,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: { inc
 	const right = 547;
 
 	page.drawRectangle({ x: 0, y: 823, width: 595.28, height: 19, color: orange });
-	page.drawText('WERKSPRUNG', { x: left, y: 780, font: bold, size: 11, color: orange });
+	page.drawText('ALL-IN-AGI', { x: left, y: 780, font: bold, size: 11, color: orange });
 	page.drawText('Agentic Engineering Hackathon', { x: left, y: 742, font: bold, size: 27, color: ink });
 	drawWrapped(page, config.companyName, left, 716, 360, regular, 14, muted, 1);
 	page.drawText(formatPrice(price.totalPrice), { x: right - bold.widthOfTextAtSize(formatPrice(price.totalPrice), 20), y: 716, font: bold, size: 20, color: ink });
@@ -70,7 +70,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: { inc
 				: 'No lunch - 500 EUR';
 	const toolsLabel = `${config.toolProvision === 'needed' ? 'Für den Tag benötigt' : 'Bereits vorhanden'}: ${selectedCodingToolLabels(config).join(', ')}`;
 	const rows = [
-		['Location', config.venueProvided ? 'Eigene Location' : 'Von WERKSPRUNG organisiert'],
+		['Location', config.venueProvided ? 'Eigene Location' : 'Von ALL-IN-AGI organisiert'],
 		['Demo Setup', config.equipment === 'projector' ? 'Projector' : config.equipment === 'tv' ? 'Display' : 'Screen wird mitgebracht'],
 		['Lunch', lunchLabel],
 		['Coding Tools', toolsLabel],
@@ -102,6 +102,6 @@ export async function createPlanPdf(config: BookingConfiguration, options: { inc
 	page.drawText(`Coding Tools ${price.toolsAdjustment ? `+${formatPrice(price.toolsAdjustment)}` : 'inklusive'}`, { x: left, y: 141, font: regular, size: 10, color: muted });
 	page.drawText(`Gesamt ${formatPrice(price.totalPrice)} netto`, { x: left, y: 110, font: bold, size: 18, color: orange });
 	page.drawText(`Planungsstand ${new Intl.DateTimeFormat('de-DE').format(new Date())}`, { x: left, y: 54, font: regular, size: 9, color: muted });
-	page.drawText('werksprung.de', { x: right - regular.widthOfTextAtSize('werksprung.de', 9), y: 54, font: regular, size: 9, color: muted });
+	page.drawText('all-in-agi.com', { x: right - regular.widthOfTextAtSize('all-in-agi.com', 9), y: 54, font: regular, size: 9, color: muted });
 	return pdf.save();
 }

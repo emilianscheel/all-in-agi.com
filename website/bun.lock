@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "werksprung-svelte-init-019f8b0e",
+      "name": "all-in-agi-svelte-init-019f8b0e",
       "dependencies": {
         "@internationalized/date": "^3.12.2",
         "better-auth": "^1.6.25",

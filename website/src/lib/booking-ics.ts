@@ -21,13 +21,13 @@ export function createPrepCallIcs(config: BookingConfiguration, booking: Booking
 	const start = new Date(booking.start || config.consultationSlot);
 	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 60 * 60_000);
 	return [
-		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//WERKSPRUNG//Prep Call//DE', 'CALSCALE:GREGORIAN',
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ALL-IN-AGI//Prep Call//DE', 'CALSCALE:GREGORIAN',
 		'BEGIN:VEVENT',
-		`UID:${escape(booking.icsUid || booking.uid || `${start.getTime()}@werksprung.de`)}`,
+		`UID:${escape(booking.icsUid || booking.uid || `${start.getTime()}@all-in-agi.com`)}`,
 		`DTSTAMP:${utcDate(new Date().toISOString())}`,
 		`DTSTART:${utcDate(start.toISOString())}`,
 		`DTEND:${utcDate(end.toISOString())}`,
-		`SUMMARY:${escape(booking.title || 'WERKSPRUNG Prep Call')}`,
+		`SUMMARY:${escape(booking.title || 'ALL-IN-AGI Prep Call')}`,
 		`DESCRIPTION:${escape(`Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`)}`,
 		...(booking.meetingUrl ? [`LOCATION:${escape(booking.meetingUrl)}`] : []),
 		'END:VEVENT', 'END:VCALENDAR', ''

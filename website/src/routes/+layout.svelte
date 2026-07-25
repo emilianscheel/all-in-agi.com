@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Binoculars } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { installGlobalHaptics } from '$lib/haptics';
 	import '../app.css';
@@ -9,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href="/brand/binoculars.svg?v=3" type="image/svg+xml" sizes="any" />
+	<link rel="icon" href="/brand/all-in-agi-logo.png" type="image/png" sizes="512x512" />
 	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 	<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 </svelte:head>
@@ -17,8 +16,8 @@
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <header class="site-header">
 	<nav class="nav-inner" aria-label="Hauptnavigation">
-		<a class="brand-mark" href="/" aria-label="WERKSPRUNG Startseite">
-			<Binoculars size={21} strokeWidth={2.1} aria-hidden="true" />
+		<a class="brand-mark" href="/" aria-label="ALL-IN-AGI Startseite">
+			<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" aria-hidden="true" />
 		</a>
 		<div class="nav-links">
 			<a href="/#format">Agenda</a>

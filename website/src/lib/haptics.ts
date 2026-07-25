@@ -12,7 +12,7 @@ function createVirtualHapticSwitch() {
 	const wrapper = document.createElement('span');
 	const input = document.createElement('input');
 	const label = document.createElement('label');
-	const id = `werksprung-haptic-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+	const id = `all-in-agi-haptic-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
 
 	input.id = id;
 	input.type = 'checkbox';

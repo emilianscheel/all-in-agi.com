@@ -24,8 +24,8 @@ export async function bookPrepCall(
 				status: 'success',
 				demo: true,
 				uid: demoUid,
-				icsUid: `${demoUid}@werksprung.de`,
-				title: 'WERKSPRUNG Prep Call',
+				icsUid: `${demoUid}@all-in-agi.com`,
+				title: 'ALL-IN-AGI Prep Call',
 				start: start.toISOString(),
 				end: end.toISOString(),
 				meetingUrl: ''

@@ -36,7 +36,7 @@
 </script>
 
 <svelte:head>
-	<title>Hackathon für {hackathon.companyName} — WERKSPRUNG</title>
+	<title>Hackathon für {hackathon.companyName} — ALL-IN-AGI</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

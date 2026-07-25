@@ -30,9 +30,9 @@
 	const schema = {
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
-		name: 'WERKSPRUNG',
+		name: 'ALL-IN-AGI',
 		description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
-		url: 'https://werksprung.de'
+		url: 'https://all-in-agi.com'
 	};
 </script>
 
@@ -41,7 +41,7 @@
 	<meta name="description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen" />
 	<meta property="og:title" content="Agentic Engineering Hackathon" />
 	<meta property="og:description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben." />
-	<meta property="og:image" content="/images/werksprung-event.webp" />
+	<meta property="og:image" content="/images/all-in-agi-event.webp" />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<script type="application/ld+json">{JSON.stringify(schema)}</script>
@@ -57,7 +57,7 @@
 		</div>
 	</div>
 	<div class="hero-image">
-		<img src="/images/werksprung-event.webp" alt="Team arbeitet gemeinsam an einem Hackathon-Projekt" fetchpriority="high" />
+		<img src="/images/all-in-agi-event.webp" alt="Team arbeitet gemeinsam an einem Hackathon-Projekt" fetchpriority="high" />
 	</div>
 </section>
 
@@ -91,7 +91,7 @@
 		<div class="agenda-grid agenda-grid-four" use:reveal={{ group: true }}>
 			<article class="agenda-card"><span class="time">09:00</span><h3>Kickoff</h3><p>Live Demo, Tool Stack, Teams und Challenges.</p></article>
 			<article class="agenda-card"><span class="time">09:30</span><h3>Build Sprint</h3><p>Von Problem und User Flow zum ersten Working Prototype.</p></article>
-			<article class="agenda-card"><span class="time">13:00</span><h3>Pizza & Iterate</h3><p>Gemeinsamer Lunch, Feedback und zweiter Build Sprint.</p></article>
+			<article class="agenda-card"><span class="time">13:00</span><h3>Pizza</h3><p>Gemeinsamer Lunch, Feedback und zweiter Build Sprint.</p></article>
 			<article class="agenda-card"><span class="time">16:30</span><h3>Live Demo</h3><p>Problem, Lösung, How its used and build</p></article>
 		</div>
 	</div>

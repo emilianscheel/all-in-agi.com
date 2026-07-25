@@ -1,8 +1,8 @@
-# WERKSPRUNG — Brand Kit v2
+# ALL-IN-AGI — Brand Kit v2
 
 ## Brand idea
 
-**WERKSPRUNG** bringt etablierte Unternehmen vom Reden ins Bauen.
+**ALL-IN-AGI** bringt etablierte Unternehmen vom Reden ins Bauen.
 
 Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwindigkeit der internationalen Agentic-Engineering-Szene. Sie ist nicht verspielt, nicht futuristisch und nicht beratertypisch glatt. Sie wirkt kompetent, direkt und handlungsorientiert.
 
@@ -12,7 +12,7 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 
 **Zielgruppe:** CTOs, CIOs, Engineering- und Digitalverantwortliche in etablierten Unternehmen mit 500–10.000 Mitarbeitenden.
 
-> WERKSPRUNG bringt aktuelle AI Coding Tools in etablierte Unternehmen. In einem intensiven Hackathon bauen Teams an echten Use Cases und shippen funktionierende Prototypen.
+> ALL-IN-AGI bringt aktuelle AI Coding Tools in etablierte Unternehmen. In einem intensiven Hackathon bauen Teams an echten Use Cases und shippen funktionierende Prototypen.
 
 **Claim:** Build what’s next.
 
@@ -20,12 +20,12 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 
 ## Produktarchitektur
 
-- **Absender:** WERKSPRUNG
+- **Absender:** ALL-IN-AGI
 - **Produkt:** Agentic Engineering Hackathon
 - **Deskriptor:** Ein Tag von Challenge bis Working Prototype
 
-> WERKSPRUNG presents  
-> **AGENTIC ENGINEERING HACKATHON**  
+> ALL-IN-AGI presents
+> **AGENTIC ENGINEERING HACKATHON**
 > From prompt to prototype. In one day.
 
 Keine Bronze-, Silver- oder Enterprise-Pakete. Keine Untermarken.
@@ -39,7 +39,7 @@ Keine Bronze-, Silver- oder Enterprise-Pakete. Keine Untermarken.
 
 ## Tonalität
 
-WERKSPRUNG spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademisch. Ambitioniert, aber ohne AI-Heilsversprechen.
+ALL-IN-AGI spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademisch. Ambitioniert, aber ohne AI-Heilsversprechen.
 
 **Sagen:**
 
@@ -59,17 +59,17 @@ WERKSPRUNG spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademi
 
 ### Logo
 
-Das schwarze Lucide-Icon **Binoculars** steht für neue Sichtweisen, Exploration und den Blick auf das technisch Machbare. In der App erscheint es alleinstehend in Navbar und Favicon.
+Die schwarze ALL-IN-AGI Bildmarke wird aus der gelieferten PNG-Datei verwendet. In der App erscheint sie alleinstehend in Navbar und Favicon; im Dark Mode wird sie für ausreichenden Kontrast weiß dargestellt.
 
 ### Farben
 
-- **Werk Black** — `#151515`
+- **AGI Black** — `#151515`
 - **Signal Orange** — `#FF4F18`
 - **Workshop Paper** — `#F5F1E8`
 - **System Grey** — `#A6A39C`
 - **White** — `#FFFFFF`
 
-Das Binoculars-Icon ist ausschließlich schwarz. Orange wird sparsam für CTAs, Auswahlzustände und Fortschritt eingesetzt.
+Die Bildmarke ist ausschließlich schwarz beziehungsweise weiß im Dark Mode. Orange wird sparsam für CTAs, Auswahlzustände und Fortschritt eingesetzt.
 
 ### Typografie
 
@@ -112,7 +112,7 @@ In 60 Minuten klären wir Tool Stack, Challenges und Setup für Ihren Hackathon.
 - Aufgaben heißen **Challenges**, nicht Übungen.
 - Das Ergebnis heißt **Prototype**, nicht Lernziel.
 - Der Abschluss heißt **Demo Day**, nicht Ergebnispräsentation.
-- Die Gewinner erhalten den **WERKSPRUNG Award**.
+- Die Gewinner erhalten den **ALL-IN-AGI Award**.
 
 ## Launch-Prinzip
 

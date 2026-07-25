@@ -18,7 +18,7 @@
 
 	onMount(() => {
 		try {
-			const raw = sessionStorage.getItem('werksprung-booking');
+			const raw = sessionStorage.getItem('all-in-agi-booking');
 			if (raw) summary = JSON.parse(raw) as SuccessSummary;
 		} catch { summary = null; }
 	});
@@ -38,19 +38,19 @@
 		try {
 			const response = await fetch('/api/plan-pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(summary) });
 			if (!response.ok) throw new Error('PDF error');
-			downloadBlob(await response.blob(), 'werksprung-hackathon-plan.pdf');
+			downloadBlob(await response.blob(), 'all-in-agi-hackathon-plan.pdf');
 			downloadState = 'idle';
 		} catch { downloadState = 'error'; }
 	}
 
 	function downloadCalendar() {
 		if (!summary) return;
-		downloadBlob(new Blob([createPrepCallIcs(summary, summary.booking)], { type: 'text/calendar;charset=utf-8' }), 'werksprung-prep-call.ics');
+		downloadBlob(new Blob([createPrepCallIcs(summary, summary.booking)], { type: 'text/calendar;charset=utf-8' }), 'all-in-agi-prep-call.ics');
 	}
 </script>
 
 <svelte:head>
-	<title>Erstgespräch gebucht — WERKSPRUNG</title>
+	<title>Erstgespräch gebucht — ALL-IN-AGI</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

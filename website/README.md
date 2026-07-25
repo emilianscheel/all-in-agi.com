@@ -1,6 +1,6 @@
-# WERKSPRUNG Website
+# ALL-IN-AGI Website
 
-Deutsche Marketing- und Buchungswebsite für den WERKSPRUNG Agentic Engineering Hackathon. Gebaut mit SvelteKit, TypeScript, Bun, Motion und MapLibre GL.
+Deutsche Marketing- und Buchungswebsite für den ALL-IN-AGI Agentic Engineering Hackathon. Gebaut mit SvelteKit, TypeScript, Bun, Motion und MapLibre GL.
 
 ## Lokal starten
 
@@ -11,7 +11,7 @@ bun run dev
 
 `bun run dev` startet PostgreSQL über Apples `container` CLI, wendet offene Drizzle-Migrationen an und startet danach den SvelteKit-Entwicklungsserver. Dafür werden ein Mac mit Apple Silicon, die installierte und initialisierte [`container` CLI](https://github.com/apple/container) sowie die Werte aus `.env.example` benötigt.
 
-Die lokale Datenbank läuft als `postgres:17-alpine` unter dem Namen `werksprung-postgres`, ist nur über `127.0.0.1:5432` erreichbar und speichert ihre Daten dauerhaft im Volume `werksprung-postgres-data`.
+Die lokale Datenbank läuft als `postgres:17-alpine` unter dem Namen `all-in-agi-postgres`, ist nur über `127.0.0.1:5432` erreichbar und speichert ihre Daten dauerhaft im Volume `all-in-agi-postgres-data`.
 
 Weitere Entwicklungsbefehle:
 
@@ -52,6 +52,6 @@ Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Ad
 - OpenFreeMap-Kartenstil und Photon-Fallback im Zielhosting testen
 - Cal.com Event Type, Zeitzone, Verfügbarkeit und Bestätigungs-E-Mails prüfen
 - finale Domain in Sitemap, strukturierten Daten und Social-Metadaten bestätigen
-- WERKSPRUNG Wort-/Bildmarke rechtlich prüfen
+- ALL-IN-AGI Wort-/Bildmarke rechtlich prüfen
 
 Die ursprüngliche Repo-README und das Brand Kit wurden vor der Initialisierung unter `docs/` archiviert.

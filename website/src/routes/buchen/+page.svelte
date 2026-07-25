@@ -233,7 +233,7 @@
 				throw new Error(result.message ?? 'Die Buchung konnte nicht abgeschlossen werden.');
 			}
 			const planUrl = await getShareUrl();
-			if (browser) sessionStorage.setItem('werksprung-booking', JSON.stringify({
+			if (browser) sessionStorage.setItem('all-in-agi-booking', JSON.stringify({
 				...config,
 				...price,
 				booking: result,

@@ -26,7 +26,7 @@ const record = {
 	totalPrice: 4000,
 	bookingUid: 'booking-1',
 	bookingIcsUid: 'booking-1@example.com',
-	bookingTitle: 'WERKSPRUNG Prep Call',
+	bookingTitle: 'ALL-IN-AGI Prep Call',
 	bookingStart: '2099-05-10T10:00:00.000Z',
 	bookingEnd: '2099-05-10T11:00:00.000Z',
 	meetingUrl: '',

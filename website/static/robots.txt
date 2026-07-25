@@ -4,4 +4,4 @@ Disallow: /buchen/erfolg
 Disallow: /impressum
 Disallow: /datenschutz
 
-Sitemap: https://werksprung.de/sitemap.xml
+Sitemap: https://all-in-agi.com/sitemap.xml

@@ -16,7 +16,7 @@ export async function GET({ params }) {
 	return new Response(calendar, {
 		headers: {
 			'content-type': 'text/calendar; charset=utf-8',
-			'content-disposition': `attachment; filename="werksprung-prep-call-${id}.ics"`,
+			'content-disposition': `attachment; filename="all-in-agi-prep-call-${id}.ics"`,
 			'cache-control': 'private, no-store'
 		}
 	});

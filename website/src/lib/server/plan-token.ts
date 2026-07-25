@@ -13,7 +13,7 @@ function fromBase64Url(value: string) {
 }
 
 function planSecret(override?: string) {
-	const secret = override ?? process.env.PLAN_URL_SECRET ?? (process.env.NODE_ENV !== 'production' ? 'werksprung-local-development-plan-secret' : '');
+	const secret = override ?? process.env.PLAN_URL_SECRET ?? (process.env.NODE_ENV !== 'production' ? 'all-in-agi-local-development-plan-secret' : '');
 	if (!secret) throw new Error('PLAN_URL_SECRET fehlt.');
 	if (process.env.NODE_ENV === 'production' && secret.length < 32) throw new Error('PLAN_URL_SECRET muss mindestens 32 Zeichen lang sein.');
 	return secret;

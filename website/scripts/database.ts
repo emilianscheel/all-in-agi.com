@@ -1,5 +1,5 @@
-const CONTAINER_NAME = 'werksprung-postgres';
-const VOLUME_NAME = 'werksprung-postgres-data';
+const CONTAINER_NAME = 'all-in-agi-postgres';
+const VOLUME_NAME = 'all-in-agi-postgres-data';
 const IMAGE = 'postgres:17-alpine';
 
 type ContainerInfo = {
@@ -56,9 +56,9 @@ async function waitUntilReady(user: string, database: string) {
 }
 
 export async function startDatabase() {
-	const user = requiredEnv('POSTGRES_USER', 'werksprung');
-	const password = requiredEnv('POSTGRES_PASSWORD', 'werksprung_local_dev');
-	const database = requiredEnv('POSTGRES_DB', 'werksprung');
+	const user = requiredEnv('POSTGRES_USER', 'all-in-agi');
+	const password = requiredEnv('POSTGRES_PASSWORD', 'all-in-agi_local_dev');
+	const database = requiredEnv('POSTGRES_DB', 'all-in-agi');
 	const port = requiredEnv('POSTGRES_PORT', '5432');
 
 	const system = await run(['system', 'start'], true);

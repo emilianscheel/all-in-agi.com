@@ -1,11 +1,11 @@
-# WERKSPRUNG GTM Research Report
+# ALL-IN-AGI GTM Research Report
 
 **How to sell Agentic Engineering Hackathons to established German companies**  
 Research snapshot: 24 July 2026
 
 ## Executive recommendation
 
-WERKSPRUNG should run a founder-led, account-based sales motion aimed at **engineering and digital leaders in German industrial and software companies**, starting with 30 named accounts and 3–4 stakeholders per account.
+ALL-IN-AGI should run a founder-led, account-based sales motion aimed at **engineering and digital leaders in German industrial and software companies**, starting with 30 named accounts and 3–4 stakeholders per account.
 
 The most effective wedge is not “AI training” and not “a fun team event.” It is:
 
@@ -21,13 +21,13 @@ This positioning matches the product already described on the website:
 - working prototypes and Demo Day;
 - transparent €4,000–€6,000 net pricing, including two facilitators, challenge design, lunch, and follow-up.
 
-The first sales objective should be **three paid lighthouse events in 90 days**, ideally one each in industrial automation, enterprise software, and digital commerce. Do not broaden to generic “AI for everyone” before WERKSPRUNG has evidence.
+The first sales objective should be **three paid lighthouse events in 90 days**, ideally one each in industrial automation, enterprise software, and digital commerce. Do not broaden to generic “AI for everyone” before ALL-IN-AGI has evidence.
 
 ## 1. Why this can sell now
 
 The DACH market has an execution gap:
 
-- In Celonis’ 2026 survey, 85% of organizations wanted to become an “agentic enterprise” in the next two to three years, but only 17% of DACH respondents said they already used AI agents. Missing expertise was the most frequently named obstacle. This is the exact gap between ambition and hands-on ability that WERKSPRUNG can address. [Celonis, March 2026](https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers)
+- In Celonis’ 2026 survey, 85% of organizations wanted to become an “agentic enterprise” in the next two to three years, but only 17% of DACH respondents said they already used AI agents. Missing expertise was the most frequently named obstacle. This is the exact gap between ambition and hands-on ability that ALL-IN-AGI can address. [Celonis, March 2026](https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers)
 - Companies are already investing. Otto Group says it plans €350 million of medium-term investment in IT, tech, and AI. [Otto Group, May 2026](https://www.ottogroup.com/en/stories/story/agentic-commerce-ready-for-takeoff.php)
 - AI has moved into software delivery and operations. DATEV is researching automation across the ML lifecycle and evaluating real use cases; TeamViewer is explicitly building an agentic proposition for IT support. [DATEV](https://www.datev.de/web/de/berufsgruppenuebergreifend/presse/presseinformationen/meldungen-2025/mit-ki-qualitaet-und-effizienz-in-der-softwareentwicklung-steigern), [TeamViewer](https://www.teamviewer.com/en-us/global/company/press/2025/teamviewer-reports-rapid-customer-adoption-ai/)
 - Governance is now a buying requirement, not a reason to wait. Otto Group has a Responsible AI Guide; TeamViewer’s CPTO describes data governance and change management as the main gates to deploying agents. [Otto Group](https://www.ottogroup.com/de/stories/story/responsible-ai-guide.php), [TeamViewer](https://www.teamviewer.com/en-in/insights/2026-predictions-mei-dent/)
@@ -63,7 +63,7 @@ Deprioritize:
 
 ## 3. Buying committee and the job each person needs done
 
-| Stakeholder | What they want | Likely objection | WERKSPRUNG answer |
+| Stakeholder | What they want | Likely objection | ALL-IN-AGI answer |
 |---|---|---|---|
 | CTO / CDO | Visible progress on AI adoption | “We already have an AI strategy.” | The event operationalizes it with builders, prototypes, and a follow-up backlog. |
 | VP / Head of Engineering | Faster learning and delivery | “My engineers can learn this themselves.” | The value is coordinated adoption across engineering, product, and domain experts using company challenges. |
@@ -113,7 +113,7 @@ Evidence supporting the industrial segment: Phoenix Contact reports a 10% produc
 |---:|---|---:|---|---|---|
 | 11 | **DATEV**, Nuremberg | 23 | 9,015 employees; AI in software development, KI-Werkstatt, cloud transformation | Director below CTO; Engineering Enablement; **Prof. Dr. Christian Bär, CTO** as sponsor | Very strong fit, but sophisticated internal capability. Sell a mixed-team frontier coding-agent day, not generic AI enablement. |
 | 12 | **Scout24**, Berlin / Munich | 22 | CTO explicitly owns AI development, architecture, analytics, and security | **Gertrud Kolb, CTO**; Director Engineering; **Stephen Molloy, CPO** | Product/engineering challenge day tied to marketplace workflows. Likely fast buyer but already mature. |
-| 13 | **Otto Group one.O**, Hamburg | 21 | 1,000-person group tech provider covering software, data, and AI; group-level AI investment | **Katrin Behrens**, Managing Director; Director Engineering; Tech Strategy | Pitch a hackathon for one group company, with one.O as co-sponsor. Could become a channel, but may see WERKSPRUNG as overlap. |
+| 13 | **Otto Group one.O**, Hamburg | 21 | 1,000-person group tech provider covering software, data, and AI; group-level AI investment | **Katrin Behrens**, Managing Director; Director Engineering; Tech Strategy | Pitch a hackathon for one group company, with one.O as co-sponsor. Could become a channel, but may see ALL-IN-AGI as overlap. |
 | 14 | **TeamViewer**, Göppingen | 20 | Explicit agentic AI product strategy and rapid customer adoption | **Mei Dent, CPTO**; VP Engineering; Developer Experience | Use an internal developer-productivity or cross-functional prototype angle. High maturity makes generic content weak. |
 | 15 | **Software AG**, Darmstadt | 20 | Hands-on 2026 Innovation Labs for AI Code Assist and AI agents on legacy data | VP Product Engineering; Innovation Labs; **Dr. Mohamed Abdelaal** as champion | Propose an internal or customer-community edition around legacy modernization. Also a potential channel. |
 
@@ -242,7 +242,7 @@ Contact multiple people in the same account, but stagger them and be transparent
 > Hallo {{first_name}},  
 > {{company}} is already working on {{specific public initiative}}. The gap we often see after the strategy and tool decision is hands-on adoption across engineering, product, and domain teams.
 >
-> WERKSPRUNG runs a one-day on-site Agentic Engineering Hackathon: 15–50 people build with the tools approved by your IT on real internal challenges and demo working prototypes the same afternoon.
+> ALL-IN-AGI runs a one-day on-site Agentic Engineering Hackathon: 15–50 people build with the tools approved by your IT on real internal challenges and demo working prototypes the same afternoon.
 >
 > For {{company}}, three plausible challenges would be {{challenge 1}}, {{challenge 2}}, and {{challenge 3}}. The complete fixed-price format is €{{price}} net.
 >
@@ -283,7 +283,7 @@ Qualify out if there is no participant group, no tool path, no challenge owner, 
 | Objection | Response |
 |---|---|
 | “We already use GitHub Copilot.” | “Good—the event is not a tool introduction. It turns individual usage into cross-functional practice on company challenges and shows where adoption or governance still blocks delivery.” |
-| “We can run a hackathon ourselves.” | “You should own the business context. WERKSPRUNG supplies challenge design, facilitation, frontier-tool practice, setup discipline, and the deadline pressure that gets teams to a live demo.” |
+| “We can run a hackathon ourselves.” | “You should own the business context. ALL-IN-AGI supplies challenge design, facilitation, frontier-tool practice, setup discipline, and the deadline pressure that gets teams to a live demo.” |
 | “Security will never approve it.” | “We use only approved accounts, repositories, tools, and data classes. If no tool or sandbox can be approved, we should not schedule the event.” |
 | “Hackathons produce toys.” | “Each challenge needs a business owner, user, constrained scope, live demo, and named next step. The goal is evidence and capability—not pretending a one-day prototype is production.” |
 | “Our non-engineers cannot code.” | “They do not need to. Product and domain experts own the problem, user flow, and validation; engineering owns the technical path.” |
@@ -406,7 +406,7 @@ After two strong events, pursue:
 
 The partner proposition should be:
 
-> “You own the platform or production implementation. WERKSPRUNG creates the one-day activation event that generates trained internal champions and qualified prototype opportunities.”
+> “You own the platform or production implementation. ALL-IN-AGI creates the one-day activation event that generates trained internal champions and qualified prototype opportunities.”
 
 Avoid giving a partner exclusivity before it has produced paid demand.
 
@@ -419,7 +419,7 @@ Avoid giving a partner exclusivity before it has produced paid demand.
 | Tool/security delays | Send setup sheet in the first qualified conversation; keep a synthetic-data fallback |
 | Too much custom preparation for €4–6k | Standardize challenge canvas, setup checklist, agenda, and outcome memo |
 | Founder travel consumes margin | Cluster outreach and event dates geographically; charge only within the website’s stated scope, then clarify travel policy |
-| Internal innovation teams see overlap | Position WERKSPRUNG as execution capacity and frontier-tool facilitation; offer co-branded delivery |
+| Internal innovation teams see overlap | Position ALL-IN-AGI as execution capacity and frontier-tool facilitation; offer co-branded delivery |
 | One-off revenue | Ask for the next department and a referral at Demo Day; later sell repetition without inventing confusing package tiers |
 
 ## 18. Immediate next actions
@@ -440,8 +440,8 @@ The central strategic discipline is simple: **sell one small, paid, observable b
 
 Primary company sources were preferred. Public signals indicate relevance, not purchase intent. Individual roles and company priorities can change; verify every named contact immediately before outreach.
 
-- WERKSPRUNG product and pricing: local website source, `src/routes/+page.svelte`
-- WERKSPRUNG positioning and ICP: local `docs/brand-kit.md`
+- ALL-IN-AGI product and pricing: local website source, `src/routes/+page.svelte`
+- ALL-IN-AGI positioning and ICP: local `docs/brand-kit.md`
 - [Celonis Process Optimization Report announcement, 9 March 2026](https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers)
 - [DATEV AI software-development research, 22 October 2025](https://www.datev.de/web/de/berufsgruppenuebergreifend/presse/presseinformationen/meldungen-2025/mit-ki-qualitaet-und-effizienz-in-der-softwareentwicklung-steigern)
 - [DATEV board](https://www.datev.de/web/de/berufsgruppenuebergreifend/ueber-datev/das-unternehmen/organe/vorstand)
