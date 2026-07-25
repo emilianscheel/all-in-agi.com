@@ -64,7 +64,7 @@
 <section class="manifesto" aria-labelledby="manifesto-title">
 	<div class="manifesto-content" use:reveal>
 		<h2 id="manifesto-title">Keine weitere Fortbildung.</h2>
-		<p>Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen AI Coding Tools.</p>
+		<p>Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.</p>
 	</div>
 	<div class="tool-carousel" role="img" aria-label={carouselLabel}>
 		<div class="tool-carousel-window">
