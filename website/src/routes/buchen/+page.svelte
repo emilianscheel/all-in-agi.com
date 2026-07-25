@@ -316,15 +316,15 @@
 					aria-hidden={previewOpacity <= 0.01}
 				>
 					<div class="event-card-top"><h2>{companyName.trim() || 'Ihr Hackathon'}</h2><div class="event-card-price">{formatPrice(price.totalPrice)}</div></div>
-					<p class:event-address-placeholder={!eventAddressLabel} class="event-address">{eventAddressLabel || 'Event-Adresse noch offen'}</p>
+					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
 					<div class="event-details">
-						<div class="event-detail"><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>
+						<div class:event-detail-unselected={!preferredEventDate} class="event-detail" aria-hidden={!preferredEventDate}><small>Event Date</small><b>{formatDate(preferredEventDate)}</b></div>
 						<div class="event-detail"><small>Team</small><b>Bis {capacity} Personen</b></div>
 						<div class="event-detail"><small>Location</small><b>{venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
-						<div class="event-detail"><small>Tools</small><b>{toolsPreviewLabel}</b></div>
+						<div class:event-detail-unselected={!toolProvision || !codingToolLabels.length} class="event-detail" aria-hidden={!toolProvision || !codingToolLabels.length}><small>Tools</small><b>{toolsPreviewLabel}</b></div>
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
 						<div class="event-detail"><small>Lunch</small><b>{lunchPreviewLabel}</b></div>
-						<div class="event-detail"><small>Prep Call</small><b>{consultationSlot ? `${formatDate(consultationSlot, true)} Uhr` : 'Noch offen'}</b></div>
+						<div class:event-detail-unselected={!consultationSlot} class="event-detail" aria-hidden={!consultationSlot}><small>Prep Call</small><b>{consultationSlot ? `${formatDate(consultationSlot, true)} Uhr` : 'Noch offen'}</b></div>
 					</div>
 				</article>
 			</MapPreview>
@@ -332,13 +332,13 @@
 
 		<form class="config-form" onsubmit={(event) => { event.preventDefault(); submitBooking(); }} novalidate>
 			<section class="config-section" use:reveal>
-				<h2>Team size</h2>
+				<h2>Teamgröße</h2>
 				<div class="option-grid three">
 					{#each [15, 30, 50] as size}<label class:selected={capacity === size} class="choice"><input type="radio" name="capacity" value={size} checked={capacity === size} onchange={() => (capacity = size as Capacity)} /><b>{size} Personen</b><small>{size === 15 ? 'Kompaktes Team' : size === 30 ? 'Mehrere Build-Teams' : 'Großer Demo Day'}</small><span class="choice-price">{formatPrice(CAPACITY_PRICES[size as Capacity])}</span></label>{/each}
 				</div>
 			</section>
 
-			<section class="config-section" use:reveal><h2>Location</h2><div class="option-grid">
+			<section class="config-section" use:reveal><h2>Veranstaltungsort</h2><div class="option-grid">
 				<label class:selected={venueProvided} class="choice"><input type="radio" name="venue" checked={venueProvided} onchange={() => (venueProvided = true)} /><b>Eigener Conference Room</b><small>Platz für Teams, stabiles WLAN, großer Screen.</small><span class="choice-price">Inklusive</span></label>
 				<label class:selected={!venueProvided} class="choice"><input type="radio" name="venue" checked={!venueProvided} onchange={() => (venueProvided = false)} /><b>Location organisieren lassen</b><small>Passender Raum nahe Ihrer Wunschadresse.</small><span class="choice-price">+ 1.000 €</span></label>
 			</div></section>
@@ -376,7 +376,7 @@
 				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>Lunch</h2>
+			<section class="config-section" use:reveal><h2>Mittagessen</h2>
 				<div class="option-grid lunch-grid">
 					<label class:selected={lunch === 'pizza'} class="choice"><input type="radio" name="lunch" checked={lunch === 'pizza'} onchange={() => (lunch = 'pizza')} /><b>Pizza</b><small>Der Hackathon-Klassiker.</small><span class="choice-price">Inklusive</span></label>
 					<label class:selected={lunch === 'custom'} class="choice"><input type="radio" name="lunch" checked={lunch === 'custom'} onchange={() => (lunch = 'custom')} /><b>Custom</b><small>Catering nach Wunsch.</small><span class="choice-price">+ 500 €</span></label>
@@ -388,7 +388,7 @@
 			</section>
 
 			<section class="config-section" use:reveal>
-				<h2>Event address</h2>
+				<h2>Veranstaltungsadresse</h2>
 				<div class="field-grid">
 					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby={searchStatus === 'idle' ? undefined : 'address-search-status'} aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}{#if searchStatus !== 'idle'}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>{/if}</div>
 					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
@@ -397,7 +397,7 @@
 				</div>
 			</section>
 
-			<section class="config-section" use:reveal><h2>Event date</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
+			<section class="config-section" use:reveal><h2>Veranstaltungsdatum</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
 
 			<section class="config-section" use:reveal><h2>Kontakt</h2><div class="field-grid">
 				<div class="field full"><label for="company">Unternehmen</label><input id="company" autocomplete="organization" bind:value={companyName} /></div>
@@ -406,7 +406,7 @@
 				<div class="field full"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
 			</div></section>
 
-			<section class="config-section" use:reveal><h2>60 min Prep Call</h2>
+			<section class="config-section" use:reveal><h2>60 Min. Vorbereitungsgespräch</h2>
 				{#if slotsLoading}
 					<p class="slot-status">Freie Termine werden geladen …</p>
 				{:else if slots.length === 0}

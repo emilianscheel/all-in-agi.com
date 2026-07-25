@@ -270,9 +270,9 @@ img { display: block; max-width: 100%; }
 .event-card h2 { margin: 0; max-width: 360px; font-size: 24px; letter-spacing: -.04em; }
 .event-card-price { margin-left: auto; font-size: 21px; font-weight: 700; white-space: nowrap; letter-spacing: -.03em; }
 .event-address { margin: 8px 0 16px; color: var(--muted); font-size: 13px; line-height: 1.35; }
-.event-address-placeholder { font-style: italic; }
 .event-details { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
-.event-detail { min-width: 0; padding: 10px; border-radius: 12px; background: var(--glass-detail); }
+.event-detail { min-width: 0; padding: 10px; border-radius: 12px; background: var(--glass-detail); transition: opacity .22s ease; }
+.event-detail-unselected { opacity: 0; }
 .event-detail small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
 .event-detail b { display: block; overflow-wrap: anywhere; font-size: 12px; line-height: 1.3; }
 
