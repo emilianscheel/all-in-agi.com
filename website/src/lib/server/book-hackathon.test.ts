@@ -15,6 +15,7 @@ const configuration: BookingConfiguration = {
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
 	phone: '+49 30 123456',
+	message: '',
 	address: {
 		label: 'Musterstraße 1, 10115 Berlin',
 		street: 'Musterstraße 1',

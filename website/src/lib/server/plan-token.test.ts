@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { decryptPlan, encryptPlan } from './plan-token';
-import type { SharedPlanV1, SharedPlanV2 } from '$lib/shared-plan';
+import type { SharedPlanV1, SharedPlanV2, SharedPlanV3 } from '$lib/shared-plan';
 
-const plan: SharedPlanV2 = {
-	v: 2,
+const plan: SharedPlanV3 = {
+	v: 3,
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
@@ -16,12 +16,16 @@ const plan: SharedPlanV2 = {
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
 	phone: '+49 30 123456',
+	message: 'Bitte vegetarische Optionen einplanen.',
 	address: { label: 'Musterstraße 1, Berlin', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland', latitude: 52.5, longitude: 13.4 },
 	preferredEventDate: '2099-06-20',
 	consultationSlot: '2099-05-10T10:00:00.000Z',
 	consultationMode: 'custom',
 	customConsultationDate: '2099-05-10'
 };
+
+const { message: _message, ...planWithoutMessage } = plan;
+const v2Plan: SharedPlanV2 = { ...planWithoutMessage, v: 2 };
 
 const legacyPlan: SharedPlanV1 = {
 	v: 1,
@@ -48,9 +52,14 @@ describe('encrypted plan tokens', () => {
 		expect(await decryptPlan(token)).toEqual(plan);
 	});
 
-	test('migrates a v1 plan to an unanswered v2 tools section', async () => {
+	test('migrates a v2 plan with an empty message', async () => {
+		const migrated = await decryptPlan(await encryptPlan(v2Plan));
+		expect(migrated).toEqual({ ...v2Plan, v: 3, message: '' });
+	});
+
+	test('migrates a v1 plan to v3 with unanswered tools and message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(legacyPlan));
-		expect(migrated).toEqual({ ...legacyPlan, v: 2, toolProvision: null, codingTools: [], customCodingTool: '' });
+		expect(migrated).toEqual({ ...legacyPlan, v: 3, toolProvision: null, codingTools: [], customCodingTool: '', message: '' });
 	});
 
 	test('rejects tampered tokens', async () => {

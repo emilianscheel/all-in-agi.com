@@ -1,12 +1,9 @@
 import { env } from '$env/dynamic/private';
 import { bookingMetadata, type BookingConfiguration } from '$lib/booking';
 import type { ConfirmedBooking } from './hackathons';
+import { BookingProviderError, reschedulePrepCallWithToken } from './cal-reschedule';
 
-export class BookingProviderError extends Error {
-	constructor(message: string, readonly status: number) {
-		super(message);
-	}
-}
+export { BookingProviderError } from './cal-reschedule';
 
 export async function bookPrepCall(
 	config: BookingConfiguration,
@@ -77,4 +74,13 @@ export async function bookPrepCall(
 		if (error instanceof BookingProviderError) throw error;
 		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502);
 	}
+}
+
+export async function reschedulePrepCall(
+	bookingUid: string | null,
+	startValue: string,
+	requestFetch: typeof fetch,
+	demo: boolean
+): Promise<ConfirmedBooking> {
+	return reschedulePrepCallWithToken(bookingUid, startValue, requestFetch, demo, env.CAL_API_KEY);
 }

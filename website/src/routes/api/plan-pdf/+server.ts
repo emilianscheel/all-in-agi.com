@@ -4,7 +4,8 @@ import { json } from '@sveltejs/kit';
 
 export async function POST({ request }) {
 	try {
-		const config = await request.json() as BookingConfiguration;
+		const body = await request.json() as Partial<BookingConfiguration>;
+		const config = { ...body, message: typeof body.message === 'string' ? body.message : '' } as BookingConfiguration;
 		const errors = validateConfiguration(config);
 		if (errors.length) return json({ message: errors[0] }, { status: 400 });
 		const bytes = await createPlanPdf(config);

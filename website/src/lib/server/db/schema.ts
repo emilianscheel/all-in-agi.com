@@ -11,6 +11,7 @@ export const hackathons = pgTable('hackathons', {
 	contactName: text('contact_name').notNull(),
 	contactEmail: text('contact_email').notNull(),
 	contactPhone: text('contact_phone').notNull(),
+	message: text('message').notNull().default(''),
 	capacity: integer('capacity').notNull(),
 	venueProvided: boolean('venue_provided').notNull(),
 	equipment: text('equipment').$type<Equipment>().notNull(),

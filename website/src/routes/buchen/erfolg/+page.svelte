@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { ArrowRight, CalendarPlus, Check, Download } from 'lucide-svelte';
 	import MapPreview from '$lib/MapPreview.svelte';
+	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
 	import { formatDate, type BookingConfiguration } from '$lib/booking';
@@ -64,7 +65,7 @@
 			<h1 id="success-title">Erstgespräch gebucht</h1>
 			{#if summary}
 				<p class="success-date">{formatDate(summary.booking.start || summary.consultationSlot, true)} Uhr</p>
-				<p>Der nächste Schritt steht. Laden Sie Ihren Hackathon-Plan herunter oder teilen Sie ihn direkt mit Ihrem Team.</p>
+				<MiniContactCards />
 				<div class="success-actions">
 					{#if summary.hackathonId}
 						<a class="button-primary action-button" href={summary.detailUrl || `/${summary.hackathonId}`}>
@@ -81,6 +82,7 @@
 				</div>
 			{:else}
 				<p>Die Buchungszusammenfassung ist in dieser Browsersitzung nicht mehr verfügbar.</p>
+				<MiniContactCards />
 				<div class="success-actions">
 					<a class="button-primary action-button" href="/buchen">Neuen Hackathon planen</a>
 				</div>

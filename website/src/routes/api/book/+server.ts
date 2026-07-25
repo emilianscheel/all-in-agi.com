@@ -6,7 +6,10 @@ import { json } from '@sveltejs/kit';
 
 export async function POST({ request, fetch }) {
 	let config: BookingConfiguration;
-	try { config = await request.json(); } catch { return json({ message: 'Die Buchungsdaten sind ungültig.' }, { status: 400 }); }
+	try {
+		const body = await request.json() as Partial<BookingConfiguration>;
+		config = { ...body, message: typeof body.message === 'string' ? body.message : '' } as BookingConfiguration;
+	} catch { return json({ message: 'Die Buchungsdaten sind ungültig.' }, { status: 400 }); }
 	const errors = validateConfiguration(config);
 	if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 	try {

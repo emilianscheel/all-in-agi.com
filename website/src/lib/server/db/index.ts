@@ -5,10 +5,11 @@ import * as schema from './schema';
 let client: Sql | undefined;
 let database: PostgresJsDatabase<typeof schema> | undefined;
 
-export function getDb() {
+export async function getDb() {
 	if (database) return database;
-	if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL ist nicht konfiguriert.');
-	client = postgres(process.env.DATABASE_URL, { max: 10 });
+	const { env } = await import('$env/dynamic/private');
+	if (!env.DATABASE_URL) throw new Error('DATABASE_URL ist nicht konfiguriert.');
+	client = postgres(env.DATABASE_URL, { max: 10 });
 	database = drizzle(client, { schema });
 	return database;
 }

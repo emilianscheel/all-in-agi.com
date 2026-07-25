@@ -1,0 +1,101 @@
+<script lang="ts">
+	import { onDestroy } from 'svelte';
+	import type { EventAddress } from '$lib/booking';
+	import { normalizePhotonAddress, photonFeatureLabel, type PhotonFeature } from '$lib/photon';
+
+	let {
+		value,
+		onchange,
+		idPrefix = 'address'
+	}: {
+		value: EventAddress;
+		onchange: (value: EventAddress) => void;
+		idPrefix?: string;
+	} = $props();
+
+	let addressQuery = $state('');
+	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
+	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
+	let abortController: AbortController | undefined;
+	let debounce: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		addressQuery = value.label || [value.street, value.city].filter(Boolean).join(', ');
+	});
+
+	function patch(patchValue: Partial<EventAddress>) {
+		onchange({ ...value, ...patchValue, country: 'Deutschland' });
+	}
+
+	function updateSuggestions() {
+		if (debounce) clearTimeout(debounce);
+		abortController?.abort();
+		const query = addressQuery.trim();
+		if (query.length < 3) {
+			suggestions = [];
+			searchStatus = 'idle';
+			return;
+		}
+		debounce = setTimeout(() => searchAddress(query), 250);
+	}
+
+	async function searchAddress(query: string) {
+		abortController?.abort();
+		abortController = new AbortController();
+		searchStatus = 'loading';
+		try {
+			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: 'de', limit: '5' });
+			const response = await fetch(`https://photon.komoot.io/api?${params}`, { signal: abortController.signal });
+			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
+			const result = await response.json() as { features?: PhotonFeature[] };
+			suggestions = (result.features ?? [])
+				.map((feature) => ({ label: photonFeatureLabel(feature), feature }))
+				.filter((suggestion) => suggestion.label);
+			searchStatus = suggestions.length ? 'idle' : 'empty';
+		} catch (error) {
+			if ((error as Error).name !== 'AbortError') {
+				suggestions = [];
+				searchStatus = 'error';
+			}
+		}
+	}
+
+	function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
+		addressQuery = suggestion.label;
+		suggestions = [];
+		searchStatus = 'idle';
+		onchange(normalizePhotonAddress(suggestion.feature));
+	}
+
+	onDestroy(() => {
+		if (debounce) clearTimeout(debounce);
+		abortController?.abort();
+	});
+</script>
+
+<div class="field-grid">
+	<div class="field full address-search-wrap">
+		<label for={`${idPrefix}-search`}>Adresse suchen</label>
+		<input
+			id={`${idPrefix}-search`}
+			autocomplete="off"
+			aria-describedby={searchStatus === 'idle' ? undefined : `${idPrefix}-search-status`}
+			aria-autocomplete="list"
+			aria-controls={`${idPrefix}-suggestions`}
+			placeholder="Straße, Ort oder Unternehmen"
+			bind:value={addressQuery}
+			oninput={updateSuggestions}
+		/>
+		{#if suggestions.length}
+			<ul id={`${idPrefix}-suggestions`} class="suggestions">
+				{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}
+			</ul>
+		{/if}
+		{#if searchStatus !== 'idle'}
+			<p id={`${idPrefix}-search-status`} class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>
+		{/if}
+	</div>
+	<div class="field full"><label for={`${idPrefix}-street`}>Straße und Hausnummer</label><input id={`${idPrefix}-street`} autocomplete="street-address" value={value.street} oninput={(event) => patch({ street: event.currentTarget.value, label: '' })} /></div>
+	<div class="field"><label for={`${idPrefix}-postal`}>Postleitzahl</label><input id={`${idPrefix}-postal`} inputmode="numeric" autocomplete="postal-code" value={value.postalCode} oninput={(event) => patch({ postalCode: event.currentTarget.value, label: '' })} /></div>
+	<div class="field"><label for={`${idPrefix}-city`}>Ort</label><input id={`${idPrefix}-city`} autocomplete="address-level2" value={value.city} oninput={(event) => patch({ city: event.currentTarget.value, label: '' })} /></div>
+</div>

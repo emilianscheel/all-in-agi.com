@@ -324,8 +324,12 @@ img { display: block; max-width: 100%; }
 .field { display: grid; gap: 7px; }
 .field.full { grid-column: 1 / -1; }
 .field label { color: var(--secondary-ink); font-size: 13px; font-weight: 600; }
-.field input, .field select { width: 100%; height: 52px; padding: 0 15px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--control); color: var(--ink); }
-.field input:focus, .field select:focus { border-color: var(--orange); outline: 2px solid color-mix(in srgb, var(--orange) 25%, transparent); }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--control-border); border-radius: 12px; background: var(--control); color: var(--ink); font: inherit; }
+.field input, .field select { height: 52px; padding: 0 15px; }
+.field textarea { min-height: 132px; padding: 14px 15px; resize: vertical; line-height: 1.5; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--orange); outline: 2px solid color-mix(in srgb, var(--orange) 25%, transparent); }
+.optional-label { margin-left: 5px; color: var(--muted); font-weight: 400; }
+.field-counter { justify-self: end; color: var(--muted); font-size: 11px; }
 .custom-lunch { margin: 11px -3px -3px; padding: 3px; overflow: visible; }
 .coding-tools { margin-top: 18px; padding: 20px 20px 14px; border: 1px solid var(--soft-line); border-radius: 18px; background: var(--card); overflow: hidden; }
 .coding-tools.has-custom-tool { padding-bottom: 20px; }
@@ -389,8 +393,21 @@ img { display: block; max-width: 100%; }
 .summary-row > svg { color: var(--muted); }
 .summary-row span { min-width: 0; }
 .summary-row span small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
-.summary-row b { text-align: right; }
+.summary-row b { text-align: right; transition: transform .24s ease; }
 .summary-row.total { border: 0; padding-top: 18px; font-size: 20px; font-weight: 700; }
+.editable-summary-item { position: relative; }
+.summary-edit-button { position: absolute; z-index: 2; top: 9px; right: 0; width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--card) 72%, transparent); color: var(--ink); cursor: pointer; opacity: 0; transform: translateX(5px); transition: opacity .24s ease, transform .24s ease, background .18s ease; }
+.summary-edit-button:hover { background: var(--card); }
+.editable-summary-item:hover .summary-edit-button, .editable-summary-item:focus-within .summary-edit-button, .editable-summary-item.active .summary-edit-button { opacity: 1; transform: translateX(0); }
+.editable-summary-item:hover .summary-row > b, .editable-summary-item:focus-within .summary-row > b, .editable-summary-item.active .summary-row > b { transform: translateX(-34px); }
+.summary-row-editor { padding: 10px 0 22px 32px; border-bottom: 1px solid var(--line); }
+.summary-row-editor .option-grid, .summary-row-editor .option-grid.three, .summary-row-editor .field-grid { grid-template-columns: 1fr; }
+.summary-row-editor .choice { min-height: 96px; }
+.summary-row-editor .coding-tools { padding-left: 14px; padding-right: 14px; }
+.summary-row-editor .event-date-picker, .summary-row-editor .prep-time-picker { padding: 16px 12px 20px; border-radius: 18px; }
+.inline-edit-error { margin: 14px 0 0; color: var(--error-ink); font-size: 13px; line-height: 1.4; }
+.summary-edit-actions { margin-top: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.summary-edit-actions button { min-width: 112px; min-height: 44px; }
 .action-button { width: 100%; margin-top: 10px; gap: 8px; font-weight: 400; }
 .error-box { margin: 16px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--error-bg); color: var(--error-ink); font-size: 13px; line-height: 1.4; }
 .error-box ul { margin: 0; padding-left: 18px; }
@@ -410,7 +427,14 @@ img { display: block; max-width: 100%; }
 .success-panel h1 { margin: 0; font-size: clamp(44px, 5.4vw, 68px); line-height: .98; letter-spacing: -.055em; }
 .success-panel > p:not(.eyebrow) { margin: 20px 0 0; color: var(--muted); font-size: 18px; line-height: 1.5; }
 .success-panel .success-date { color: var(--ink) !important; font-size: 22px !important; font-weight: 600; }
+.mini-contact-grid { margin-top: 26px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mini-contact-card { min-width: 0; padding: 13px 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--soft-line); border-radius: 15px; background: var(--surface); color: var(--ink); text-decoration: none; transition: border-color .18s ease, transform .18s ease; }
+.mini-contact-card:hover { border-color: var(--control-border); transform: translateY(-1px); }
+.mini-contact-card svg { flex: 0 0 auto; color: var(--orange); }
+.mini-contact-card span { min-width: 0; overflow-wrap: anywhere; font-size: clamp(10px, .8vw, 12px); line-height: 1.3; }
+.mini-contact-card small { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .success-actions { margin-top: 28px; display: flex; flex-direction: column; }
+.mini-contact-grid + .success-actions { margin-top: 18px; }
 .success-actions .action-button { min-height: 50px; }
 .detail-layout { align-items: start; }
 .detail-map { position: sticky; top: 72px; height: calc(100svh - 102px); }
@@ -493,6 +517,8 @@ img { display: block; max-width: 100%; }
 
 @media (hover: none) {
 	.brand-wordmark { display: none; }
+	.summary-edit-button { opacity: 1; transform: none; }
+	.editable-summary-item .summary-row > b { transform: translateX(-34px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -549,6 +575,9 @@ img { display: block; max-width: 100%; }
 	.success-layout { gap: 10px; }
 	.success-map .map-shell { height: 370px; }
 	.success-panel { min-height: 520px; padding: 36px 24px; border-radius: 22px; }
+	.mini-contact-grid { grid-template-columns: 1fr; }
+	.summary-row-editor { padding-left: 0; }
+	.summary-edit-actions button { min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

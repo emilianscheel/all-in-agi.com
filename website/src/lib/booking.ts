@@ -39,6 +39,7 @@ export interface BookingConfiguration {
 	contactName: string;
 	email: string;
 	phone: string;
+	message: string;
 	address: EventAddress;
 	preferredEventDate: string;
 	consultationSlot: string;
@@ -84,6 +85,7 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 		codingTools: selectedCodingToolLabels(config).join(', '),
 		customCodingTool: config.codingTools.includes('custom') ? config.customCodingTool : '',
 		address: [config.address.street, config.address.postalCode, config.address.city].join(', '),
+		message: config.message.trim(),
 		totalPrice: String(price.totalPrice)
 	};
 }
@@ -113,10 +115,15 @@ export function formatDate(value: string, withTime = false) {
 
 export function validateConfiguration(config: BookingConfiguration) {
 	const errors: string[] = [];
+	if (![15, 30, 50].includes(config.capacity)) errors.push('Bitte wählen Sie eine gültige Teamgröße.');
+	if (typeof config.venueProvided !== 'boolean') errors.push('Bitte wählen Sie einen Veranstaltungsort.');
+	if (!['projector', 'tv', 'none'].includes(config.equipment)) errors.push('Bitte wählen Sie ein gültiges Demo Setup.');
+	if (!['pizza', 'custom', 'none', 'self-organized'].includes(config.lunch)) errors.push('Bitte wählen Sie eine gültige Lunch-Option.');
 	if (!config.companyName.trim()) errors.push('Bitte geben Sie den Unternehmensnamen an.');
 	if (!config.contactName.trim()) errors.push('Bitte geben Sie eine Ansprechperson an.');
 	if (!/^\S+@\S+\.\S+$/.test(config.email)) errors.push('Bitte geben Sie eine gültige E-Mail-Adresse an.');
 	if (config.phone.replace(/\D/g, '').length < 6) errors.push('Bitte geben Sie eine gültige Telefonnummer an.');
+	if (typeof config.message !== 'string' || config.message.length > 500) errors.push('Ihre Nachricht darf maximal 500 Zeichen lang sein.');
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
 		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
 	}

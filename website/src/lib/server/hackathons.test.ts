@@ -8,6 +8,7 @@ const record = {
 	contactName: 'Ada Beispiel',
 	contactEmail: 'ada@example.com',
 	contactPhone: '+49 30 123456',
+	message: 'Bitte vegetarisch.',
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
@@ -36,15 +37,16 @@ const record = {
 } as HackathonRecord;
 
 describe('public hackathon mapping', () => {
-	test('exposes event details and redacts all contact fields', () => {
+	test('exposes editable booking and contact details', () => {
 		const result = toPublicHackathon(record);
 		expect(result.companyName).toBe('Musterwerke GmbH');
 		expect(result.price.totalPrice).toBe(4000);
 		expect(result.booking.uid).toBe('booking-1');
-		expect(result).not.toHaveProperty('contactName');
+		expect(result.contactName).toBe('Ada Beispiel');
+		expect(result.email).toBe('ada@example.com');
+		expect(result.phone).toBe('+49 30 123456');
+		expect(result.message).toBe('Bitte vegetarisch.');
 		expect(result).not.toHaveProperty('contactEmail');
 		expect(result).not.toHaveProperty('contactPhone');
-		expect(result).not.toHaveProperty('email');
-		expect(result).not.toHaveProperty('phone');
 	});
 });

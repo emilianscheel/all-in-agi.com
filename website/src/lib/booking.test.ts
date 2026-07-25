@@ -14,6 +14,7 @@ const validConfiguration: BookingConfiguration = {
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
 	phone: '+49 30 123456',
+	message: '',
 	address: {
 		label: 'Musterstraße 1, 10115 Berlin',
 		street: 'Musterstraße 1',
@@ -72,6 +73,11 @@ describe('booking validation', () => {
 		expect(validateConfiguration({ ...validConfiguration, lunch: 'none', customLunch: 'ignored' })).toEqual([]);
 	});
 
+	test('accepts an optional message up to 500 characters', () => {
+		expect(validateConfiguration({ ...validConfiguration, message: 'x'.repeat(500) })).toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, message: 'x'.repeat(501) })).toContain('Ihre Nachricht darf maximal 500 Zeichen lang sein.');
+	});
+
 	test('requires a tool mode and at least one valid tool', () => {
 		expect(validateConfiguration({ ...validConfiguration, toolProvision: null })).toContain('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.');
 		expect(validateConfiguration({ ...validConfiguration, codingTools: [] })).toContain('Bitte wählen Sie mindestens ein Coding Tool.');
@@ -94,7 +100,12 @@ describe('booking metadata', () => {
 			toolProvision: 'needed',
 			codingTools: 'Codex, Internes Tool',
 			customCodingTool: 'Internes Tool',
+			message: '',
 			totalPrice: '4500'
 		});
+	});
+
+	test('includes the customer message in Cal.com metadata', () => {
+		expect(bookingMetadata({ ...validConfiguration, message: 'Bitte vegetarisch.' }).message).toBe('Bitte vegetarisch.');
 	});
 });

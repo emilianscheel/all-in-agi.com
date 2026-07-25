@@ -2,20 +2,22 @@
 	import { browser } from '$app/environment';
 	import { goto, replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
-	import { slide } from 'svelte/transition';
-	import { Apple, Award, Beef, CakeSlice, CalendarDays, Camera, Check, Clock3, Code2, Coffee, Cookie, Drumstick, Fish, IceCreamBowl, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Salad, Sandwich, Soup, Utensils, UtensilsCrossed, Users } from 'lucide-svelte';
-	import { CAPACITY_PRICES, CODING_TOOLS, PROVIDED_CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
+	import { Apple, Award, Beef, CakeSlice, CalendarDays, Camera, Clock3, Code2, Coffee, Cookie, Drumstick, Fish, IceCreamBowl, MapPin, Monitor, Pizza, Plane, ReceiptEuro, Salad, Sandwich, Soup, Utensils, UtensilsCrossed, Users } from 'lucide-svelte';
+	import { PROVIDED_CODING_TOOLS, formatDate, formatPrice, getPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration, type Capacity, type CodingTool, type Equipment, type EventAddress, type Lunch, type ToolProvision } from '$lib/booking';
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import AnimatedValue from '$lib/AnimatedValue.svelte';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
-	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
 	import { lunchIconKind } from '$lib/lunch-icon';
-	import { availablePrepCallDates, normalizeAvailabilitySlots, prepCallDateBounds, prepCallSlotsForDate } from '$lib/prep-call';
-	import type { SharedPlanV2 } from '$lib/shared-plan';
+	import type { SharedPlanV3 } from '$lib/shared-plan';
 	import { reveal } from '$lib/motion';
 	import MapPreview from '$lib/MapPreview.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
+	import AddressEditor from '$lib/config/AddressEditor.svelte';
+	import ConfigOptionCards, { type OptionValues } from '$lib/config/ConfigOptionCards.svelte';
+	import ContactFields from '$lib/config/ContactFields.svelte';
+	import MessageField from '$lib/config/MessageField.svelte';
+	import PrepCallEditor from '$lib/config/PrepCallEditor.svelte';
 
 	let capacity = $state<Capacity>(15);
 	let venueProvided = $state(true);
@@ -29,6 +31,7 @@
 	let contactName = $state('');
 	let email = $state('');
 	let phone = $state('');
+	let message = $state('');
 	let preferredEventDate = $state('');
 	let consultationSlot = $state('');
 	let consultationMode = $state<'quick' | 'custom'>('quick');
@@ -44,9 +47,8 @@
 	let planHydrated = $state(false);
 	let planToken = $state('');
 	let planError = $state('');
-	let slots = $state<string[]>([]);
 	let slotsLoading = $state(true);
-	let demoMode = $state(false);
+	let availabilityKey = $state(0);
 	let submitting = $state(false);
 	let errors = $state<string[]>([]);
 	let eventCard: HTMLElement;
@@ -81,14 +83,18 @@
 		coffee: Coffee,
 		apple: Apple
 	}[selectedLunchIconKind]);
-	let visibleCodingTools = $derived(toolProvision === 'needed'
-		? PROVIDED_CODING_TOOLS.map((id) => CODING_TOOLS.find((tool) => tool.id === id)!)
-		: CODING_TOOLS);
-	let prepCallDates = $derived(availablePrepCallDates(slots));
-	let customConsultationSlots = $derived(prepCallSlotsForDate(slots, customConsultationDate));
+	let optionValues = $derived<OptionValues>({
+		capacity,
+		venueProvided,
+		equipment,
+		lunch,
+		customLunch,
+		toolProvision,
+		codingTools,
+		customCodingTool
+	});
 
 	const { min: minEventDate, max: maxEventDate } = eventDateBounds();
-	const { min: minPrepCallDate, max: maxPrepCallDate } = prepCallDateBounds();
 
 	$effect(() => {
 		const nextCustomLunch = customLunch.trim();
@@ -98,54 +104,15 @@
 		}, 280);
 	});
 
-	async function loadAvailability() {
-		slotsLoading = true;
-		try {
-			const start = new Date().toISOString().slice(0, 10);
-			const endDate = new Date();
-			endDate.setDate(endDate.getDate() + 45);
-			const response = await fetch(`/api/availability?start=${start}&end=${endDate.toISOString().slice(0, 10)}&tz=Europe/Berlin`);
-			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Verfügbarkeit konnte nicht geladen werden.');
-			slots = normalizeAvailabilitySlots(Array.isArray(result.slots) ? result.slots : []);
-			if (consultationSlot && !slots.includes(consultationSlot)) consultationSlot = '';
-			if (customConsultationDate && !availablePrepCallDates(slots).includes(customConsultationDate)) customConsultationDate = '';
-			demoMode = Boolean(result.demo);
-		} catch (error) {
-			slots = [];
-			errors = [error instanceof Error ? error.message : 'Verfügbarkeit konnte nicht geladen werden.'];
-		} finally {
-			slotsLoading = false;
-		}
-	}
-
-	function selectQuickSlot(slot: string) {
-		consultationMode = 'quick';
-		customConsultationDate = '';
-		consultationSlot = slot;
-	}
-
-	function selectCustomMode() {
-		if (consultationMode === 'custom') return;
-		consultationMode = 'custom';
-		consultationSlot = '';
-	}
-
-	function selectCustomDate(date: string) {
-		customConsultationDate = date;
-		consultationSlot = '';
-	}
-
-	function toggleCodingTool(tool: CodingTool) {
-		codingTools = codingTools.includes(tool) ? codingTools.filter((selected) => selected !== tool) : [...codingTools, tool];
-	}
-
-	function selectToolProvision(provision: ToolProvision) {
-		toolProvision = provision;
-		if (provision === 'needed') {
-			codingTools = codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool));
-			customCodingTool = '';
-		}
+	function updateOptionValues(patch: Partial<OptionValues>) {
+		if (patch.capacity !== undefined) capacity = patch.capacity;
+		if (patch.venueProvided !== undefined) venueProvided = patch.venueProvided;
+		if (patch.equipment !== undefined) equipment = patch.equipment;
+		if (patch.lunch !== undefined) lunch = patch.lunch;
+		if (patch.customLunch !== undefined) customLunch = patch.customLunch;
+		if (patch.toolProvision !== undefined) toolProvision = patch.toolProvision;
+		if (patch.codingTools !== undefined) codingTools = patch.codingTools;
+		if (patch.customCodingTool !== undefined) customCodingTool = patch.customCodingTool;
 	}
 
 	function updateSuggestions() {
@@ -205,20 +172,21 @@
 			contactName,
 			email,
 			phone,
+			message,
 			address,
 			preferredEventDate,
 			consultationSlot
 		};
 	}
 
-	function buildSharedPlan(): SharedPlanV2 {
-		return { v: 2, ...buildConfiguration(), consultationMode, customConsultationDate };
+	function buildSharedPlan(): SharedPlanV3 {
+		return { v: 3, ...buildConfiguration(), consultationMode, customConsultationDate };
 	}
 
-	function applySharedPlan(plan: SharedPlanV2) {
+	function applySharedPlan(plan: SharedPlanV3) {
 		capacity = plan.capacity; venueProvided = plan.venueProvided; equipment = plan.equipment; lunch = plan.lunch; customLunch = plan.customLunch;
 		toolProvision = plan.toolProvision; codingTools = plan.toolProvision === 'needed' ? plan.codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool)) : plan.codingTools; customCodingTool = plan.toolProvision === 'needed' ? '' : plan.customCodingTool;
-		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; address = plan.address;
+		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; message = plan.message; address = plan.address;
 		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
 		preferredEventDate = plan.preferredEventDate; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
 	}
@@ -235,7 +203,7 @@
 		return `${location.origin}${path}`;
 	}
 
-	function schedulePlanUrl(plan: SharedPlanV2) {
+	function schedulePlanUrl(plan: SharedPlanV3) {
 		if (!browser || !planHydrated) return;
 		if (planDebounce) clearTimeout(planDebounce);
 		planDebounce = setTimeout(() => encodePlan(plan).catch((error) => { if ((error as Error).name !== 'AbortError') planError = (error as Error).message; }), 400);
@@ -266,7 +234,12 @@
 			const response = await fetch('/api/book', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(config) });
 			const result = await response.json();
 			if (!response.ok) {
-				if (response.status === 409) { consultationSlot = ''; customConsultationDate = ''; consultationMode = 'quick'; await loadAvailability(); }
+				if (response.status === 409) {
+					consultationSlot = '';
+					customConsultationDate = '';
+					consultationMode = 'quick';
+					availabilityKey += 1;
+				}
 				throw new Error(result.message ?? 'Die Buchung konnte nicht abgeschlossen werden.');
 			}
 			const planUrl = await getShareUrl();
@@ -322,7 +295,6 @@
 		schedulePreviewFade();
 		await hydratePlanFromUrl();
 		planHydrated = true;
-		await loadAvailability();
 		schedulePlanUrl(buildSharedPlan());
 	});
 	onDestroy(() => {
@@ -404,105 +376,58 @@
 		<form class="config-form" onsubmit={(event) => { event.preventDefault(); submitBooking(); }} novalidate>
 			<section class="config-section" use:reveal>
 				<h2>Teamgröße</h2>
-				<div class="option-grid three">
-					{#each [15, 30, 50] as size}<label class:selected={capacity === size} class="choice"><input type="radio" name="capacity" value={size} checked={capacity === size} onchange={() => (capacity = size as Capacity)} /><b>{size} Personen</b><small>{size === 15 ? 'Kompaktes Team' : size === 30 ? 'Mehrere Build-Teams' : 'Großer Demo Day'}</small><span class="choice-price">{formatPrice(CAPACITY_PRICES[size as Capacity])}</span></label>{/each}
-				</div>
+				<ConfigOptionCards kind="capacity" values={optionValues} onchange={updateOptionValues} />
 			</section>
 
-			<section class="config-section" use:reveal><h2>Veranstaltungsort</h2><div class="option-grid">
-				<label class:selected={venueProvided} class="choice"><input type="radio" name="venue" checked={venueProvided} onchange={() => (venueProvided = true)} /><b>Eigener Conference Room</b><small>Platz für Teams, stabiles WLAN, großer Screen.</small><span class="choice-price">Inklusive</span></label>
-				<label class:selected={!venueProvided} class="choice"><input type="radio" name="venue" checked={!venueProvided} onchange={() => (venueProvided = false)} /><b>Location organisieren lassen</b><small>Passender Raum nahe Ihrer Wunschadresse.</small><span class="choice-price">+ 1.000 €</span></label>
-			</div></section>
+			<section class="config-section" use:reveal><h2>Veranstaltungsort</h2><ConfigOptionCards kind="venue" values={optionValues} onchange={updateOptionValues} /></section>
 
 			<section class="config-section tools-section" use:reveal><h2>Tools</h2>
-				<div class="option-grid tools-mode-grid">
-					<label class:selected={toolProvision === 'existing'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'existing'} onchange={() => selectToolProvision('existing')} /><b>Wir haben Agentic Coding Tools</b><span class="choice-price">Inklusive</span></label>
-					<label class:selected={toolProvision === 'needed'} class="choice"><input type="radio" name="tool-provision" checked={toolProvision === 'needed'} onchange={() => selectToolProvision('needed')} /><b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span></label>
-				</div>
-				{#if toolProvision}
-					<div class:has-custom-tool={codingTools.includes('custom')} class="coding-tools" transition:slide={{ duration: 300 }}>
-						<p>{toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?'}</p>
-						<div class="coding-tool-list">
-							{#each visibleCodingTools as tool}
-								<label class="coding-tool-option">
-									<input type="checkbox" checked={codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
-									<span class="round-checkbox" aria-hidden="true">{#if codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
-									<span class="coding-tool-label">{tool.label}</span>
-									{#if tool.icon}<img class="coding-tool-icon" src={tool.icon} alt="" width="30" height="30" loading="lazy" decoding="async" aria-hidden="true" />{/if}
-								</label>
-							{/each}
-						</div>
-						{#if codingTools.includes('custom')}
-							<div class="custom-tool" transition:slide={{ duration: 280 }}>
-								<div class="field"><label for="custom-coding-tool">Individuelles Coding Tool</label><input id="custom-coding-tool" maxlength="160" placeholder="z. B. internes Agent Framework" bind:value={customCodingTool} /></div>
-							</div>
-						{/if}
-					</div>
-				{/if}
+				<ConfigOptionCards kind="tools" values={optionValues} onchange={updateOptionValues} />
 			</section>
 
-			<section class="config-section" use:reveal><h2>Demo setup</h2><div class="option-grid demo-setup-grid">
-				<label class:selected={equipment !== 'none'} class="choice"><input type="radio" name="equipment" checked={equipment !== 'none'} onchange={() => (equipment = 'projector')} /><b>Projector / Display</b><small>Großer Screen vorhanden.</small></label>
-				<label class:selected={equipment === 'none'} class="choice"><input type="radio" name="equipment" checked={equipment === 'none'} onchange={() => (equipment = 'none')} /><b>Kein Screen</b><small>Bringen wir mit.</small></label>
-			</div></section>
+			<section class="config-section" use:reveal><h2>Demo setup</h2><ConfigOptionCards kind="equipment" values={optionValues} onchange={updateOptionValues} /></section>
 
 			<section class="config-section" use:reveal><h2>Mittagessen</h2>
-				<div class="option-grid lunch-grid">
-					<label class:selected={lunch === 'pizza'} class="choice"><input type="radio" name="lunch" checked={lunch === 'pizza'} onchange={() => (lunch = 'pizza')} /><b>Pizza</b><small>Der Hackathon-Klassiker.</small><span class="choice-price">Inklusive</span></label>
-					<label class:selected={lunch === 'custom'} class="choice"><input type="radio" name="lunch" checked={lunch === 'custom'} onchange={() => (lunch = 'custom')} /><b>Custom</b><small>Catering nach Wunsch.</small><span class="choice-price">+ 500 €</span></label>
-					<label class:selected={lunch === 'none'} class="choice"><input type="radio" name="lunch" checked={lunch === 'none'} onchange={() => (lunch = 'none')} /><b>No lunch</b><small>Ohne Mahlzeit.</small><span class="choice-price">− 500 €</span></label>
-					<label class:selected={lunch === 'self-organized'} class="choice"><input type="radio" name="lunch" checked={lunch === 'self-organized'} onchange={() => (lunch = 'self-organized')} /><b>Selbstorganisiert</b><small>Sie kümmern sich um das Essen.</small><span class="choice-price">− 500 €</span></label>
-				</div>
-				{#if lunch === 'custom'}<div class="custom-lunch" transition:slide={{ duration: 300 }}><div class="field"><label for="custom-lunch">Catering-Wunsch</label><input id="custom-lunch" maxlength="160" placeholder="z. B. vegetarische Bowls oder Buffet" bind:value={customLunch} /></div></div>{/if}
-				<p class="section-note">{lunch === 'none' ? 'Keine Mahlzeit eingeplant.' : lunch === 'self-organized' ? 'Das Catering wird von Ihnen organisiert.' : 'Wir organisieren das Catering für Sie.'}</p>
+				<ConfigOptionCards kind="lunch" values={optionValues} onchange={updateOptionValues} />
 			</section>
 
 			<section class="config-section" use:reveal>
 				<h2>Veranstaltungsadresse</h2>
-				<div class="field-grid">
-					<div class="field full address-search-wrap"><label for="address-search">Adresse suchen</label><input id="address-search" autocomplete="off" aria-describedby={searchStatus === 'idle' ? undefined : 'address-search-status'} aria-autocomplete="list" aria-controls="address-suggestions" placeholder="Straße, Ort oder Unternehmen" bind:value={addressQuery} oninput={updateSuggestions} />{#if suggestions.length}<ul id="address-suggestions" class="suggestions">{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}</ul>{/if}{#if searchStatus !== 'idle'}<p id="address-search-status" class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>{/if}</div>
-					<div class="field full"><label for="street">Straße und Hausnummer</label><input id="street" autocomplete="street-address" bind:value={address.street} /></div>
-					<div class="field"><label for="postal">Postleitzahl</label><input id="postal" inputmode="numeric" autocomplete="postal-code" bind:value={address.postalCode} /></div>
-					<div class="field"><label for="city">Ort</label><input id="city" autocomplete="address-level2" bind:value={address.city} /></div>
-				</div>
+				<AddressEditor value={address} onchange={(value) => (address = value)} idPrefix="booking-address" />
 			</section>
 
 			<section class="config-section" use:reveal><h2>Veranstaltungsdatum</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
 
-			<section class="config-section" use:reveal><h2>Kontakt</h2><div class="field-grid">
-				<div class="field full"><label for="company">Unternehmen</label><input id="company" autocomplete="organization" bind:value={companyName} /></div>
-				<div class="field full"><label for="contact">Ansprechperson</label><input id="contact" autocomplete="name" bind:value={contactName} /></div>
-				<div class="field full"><label for="email">E-Mail-Adresse</label><input id="email" type="email" autocomplete="email" bind:value={email} /></div>
-				<div class="field full"><label for="phone">Telefonnummer</label><input id="phone" type="tel" autocomplete="tel" bind:value={phone} /></div>
-			</div></section>
+			<section class="config-section" use:reveal><h2>Kontakt</h2><ContactFields
+				{companyName}
+				{contactName}
+				{email}
+				{phone}
+				onchange={(patch) => {
+					if (patch.companyName !== undefined) companyName = patch.companyName;
+					if (patch.contactName !== undefined) contactName = patch.contactName;
+					if (patch.email !== undefined) email = patch.email;
+					if (patch.phone !== undefined) phone = patch.phone;
+				}}
+				idPrefix="booking-contact"
+			/></section>
 
 			<section class="config-section" use:reveal><h2>60 Min. Vorbereitungsgespräch</h2>
-				{#if slotsLoading}
-					<p class="slot-status">Freie Termine werden geladen …</p>
-				{:else if slots.length === 0}
-					<p class="slot-status">Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.</p>
-					<button class="button-secondary" type="button" onclick={loadAvailability}>Neu laden</button>
-				{:else}
-					<div class="slots">
-						{#each slots.slice(0, -1).slice(0, 15) as slot}<button type="button" class:selected={consultationMode === 'quick' && consultationSlot === slot} class="slot" aria-pressed={consultationMode === 'quick' && consultationSlot === slot} onclick={() => selectQuickSlot(slot)}>{formatDate(slot, true)} Uhr</button>{/each}
-						<button type="button" class:selected={consultationMode === 'custom'} class="slot custom-slot" aria-pressed={consultationMode === 'custom'} onclick={selectCustomMode}>Custom</button>
-					</div>
-					{#if consultationMode === 'custom'}
-						<div class="custom-prep-call" transition:slide={{ duration: 320 }}>
-							<EventDateCalendar
-								value={customConsultationDate}
-								minValue={minPrepCallDate}
-								maxValue={maxPrepCallDate}
-								availableDates={prepCallDates}
-								calendarLabel="Datum für den Prep Call"
-								emptyText="Bitte wählen Sie einen verfügbaren Tag."
-								onchange={selectCustomDate}
-							/>
-							{#if customConsultationDate}<div transition:slide={{ duration: 280 }}><PrepCallTimePicker date={customConsultationDate} slots={customConsultationSlots} value={consultationSlot} onchange={(slot) => (consultationSlot = slot)} /></div>{/if}
-						</div>
-					{/if}
-				{/if}
+				{#key availabilityKey}
+					<PrepCallEditor
+						value={consultationSlot}
+						mode={consultationMode}
+						customDate={customConsultationDate}
+						onchange={(value) => (consultationSlot = value)}
+						onmodechange={(value) => (consultationMode = value)}
+						oncustomdatechange={(value) => (customConsultationDate = value)}
+						onloadingchange={(value) => (slotsLoading = value)}
+						clearUnavailableValue
+					/>
+				{/key}
 			</section>
+
+			<section class="config-section" use:reveal><h2>Ihre Nachricht</h2><MessageField value={message} onchange={(value) => (message = value)} id="booking-message" /></section>
 
 			<section class="config-section" use:reveal><div class="summary-box overview-box" bind:this={overviewCard}>
 				<div class="summary-row"><Users size={18} aria-hidden="true" /><span><small>Team</small><AnimatedValue value={`Bis ${capacity} Personen`} /></span><b><AnimatedValue value={formatPrice(price.basePrice)} /></b></div>

@@ -3,6 +3,7 @@
 	import { CalendarClock, Lightbulb, Mail, MapPin, Phone, Pizza, Presentation, Users } from 'lucide-svelte';
 	import { Accordion } from 'bits-ui';
 	import { CODING_TOOLS } from '$lib/booking';
+	import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from '$lib/contact';
 	import { reveal } from '$lib/motion';
 
 	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
@@ -182,13 +183,13 @@
 				<Mail size={46} strokeWidth={1.7} aria-hidden="true" />
 				<h3>E-Mail</h3>
 				<p>Jederzeit.</p>
-				<a href="mailto:emilian.scheel@gmail.com">emilian.scheel@gmail.com <span aria-hidden="true">›</span></a>
+				<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL} <span aria-hidden="true">›</span></a>
 			</article>
 			<article class="contact-card">
 				<Phone size={46} strokeWidth={1.7} aria-hidden="true" />
 				<h3>Telefon</h3>
 				<p>Jederzeit oder schneller Rückruf.</p>
-				<a href="tel:+4915257257750">0152 57257750 <span aria-hidden="true">›</span></a>
+				<a href={`tel:${CONTACT_PHONE_HREF}`}>{CONTACT_PHONE_DISPLAY} <span aria-hidden="true">›</span></a>
 			</article>
 			<article class="contact-card">
 				<CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
