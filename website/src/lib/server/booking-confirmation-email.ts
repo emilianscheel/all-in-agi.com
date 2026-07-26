@@ -127,6 +127,19 @@ function failedReport(error: BookingConfirmationEmailError): BookingConfirmation
 	};
 }
 
+function normalizeConfirmationError(error: unknown) {
+	return error instanceof BookingConfirmationEmailError
+		? error
+		: new BookingConfirmationEmailError(
+				'Die Buchungsbestätigung ist unerwartet fehlgeschlagen.',
+				{
+					stage: 'provider',
+					providerCode: 'unexpected_error',
+					cause: error
+				}
+			);
+}
+
 export function bookingDetailUrl(id: string) {
 	return hackathonDetailUrl(id);
 }
@@ -376,6 +389,40 @@ async function sendPreparedBookingConfirmation(
 	};
 }
 
+export async function sendCustomerBookingConfirmationEmail(
+	input: BookingConfirmationInput,
+	dependencies: BookingConfirmationDependencies = {}
+): Promise<BookingConfirmationAttempt> {
+	const accountId = dependencies.accountId ?? process.env.CLOUDFLARE_ACCOUNT_ID;
+	const apiToken = dependencies.apiToken ?? process.env.CLOUDFLARE_EMAIL_API_TOKEN;
+	if (!accountId || !apiToken) {
+		return failedAttempt(
+			'customer',
+			new BookingConfirmationEmailError(
+				'Cloudflare Email Service ist nicht vollständig konfiguriert.',
+				{
+					stage: 'configuration',
+					providerCode: 'configuration_missing'
+				}
+			)
+		);
+	}
+
+	try {
+		const prepared = await prepareBookingConfirmation(input, dependencies, 'customer');
+		return await sendPreparedBookingConfirmation(
+			'customer',
+			{ address: input.config.email, name: input.config.contactName },
+			prepared,
+			accountId,
+			apiToken,
+			dependencies
+		);
+	} catch (error) {
+		return failedAttempt('customer', normalizeConfirmationError(error));
+	}
+}
+
 export async function sendBookingConfirmationEmails(
 	input: BookingConfirmationInput,
 	dependencies: BookingConfirmationDependencies = {}
@@ -442,17 +489,7 @@ export async function sendBookingConfirmationEmails(
 		result: PromiseSettledResult<BookingConfirmationAttempt>
 	): BookingConfirmationAttempt => {
 		if (result.status === 'fulfilled') return result.value;
-		const error = result.reason instanceof BookingConfirmationEmailError
-			? result.reason
-			: new BookingConfirmationEmailError(
-					'Die Buchungsbestätigung ist unerwartet fehlgeschlagen.',
-					{
-						stage: 'provider',
-						providerCode: 'unexpected_error',
-						cause: result.reason
-					}
-				);
-		return failedAttempt(role, error);
+		return failedAttempt(role, normalizeConfirmationError(result.reason));
 	};
 
 	return {

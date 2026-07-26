@@ -13,6 +13,7 @@
 		Download,
 		MapPin,
 		MapPinned,
+		Mail,
 		MessageSquareText,
 		Monitor,
 		Pizza,
@@ -46,6 +47,7 @@
 	let activeSection = $state<EditSection | null>(null);
 	let saving = $state(false);
 	let editError = $state('');
+	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let prepCallMode = $state<'quick' | 'custom'>('quick');
 	let customPrepCallDate = $state('');
 	let draft = $state<BookingConfiguration>(configurationFromHackathon(initialHackathon));
@@ -164,6 +166,20 @@
 		return location.href;
 	}
 
+	async function resendConfirmationEmail() {
+		if (confirmationEmailState === 'loading') return;
+		confirmationEmailState = 'loading';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/confirmation-email`, {
+				method: 'POST'
+			});
+			if (!response.ok) throw new Error('Die Bestätigungs-E-Mail konnte nicht gesendet werden.');
+			confirmationEmailState = 'sent';
+		} catch {
+			confirmationEmailState = 'error';
+		}
+	}
+
 </script>
 
 <svelte:head>
@@ -193,9 +209,6 @@
 
 		<section class="success-panel detail-panel" aria-labelledby="detail-title">
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
-			<div class="detail-id-row">
-				<span class="detail-id">{hackathon.id}</span>
-			</div>
 			<h1 id="detail-title">Hackathon für {hackathon.companyName}</h1>
 			<p class="success-date">{formatEventTimeRange(hackathon.eventStart, hackathon.eventEnd)}</p>
 
@@ -208,6 +221,13 @@
 				<a class="button-secondary action-button" href={`/api/hackathons/${hackathon.id}/prep-call.ics`}>
 					<CalendarPlus size={18} aria-hidden="true" />Kalenderereignis hinzufügen
 				</a>
+				<button class="button-secondary action-button" type="button" onclick={resendConfirmationEmail} disabled={confirmationEmailState === 'loading'} aria-live="polite">
+					{#if confirmationEmailState === 'sent'}
+						<Check size={18} aria-hidden="true" />Bestätigungs-E-Mail gesendet
+					{:else}
+						<Mail size={18} aria-hidden="true" />{confirmationEmailState === 'loading' ? 'E-Mail wird gesendet …' : confirmationEmailState === 'error' ? 'Senden erneut versuchen' : 'Bestätigungs-E-Mail senden'}
+					{/if}
+				</button>
 			</div>
 
 			<div class="summary-box overview-box detail-overview">

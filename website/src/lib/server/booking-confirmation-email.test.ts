@@ -5,6 +5,7 @@ import {
 	bookingDetailUrl,
 	buildBookingConfirmationHtml,
 	buildBookingConfirmationText,
+	sendCustomerBookingConfirmationEmail,
 	sendBookingConfirmationEmails
 } from './booking-confirmation-email';
 
@@ -175,6 +176,27 @@ describe('booking confirmation email', () => {
 		expect(calendar).toContain('Buchung verwalten: https://all-in-agi.com/HAA-AAA-AAA');
 		const pdfBytes = Buffer.from(customerBody.attachments[1].content, 'base64');
 		expect((await PDFDocument.load(pdfBytes)).getPageCount()).toBe(1);
+	});
+
+	test('resends a confirmation only to the customer', async () => {
+		const recipients: string[] = [];
+		const result = await sendCustomerBookingConfirmationEmail(input, {
+			accountId: 'account-123',
+			apiToken: 'secret-token',
+			fetch: async (_url, init) => {
+				const body = JSON.parse(String(init?.body));
+				recipients.push(body.to.address);
+				return acceptedResponse(body.to.address);
+			}
+		});
+
+		expect(result).toMatchObject({
+			role: 'customer',
+			sent: true,
+			status: 'delivered'
+		});
+		expect(recipients).toEqual(['ada@example.com']);
+		expect(recipients).not.toContain('go@all-in-agi.com');
 	});
 
 	test('accepts queued responses for both recipients', async () => {
