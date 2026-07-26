@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { Square } from 'lucide-svelte';
 	import TimerPresentation from '$lib/TimerPresentation.svelte';
 	import { berlinInputsFromIso } from '$lib/event-time';
 	import { formatRemainingTime, resolveBerlinTargetTime } from '$lib/timer';
@@ -19,9 +20,17 @@
 		input?.focus();
 	}
 
-	function chooseTarget(value: string) {
-		targetTime = value;
-		const resolved = resolveBerlinTargetTime(value, new Date(now));
+	async function stopTimer() {
+		target = '';
+		targetTime = '';
+		editing = true;
+		try { localStorage.removeItem(targetStorageKey); } catch { /* The editor still resets without persistence. */ }
+		await tick();
+		input?.focus();
+	}
+
+	function startTimer() {
+		const resolved = resolveBerlinTargetTime(targetTime, new Date(now));
 		if (!resolved) return;
 		target = resolved;
 		editing = false;
@@ -50,6 +59,13 @@
 	label={editing ? '' : remaining?.completed ? 'Timer beendet' : `Bis ${targetTime} Uhr`}
 	onescape={editTarget}
 >
+	{#snippet controls()}
+		{#if !editing}
+			<button class="stop-button" type="button" aria-label="Timer stoppen" title="Timer stoppen" onclick={stopTimer}>
+				<Square size={22} strokeWidth={2.4} aria-hidden="true" />
+			</button>
+		{/if}
+	{/snippet}
 	<div class="timer-editor">
 		<label for="timer-target">Zielzeit</label>
 		<input
@@ -57,8 +73,9 @@
 			id="timer-target"
 			type="time"
 			value={targetTime}
-			oninput={(event) => chooseTarget(event.currentTarget.value)}
+			oninput={(event) => (targetTime = event.currentTarget.value)}
 		/>
+		<button type="button" disabled={!targetTime} onclick={startTimer}>Timer starten</button>
 	</div>
 </TimerPresentation>
 
@@ -80,4 +97,33 @@
 		color-scheme: light;
 	}
 	.timer-editor input:focus { outline: 3px solid color-mix(in srgb, currentColor 35%, transparent); outline-offset: 3px; }
+	.timer-editor button {
+		width: 100%;
+		min-height: 52px;
+		margin-top: 14px;
+		padding: 12px 20px;
+		border: 1px solid var(--timer-ink, #ff4f18);
+		border-radius: 999px;
+		background: var(--timer-ink, #ff4f18);
+		color: var(--timer-bg, #fff);
+		font-size: 17px;
+		font-weight: 650;
+		transition: opacity .2s ease, transform .2s ease;
+	}
+	.timer-editor button:hover:not(:disabled) { transform: translateY(-1px); }
+	.timer-editor button:disabled { opacity: .35; cursor: not-allowed; }
+	.stop-button {
+		width: 48px;
+		height: 48px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		border: 0;
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--timer-bg, #fff) 86%, transparent);
+		color: var(--timer-ink, #ff4f18);
+		backdrop-filter: blur(16px);
+		transition: background-color .2s ease;
+	}
+	.stop-button:hover { background: var(--timer-bg, #fff); }
 </style>

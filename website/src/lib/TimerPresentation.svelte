@@ -9,6 +9,7 @@
 		progress = 0,
 		now = Date.now(),
 		onescape,
+		controls,
 		children
 	}: {
 		display?: string;
@@ -17,6 +18,7 @@
 		progress?: number;
 		now?: number;
 		onescape?: () => void;
+		controls?: Snippet;
 		children?: Snippet;
 	} = $props();
 
@@ -52,6 +54,7 @@
 
 <section class={`timer-presentation theme-${theme}`} class:with-timeline={timeline.length > 0} aria-label="Timer">
 	<p class="keyboard-hint">Enter wechselt das Farbschema{onescape ? ', Escape bearbeitet die Zielzeit' : ''}.</p>
+	{#if controls}<div class="timer-controls">{@render controls()}</div>{/if}
 	<div class="timer-center">
 		{#if display}
 			<div class="timer-value" class:long-display={display.includes('Tag')} aria-live="polite" aria-atomic="true">{display}</div>
@@ -110,6 +113,7 @@
 		white-space: nowrap;
 		border: 0;
 	}
+	.timer-controls { position: absolute; z-index: 2; top: max(20px, env(safe-area-inset-top)); right: 20px; }
 	.timer-center {
 		min-height: 100svh;
 		padding: 8vh 4vw;
