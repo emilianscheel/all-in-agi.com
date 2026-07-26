@@ -1,8 +1,8 @@
-# ALL-IN-AGI — Brand Kit v2
+# ALL IN AGI — Brand Kit v2
 
 ## Brand idea
 
-**ALL-IN-AGI** bringt etablierte Unternehmen vom Reden ins Bauen.
+**ALL IN AGI** bringt etablierte Unternehmen vom Reden ins Bauen.
 
 Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwindigkeit der internationalen Agentic-Engineering-Szene. Sie ist nicht verspielt, nicht futuristisch und nicht beratertypisch glatt. Sie wirkt kompetent, direkt und handlungsorientiert.
 
@@ -12,7 +12,7 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 
 **Zielgruppe:** CTOs, CIOs, Engineering- und Digitalverantwortliche in etablierten Unternehmen mit 500–10.000 Mitarbeitenden.
 
-> ALL-IN-AGI bringt aktuelle AI Coding Tools in etablierte Unternehmen. In einem intensiven Hackathon bauen Teams an echten Use Cases und shippen funktionierende Prototypen.
+> ALL IN AGI bringt aktuelle AI Coding Tools in etablierte Unternehmen. In einem intensiven Hackathon bauen Teams an echten Use Cases und shippen funktionierende Prototypen.
 
 **Claim:** Build what’s next.
 
@@ -20,11 +20,11 @@ Die Marke steht zwischen zwei Welten: deutsche Umsetzungskultur und die Geschwin
 
 ## Produktarchitektur
 
-- **Absender:** ALL-IN-AGI
+- **Absender:** ALL IN AGI
 - **Produkt:** Agentic Engineering Hackathon
 - **Deskriptor:** Ein Tag von Challenge bis Working Prototype
 
-> ALL-IN-AGI presents
+> ALL IN AGI presents
 > **AGENTIC ENGINEERING HACKATHON**
 > From prompt to prototype. In one day.
 
@@ -39,7 +39,7 @@ Keine Bronze-, Silver- oder Enterprise-Pakete. Keine Untermarken.
 
 ## Tonalität
 
-ALL-IN-AGI spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademisch. Ambitioniert, aber ohne AI-Heilsversprechen.
+ALL IN AGI spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademisch. Ambitioniert, aber ohne AI-Heilsversprechen.
 
 **Sagen:**
 
@@ -59,7 +59,7 @@ ALL-IN-AGI spricht kurz, konkret und selbstbewusst. Fachlich, aber nicht akademi
 
 ### Logo
 
-Die schwarze ALL-IN-AGI Bildmarke wird aus der gelieferten PNG-Datei verwendet. In der App erscheint sie alleinstehend in Navbar und Favicon; im Dark Mode wird sie für ausreichenden Kontrast weiß dargestellt.
+Die schwarze ALL IN AGI Bildmarke wird aus der gelieferten PNG-Datei verwendet. In der App erscheint sie alleinstehend in Navbar und Favicon; im Dark Mode wird sie für ausreichenden Kontrast weiß dargestellt.
 
 ### Farben
 
@@ -112,7 +112,7 @@ In 60 Minuten klären wir Tool Stack, Challenges und Setup für Ihren Hackathon.
 - Aufgaben heißen **Challenges**, nicht Übungen.
 - Das Ergebnis heißt **Prototype**, nicht Lernziel.
 - Der Abschluss heißt **Demo Day**, nicht Ergebnispräsentation.
-- Die Gewinner erhalten den **ALL-IN-AGI Award**.
+- Die Gewinner erhalten den **ALL IN AGI Award**.
 
 ## Launch-Prinzip
 

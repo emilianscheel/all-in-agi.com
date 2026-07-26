@@ -67,7 +67,7 @@ export async function cancelCalBookingWithToken(booking: ConfirmedBooking, reque
 	const response = await requestFetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(booking.uid)}/cancel`, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${token}`, 'cal-api-version': CAL_API_VERSION, 'content-type': 'application/json' },
-		body: JSON.stringify({ cancellationReason: 'Buchung über ALL-IN-AGI zurückgerollt' })
+		body: JSON.stringify({ cancellationReason: 'Buchung über ALL IN AGI zurückgerollt' })
 	});
 	if (!response.ok) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', response.status);
 }

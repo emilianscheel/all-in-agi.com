@@ -42,7 +42,7 @@ const input = {
 		end: '2099-05-10T11:00:00.000Z',
 		uid: 'booking-1',
 		icsUid: 'booking-1@all-in-agi.com',
-		title: 'ALL-IN-AGI Prep Call',
+		title: 'ALL IN AGI Prep Call',
 		meetingUrl: 'https://meet.example.com/booking-1'
 	}
 };

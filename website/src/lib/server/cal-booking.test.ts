@@ -23,7 +23,7 @@ describe('Cal.com booking contracts', () => {
 		}) as typeof fetch;
 		const result = await createCalBookingWithToken(configuration, mockFetch, false, {
 			eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
-			title: 'ALL-IN-AGI Hackathon', field: 'hackathon', location: 'Musterstraße 1, 10115 Berlin, Deutschland', allowBookingOutOfBounds: true
+			title: 'ALL IN AGI Hackathon', field: 'hackathon', location: 'Musterstraße 1, 10115 Berlin, Deutschland', allowBookingOutOfBounds: true
 		}, 'cal_test');
 		const body = JSON.parse(String(request?.init?.body));
 		expect(request?.url).toBe('https://api.cal.com/v2/bookings');

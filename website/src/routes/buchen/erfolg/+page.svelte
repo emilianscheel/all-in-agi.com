@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>Hackathon gebucht — ALL-IN-AGI</title>
+	<title>Hackathon gebucht — ALL IN AGI</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

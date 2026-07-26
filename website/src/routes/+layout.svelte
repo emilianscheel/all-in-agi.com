@@ -20,7 +20,7 @@
 	<a class="skip-link" href="#main">Zum Inhalt springen</a>
 	<header class="site-header">
 	<nav class="nav-inner" aria-label="Hauptnavigation">
-		<a class="brand-mark" href="/" aria-label="ALL-IN-AGI Startseite">
+		<a class="brand-mark" href="/" aria-label="ALL IN AGI Startseite">
 			<span class="brand-icon" aria-hidden="true">
 				<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
 			</span>

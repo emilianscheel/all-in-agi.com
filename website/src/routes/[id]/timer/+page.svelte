@@ -15,7 +15,7 @@
 	});
 </script>
 
-<svelte:head><title>Hackathon Timer {data.hackathon.id} — ALL-IN-AGI</title></svelte:head>
+<svelte:head><title>Hackathon Timer {data.hackathon.id} — ALL IN AGI</title></svelte:head>
 
 <TimerPresentation
 	display={remaining.display}

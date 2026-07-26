@@ -29,13 +29,13 @@ export function createPrepCallIcs(
 		...(bookingUrl ? [`Buchung verwalten: ${bookingUrl}`] : [])
 	].join('\n\n');
 	return [
-		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ALL-IN-AGI//Prep Call//DE', 'CALSCALE:GREGORIAN',
+		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ALL IN AGI//Prep Call//DE', 'CALSCALE:GREGORIAN',
 		'BEGIN:VEVENT',
 		`UID:${escape(booking.icsUid || booking.uid || `${start.getTime()}@all-in-agi.com`)}`,
 		`DTSTAMP:${utcDate(new Date().toISOString())}`,
 		`DTSTART:${utcDate(start.toISOString())}`,
 		`DTEND:${utcDate(end.toISOString())}`,
-		`SUMMARY:${escape(booking.title || 'ALL-IN-AGI Prep Call')}`,
+		`SUMMARY:${escape(booking.title || 'ALL IN AGI Prep Call')}`,
 		`DESCRIPTION:${escape(description)}`,
 		...(bookingUrl ? [`URL:${escape(bookingUrl)}`] : []),
 		...(booking.meetingUrl ? [`LOCATION:${escape(booking.meetingUrl)}`] : []),

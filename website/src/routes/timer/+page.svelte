@@ -52,7 +52,7 @@
 	});
 </script>
 
-<svelte:head><title>Timer — ALL-IN-AGI</title></svelte:head>
+<svelte:head><title>Timer — ALL IN AGI</title></svelte:head>
 
 <TimerPresentation
 	display={editing ? '' : remaining?.display ?? '00:00 h'}

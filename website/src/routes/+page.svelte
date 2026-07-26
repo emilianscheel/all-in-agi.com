@@ -32,7 +32,7 @@
 	const schema = {
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
-		name: 'ALL-IN-AGI',
+		name: 'ALL IN AGI',
 		description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
 		url: 'https://all-in-agi.com'
 	};

@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Impressum — ALL-IN-AGI</title>
+	<title>Impressum — ALL IN AGI</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 

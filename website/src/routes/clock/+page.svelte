@@ -10,6 +10,6 @@
 	});
 </script>
 
-<svelte:head><title>Clock — ALL-IN-AGI</title></svelte:head>
+<svelte:head><title>Clock — ALL IN AGI</title></svelte:head>
 
 <TimerPresentation display={formatBerlinClock(now)} />

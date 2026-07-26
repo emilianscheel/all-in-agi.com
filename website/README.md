@@ -1,6 +1,6 @@
-# ALL-IN-AGI Website
+# ALL IN AGI Website
 
-Deutsche Marketing- und Buchungswebsite für den ALL-IN-AGI Agentic Engineering Hackathon. Gebaut mit SvelteKit, TypeScript, Bun, Motion und MapLibre GL.
+Deutsche Marketing- und Buchungswebsite für den ALL IN AGI Agentic Engineering Hackathon. Gebaut mit SvelteKit, TypeScript, Bun, Motion und MapLibre GL.
 
 ## Lokal starten
 
@@ -56,6 +56,6 @@ Nach einer bestätigten Buchung versendet der Server über Cloudflare Email Serv
 - OpenFreeMap-Kartenstil und Photon-Fallback im Zielhosting testen
 - Beide Cal.com Event Types, Zeitzone, Verfügbarkeit, unterstützte Hackathon-Dauern und Bestätigungs-E-Mails prüfen
 - finale Domain in Sitemap, strukturierten Daten und Social-Metadaten bestätigen
-- ALL-IN-AGI Wort-/Bildmarke rechtlich prüfen
+- ALL IN AGI Wort-/Bildmarke rechtlich prüfen
 
 Die ursprüngliche Repo-README und das Brand Kit wurden vor der Initialisierung unter `docs/` archiviert.

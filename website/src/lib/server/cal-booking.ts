@@ -12,7 +12,7 @@ export function bookHackathonDay(config: BookingConfiguration, requestFetch: typ
 		eventTypeId: env.CAL_HACKATHON_EVENT_TYPE_ID,
 		start: config.eventStart,
 		end: config.eventEnd,
-		title: 'ALL-IN-AGI Hackathon',
+		title: 'ALL IN AGI Hackathon',
 		field: 'hackathon',
 		location,
 		allowBookingOutOfBounds: true
@@ -25,7 +25,7 @@ export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof 
 		eventTypeId: env.CAL_EVENT_TYPE_ID,
 		start: start.toISOString(),
 		end: new Date(start.getTime() + 60 * 60_000).toISOString(),
-		title: 'ALL-IN-AGI Prep Call',
+		title: 'ALL IN AGI Prep Call',
 		field: 'prep-call'
 	}, env.CAL_API_KEY);
 }
@@ -41,7 +41,7 @@ export function reschedulePrepCall(bookingUid: string | null, startValue: string
 export function rescheduleHackathonDay(bookingUid: string | null, eventStart: string, eventEnd: string, requestFetch: typeof fetch, demo: boolean) {
 	return reschedulePrepCallWithToken(bookingUid, eventStart, requestFetch, demo, env.CAL_API_KEY, {
 		end: eventEnd,
-		title: 'ALL-IN-AGI Hackathon',
+		title: 'ALL IN AGI Hackathon',
 		reason: 'Hackathon-Termin über die Detailseite geändert',
 		field: 'hackathon'
 	});

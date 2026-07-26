@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Buchung nicht verfügbar — ALL-IN-AGI</title>
+	<title>Buchung nicht verfügbar — ALL IN AGI</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 

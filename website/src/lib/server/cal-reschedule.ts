@@ -24,7 +24,7 @@ export async function reschedulePrepCallWithToken(
 			demo: true,
 			uid,
 			icsUid: `${uid}@all-in-agi.com`,
-			title: options.title ?? 'ALL-IN-AGI Prep Call',
+			title: options.title ?? 'ALL IN AGI Prep Call',
 			start: start.toISOString(),
 			end: end.toISOString(),
 			meetingUrl: ''
