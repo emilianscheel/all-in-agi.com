@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { ArrowRight } from 'lucide-svelte';
+	import { PinInput } from 'bits-ui';
+	import { untrack } from 'svelte';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
+	let otpValue = $state(untrack(() => (form?.id ?? '').replace(/[^a-z0-9]/gi, '').slice(0, 9)));
 </script>
 
 <svelte:head>
@@ -13,20 +15,35 @@
 <div class="manage-page">
 	<form class="manage-form" method="POST" aria-labelledby="manage-title">
 		<h1 id="manage-title">Buchung verwalten</h1>
-		<label for="hackathon-id">Hackathon-ID</label>
-		<div class="manage-input-row">
-			<input
-				id="hackathon-id"
-				name="hackathonId"
-				value={form?.id ?? ''}
-				placeholder="HAA-AAA-AAA"
-				pattern="[Hh][A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Za-z0-9]{3}"
-				autocomplete="off"
-				autocapitalize="characters"
-				required
-			/>
-			<button class="button-primary" type="submit" aria-label="Buchung öffnen"><ArrowRight size={20} aria-hidden="true" /></button>
-		</div>
+		<PinInput.Root
+			class="manage-otp"
+			bind:value={otpValue}
+			maxlength={9}
+			pattern="^[a-zA-Z0-9]+$"
+			inputmode="text"
+			inputId="hackathon-id"
+			name="hackathonId"
+			aria-label="Hackathon-ID"
+			autocomplete="off"
+			autocapitalize="characters"
+			pasteTransformer={(value) => value.replace(/[^a-z0-9]/gi, '').slice(0, 9)}
+		>
+			{#snippet children({ cells })}
+				<div class="manage-otp-groups" aria-hidden="true">
+					{#each [0, 1, 2] as group}
+						<div class="manage-otp-group">
+							{#each cells.slice(group * 3, group * 3 + 3) as cell}
+								<PinInput.Cell {cell} class="manage-otp-cell">
+									{cell.char ?? ''}
+									{#if cell.hasFakeCaret}<span class="manage-otp-caret"></span>{/if}
+								</PinInput.Cell>
+							{/each}
+						</div>
+					{/each}
+				</div>
+			{/snippet}
+		</PinInput.Root>
+		<button class="button-primary manage-submit" type="submit">Buchung öffnen</button>
 		{#if form?.message}<p class="manage-error" role="alert">{form.message}</p>{/if}
 	</form>
 </div>
