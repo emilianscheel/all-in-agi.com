@@ -54,7 +54,6 @@
 
 <svelte:head>
 	<title>Hackathon gebucht — ALL IN AGI</title>
-	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div class="success-page">

@@ -20,6 +20,7 @@
 	import ContactFields from '$lib/config/ContactFields.svelte';
 	import MessageField from '$lib/config/MessageField.svelte';
 	import PrepCallEditor from '$lib/config/PrepCallEditor.svelte';
+	import SeoHead from '$lib/SeoHead.svelte';
 
 	let capacity = $state<Capacity>(15);
 	let venueProvided = $state(true);
@@ -321,7 +322,11 @@
 	});
 </script>
 
-<svelte:head><title>Hackathon planen — Agentic Engineering Hackathon</title><meta name="description" content="Planen Sie Teamgröße, Location und Wunschtermin für Ihren Agentic Engineering Hackathon." /><meta name="robots" content="noindex,nofollow" /></svelte:head>
+<SeoHead
+	title="Agentic Engineering Hackathon planen | ALL IN AGI"
+	description="Konfigurieren Sie Teamgröße, Location, Ausstattung und Wunschtermin für Ihren moderierten Agentic Engineering Hackathon."
+	path="/buchen"
+/>
 
 <div class="config-page">
 	<header class="config-intro">

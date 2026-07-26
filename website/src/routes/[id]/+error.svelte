@@ -4,7 +4,6 @@
 
 <svelte:head>
 	<title>Buchung nicht verfügbar — ALL IN AGI</title>
-	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div class="booking-error-page">

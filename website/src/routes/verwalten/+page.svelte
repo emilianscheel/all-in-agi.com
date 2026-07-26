@@ -9,7 +9,6 @@
 
 <svelte:head>
 	<title>Buchung verwalten — ALL IN AGI</title>
-	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div class="manage-page">

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { installGlobalHaptics } from '$lib/haptics';
+	import { robotsDirective } from '$lib/seo';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children } = $props();
@@ -14,6 +15,7 @@
 	<link rel="icon" href="/brand/all-in-agi-logo.png" type="image/png" sizes="512x512" />
 	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 	<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+	<meta name="robots" content={robotsDirective(page.url.pathname)} />
 </svelte:head>
 
 {#if !presentationRoute}

@@ -5,6 +5,7 @@
 	import { CODING_TOOLS } from '$lib/booking';
 	import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from '$lib/contact';
 	import { reveal } from '$lib/motion';
+	import SeoHead from '$lib/SeoHead.svelte';
 
 	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
 	const carouselRepeats = [0, 1, 2, 3];
@@ -31,10 +32,36 @@
 
 	const schema = {
 		'@context': 'https://schema.org',
-		'@type': 'Organization',
-		name: 'ALL IN AGI',
-		description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
-		url: 'https://all-in-agi.com'
+		'@graph': [
+			{
+				'@type': 'Organization',
+				'@id': 'https://all-in-agi.com/#organization',
+				name: 'ALL IN AGI',
+				description: 'Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.',
+				url: 'https://all-in-agi.com',
+				logo: 'https://all-in-agi.com/brand/all-in-agi-logo.png',
+				email: CONTACT_EMAIL,
+				telephone: CONTACT_PHONE_HREF
+			},
+			{
+				'@type': 'WebSite',
+				'@id': 'https://all-in-agi.com/#website',
+				url: 'https://all-in-agi.com',
+				name: 'ALL IN AGI',
+				inLanguage: 'de-DE',
+				publisher: { '@id': 'https://all-in-agi.com/#organization' }
+			},
+			{
+				'@type': 'Service',
+				'@id': 'https://all-in-agi.com/#agentic-engineering-hackathon',
+				name: 'Agentic Engineering Hackathon',
+				serviceType: 'Moderierter Agentic Engineering Hackathon für Unternehmen',
+				description: 'Teams entwickeln an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.',
+				areaServed: { '@type': 'Country', name: 'Deutschland' },
+				provider: { '@id': 'https://all-in-agi.com/#organization' },
+				url: 'https://all-in-agi.com/'
+			}
+		]
 	};
 
 	onMount(() => {
@@ -65,16 +92,13 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Agentic Engineering Hackathon</title>
-	<meta name="description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on erleben und mit einem Projekt kennenlernen" />
-	<meta property="og:title" content="Agentic Engineering Hackathon" />
-	<meta property="og:description" content="Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben." />
-	<meta property="og:image" content="/images/all-in-agi-event.webp" />
-	<meta property="og:type" content="website" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<script type="application/ld+json">{JSON.stringify(schema)}</script>
-</svelte:head>
+<SeoHead
+	title="Agentic Engineering Hackathon für Unternehmen | ALL IN AGI"
+	description="Ihr Team baut in einem Tag einen funktionierenden Prototyp mit aktuellen Coding Agents – als moderierter Hackathon vor Ort in Deutschland."
+	path="/"
+/>
+
+<svelte:head><script type="application/ld+json">{JSON.stringify(schema)}</script></svelte:head>
 
 <section class="hero">
 	<div class="hero-copy" use:reveal>

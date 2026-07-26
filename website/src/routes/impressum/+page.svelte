@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { CONTACT_EMAIL, CONTACT_PHONE_HREF } from '$lib/contact';
+	import SeoHead from '$lib/SeoHead.svelte';
 </script>
 
-<svelte:head>
-	<title>Impressum — ALL IN AGI</title>
-	<meta name="robots" content="noindex" />
-</svelte:head>
+<SeoHead
+	title="Impressum | ALL IN AGI"
+	description="Impressum und Anbieterkennzeichnung von ALL IN AGI, Ihrem Partner für Agentic Engineering Hackathons in Deutschland."
+	path="/impressum"
+/>
 
 <div class="simple-page">
 	<article class="simple-card">
