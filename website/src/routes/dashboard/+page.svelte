@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
 	import { formatPrice } from '$lib/booking';
+	import { AlertDialog, DropdownMenu } from 'bits-ui';
 	import { animate } from 'motion';
-	import { Download, LogIn } from 'lucide-svelte';
+	import { Ban, Download, Ellipsis, ExternalLink, Eye, LogIn, RotateCcw } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -14,6 +15,10 @@
 	let showPassword = $state(false);
 	let busy = $state(false);
 	let errorMessage = $state('');
+	let cancellationTarget = $state<PageData['bookings'][number] | null>(null);
+	let cancellationBusyId = $state<string | null>(null);
+	let cancellationMessage = $state('');
+	let cancelDialogOpen = $state(false);
 
 	onMount(() => {
 		if (data.admin.needsPasskey) void registerPasskey();
@@ -27,6 +32,37 @@
 		if (status === 'confirmed') return 'Bestätigt';
 		if (status === 'cancellation_pending') return 'Stornierung offen';
 		return 'Storniert';
+	}
+
+	function openTimer(id: string) {
+		window.open(`/${id}/timer`, '_blank', 'noopener,noreferrer');
+	}
+
+	function confirmCancellation(booking: PageData['bookings'][number]) {
+		cancellationTarget = booking;
+		cancellationMessage = '';
+		cancelDialogOpen = true;
+	}
+
+	async function cancelBooking(booking: PageData['bookings'][number] | null) {
+		if (!booking || cancellationBusyId) return;
+		cancellationBusyId = booking.id;
+		cancellationMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${booking.id}/cancel`, { method: 'POST' });
+			const result = await response.json();
+			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Stornierung konnte nicht gestartet werden.');
+			cancellationMessage = result.complete
+				? 'Die Buchung wurde storniert und der Kunde benachrichtigt.'
+				: result.message ?? 'Die Stornierung ist noch nicht vollständig. Bitte versuchen Sie es erneut.';
+			cancelDialogOpen = false;
+			cancellationTarget = null;
+			await invalidateAll();
+		} catch (error) {
+			cancellationMessage = error instanceof Error ? error.message : 'Die Stornierung konnte nicht gestartet werden.';
+		} finally {
+			cancellationBusyId = null;
+		}
 	}
 
 	function expandPassword(node: HTMLElement) {
@@ -109,11 +145,7 @@
 {#if data.admin.authorized && data.summary}
 	<div class="dashboard-page">
 		<header class="dashboard-heading">
-			<div>
-				<p class="eyebrow">Admin</p>
-				<h1>Buchungen</h1>
-				<p>Alle bestätigten und stornierten Hackathons an einem Ort.</p>
-			</div>
+			<h1>Buchungen</h1>
 			<a class="button-secondary dashboard-export" href="/dashboard/bookings.csv">
 				<Download size={17} aria-hidden="true" /> CSV exportieren
 			</a>
@@ -132,13 +164,16 @@
 
 		<section class="dashboard-list-card" aria-labelledby="booking-list-title">
 			<div class="dashboard-list-heading">
-				<h2 id="booking-list-title">Alle Buchungen</h2>
+				<div>
+					<h2 id="booking-list-title">Alle Buchungen</h2>
+					{#if cancellationMessage}<p class="dashboard-action-message" role="status">{cancellationMessage}</p>{/if}
+				</div>
 				<span>{data.bookings.length} Einträge</span>
 			</div>
 			{#if data.bookings.length}
 				<div class="dashboard-table-wrap">
 					<table class="dashboard-table">
-						<thead><tr><th>Status</th><th>Hackathon</th><th>Termin</th><th>Team</th><th>Netto</th><th>Gebucht</th></tr></thead>
+						<thead><tr><th>Status</th><th>Hackathon</th><th>Termin</th><th>Team</th><th>Netto</th><th>Gebucht</th><th><span class="visually-hidden">Aktionen</span></th></tr></thead>
 						<tbody>
 							{#each data.bookings as booking}
 								<tr>
@@ -148,6 +183,34 @@
 									<td>Bis {booking.capacity}</td>
 									<td>{formatPrice(booking.totalPrice)}</td>
 									<td>{formatDate(booking.createdAt)}</td>
+									<td class="dashboard-actions-cell">
+										<DropdownMenu.Root>
+											<DropdownMenu.Trigger class="dashboard-action-trigger" aria-label={`Aktionen für ${booking.companyName}`}>
+												<Ellipsis size={19} aria-hidden="true" />
+											</DropdownMenu.Trigger>
+											<DropdownMenu.Portal>
+												<DropdownMenu.Content class="dashboard-actions-menu" sideOffset={6} align="end" loop>
+													<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => goto(`/${booking.id}`)}>
+														<Eye size={16} aria-hidden="true" />Details öffnen
+													</DropdownMenu.Item>
+													{#if booking.status === 'confirmed'}
+														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => openTimer(booking.id)}>
+															<ExternalLink size={16} aria-hidden="true" />Timer öffnen
+														</DropdownMenu.Item>
+														<DropdownMenu.Separator class="dashboard-actions-separator" />
+														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => confirmCancellation(booking)} disabled={cancellationBusyId !== null}>
+															<Ban size={16} aria-hidden="true" />Buchung stornieren
+														</DropdownMenu.Item>
+													{:else if !booking.cancellationEmailSentAt}
+														<DropdownMenu.Separator class="dashboard-actions-separator" />
+														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => cancelBooking(booking)} disabled={cancellationBusyId !== null}>
+															<RotateCcw size={16} aria-hidden="true" />{cancellationBusyId === booking.id ? 'Wird fortgesetzt …' : booking.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
+														</DropdownMenu.Item>
+													{/if}
+												</DropdownMenu.Content>
+											</DropdownMenu.Portal>
+										</DropdownMenu.Root>
+									</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -157,6 +220,21 @@
 				<p class="dashboard-empty">Noch keine Kundenbuchungen vorhanden.</p>
 			{/if}
 		</section>
+
+		<AlertDialog.Root bind:open={cancelDialogOpen}>
+			<AlertDialog.Portal>
+				<AlertDialog.Overlay class="confirmation-overlay" />
+				<AlertDialog.Content class="confirmation-dialog">
+					<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
+					<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
+					<AlertDialog.Description>Der Hackathontag und der Prep Call werden bei Cal.com storniert. Anschließend erhält {cancellationTarget?.contactName ?? 'der Kunde'} eine Stornierungs-E-Mail.</AlertDialog.Description>
+					<div class="confirmation-dialog-actions">
+						<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
+						<AlertDialog.Action class="button-primary" onclick={() => cancelBooking(cancellationTarget)} disabled={cancellationBusyId !== null}>Buchung stornieren</AlertDialog.Action>
+					</div>
+				</AlertDialog.Content>
+			</AlertDialog.Portal>
+		</AlertDialog.Root>
 	</div>
 {:else}
 	<div class="dashboard-login-page">

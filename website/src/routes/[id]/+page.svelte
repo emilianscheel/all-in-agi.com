@@ -279,7 +279,7 @@
 							<ExternalLink size={18} aria-hidden="true" />Open timer
 						</a>
 						<AlertDialog.Root bind:open={cancelDialogOpen}>
-							<AlertDialog.Trigger class="button-destructive action-button"><Ban size={18} aria-hidden="true" />Cancel booking</AlertDialog.Trigger>
+							<AlertDialog.Trigger class="button-primary action-button"><Ban size={18} aria-hidden="true" />Cancel booking</AlertDialog.Trigger>
 							<AlertDialog.Portal>
 								<AlertDialog.Overlay class="confirmation-overlay" />
 								<AlertDialog.Content class="confirmation-dialog">
@@ -288,13 +288,13 @@
 									<AlertDialog.Description>Der Hackathontag und der Prep Call werden bei Cal.com storniert. Anschließend erhält {hackathon.contactName} eine Stornierungs-E-Mail.</AlertDialog.Description>
 									<div class="confirmation-dialog-actions">
 										<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
-										<AlertDialog.Action class="button-destructive" onclick={cancelBooking}>Buchung stornieren</AlertDialog.Action>
+										<AlertDialog.Action class="button-primary" onclick={cancelBooking}>Buchung stornieren</AlertDialog.Action>
 									</div>
 								</AlertDialog.Content>
 							</AlertDialog.Portal>
 						</AlertDialog.Root>
 					{:else if !hackathon.cancellationEmailSentAt}
-						<button class="button-destructive action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
+						<button class="button-primary action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
 							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird fortgesetzt …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
 						</button>
 					{/if}

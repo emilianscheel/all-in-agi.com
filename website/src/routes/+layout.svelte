@@ -46,7 +46,7 @@
 				<a href="/clock">Clock</a>
 			</div>
 			<div class="admin-nav-action">
-				{#if data.admin.authenticated}<button type="button" onclick={logout}>Logout</button>{/if}
+				{#if data.admin.authenticated}<button class="nav-cta admin-logout" type="button" onclick={logout}>Logout</button>{/if}
 			</div>
 		</nav>
 	{:else}
