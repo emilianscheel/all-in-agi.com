@@ -17,9 +17,17 @@ function utcDate(value: string) {
 	return new Date(value).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-export function createPrepCallIcs(config: BookingConfiguration, booking: BookingResultSummary) {
+export function createPrepCallIcs(
+	config: BookingConfiguration,
+	booking: BookingResultSummary,
+	bookingUrl?: string
+) {
 	const start = new Date(booking.start || config.consultationSlot);
 	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 60 * 60_000);
+	const description = [
+		`Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`,
+		...(bookingUrl ? [`Buchung verwalten: ${bookingUrl}`] : [])
+	].join('\n\n');
 	return [
 		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ALL-IN-AGI//Prep Call//DE', 'CALSCALE:GREGORIAN',
 		'BEGIN:VEVENT',
@@ -28,7 +36,8 @@ export function createPrepCallIcs(config: BookingConfiguration, booking: Booking
 		`DTSTART:${utcDate(start.toISOString())}`,
 		`DTEND:${utcDate(end.toISOString())}`,
 		`SUMMARY:${escape(booking.title || 'ALL-IN-AGI Prep Call')}`,
-		`DESCRIPTION:${escape(`Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`)}`,
+		`DESCRIPTION:${escape(description)}`,
+		...(bookingUrl ? [`URL:${escape(bookingUrl)}`] : []),
 		...(booking.meetingUrl ? [`LOCATION:${escape(booking.meetingUrl)}`] : []),
 		'END:VEVENT', 'END:VCALENDAR', ''
 	].join('\r\n');

@@ -2,7 +2,7 @@ import { createPlanPdf, hackathonDetailUrl } from '$lib/booking-artifacts';
 import type { BookingConfiguration } from '$lib/booking';
 import { bookingOverviewRows } from '$lib/booking-overview';
 import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
-import { CONTACT_EMAIL } from '$lib/contact';
+import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from '$lib/contact';
 
 const CLOUDFLARE_API_BASE = 'https://api.cloudflare.com/client/v4';
 const MAX_EMAIL_BYTES = 5 * 1024 * 1024;
@@ -62,6 +62,7 @@ interface CloudflareEmailResponse {
 interface PreparedBookingConfirmation {
 	subject: string;
 	text: string;
+	html: string;
 	headers: { 'X-Booking-ID': string };
 	attachments: Array<{
 		content: string;
@@ -130,22 +131,88 @@ export function bookingDetailUrl(id: string) {
 	return hackathonDetailUrl(id);
 }
 
-export function buildBookingConfirmationText(input: BookingConfirmationInput) {
+function rowText(row: ReturnType<typeof bookingOverviewRows>[number]) {
+	return `- ${row.label}: ${row.value}${row.status === 'Inklusive' ? '' : ` — ${row.status}`}`;
+}
+
+function escapeHtml(value: string) {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+export function buildBookingConfirmationText(
+	input: BookingConfirmationInput,
+	role: BookingConfirmationRecipientRole = 'customer'
+) {
 	const rows = bookingOverviewRows(input.config, input.booking);
-	const bullets = rows.map((row) => `- ${row.label}: ${row.value} — ${row.status}`);
-	return [
-		`Hallo ${input.config.contactName},`,
-		'vielen Dank für Ihre Buchung. Ihr ALL IN AGI Hackathon ist bestätigt.',
+	const customer = role === 'customer';
+	const content = [
+		customer ? `Hallo ${input.config.contactName},` : 'Hallo ALL IN AGI,',
 		'',
-		...bullets,
+		customer
+			? 'Vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt.'
+			: 'Es wurde ein neuer Hackathon gebucht.',
 		'',
-		bookingDetailUrl(input.id)
-	].join('\n');
+		...rows.map(rowText),
+		'',
+		`Buchung verwalten: ${bookingDetailUrl(input.id)}`
+	];
+
+	if (customer) {
+		content.push(
+			'',
+			'Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.',
+			`Telefon: ${CONTACT_PHONE_DISPLAY} (tel:${CONTACT_PHONE_HREF})`,
+			`E-Mail: ${CONTACT_EMAIL} (mailto:${CONTACT_EMAIL})`,
+			'',
+			'Wir freuen uns auf Sie!'
+		);
+	}
+
+	// Keep two blank lines between the body and the mail client's attachment area.
+	return `${content.join('\n')}\n\n\n`;
+}
+
+export function buildBookingConfirmationHtml(
+	input: BookingConfirmationInput,
+	role: BookingConfirmationRecipientRole = 'customer'
+) {
+	const customer = role === 'customer';
+	const rows = bookingOverviewRows(input.config, input.booking);
+	const detailUrl = escapeHtml(bookingDetailUrl(input.id));
+	const options = rows.map((row) => {
+		const status = row.status === 'Inklusive'
+			? ''
+			: `<span style="color:#5f6368;"> — ${escapeHtml(row.status)}</span>`;
+		return `<tr><td style="padding:6px 16px 6px 0;vertical-align:top;">${escapeHtml(row.label)}</td><td style="padding:6px 0;vertical-align:top;"><strong>${escapeHtml(row.value)}</strong>${status}</td></tr>`;
+	}).join('');
+	const contact = customer
+		? `<p style="margin:24px 0 8px;">Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
+			<p style="margin:0;"><a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p>
+			<p style="margin:24px 0 0;">Wir freuen uns auf Sie!</p>`
+		: '';
+
+	return `<!doctype html>
+<html lang="de">
+<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#171717;">
+	<p style="margin:0 0 16px;">${customer ? `Hallo ${escapeHtml(input.config.contactName)},` : 'Hallo ALL IN AGI,'}</p>
+	<p style="margin:0 0 20px;">${customer ? 'Vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt.' : 'Es wurde ein neuer Hackathon gebucht.'}</p>
+	<table role="presentation" style="border-collapse:collapse;margin:0 0 20px;">${options}</table>
+	<p style="margin:0;"><a href="${detailUrl}">Buchung verwalten</a></p>
+	${contact}
+	<div style="height:2.5em;line-height:1.25em;" aria-hidden="true">&nbsp;</div>
+</body>
+</html>`;
 }
 
 async function prepareBookingConfirmation(
 	input: BookingConfirmationInput,
-	dependencies: BookingConfirmationDependencies
+	dependencies: BookingConfirmationDependencies,
+	role: BookingConfirmationRecipientRole
 ): Promise<PreparedBookingConfirmation> {
 	let pdf: Uint8Array;
 	let calendar: string;
@@ -154,7 +221,11 @@ async function prepareBookingConfirmation(
 			booking: input.booking,
 			hackathonId: input.id
 		});
-		calendar = (dependencies.createCalendar ?? createPrepCallIcs)(input.config, input.booking);
+		calendar = (dependencies.createCalendar ?? createPrepCallIcs)(
+			input.config,
+			input.booking,
+			bookingDetailUrl(input.id)
+		);
 	} catch (cause) {
 		throw new BookingConfirmationEmailError(
 			'Die Anhänge der Buchungsbestätigung konnten nicht erstellt werden.',
@@ -168,19 +239,22 @@ async function prepareBookingConfirmation(
 
 	try {
 		return {
-			subject: `Buchungsbestätigung ${input.id}`,
-			text: buildBookingConfirmationText(input),
+			subject: role === 'customer'
+				? `Buchungsbestätigung Hackathon ${input.id}`
+				: `Neue Buchung Hackathon ${input.id}`,
+			text: buildBookingConfirmationText(input, role),
+			html: buildBookingConfirmationHtml(input, role),
 			headers: { 'X-Booking-ID': input.id },
 			attachments: [
 				{
 					content: bytesToBase64(new TextEncoder().encode(calendar)),
-					filename: `all-in-agi-prep-call-${input.id}.ics`,
+					filename: 'Vorbereitungsgespräch.ics',
 					type: 'text/calendar; charset=utf-8',
 					disposition: 'attachment'
 				},
 				{
 					content: bytesToBase64(pdf),
-					filename: `all-in-agi-hackathon-${input.id}.pdf`,
+					filename: 'Hackathon.pdf',
 					type: 'application/pdf',
 					disposition: 'attachment'
 				}
@@ -320,9 +394,16 @@ export async function sendBookingConfirmationEmails(
 		);
 	}
 
-	let prepared: PreparedBookingConfirmation;
+	let customerPrepared: PreparedBookingConfirmation;
+	let organizerPrepared: PreparedBookingConfirmation;
 	try {
-		prepared = await prepareBookingConfirmation(input, dependencies);
+		customerPrepared = await prepareBookingConfirmation(input, dependencies, 'customer');
+		organizerPrepared = {
+			...customerPrepared,
+			subject: `Neue Buchung Hackathon ${input.id}`,
+			text: buildBookingConfirmationText(input, 'organizer'),
+			html: buildBookingConfirmationHtml(input, 'organizer')
+		};
 	} catch (error) {
 		if (error instanceof BookingConfirmationEmailError) return failedReport(error);
 		return failedReport(
@@ -341,7 +422,7 @@ export async function sendBookingConfirmationEmails(
 		sendPreparedBookingConfirmation(
 			'customer',
 			{ address: input.config.email, name: input.config.contactName },
-			prepared,
+			customerPrepared,
 			accountId,
 			apiToken,
 			dependencies
@@ -349,7 +430,7 @@ export async function sendBookingConfirmationEmails(
 		sendPreparedBookingConfirmation(
 			'organizer',
 			{ address: CONTACT_EMAIL, name: 'ALL IN AGI' },
-			prepared,
+			organizerPrepared,
 			accountId,
 			apiToken,
 			dependencies

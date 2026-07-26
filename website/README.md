@@ -47,7 +47,7 @@ Das Drizzle-Schema liegt unter `src/lib/server/db/schema.ts`; generierte und gep
 
 Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Adresssuche nutzt die öffentliche Photon-Instanz. Photon hat keine Verfügbarkeitsgarantie; deshalb bleiben alle Adressfelder immer manuell editierbar.
 
-Nach einer bestätigten Buchung versendet der Server zwei reine Text-E-Mails über Cloudflare Email Service: eine an den Kunden und eine identische Kopie an `go@all-in-agi.com`. Absender und Antwortadresse sind `go@all-in-agi.com`. Beide E-Mails enthalten den öffentlichen Buchungslink sowie den vollständigen PDF-Plan und den Vorbereitungstermin als Anhänge. Ein Fehler beim E-Mail-Versand macht die bereits bestätigte Cal.com- und Datenbankbuchung nicht rückgängig.
+Nach einer bestätigten Buchung versendet der Server über Cloudflare Email Service eine HTML-Bestätigung mit Text-Fallback an den Kunden und eine inhaltlich angepasste Benachrichtigung an `go@all-in-agi.com`. Absender und Antwortadresse sind `go@all-in-agi.com`. Beide E-Mails enthalten den öffentlichen Buchungslink sowie den vollständigen PDF-Plan und den Vorbereitungstermin als Anhänge. Der Vorbereitungstermin im E-Mail-Anhang verlinkt ebenfalls auf die Buchungsverwaltung. Ein Fehler beim E-Mail-Versand macht die bereits bestätigte Cal.com- und Datenbankbuchung nicht rückgängig.
 
 ## Vor einem Livegang zwingend erledigen
 

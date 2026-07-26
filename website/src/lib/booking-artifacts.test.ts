@@ -29,6 +29,16 @@ describe('booking artifacts', () => {
 		expect(ics).toContain('SUMMARY:ALL-IN-AGI Prep Call');
 	});
 
+	test('adds the booking management URL to the ICS when provided', () => {
+		const ics = createPrepCallIcs(
+			config,
+			{ start: config.consultationSlot, uid: 'booking-1' },
+			'https://all-in-agi.com/HAA-AAA-AAA'
+		);
+		expect(ics).toContain('URL:https://all-in-agi.com/HAA-AAA-AAA');
+		expect(ics).toContain('Buchung verwalten: https://all-in-agi.com/HAA-AAA-AAA');
+	});
+
 	test('uses the ALL-IN-AGI domain for generated calendar UIDs', () => {
 		const ics = createPrepCallIcs(config, { start: config.consultationSlot });
 		expect(ics).toContain('UID:4082090400000@all-in-agi.com');
