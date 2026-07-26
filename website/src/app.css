@@ -318,9 +318,8 @@ img { display: block; max-width: 100%; }
 .booking-status.cancelled { background: var(--surface); color: var(--muted); }
 .dashboard-empty { margin: 0; padding: 64px 24px; color: var(--muted); text-align: center; }
 
-.dashboard-login-page { min-height: calc(100svh - 105px); display: grid; place-items: center; padding: 64px 22px; background: var(--surface); }
-.dashboard-login-card { width: min(100%, 460px); padding: 40px; border: 1px solid var(--soft-line); border-radius: 28px; background: var(--card); box-shadow: var(--floating-shadow); text-align: center; }
-.dashboard-login-icon { width: 54px; height: 54px; margin: 0 auto 24px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--orange); }
+.dashboard-login-page { min-height: calc(100svh - 105px); display: grid; place-items: center; padding: 64px 22px; background: var(--page); }
+.dashboard-login-card { width: min(100%, 420px); text-align: center; }
 .dashboard-login-card .eyebrow { margin-bottom: 10px; }
 .dashboard-login-card h1 { margin: 0; font-size: clamp(32px, 5vw, 46px); line-height: 1; letter-spacing: -.05em; }
 .dashboard-login-card > p:not(.eyebrow):not(.dashboard-login-error) { margin: 18px auto 26px; color: var(--muted); line-height: 1.5; }
@@ -340,7 +339,6 @@ img { display: block; max-width: 100%; }
 	.dashboard-export { width: 100%; }
 	.dashboard-stats { grid-template-columns: 1fr; }
 	.dashboard-stat-card { min-height: 144px; }
-	.dashboard-login-card { padding: 34px 22px; border-radius: 22px; }
 }
 
 @media (max-width: 460px) {

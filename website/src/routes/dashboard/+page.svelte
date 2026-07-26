@@ -3,7 +3,7 @@
 	import { authClient } from '$lib/auth-client';
 	import { formatPrice } from '$lib/booking';
 	import { animate } from 'motion';
-	import { Download, KeyRound, LogIn, ShieldCheck } from 'lucide-svelte';
+	import { Download, KeyRound, LogIn } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -153,19 +153,15 @@
 	</div>
 {:else}
 	<div class="dashboard-login-page">
-		<section class="dashboard-login-card" aria-labelledby="dashboard-login-title">
-			<div class="dashboard-login-icon"><ShieldCheck size={28} aria-hidden="true" /></div>
+		<section class="dashboard-login-card" aria-label="Admin-Anmeldung">
 			{#if data.admin.needsPasskey}
 				<p class="eyebrow">Einrichtung abschließen</p>
-				<h1 id="dashboard-login-title">Passkey erstellen</h1>
+				<h1>Passkey erstellen</h1>
 				<p>Schützen Sie das Dashboard jetzt mit einem Passkey. Erst danach werden Buchungsdaten freigeschaltet.</p>
 				<button class="button-primary dashboard-login-button" type="button" onclick={registerPasskey} disabled={busy}>
 					<KeyRound size={18} aria-hidden="true" /> {busy ? 'Passkey wird erstellt …' : 'Passkey erstellen'}
 				</button>
 			{:else}
-				<p class="eyebrow">Admin</p>
-				<h1 id="dashboard-login-title">Dashboard Login</h1>
-				<p>Geben Sie Ihre Admin-E-Mail ein, um fortzufahren.</p>
 				<form onsubmit={showPassword ? submitSeed : continueWithEmail}>
 					<div class="field dashboard-login-field">
 						<label for="admin-email">E-Mail</label>
@@ -174,13 +170,13 @@
 					{#if showPassword}
 						<div class="dashboard-password-reveal" use:expandPassword>
 							<div class="field dashboard-login-field">
-								<label for="admin-password">Seed-Passwort</label>
+								<label for="admin-password">Passwort</label>
 								<input id="admin-password" type="password" bind:value={password} autocomplete="current-password" minlength="8" required />
 							</div>
 						</div>
 					{/if}
 					<button class="button-primary dashboard-login-button" type="submit" disabled={busy}>
-						<LogIn size={18} aria-hidden="true" /> {busy ? 'Bitte warten …' : showPassword ? 'Einrichten und anmelden' : 'Weiter'}
+						<LogIn size={18} aria-hidden="true" /> {busy ? 'Bitte warten …' : 'Sign in'}
 					</button>
 				</form>
 			{/if}
