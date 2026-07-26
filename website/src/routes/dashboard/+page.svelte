@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
 	import { formatPrice } from '$lib/booking';
 	import { animate } from 'motion';
-	import { Download, KeyRound, LogIn } from 'lucide-svelte';
+	import { Download, LogIn } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -13,6 +14,10 @@
 	let showPassword = $state(false);
 	let busy = $state(false);
 	let errorMessage = $state('');
+
+	onMount(() => {
+		if (data.admin.needsPasskey) void registerPasskey();
+	});
 
 	function formatDate(value: string) {
 		return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(value));
@@ -74,7 +79,7 @@
 				: await authClient.signUp.email({ email, password, name: 'ALL IN AGI Admin' });
 			if (result.error) throw new Error(result.error.message ?? 'Die Anmeldedaten sind ungültig.');
 			password = '';
-			await invalidateAll();
+			await registerPasskey();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Die Anmeldedaten sind ungültig.';
 		} finally {
@@ -91,6 +96,8 @@
 			await invalidateAll();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Der Passkey konnte nicht erstellt werden.';
+			await authClient.signOut();
+			await invalidateAll();
 		} finally {
 			busy = false;
 		}
@@ -154,11 +161,7 @@
 {:else}
 	<div class="dashboard-login-page">
 		<section class="dashboard-login-card" aria-label="Admin-Anmeldung">
-			{#if data.admin.needsPasskey}
-				<button class="button-primary dashboard-login-button" type="button" onclick={registerPasskey} disabled={busy}>
-					<KeyRound size={18} aria-hidden="true" /> {busy ? 'Passkey wird erstellt …' : 'Passkey erstellen'}
-				</button>
-			{:else}
+			{#if !data.admin.needsPasskey}
 				<form onsubmit={showPassword ? submitSeed : continueWithEmail}>
 					<div class="field dashboard-login-field">
 						<label for="admin-email">E-Mail</label>
