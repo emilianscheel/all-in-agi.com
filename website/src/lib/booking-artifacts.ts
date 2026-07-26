@@ -1,6 +1,8 @@
 import fontkit from '@pdf-lib/fontkit';
-import instrumentSansAsset from '@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff?inline';
+import instrumentSerifAsset from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff?inline';
+import QRCode from 'qrcode';
 import {
+	LineCapStyle,
 	PDFDocument,
 	StandardFonts,
 	rgb,
@@ -10,14 +12,19 @@ import {
 } from 'pdf-lib';
 import logoAsset from '../../static/brand/all-in-agi-logo.png?inline';
 import { formatPrice, getPrice, type BookingConfiguration } from './booking';
-import { bookingOverviewRows } from './booking-overview';
+import { bookingOverviewRows, type BookingOverviewRowId } from './booking-overview';
 import type { BookingResultSummary } from './booking-ics';
-import { CONTACT_EMAIL } from './contact';
+import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from './contact';
 
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
 const LEFT = 48;
 const RIGHT = PAGE_WIDTH - LEFT;
+const SITE_ORIGIN = 'https://all-in-agi.com';
+
+export function hackathonDetailUrl(id: string) {
+	return `${SITE_ORIGIN}/${encodeURIComponent(id)}`;
+}
 
 function safeText(value: unknown) {
 	return String(value ?? '')
@@ -107,6 +114,113 @@ function drawRoundedCard(
 	page.drawCircle({ x: x + width - r, y: y + height - r, size: r, color });
 }
 
+function drawQrCode(page: PDFPage, value: string, x: number, y: number, size: number) {
+	const qr = QRCode.create(value, { errorCorrectionLevel: 'M' });
+	const quietZone = 4;
+	const gridSize = qr.modules.size + quietZone * 2;
+	const moduleSize = size / gridSize;
+	page.drawRectangle({ x, y, width: size, height: size, color: rgb(1, 1, 1) });
+
+	for (let row = 0; row < qr.modules.size; row += 1) {
+		for (let column = 0; column < qr.modules.size; column += 1) {
+			if (!qr.modules.get(row, column)) continue;
+			page.drawRectangle({
+				x: x + (column + quietZone) * moduleSize,
+				y: y + (qr.modules.size - row - 1 + quietZone) * moduleSize,
+				width: moduleSize + 0.02,
+				height: moduleSize + 0.02,
+				color: rgb(0.08, 0.08, 0.09)
+			});
+		}
+	}
+}
+
+function drawOverviewIcon(
+	page: PDFPage,
+	id: BookingOverviewRowId,
+	x: number,
+	y: number,
+	color: Color,
+	surface: Color
+) {
+	const scale = 0.68;
+	const px = (value: number) => x + value * scale;
+	const py = (value: number) => y + (24 - value) * scale;
+	const line = (x1: number, y1: number, x2: number, y2: number, thickness = 1.45) => {
+		page.drawLine({
+			start: { x: px(x1), y: py(y1) },
+			end: { x: px(x2), y: py(y2) },
+			thickness: thickness * scale,
+			color,
+			lineCap: LineCapStyle.Round
+		});
+	};
+	const circle = (cx: number, cy: number, radius: number, fill?: Color) => {
+		page.drawCircle({
+			x: px(cx),
+			y: py(cy),
+			size: radius * scale,
+			color: fill,
+			borderColor: fill ? undefined : color,
+			borderWidth: fill ? undefined : 1.45 * scale
+		});
+	};
+	const rectangle = (rx: number, ry: number, width: number, height: number) => {
+		page.drawRectangle({
+			x: px(rx),
+			y: py(ry + height),
+			width: width * scale,
+			height: height * scale,
+			borderColor: color,
+			borderWidth: 1.45 * scale
+		});
+	};
+
+	switch (id) {
+		case 'team':
+			circle(9, 7, 3.2);
+			circle(17.2, 8.2, 2.4);
+			line(3.5, 20, 3.5, 18.2); line(3.5, 18.2, 5.6, 15.5); line(5.6, 15.5, 12.4, 15.5); line(12.4, 15.5, 14.5, 18.2); line(14.5, 18.2, 14.5, 20);
+			line(15.8, 15.8, 19.3, 15.8); line(19.3, 15.8, 21, 18); line(21, 18, 21, 20);
+			break;
+		case 'location':
+			circle(12, 9, 3);
+			line(12, 22, 6.2, 13.7); line(6.2, 13.7, 5.5, 10); line(5.5, 10, 6.6, 6.4); line(6.6, 6.4, 9, 4.1);
+			line(9, 4.1, 12, 3.2); line(12, 3.2, 15, 4.1); line(15, 4.1, 17.4, 6.4); line(17.4, 6.4, 18.5, 10); line(18.5, 10, 17.8, 13.7); line(17.8, 13.7, 12, 22);
+			break;
+		case 'tools':
+			line(8, 9, 3.5, 12); line(3.5, 12, 8, 15); line(16, 9, 20.5, 12); line(20.5, 12, 16, 15); line(14, 5, 10, 19);
+			break;
+		case 'equipment':
+			rectangle(3, 4, 18, 13); line(8, 21, 16, 21); line(12, 17, 12, 21);
+			break;
+		case 'event-date':
+			rectangle(3, 5, 18, 16); line(3, 9, 21, 9); line(8, 3, 8, 7); line(16, 3, 16, 7); line(7, 13, 7.1, 13); line(12, 13, 12.1, 13); line(17, 13, 17.1, 13); line(7, 17, 7.1, 17); line(12, 17, 12.1, 17);
+			break;
+		case 'prep-call':
+			circle(12, 12, 9); line(12, 7, 12, 12); line(12, 12, 16, 14);
+			break;
+		case 'lunch':
+			line(4, 19.5, 20, 19.5); line(4, 19.5, 11.5, 4); line(11.5, 4, 20, 19.5); line(7.8, 12, 17.3, 12); circle(12.5, 15.5, 1.1); circle(13.2, 9, 1.1);
+			break;
+		case 'winner-poster':
+			circle(12, 8.5, 5.3); line(8.5, 12.5, 7, 21); line(7, 21, 12, 18); line(15.5, 12.5, 17, 21); line(17, 21, 12, 18);
+			break;
+		case 'event-photos':
+			rectangle(3, 7, 18, 13); rectangle(8, 4.5, 8, 2.5); circle(12, 13.5, 4); circle(18, 10, 0.8, color);
+			break;
+		case 'snacks':
+			circle(11, 12, 8.5); circle(17.8, 5.2, 3.5, surface); circle(6.8, 9, 1, color); circle(12.5, 15.5, 1, color); circle(8.7, 17, 0.8, color); circle(15.5, 11.2, 0.8, color);
+			break;
+		case 'travel':
+			line(3, 14, 21, 7); line(21, 7, 15.5, 19); line(15.5, 19, 12.5, 12); line(12.5, 12, 7.8, 19); line(7.8, 19, 8.2, 13); line(8.2, 13, 3, 14);
+			break;
+		case 'total':
+			rectangle(5, 3, 14, 18); line(8, 8, 16, 8); line(8, 12, 14, 12); line(8, 16, 16, 16); line(8, 20, 13, 20);
+			break;
+	}
+}
+
 function longDateLabel(value: string, withTime = false) {
 	const date = new Date(value);
 	if (Number.isNaN(date.getTime())) return 'Noch offen';
@@ -121,7 +235,7 @@ function longDateLabel(value: string, withTime = false) {
 	}).format(date);
 }
 
-let brandAssets: Promise<{ logo: Uint8Array; instrumentSans: Uint8Array }> | undefined;
+let brandAssets: Promise<{ logo: Uint8Array; instrumentSerif: Uint8Array }> | undefined;
 
 function decodeDataUrl(asset: string) {
 	const comma = asset.indexOf(',');
@@ -148,20 +262,18 @@ async function readBundledAsset(asset: string) {
 function loadBrandAssets() {
 	brandAssets ??= Promise.all([
 		readBundledAsset(logoAsset),
-		readBundledAsset(instrumentSansAsset)
-	]).then(([logo, instrumentSans]) => ({ logo, instrumentSans }));
+		readBundledAsset(instrumentSerifAsset)
+	]).then(([logo, instrumentSerif]) => ({ logo, instrumentSerif }));
 	return brandAssets;
 }
 
 export interface PlanPdfOptions {
-	includeContact?: boolean;
 	booking?: BookingResultSummary;
 	hackathonId?: string;
 	generatedAt?: Date;
 }
 
 export async function createPlanPdf(config: BookingConfiguration, options: PlanPdfOptions = {}) {
-	const includeContact = options.includeContact ?? true;
 	const generatedAt = options.generatedAt ?? new Date();
 	const pdf = await PDFDocument.create();
 	pdf.registerFontkit(fontkit);
@@ -169,7 +281,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	const regular = await pdf.embedFont(StandardFonts.Helvetica);
 	const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
 	const assets = await loadBrandAssets();
-	const brandFont = await pdf.embedFont(assets.instrumentSans, { subset: true });
+	const brandFont = await pdf.embedFont(assets.instrumentSerif, { subset: true });
 	const logo = await pdf.embedPng(assets.logo);
 
 	const orange = rgb(1, 0.31, 0.094);
@@ -184,9 +296,11 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 10, width: PAGE_WIDTH, height: 10, color: orange });
 
 	page.drawImage(logo, { x: LEFT, y: 778, width: 28, height: 28 });
-	page.drawText('ALL IN AGI', { x: LEFT + 38, y: 786, font: brandFont, size: 12.5, color: ink });
+	page.drawText('ALL IN AGI', { x: LEFT + 38, y: 784, font: brandFont, size: 16.5, color: ink });
 	if (options.hackathonId) {
-		drawRight(page, options.hackathonId, RIGHT, 786, bold, 9, muted);
+		const detailUrl = hackathonDetailUrl(options.hackathonId);
+		drawQrCode(page, detailUrl, RIGHT - 68, 754, 68);
+		drawRight(page, `all-in-agi.com/${options.hackathonId}`, RIGHT, 742, regular, 6.6, muted);
 	}
 
 	page.drawText('Agentic Engineering Hackathon', {
@@ -245,18 +359,20 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	for (const row of rows) {
 		const height = row.total ? totalRowHeight : normalRowHeight;
 		const rowBottom = rowTop - height;
+		const iconColor = row.total ? orange : muted;
+		drawOverviewIcon(page, row.id, 65, rowBottom + (row.total ? 12 : 9), iconColor, surface);
 		if (row.total) {
-			page.drawText('Gesamt', { x: 66, y: rowBottom + 15, font: bold, size: 14, color: ink });
+			page.drawText('Gesamt', { x: 91, y: rowBottom + 15, font: bold, size: 14, color: ink });
 			drawRight(page, row.status, RIGHT - 18, rowBottom + 15, bold, 14, orange);
 		} else {
 			page.drawText(safeText(row.label).toUpperCase(), {
-				x: 66,
+				x: 91,
 				y: rowTop - 12,
 				font: bold,
 				size: 6.6,
 				color: muted
 			});
-			drawWrapped(page, row.value, 66, rowTop - 26, 335, regular, 9.5, ink, 1);
+			drawWrapped(page, row.value, 91, rowTop - 26, 310, regular, 9.5, ink, 1);
 			drawRight(page, row.status, RIGHT - 18, rowTop - 23, bold, 9.2, ink);
 			page.drawLine({
 				start: { x: 66, y: rowBottom },
@@ -268,26 +384,16 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 		rowTop = rowBottom;
 	}
 
-	const supportY = 72;
-	drawRoundedCard(page, LEFT, supportY, RIGHT - LEFT, 31, 12, white);
-	if (includeContact) {
-		drawWrapped(page, config.contactName, 62, supportY + 12, 165, bold, 8.7, ink, 1);
-		drawWrapped(page, config.email, 225, supportY + 12, 185, regular, 8.5, muted, 1);
-		drawRight(page, config.phone, RIGHT - 14, supportY + 12, regular, 8.5, muted);
-	} else {
-		page.drawText('GETEILTER PLAN', { x: 62, y: supportY + 12, font: bold, size: 7, color: muted });
-		page.drawText('Kontaktdaten sind aus Datenschutzgründen ausgeblendet.', {
-			x: 145,
-			y: supportY + 11,
-			font: regular,
-			size: 8.5,
-			color: muted
-		});
-	}
+	const supportY = 66;
+	drawRoundedCard(page, LEFT, supportY, RIGHT - LEFT, 39, 12, white);
+	page.drawText('KONTAKT', { x: 62, y: supportY + 25, font: bold, size: 6.3, color: muted });
+	drawWrapped(page, config.contactName, 62, supportY + 11, 144, bold, 8.7, ink, 1);
+	drawWrapped(page, config.email, 210, supportY + 11, 190, regular, 8.5, muted, 1);
+	drawRight(page, config.phone, RIGHT - 14, supportY + 11, regular, 8.5, muted);
 
 	const generatedLabel = `Planungsstand ${new Intl.DateTimeFormat('de-DE').format(generatedAt)}`;
 	page.drawText(generatedLabel, { x: LEFT, y: 38, font: regular, size: 8.5, color: muted });
-	const footerContact = `${CONTACT_EMAIL}  |  all-in-agi.com`;
+	const footerContact = `${CONTACT_PHONE_DISPLAY}  |  ${CONTACT_EMAIL}  |  all-in-agi.com`;
 	drawRight(page, footerContact, RIGHT, 38, regular, 8.5, muted);
 
 	return pdf.save();

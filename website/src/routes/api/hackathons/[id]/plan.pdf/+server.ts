@@ -13,7 +13,6 @@ export async function GET({ params }) {
 	const record = await getConfirmedHackathonRecord(id);
 	if (!record) error(404, 'Hackathon nicht gefunden');
 	const bytes = await createPlanPdf(recordToBookingConfiguration(record), {
-		includeContact: false,
 		booking: recordToBookingSummary(record),
 		hackathonId: id
 	});

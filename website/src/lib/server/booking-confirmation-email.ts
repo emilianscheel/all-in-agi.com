@@ -1,4 +1,4 @@
-import { createPlanPdf } from '$lib/booking-artifacts';
+import { createPlanPdf, hackathonDetailUrl } from '$lib/booking-artifacts';
 import type { BookingConfiguration } from '$lib/booking';
 import { bookingOverviewRows } from '$lib/booking-overview';
 import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
@@ -6,7 +6,6 @@ import { CONTACT_EMAIL } from '$lib/contact';
 
 const CLOUDFLARE_API_BASE = 'https://api.cloudflare.com/client/v4';
 const MAX_EMAIL_BYTES = 5 * 1024 * 1024;
-const SITE_ORIGIN = 'https://all-in-agi.com';
 
 export interface BookingConfirmationInput {
 	id: string;
@@ -128,7 +127,7 @@ function failedReport(error: BookingConfirmationEmailError): BookingConfirmation
 }
 
 export function bookingDetailUrl(id: string) {
-	return `${SITE_ORIGIN}/${encodeURIComponent(id)}`;
+	return hackathonDetailUrl(id);
 }
 
 export function buildBookingConfirmationText(input: BookingConfirmationInput) {
@@ -152,7 +151,6 @@ async function prepareBookingConfirmation(
 	let calendar: string;
 	try {
 		pdf = await (dependencies.createPdf ?? createPlanPdf)(input.config, {
-			includeContact: false,
 			booking: input.booking,
 			hackathonId: input.id
 		});
