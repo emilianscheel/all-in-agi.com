@@ -61,13 +61,24 @@ export async function createCalBookingWithToken(
 	}
 }
 
-export async function cancelCalBookingWithToken(booking: ConfirmedBooking, requestFetch: typeof fetch, token?: string) {
+export async function cancelCalBookingWithToken(
+	booking: ConfirmedBooking,
+	requestFetch: typeof fetch,
+	token?: string,
+	options: { reason?: string } = {}
+) {
 	if (booking.demo) return;
 	if (!token || !booking.uid) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', 503);
 	const response = await requestFetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(booking.uid)}/cancel`, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${token}`, 'cal-api-version': CAL_API_VERSION, 'content-type': 'application/json' },
-		body: JSON.stringify({ cancellationReason: 'Buchung über ALL IN AGI zurückgerollt' })
+		body: JSON.stringify({ cancellationReason: options.reason ?? 'Buchung über ALL IN AGI zurückgerollt' })
 	});
-	if (!response.ok) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', response.status);
+	if (!response.ok) {
+		let result: unknown;
+		try { result = await response.json(); } catch { result = null; }
+		const alreadyCancelled = (response.status === 404 || response.status === 409)
+			&& /cancelled|canceled|already|not found/i.test(JSON.stringify(result));
+		if (!alreadyCancelled) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', response.status);
+	}
 }

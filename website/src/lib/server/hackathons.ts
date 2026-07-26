@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import { getPrice, type BookingConfiguration, type Capacity } from '$lib/booking';
 import type { BookingResultSummary } from '$lib/booking-ics';
 import { generatePublicId, HACKATHON_ID_PREFIX } from '$lib/public-id';
@@ -19,6 +19,9 @@ export interface ConfirmedBookings {
 
 export interface PublicHackathon extends BookingConfiguration {
 	id: string;
+	status: 'confirmed' | 'cancellation_pending' | 'cancelled';
+	cancelledAt: string | null;
+	cancellationEmailSentAt: string | null;
 	price: ReturnType<typeof getPrice>;
 	hackathonBooking: BookingResultSummary;
 	prepCallBooking: BookingResultSummary;
@@ -114,6 +117,14 @@ export async function getConfirmedHackathonRecord(id: string) {
 	return record ?? null;
 }
 
+export async function getCustomerHackathonRecord(id: string) {
+	const db = await getDb();
+	const [record] = await db.select().from(hackathons)
+		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['confirmed', 'cancellation_pending', 'cancelled'])))
+		.limit(1);
+	return record ?? null;
+}
+
 export async function updateConfirmedHackathon(id: string, config: BookingConfiguration, bookings: Partial<ConfirmedBookings> = {}) {
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
 	const db = await getDb();
@@ -189,6 +200,9 @@ export function recordToHackathonBookingSummary(record: HackathonRecord): Bookin
 export function toPublicHackathon(record: HackathonRecord): PublicHackathon {
 	return {
 		id: record.id,
+		status: record.status as PublicHackathon['status'],
+		cancelledAt: record.cancelledAt,
+		cancellationEmailSentAt: record.cancellationEmailSentAt,
 		...recordToBookingConfiguration(record),
 		price: {
 			basePrice: record.basePrice,
@@ -203,8 +217,70 @@ export function toPublicHackathon(record: HackathonRecord): PublicHackathon {
 }
 
 export async function getPublicHackathon(id: string) {
-	const record = await getConfirmedHackathonRecord(id);
+	const record = await getCustomerHackathonRecord(id);
 	return record ? toPublicHackathon(record) : null;
+}
+
+const CANCELLATION_LEASE_MS = 120_000;
+
+export async function claimHackathonCancellation(id: string, now = new Date()) {
+	const db = await getDb();
+	const processingAt = now.toISOString();
+	const [started] = await db.update(hackathons).set({
+		status: 'cancellation_pending',
+		cancellationProcessingAt: processingAt,
+		updatedAt: processingAt
+	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();
+	if (started) return { claimed: true, record: started };
+
+	const leaseExpiredAt = new Date(now.getTime() - CANCELLATION_LEASE_MS).toISOString();
+	const [resumed] = await db.update(hackathons).set({ cancellationProcessingAt: processingAt, updatedAt: processingAt })
+		.where(and(
+			eq(hackathons.id, id),
+			or(
+				eq(hackathons.status, 'cancellation_pending'),
+				and(eq(hackathons.status, 'cancelled'), isNull(hackathons.cancellationEmailSentAt))
+			),
+			or(isNull(hackathons.cancellationProcessingAt), lt(hackathons.cancellationProcessingAt, leaseExpiredAt))
+		)).returning();
+	if (resumed) return { claimed: true, record: resumed };
+	return { claimed: false, record: await getCustomerHackathonRecord(id) };
+}
+
+export async function markHackathonCalendarCancelled(id: string, kind: 'hackathon' | 'prep-call', at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		...(kind === 'hackathon' ? { hackathonCancelledAt: at } : { prepCallCancelledAt: at }),
+		updatedAt: at
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['cancellation_pending', 'cancelled']))).returning();
+	return record ?? null;
+}
+
+export async function markHackathonCancelled(id: string, at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({ status: 'cancelled', cancelledAt: at, updatedAt: at })
+		.where(and(eq(hackathons.id, id), eq(hackathons.status, 'cancellation_pending'))).returning();
+	return record ?? await getCustomerHackathonRecord(id);
+}
+
+export async function markCancellationEmailSent(id: string, messageId?: string, at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		cancellationEmailSentAt: at,
+		cancellationEmailMessageId: messageId ?? null,
+		updatedAt: at
+	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'cancelled'))).returning();
+	return record ?? null;
+}
+
+export async function releaseHackathonCancellation(id: string, processingAt: string | null) {
+	const db = await getDb();
+	await db.update(hackathons).set({ cancellationProcessingAt: null })
+		.where(and(
+			eq(hackathons.id, id),
+			inArray(hackathons.status, ['cancellation_pending', 'cancelled']),
+			processingAt ? eq(hackathons.cancellationProcessingAt, processingAt) : isNull(hackathons.cancellationProcessingAt)
+		));
 }
 
 export function toPublicHackathonTimer(record: Pick<HackathonRecord, 'id' | 'eventStart' | 'eventEnd' | 'lunch' | 'customLunch'>): PublicHackathonTimer {

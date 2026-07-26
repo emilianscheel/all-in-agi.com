@@ -37,11 +37,22 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
 - `DATABASE_URL`: einzige PostgreSQL-Konfiguration für Anwendung, Drizzle und lokale Entwicklung; der lokale Container übernimmt daraus Benutzername, Passwort, Datenbankname und Port
-- `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`: für eine spätere Better-Auth-Integration reserviert; aktuell noch nicht verwendet
+- `BETTER_AUTH_SECRET`: mindestens 32 Zeichen langes Secret für Better-Auth-Sessions
+- `BETTER_AUTH_URL`: vollständiger Origin der Anwendung ohne abschließenden Slash; lokal standardmäßig `http://localhost:5173`
+- `SEED_ADMIN_EMAIL`: einzige E-Mail-Adresse, die das Admin-Konto einrichten darf
+- `SEED_ADMIN_PASSWORD`: Seed-Passwort mit mindestens 8 Zeichen; es wird nur bis zur erfolgreichen Passkey-Einrichtung akzeptiert
 
 In der lokalen Entwicklung wird ein festes Development-Secret verwendet. Im Live-Betrieb verweigert die App das Erstellen und Öffnen von Plan-Links ohne eigenes Secret. Plan-Links enthalten die vollständige Konfiguration inklusive Kontakt- und Adressdaten; jede Person mit dem Link kann diese Daten nach dem Öffnen sehen. Eine Rotation des Secrets macht bestehende Links ungültig.
 
 Gebuchte Hackathons werden dauerhaft in PostgreSQL gespeichert und erhalten eine öffentliche ID im Format `HAA-AAA-AAA`. Die Route `/<id>` ist nicht indexiert, aber als nicht gelisteter Bearer-Link erreichbar: Wer den Link kennt, kann die Veranstaltungsdetails und den PDF-Plan einschließlich der hinterlegten Kontaktdaten öffnen.
+
+## Admin-Dashboard
+
+Das Admin-Dashboard liegt unter `/dashboard`. Beim ersten Aufruf wird ausschließlich die in `SEED_ADMIN_EMAIL` konfigurierte Adresse akzeptiert. Nach der Anmeldung mit `SEED_ADMIN_PASSWORD` muss unmittelbar ein Passkey registriert werden; Buchungsdaten und Admin-Endpunkte bleiben bis dahin gesperrt. Sobald ein Passkey vorhanden ist, weist der Server alle Passwort-Anmeldungen zurück und akzeptiert nur noch WebAuthn/Passkey.
+
+Passkeys benötigen im Live-Betrieb HTTPS und einen `BETTER_AUTH_URL`-Origin, der exakt zur aufgerufenen Domain passt. `localhost` funktioniert für die lokale Entwicklung. Das Dashboard zeigt bestätigte und stornierte Kundenbuchungen, bietet einen CSV-Export und ergänzt die öffentliche Hackathon-Detailseite für angemeldete Admins um Timer- und Stornierungsaktionen.
+
+Wenn alle Passkeys verloren gehen, gibt es bewusst keinen Seed-Bypass. Für die manuelle Wiederherstellung müssen in der Datenbank zunächst alle Sessions des Seed-Benutzers widerrufen und dessen Einträge aus `passkey` entfernt werden. Danach darf das Seed-Passwort erneut zur Passkey-Einrichtung verwendet werden. Vor diesem Eingriff sollte ein Datenbank-Backup erstellt werden.
 
 Das Drizzle-Schema liegt unter `src/lib/server/db/schema.ts`; generierte und geprüfte SQL-Migrationen werden im Ordner `drizzle/` versioniert. Schemaänderungen werden mit `bun run db:generate` erzeugt und mit `bun run db:migrate` angewendet.
 

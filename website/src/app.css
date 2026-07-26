@@ -108,6 +108,15 @@ img { display: block; max-width: 100%; }
 .button-secondary:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 0 color-mix(in srgb, var(--orange) 18%, transparent), 0 7px 16px rgba(0,0,0,.11); }
 .button-primary[aria-disabled="true"], .button-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
 .button-primary[aria-disabled="true"]::before, .button-primary:disabled::before { opacity: 0; }
+.button-destructive {
+	display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+	padding: 10px 22px; border: 1px solid #c83228; border-radius: 999px;
+	background: linear-gradient(180deg, #df5148, #c83228 55%, #a8221b); color: #fff;
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -2px 0 rgba(80,0,0,.2), 0 6px 14px rgba(160,30,24,.18);
+	font-size: 16px; line-height: 1.2; cursor: pointer;
+}
+.button-destructive:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.46), inset 0 -2px 0 rgba(80,0,0,.18), 0 8px 18px rgba(160,30,24,.28); }
+.button-destructive:disabled { opacity: .5; cursor: not-allowed; }
 
 .eyebrow { margin: 0 0 14px; color: var(--orange); font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .display-title { margin: 0; font-size: clamp(52px, 7.4vw, 96px); line-height: .94; letter-spacing: -.065em; font-weight: 700; }
@@ -269,6 +278,76 @@ img { display: block; max-width: 100%; }
 .footer-inner { max-width: 1024px; margin: 0 auto; padding: 24px 22px; display: flex; justify-content: center; }
 .footer-links { display: flex; justify-content: center; gap: 18px; }
 .footer-links a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+/* Admin */
+.admin-header { background: color-mix(in srgb, var(--surface) 92%, transparent); border-color: var(--soft-line); }
+.admin-nav-inner { grid-template-columns: 1fr auto 1fr; }
+.admin-brand-mark { transform: translateY(-3.25px); }
+.admin-nav-links { display: flex; align-items: center; gap: 30px; color: var(--nav-ink); font-size: 12px; }
+.admin-nav-links a { opacity: .7; transition: opacity .2s ease; }
+.admin-nav-links a:hover, .admin-nav-links a.active { opacity: 1; }
+.admin-nav-action { justify-self: end; min-width: 70px; display: flex; justify-content: flex-end; }
+.admin-nav-action button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--control); color: var(--ink); font-size: 12px; box-shadow: inset 0 1px 0 var(--gloss-soft-highlight); }
+
+.dashboard-page { width: min(100%, 1180px); margin: 0 auto; padding: 72px 30px 110px; }
+.dashboard-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 30px; margin-bottom: 36px; }
+.dashboard-heading .eyebrow { margin-bottom: 10px; }
+.dashboard-heading h1 { margin: 0; font-size: clamp(42px, 6vw, 68px); line-height: .98; letter-spacing: -.055em; }
+.dashboard-heading p:not(.eyebrow) { margin: 16px 0 0; color: var(--muted); font-size: 18px; }
+.dashboard-export { min-height: 40px; padding: 8px 17px; gap: 8px; font-size: 14px; white-space: nowrap; }
+.dashboard-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.dashboard-stat-card { min-height: 172px; padding: 25px 28px; border: 1px solid var(--soft-line); border-radius: 24px; background: var(--card); box-shadow: var(--card-shadow); display: flex; flex-direction: column; justify-content: space-between; }
+.dashboard-stat-card span { color: var(--muted); font-size: 14px; }
+.dashboard-stat-card strong { font-size: clamp(38px, 5vw, 58px); line-height: 1; letter-spacing: -.055em; }
+.dashboard-list-card { overflow: hidden; border: 1px solid var(--soft-line); border-radius: 24px; background: var(--card); box-shadow: var(--card-shadow); }
+.dashboard-list-heading { min-height: 78px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--soft-line); }
+.dashboard-list-heading h2 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
+.dashboard-list-heading span { color: var(--muted); font-size: 13px; }
+.dashboard-table-wrap { overflow-x: auto; }
+.dashboard-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dashboard-table th { padding: 12px 18px; color: var(--muted); background: var(--surface); font-size: 11px; font-weight: 650; letter-spacing: .04em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+.dashboard-table td { padding: 17px 18px; border-top: 1px solid var(--soft-line); vertical-align: middle; white-space: nowrap; }
+.dashboard-table tbody tr:first-child td { border-top: 0; }
+.dashboard-table tbody tr { transition: background .18s ease; }
+.dashboard-table tbody tr:hover { background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.booking-primary-link { display: flex; flex-direction: column; gap: 4px; min-width: 210px; }
+.booking-primary-link strong { letter-spacing: -.015em; }
+.booking-primary-link small { color: var(--muted); font-size: 12px; }
+.booking-status { display: inline-flex; align-items: center; min-height: 26px; padding: 4px 9px; border-radius: 999px; background: color-mix(in srgb, #34a853 12%, var(--card)); color: color-mix(in srgb, #20853a 85%, var(--ink)); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.booking-status.cancellation_pending { background: var(--warning-bg); color: var(--warning-ink); }
+.booking-status.cancelled { background: var(--surface); color: var(--muted); }
+.dashboard-empty { margin: 0; padding: 64px 24px; color: var(--muted); text-align: center; }
+
+.dashboard-login-page { min-height: calc(100svh - 105px); display: grid; place-items: center; padding: 64px 22px; background: var(--surface); }
+.dashboard-login-card { width: min(100%, 460px); padding: 40px; border: 1px solid var(--soft-line); border-radius: 28px; background: var(--card); box-shadow: var(--floating-shadow); text-align: center; }
+.dashboard-login-icon { width: 54px; height: 54px; margin: 0 auto 24px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--orange); }
+.dashboard-login-card .eyebrow { margin-bottom: 10px; }
+.dashboard-login-card h1 { margin: 0; font-size: clamp(32px, 5vw, 46px); line-height: 1; letter-spacing: -.05em; }
+.dashboard-login-card > p:not(.eyebrow):not(.dashboard-login-error) { margin: 18px auto 26px; color: var(--muted); line-height: 1.5; }
+.dashboard-login-field { text-align: left; }
+.dashboard-login-field + .dashboard-login-field { margin-top: 14px; }
+.dashboard-password-reveal { margin-top: 14px; }
+.dashboard-login-button { width: 100%; margin-top: 18px; gap: 8px; }
+.dashboard-login-error { margin: 16px 0 0; color: var(--error-ink); font-size: 14px; line-height: 1.45; }
+
+@media (max-width: 700px) {
+	.admin-nav-inner { padding: 0 14px; grid-template-columns: auto 1fr auto; }
+	.admin-nav-links { justify-content: center; gap: 14px; }
+	.admin-nav-action { min-width: 0; }
+	.admin-nav-action button { padding: 5px 9px; }
+	.dashboard-page { padding: 48px 18px 80px; }
+	.dashboard-heading { align-items: flex-start; flex-direction: column; }
+	.dashboard-export { width: 100%; }
+	.dashboard-stats { grid-template-columns: 1fr; }
+	.dashboard-stat-card { min-height: 144px; }
+	.dashboard-login-card { padding: 34px 22px; border-radius: 22px; }
+}
+
+@media (max-width: 460px) {
+	.admin-nav-links { gap: 10px; }
+	.admin-nav-links a { font-size: 11px; }
+	.admin-nav-action button { font-size: 11px; }
+}
 
 .manage-page { min-height: calc(100svh - 105px); display: grid; place-items: center; padding: 48px 22px; }
 .manage-form { width: min(100%, 460px); text-align: center; }
@@ -480,6 +559,24 @@ img { display: block; max-width: 100%; }
 .detail-panel { justify-content: flex-start; }
 .detail-panel h1 { margin-top: 12px; }
 .detail-overview { margin-top: 42px; }
+.detail-readonly .summary-edit-button { display: none; }
+.booking-state-banner { width: 100%; margin-top: 22px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 11px; border-radius: 15px; text-align: left; font-size: 13px; line-height: 1.45; }
+.booking-state-banner svg { flex: none; margin-top: 1px; }
+.booking-state-banner span { display: grid; gap: 2px; }
+.booking-state-banner.cancelled { background: var(--error-bg); color: var(--error-ink); }
+.booking-state-banner.pending { background: var(--warning-bg); color: var(--warning-ink); }
+.admin-detail-actions { width: 100%; margin-top: 18px; padding-top: 18px; display: grid; gap: 10px; border-top: 1px solid var(--soft-line); }
+.admin-detail-actions .action-button { width: 100%; min-height: 50px; }
+.admin-action-message { margin: 2px 4px 0; color: var(--muted); font-size: 13px; line-height: 1.45; text-align: center; }
+.confirmation-overlay { position: fixed; z-index: 100; inset: 0; background: rgba(0,0,0,.48); backdrop-filter: blur(5px); animation: confirmation-fade .2s ease-out; }
+.confirmation-dialog { position: fixed; z-index: 101; left: 50%; top: 50%; width: min(calc(100% - 32px), 480px); padding: 30px; transform: translate(-50%, -50%); border: 1px solid var(--soft-line); border-radius: 24px; background: var(--card); color: var(--ink); box-shadow: var(--floating-shadow); animation: confirmation-pop .28s cubic-bezier(.22, 1, .36, 1); }
+.confirmation-dialog-icon { width: 48px; height: 48px; margin-bottom: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--error-bg); color: var(--error-ink); }
+.confirmation-dialog h2 { margin: 0; font-size: 27px; line-height: 1.05; letter-spacing: -.04em; }
+.confirmation-dialog p { margin: 15px 0 0; color: var(--muted); line-height: 1.55; }
+.confirmation-dialog-actions { margin-top: 26px; display: flex; justify-content: flex-end; gap: 10px; }
+.confirmation-dialog-actions button { min-height: 42px; padding: 9px 17px; font-size: 14px; }
+@keyframes confirmation-fade { from { opacity: 0; } }
+@keyframes confirmation-pop { from { opacity: 0; transform: translate(-50%, calc(-50% + 14px)) scale(.97); } }
 
 @media (prefers-color-scheme: dark) {
 	:root {

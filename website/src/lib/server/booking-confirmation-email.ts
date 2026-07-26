@@ -3,9 +3,7 @@ import type { BookingConfiguration } from "$lib/booking";
 import { bookingOverviewRows } from "$lib/booking-overview";
 import { createPrepCallIcs, type BookingResultSummary } from "$lib/booking-ics";
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from "$lib/contact";
-
-const CLOUDFLARE_API_BASE = "https://api.cloudflare.com/client/v4";
-const MAX_EMAIL_BYTES = 5 * 1024 * 1024;
+import { EmailTransportError, sendEmailMessage } from './email-transport';
 
 export interface BookingConfirmationInput {
     id: string;
@@ -42,17 +40,6 @@ export type BookingConfirmationAttempt =
 export interface BookingConfirmationReport {
     customer: BookingConfirmationAttempt;
     organizer: BookingConfirmationAttempt;
-}
-
-interface CloudflareEmailResponse {
-    success?: boolean;
-    errors?: Array<{ code?: number; message?: string }>;
-    result?: {
-        delivered?: string[];
-        queued?: string[];
-        permanent_bounces?: string[];
-        message_id?: string;
-    } | null;
 }
 
 interface PreparedBookingConfirmation {
@@ -293,97 +280,30 @@ async function sendPreparedBookingConfirmation(
     apiToken: string,
     dependencies: BookingConfirmationDependencies,
 ): Promise<BookingConfirmationAttempt> {
-    let serializedPayload: string;
     try {
-        serializedPayload = JSON.stringify({
-            from: { address: CONTACT_EMAIL, name: "ALL IN AGI" },
-            reply_to: { address: CONTACT_EMAIL, name: "ALL IN AGI" },
+        const result = await sendEmailMessage({
             to: recipient,
             ...prepared,
+        }, {
+            fetch: dependencies.fetch,
+            accountId,
+            apiToken,
+            maxMessageBytes: dependencies.maxMessageBytes
         });
-        const payloadBytes = new TextEncoder().encode(serializedPayload).byteLength;
-        if (payloadBytes > (dependencies.maxMessageBytes ?? MAX_EMAIL_BYTES)) {
-            throw new BookingConfirmationEmailError(
-                "Die Buchungsbestätigung überschreitet die maximale Nachrichtengröße.",
-                {
-                    stage: "serialization",
-                    status: 400,
-                    providerCode: "message_too_big",
-                },
-            );
-        }
-    } catch (cause) {
-        if (cause instanceof BookingConfirmationEmailError) throw cause;
+        return { role, sent: true, messageId: result.messageId, status: result.status };
+    } catch (error) {
+        if (!(error instanceof EmailTransportError)) throw error;
         throw new BookingConfirmationEmailError(
-            "Die Buchungsbestätigung konnte nicht serialisiert werden.",
+            error.message,
             {
-                stage: "serialization",
-                providerCode: "payload_serialization_failed",
-                cause,
+                stage: error.stage,
+                status: error.details.status,
+                providerCode: error.details.providerCode,
+                messageId: error.details.messageId,
+                cause: error.details.cause
             },
         );
     }
-
-    const requestFetch = dependencies.fetch ?? globalThis.fetch;
-    let response: Response;
-    try {
-        response = await requestFetch(
-            `${CLOUDFLARE_API_BASE}/accounts/${encodeURIComponent(accountId)}/email/sending/send`,
-            {
-                method: "POST",
-                headers: {
-                    authorization: `Bearer ${apiToken}`,
-                    "content-type": "application/json",
-                },
-                body: serializedPayload,
-            },
-        );
-    } catch (cause) {
-        throw new BookingConfirmationEmailError("Cloudflare Email Service ist nicht erreichbar.", {
-            stage: "network",
-            providerCode: "network_error",
-            cause,
-        });
-    }
-
-    let result: CloudflareEmailResponse = {};
-    try {
-        result = (await response.json()) as CloudflareEmailResponse;
-    } catch {
-        // Preserve the HTTP status even when an upstream error body is not JSON.
-    }
-    const providerError = result.errors?.[0];
-    // Each request contains exactly one recipient. Cloudflare can return the mailbox
-    // with its display name, so comparing the status entry to the bare address is
-    // unnecessarily strict. A message ID is also evidence that Cloudflare accepted
-    // the message when the immediate delivery arrays are still empty.
-    const delivered = (result.result?.delivered?.length ?? 0) > 0;
-    const queued = (result.result?.queued?.length ?? 0) > 0;
-    const permanentlyBounced = (result.result?.permanent_bounces?.length ?? 0) > 0;
-    const accepted = Boolean(result.result?.message_id);
-    if (
-        !response.ok ||
-        result.success !== true ||
-        (!delivered && !queued && !accepted) ||
-        permanentlyBounced
-    ) {
-        throw new BookingConfirmationEmailError(
-            providerError?.message ?? "Cloudflare hat die Buchungsbestätigung nicht angenommen.",
-            {
-                stage: "provider",
-                status: response.status,
-                providerCode: providerError?.code ?? "delivery_not_accepted",
-                messageId: result.result?.message_id,
-            },
-        );
-    }
-
-    return {
-        role,
-        sent: true,
-        messageId: result.result?.message_id,
-        status: delivered ? "delivered" : queued ? "queued" : "accepted",
-    };
 }
 
 export async function sendCustomerBookingConfirmationEmail(

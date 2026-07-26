@@ -1,14 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { installGlobalHaptics } from '$lib/haptics';
 	import { robotsDirective } from '$lib/seo';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
-	let { children } = $props();
+	let { children, data } = $props();
 	let presentationRoute = $derived(page.route.id === '/timer' || page.route.id === '/clock' || page.route.id === '/[id]/timer');
+	let adminNavigation = $derived(page.route.id === '/dashboard' || (page.route.id === '/[id]' && data.admin.authorized));
 
 	onMount(installGlobalHaptics);
+
+	async function logout() {
+		const { authClient } = await import('$lib/auth-client');
+		await authClient.signOut();
+		await invalidateAll();
+		await goto('/dashboard');
+	}
 </script>
 
 <svelte:head>
@@ -20,25 +29,41 @@
 
 {#if !presentationRoute}
 	<a class="skip-link" href="#main">Zum Inhalt springen</a>
-	<header class="site-header">
-	<nav class="nav-inner" aria-label="Hauptnavigation">
-		<a class="brand-mark" href="/" aria-label="ALL IN AGI Startseite">
-			<span class="brand-icon" aria-hidden="true">
-				<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
-			</span>
-			<span class="brand-wordmark" aria-hidden="true">
-				{#each [...'ALL IN AGI'] as character, index}
-					<span class="brand-character" style={`--char-index: ${index}`}>{character === ' ' ? '\u00a0' : character}</span>
-				{/each}
-			</span>
-		</a>
-		<div class="nav-links">
-			<a href="/#format">Agenda</a>
-			<a href="/#preis">Preis</a>
-			<a href="/#kontakt">Kontakt</a>
-		</div>
-		<a class="nav-cta" href="/buchen">Hackathon planen</a>
-	</nav>
+	<header class:admin-header={adminNavigation} class="site-header">
+	{#if adminNavigation}
+		<nav class="nav-inner admin-nav-inner" aria-label="Admin-Navigation">
+			<a class="brand-mark admin-brand-mark" href="/dashboard" aria-label="ALL IN AGI Dashboard">
+				<span class="brand-icon" aria-hidden="true"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /></span>
+			</a>
+			<div class="admin-nav-links">
+				<a class:active={page.route.id === '/dashboard'} href="/dashboard">Dashboard</a>
+				<a href="/timer">Timer</a>
+				<a href="/clock">Clock</a>
+			</div>
+			<div class="admin-nav-action">
+				{#if data.admin.authenticated}<button type="button" onclick={logout}>Logout</button>{/if}
+			</div>
+		</nav>
+	{:else}
+		<nav class="nav-inner" aria-label="Hauptnavigation">
+			<a class="brand-mark" href="/" aria-label="ALL IN AGI Startseite">
+				<span class="brand-icon" aria-hidden="true">
+					<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
+				</span>
+				<span class="brand-wordmark" aria-hidden="true">
+					{#each [...'ALL IN AGI'] as character, index}
+						<span class="brand-character" style={`--char-index: ${index}`}>{character === ' ' ? '\u00a0' : character}</span>
+					{/each}
+				</span>
+			</a>
+			<div class="nav-links">
+				<a href="/#format">Agenda</a>
+				<a href="/#preis">Preis</a>
+				<a href="/#kontakt">Kontakt</a>
+			</div>
+			<a class="nav-cta" href="/buchen">Hackathon planen</a>
+		</nav>
+	{/if}
 	</header>
 {/if}
 

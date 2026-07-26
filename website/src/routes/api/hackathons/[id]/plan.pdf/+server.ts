@@ -1,7 +1,7 @@
 import { createPlanPdf } from '$lib/booking-artifacts';
 import { isHackathonId } from '$lib/public-id';
 import {
-	getConfirmedHackathonRecord,
+	getCustomerHackathonRecord,
 	recordToBookingConfiguration,
 	recordToPrepCallBookingSummary
 } from '$lib/server/hackathons';
@@ -10,7 +10,7 @@ import { error } from '@sveltejs/kit';
 export async function GET({ params }) {
 	const id = params.id.toUpperCase();
 	if (!isHackathonId(id)) error(404, 'Hackathon nicht gefunden');
-	const record = await getConfirmedHackathonRecord(id);
+	const record = await getCustomerHackathonRecord(id);
 	if (!record) error(404, 'Hackathon nicht gefunden');
 	const bytes = await createPlanPdf(recordToBookingConfiguration(record), {
 		booking: recordToPrepCallBookingSummary(record),

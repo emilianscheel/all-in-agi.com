@@ -1,8 +1,8 @@
-import { sql } from 'drizzle-orm';
-import { boolean, check, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import type { CodingTool, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 
-export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed']);
+export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed', 'cancellation_pending', 'cancelled']);
 
 export const hackathons = pgTable('hackathons', {
 	id: text('id').primaryKey(),
@@ -40,6 +40,12 @@ export const hackathons = pgTable('hackathons', {
 	hackathonBookingTitle: text('hackathon_booking_title'),
 	hackathonBookingStart: timestamp('hackathon_booking_start', { withTimezone: true, mode: 'string' }),
 	hackathonBookingEnd: timestamp('hackathon_booking_end', { withTimezone: true, mode: 'string' }),
+	hackathonCancelledAt: timestamp('hackathon_cancelled_at', { withTimezone: true, mode: 'string' }),
+	prepCallCancelledAt: timestamp('prep_call_cancelled_at', { withTimezone: true, mode: 'string' }),
+	cancelledAt: timestamp('cancelled_at', { withTimezone: true, mode: 'string' }),
+	cancellationEmailSentAt: timestamp('cancellation_email_sent_at', { withTimezone: true, mode: 'string' }),
+	cancellationEmailMessageId: text('cancellation_email_message_id'),
+	cancellationProcessingAt: timestamp('cancellation_processing_at', { withTimezone: true, mode: 'string' }),
 	demoMode: boolean('demo_mode').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
@@ -47,3 +53,84 @@ export const hackathons = pgTable('hackathons', {
 	check('hackathons_id_format_check', sql`${table.id} ~ '^H[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`),
 	check('hackathons_capacity_check', sql`${table.capacity} in (15, 30, 50)`)
 ]);
+
+export const user = pgTable('user', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	email: text('email').notNull().unique(),
+	emailVerified: boolean('email_verified').default(false).notNull(),
+	image: text('image'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull()
+});
+
+export const session = pgTable('session', {
+	id: text('id').primaryKey(),
+	expiresAt: timestamp('expires_at').notNull(),
+	token: text('token').notNull().unique(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').$onUpdate(() => new Date()).notNull(),
+	ipAddress: text('ip_address'),
+	userAgent: text('user_agent'),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' })
+}, (table) => [index('session_userId_idx').on(table.userId)]);
+
+export const account = pgTable('account', {
+	id: text('id').primaryKey(),
+	accountId: text('account_id').notNull(),
+	providerId: text('provider_id').notNull(),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	accessToken: text('access_token'),
+	refreshToken: text('refresh_token'),
+	idToken: text('id_token'),
+	accessTokenExpiresAt: timestamp('access_token_expires_at'),
+	refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+	scope: text('scope'),
+	password: text('password'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').$onUpdate(() => new Date()).notNull()
+}, (table) => [index('account_userId_idx').on(table.userId)]);
+
+export const verification = pgTable('verification', {
+	id: text('id').primaryKey(),
+	identifier: text('identifier').notNull(),
+	value: text('value').notNull(),
+	expiresAt: timestamp('expires_at').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull()
+}, (table) => [index('verification_identifier_idx').on(table.identifier)]);
+
+export const passkey = pgTable('passkey', {
+	id: text('id').primaryKey(),
+	name: text('name'),
+	publicKey: text('public_key').notNull(),
+	userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+	credentialID: text('credential_id').notNull(),
+	counter: integer('counter').notNull(),
+	deviceType: text('device_type').notNull(),
+	backedUp: boolean('backed_up').notNull(),
+	transports: text('transports'),
+	createdAt: timestamp('created_at'),
+	aaguid: text('aaguid')
+}, (table) => [
+	index('passkey_userId_idx').on(table.userId),
+	index('passkey_credentialID_idx').on(table.credentialID)
+]);
+
+export const userRelations = relations(user, ({ many }) => ({
+	sessions: many(session),
+	accounts: many(account),
+	passkeys: many(passkey)
+}));
+
+export const sessionRelations = relations(session, ({ one }) => ({
+	user: one(user, { fields: [session.userId], references: [user.id] })
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+	user: one(user, { fields: [account.userId], references: [user.id] })
+}));
+
+export const passkeyRelations = relations(passkey, ({ one }) => ({
+	user: one(user, { fields: [passkey.userId], references: [user.id] })
+}));

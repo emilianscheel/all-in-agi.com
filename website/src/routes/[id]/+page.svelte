@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		Award,
+		Ban,
 		Building2,
 		CalendarDays,
 		CalendarPlus,
@@ -11,6 +12,7 @@
 		Contact,
 		Cookie,
 		Download,
+		ExternalLink,
 		MapPin,
 		MapPinned,
 		Mail,
@@ -19,8 +21,11 @@
 		Pizza,
 		Plane,
 		ReceiptEuro,
+		RotateCcw,
 		Users
 	} from 'lucide-svelte';
+	import { AlertDialog } from 'bits-ui';
+	import { invalidateAll } from '$app/navigation';
 	import AddressEditor from '$lib/config/AddressEditor.svelte';
 	import ConfigOptionCards, { type OptionValues } from '$lib/config/ConfigOptionCards.svelte';
 	import ContactFields from '$lib/config/ContactFields.svelte';
@@ -48,6 +53,9 @@
 	let saving = $state(false);
 	let editError = $state('');
 	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let cancellationBusy = $state(false);
+	let cancellationMessage = $state('');
+	let cancelDialogOpen = $state(false);
 	let prepCallMode = $state<'quick' | 'custom'>('quick');
 	let customPrepCallDate = $state('');
 	let draft = $state<BookingConfiguration>(configurationFromHackathon(initialHackathon));
@@ -70,6 +78,7 @@
 		customCodingTool: draft.customCodingTool
 	});
 	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.prepCallBooking));
+	let readOnly = $derived(hackathon.status !== 'confirmed');
 
 	function configurationFromHackathon(value: typeof data.hackathon): BookingConfiguration {
 		return {
@@ -102,6 +111,7 @@
 	}
 
 	function openEditor(section: EditSection) {
+		if (readOnly) return;
 		if (activeSection === section) {
 			cancelEditor();
 			return;
@@ -180,13 +190,39 @@
 		}
 	}
 
+	async function cancelBooking() {
+		if (cancellationBusy) return;
+		cancellationBusy = true;
+		cancellationMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/cancel`, { method: 'POST' });
+			const result = await response.json();
+			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Stornierung konnte nicht gestartet werden.');
+			hackathon = {
+				...hackathon,
+				status: result.status,
+				cancelledAt: result.status === 'cancelled' ? hackathon.cancelledAt ?? new Date().toISOString() : hackathon.cancelledAt,
+				cancellationEmailSentAt: result.emailSent ? hackathon.cancellationEmailSentAt ?? new Date().toISOString() : hackathon.cancellationEmailSentAt
+			};
+			cancellationMessage = result.complete
+				? 'Die Buchung wurde storniert und der Kunde benachrichtigt.'
+				: result.message ?? 'Die Stornierung ist noch nicht vollständig. Bitte versuchen Sie es erneut.';
+			cancelDialogOpen = false;
+			await invalidateAll();
+		} catch (error) {
+			cancellationMessage = error instanceof Error ? error.message : 'Die Stornierung konnte nicht gestartet werden.';
+		} finally {
+			cancellationBusy = false;
+		}
+	}
+
 </script>
 
 <svelte:head>
 	<title>Hackathon für {hackathon.companyName} — ALL IN AGI</title>
 </svelte:head>
 
-<div class="success-page detail-page">
+<div class:detail-readonly={readOnly} class="success-page detail-page">
 	<div class="success-layout detail-layout">
 		<div class="success-map detail-map">
 			<MapPreview latitude={hackathon.address.latitude} longitude={hackathon.address.longitude}>
@@ -210,6 +246,11 @@
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
 			<h1 id="detail-title">Hackathon für {hackathon.companyName}</h1>
 			<p class="success-date">{formatEventTimeRange(hackathon.eventStart, hackathon.eventEnd)}</p>
+			{#if hackathon.status === 'cancelled'}
+				<div class="booking-state-banner cancelled" role="status"><Ban size={18} aria-hidden="true" /><span><strong>Buchung storniert</strong>Die Kalendertermine wurden aufgehoben.</span></div>
+			{:else if hackathon.status === 'cancellation_pending'}
+				<div class="booking-state-banner pending" role="status"><RotateCcw size={18} aria-hidden="true" /><span><strong>Stornierung in Bearbeitung</strong>Mindestens ein Schritt muss noch abgeschlossen werden.</span></div>
+			{/if}
 
 			<MiniContactCards />
 			<div class="success-actions">
@@ -217,17 +258,49 @@
 				<a class="button-primary action-button" href={`/api/hackathons/${hackathon.id}/plan.pdf`}>
 					<Download size={18} aria-hidden="true" />Plan herunterladen
 				</a>
-				<a class="button-secondary action-button" href={`/api/hackathons/${hackathon.id}/prep-call.ics`}>
-					<CalendarPlus size={18} aria-hidden="true" />Kalenderereignis hinzufügen
-				</a>
-				<button class="button-secondary action-button" type="button" onclick={resendConfirmationEmail} disabled={confirmationEmailState === 'loading'} aria-live="polite">
-					{#if confirmationEmailState === 'sent'}
-						<Check size={18} aria-hidden="true" />Bestätigungs-E-Mail gesendet
-					{:else}
-						<Mail size={18} aria-hidden="true" />{confirmationEmailState === 'loading' ? 'E-Mail wird gesendet …' : confirmationEmailState === 'error' ? 'Senden erneut versuchen' : 'Bestätigungs-E-Mail senden'}
-					{/if}
-				</button>
+				{#if !readOnly}
+					<a class="button-secondary action-button" href={`/api/hackathons/${hackathon.id}/prep-call.ics`}>
+						<CalendarPlus size={18} aria-hidden="true" />Kalenderereignis hinzufügen
+					</a>
+					<button class="button-secondary action-button" type="button" onclick={resendConfirmationEmail} disabled={confirmationEmailState === 'loading'} aria-live="polite">
+						{#if confirmationEmailState === 'sent'}
+							<Check size={18} aria-hidden="true" />Bestätigungs-E-Mail gesendet
+						{:else}
+							<Mail size={18} aria-hidden="true" />{confirmationEmailState === 'loading' ? 'E-Mail wird gesendet …' : confirmationEmailState === 'error' ? 'Senden erneut versuchen' : 'Bestätigungs-E-Mail senden'}
+						{/if}
+					</button>
+				{/if}
 			</div>
+
+			{#if data.admin.authorized}
+				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
+					{#if !readOnly}
+						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
+							<ExternalLink size={18} aria-hidden="true" />Open timer
+						</a>
+						<AlertDialog.Root bind:open={cancelDialogOpen}>
+							<AlertDialog.Trigger class="button-destructive action-button"><Ban size={18} aria-hidden="true" />Cancel booking</AlertDialog.Trigger>
+							<AlertDialog.Portal>
+								<AlertDialog.Overlay class="confirmation-overlay" />
+								<AlertDialog.Content class="confirmation-dialog">
+									<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
+									<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
+									<AlertDialog.Description>Der Hackathontag und der Prep Call werden bei Cal.com storniert. Anschließend erhält {hackathon.contactName} eine Stornierungs-E-Mail.</AlertDialog.Description>
+									<div class="confirmation-dialog-actions">
+										<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
+										<AlertDialog.Action class="button-destructive" onclick={cancelBooking}>Buchung stornieren</AlertDialog.Action>
+									</div>
+								</AlertDialog.Content>
+							</AlertDialog.Portal>
+						</AlertDialog.Root>
+					{:else if !hackathon.cancellationEmailSentAt}
+						<button class="button-destructive action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
+							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird fortgesetzt …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
+						</button>
+					{/if}
+					{#if cancellationMessage}<p class="admin-action-message" role="status">{cancellationMessage}</p>{/if}
+				</div>
+			{/if}
 
 			<div class="summary-box overview-box detail-overview">
 				<EditableSummaryRow icon={Building2} label="Unternehmen" value={hackathon.companyName} status="Gespeichert" active={activeSection === 'company'} {saving} error={activeSection === 'company' ? editError : ''} onedit={() => openEditor('company')} onsave={saveEditor} oncancel={cancelEditor}>

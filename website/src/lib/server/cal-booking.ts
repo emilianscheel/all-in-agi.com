@@ -30,8 +30,8 @@ export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof 
 	}, env.CAL_API_KEY);
 }
 
-export function cancelCalBooking(booking: ConfirmedBooking, requestFetch: typeof fetch) {
-	return cancelCalBookingWithToken(booking, requestFetch, env.CAL_API_KEY);
+export function cancelCalBooking(booking: ConfirmedBooking, requestFetch: typeof fetch, reason?: string) {
+	return cancelCalBookingWithToken(booking, requestFetch, env.CAL_API_KEY, { reason });
 }
 
 export function reschedulePrepCall(bookingUid: string | null, startValue: string, requestFetch: typeof fetch, demo: boolean) {
