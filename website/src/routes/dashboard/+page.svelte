@@ -155,9 +155,6 @@
 	<div class="dashboard-login-page">
 		<section class="dashboard-login-card" aria-label="Admin-Anmeldung">
 			{#if data.admin.needsPasskey}
-				<p class="eyebrow">Einrichtung abschließen</p>
-				<h1>Passkey erstellen</h1>
-				<p>Schützen Sie das Dashboard jetzt mit einem Passkey. Erst danach werden Buchungsdaten freigeschaltet.</p>
 				<button class="button-primary dashboard-login-button" type="button" onclick={registerPasskey} disabled={busy}>
 					<KeyRound size={18} aria-hidden="true" /> {busy ? 'Passkey wird erstellt …' : 'Passkey erstellen'}
 				</button>

@@ -34,6 +34,11 @@
 		<nav class="nav-inner admin-nav-inner" aria-label="Admin-Navigation">
 			<a class="brand-mark admin-brand-mark" href="/dashboard" aria-label="ALL IN AGI Dashboard">
 				<span class="brand-icon" aria-hidden="true"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /></span>
+				<span class="brand-wordmark" aria-hidden="true">
+					{#each [...'ALL IN AGI'] as character, index}
+						<span class="brand-character" style={`--char-index: ${index}`}>{character === ' ' ? '\u00a0' : character}</span>
+					{/each}
+				</span>
 			</a>
 			<div class="admin-nav-links">
 				<a class:active={page.route.id === '/dashboard'} href="/dashboard">Dashboard</a>
