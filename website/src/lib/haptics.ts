@@ -8,29 +8,49 @@ const INTERACTIVE_SELECTOR = [
 	'[data-calendar-day]'
 ].join(',');
 
-function triggerVirtualHapticSwitch() {
-	const label = document.createElement('label');
+function createVirtualHapticSwitch() {
+	const wrapper = document.createElement('span');
 	const input = document.createElement('input');
+	const label = document.createElement('label');
+	const id = `all-in-agi-haptic-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
 
+	input.id = id;
 	input.type = 'checkbox';
 	input.setAttribute('switch', '');
 	input.tabIndex = -1;
 	input.setAttribute('aria-hidden', 'true');
-	label.setAttribute('aria-hidden', 'true');
-	label.style.display = 'none';
-	label.append(input);
-	document.head.append(label);
-	label.click();
-	label.remove();
+	label.htmlFor = id;
+	wrapper.setAttribute('aria-hidden', 'true');
+	Object.assign(wrapper.style, {
+		position: 'fixed',
+		left: '-10000px',
+		top: '0',
+		width: '1px',
+		height: '1px',
+		overflow: 'hidden',
+		opacity: '0',
+		pointerEvents: 'none'
+	});
+	wrapper.append(input, label);
+	document.body.append(wrapper);
+
+	return {
+		wrapper,
+		trigger() {
+			label.click();
+		}
+	};
 }
 
 export function installGlobalHaptics() {
+	const virtualSwitch = createVirtualHapticSwitch();
+
 	function haptic() {
 		try {
 			if (typeof navigator.vibrate === 'function' && navigator.vibrate(10)) return;
 			// Safari on iPhone has no Vibration API, but its native switch control
-			// produces haptic feedback when its wrapping label is activated.
-			triggerVirtualHapticSwitch();
+			// produces haptic feedback when its rendered label is activated.
+			virtualSwitch.trigger();
 		} catch {
 			// Haptics are progressive enhancement and may be blocked by the browser or OS.
 		}
@@ -47,5 +67,6 @@ export function installGlobalHaptics() {
 	document.addEventListener('pointerup', onPointerUp, { capture: true, passive: true });
 	return () => {
 		document.removeEventListener('pointerup', onPointerUp, { capture: true });
+		virtualSwitch.wrapper.remove();
 	};
 }
