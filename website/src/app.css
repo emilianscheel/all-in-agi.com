@@ -287,6 +287,17 @@ img { display: block; max-width: 100%; }
 	.manage-otp-group { grid-template-columns: repeat(3, minmax(34px, 1fr)); gap: 4px; }
 	.manage-otp-cell { height: 48px; border-radius: 10px; font-size: 18px; }
 }
+.booking-error-page { min-height: calc(100svh - 105px); display: grid; place-items: center; padding: 64px 22px; }
+.booking-error-card { width: min(100%, 720px); text-align: center; }
+.booking-error-card .eyebrow { margin-bottom: 14px; color: var(--orange); }
+.booking-error-card h1 { max-width: 650px; margin: 0 auto 32px; font-size: clamp(34px, 6vw, 58px); line-height: 1.02; letter-spacing: -.05em; }
+.booking-error-copy { max-width: 600px; margin: 20px auto 32px; color: var(--muted); font-size: 17px; line-height: 1.55; }
+.booking-error-card .mini-contact-grid { margin-top: 0; }
+.booking-error-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+@media (max-width: 560px) {
+	.booking-error-actions { flex-direction: column; }
+	.booking-error-actions a { width: 100%; }
+}
 .event-time-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
 @media (max-width: 640px) { .event-time-fields { grid-template-columns: 1fr; } }
 
