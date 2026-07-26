@@ -268,6 +268,17 @@ img { display: block; max-width: 100%; }
 .footer-links { display: flex; justify-content: center; gap: 18px; }
 .footer-links a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 
+.manage-page { min-height: calc(100svh - 132px); display: grid; place-items: center; padding: 48px 22px; }
+.manage-form { width: min(100%, 460px); text-align: center; }
+.manage-form h1 { margin: 0 0 24px; font-size: clamp(30px, 5vw, 48px); letter-spacing: -.045em; }
+.manage-form > label { display: block; margin-bottom: 8px; text-align: left; font-size: 13px; font-weight: 700; }
+.manage-input-row { display: grid; grid-template-columns: 1fr 52px; gap: 10px; }
+.manage-input-row input { min-width: 0; text-transform: uppercase; font-variant-numeric: tabular-nums; letter-spacing: .09em; }
+.manage-input-row button { width: 52px; min-height: 52px; padding: 0; display: grid; place-items: center; }
+.manage-error { margin: 12px 0 0; color: var(--error, #b42318); font-size: 14px; text-align: left; }
+.event-time-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+@media (max-width: 640px) { .event-time-fields { grid-template-columns: 1fr; } }
+
 /* Configurator */
 .config-page { background: var(--page); }
 .config-intro { max-width: 1180px; margin: 0 auto; padding: 54px 30px 68px; display: flex; justify-content: space-between; gap: 34px; align-items: flex-start; }

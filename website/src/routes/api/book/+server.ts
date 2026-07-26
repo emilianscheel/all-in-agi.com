@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { validateConfiguration, type BookingConfiguration } from '$lib/booking';
 import { completeHackathonBookingWithConfirmation } from '$lib/server/book-hackathon';
-import { bookPrepCall, BookingProviderError } from '$lib/server/cal-booking';
+import { bookHackathonDay, bookPrepCall, cancelCalBooking, BookingProviderError } from '$lib/server/cal-booking';
 import {
 	BookingConfirmationEmailError,
 	sendBookingConfirmationEmails,
@@ -65,11 +65,15 @@ export async function POST({ request, fetch }) {
 	try {
 		const result = await completeHackathonBookingWithConfirmation(
 			config,
-			(bookingConfig) => bookPrepCall(bookingConfig, fetch, dev),
+			{
+				bookHackathon: (bookingConfig) => bookHackathonDay(bookingConfig, fetch, dev),
+				bookPrepCall: (bookingConfig) => bookPrepCall(bookingConfig, fetch, dev),
+				cancel: (booking) => cancelCalBooking(booking, fetch)
+			},
 			(id, bookingConfig, booking) =>
 				sendBookingConfirmationEmails({ id, config: bookingConfig, booking }, { fetch })
 		);
-		const { id, booking } = result;
+		const { id, hackathonBooking, prepCallBooking } = result;
 		let customerAttempt: BookingConfirmationAttempt;
 		let organizerAttempt: BookingConfirmationAttempt;
 		if ('confirmationDelivery' in result) {
@@ -82,14 +86,15 @@ export async function POST({ request, fetch }) {
 		logConfirmationAttempt(id, customerAttempt);
 		logConfirmationAttempt(id, organizerAttempt);
 		return json({
-			...booking,
+			hackathonBooking,
+			prepCallBooking,
 			hackathonId: id,
 			detailUrl: `/${id}`,
 			confirmationEmailSent: customerAttempt.sent,
 			organizerConfirmationEmailSent: organizerAttempt.sent
 		}, { status: 201 });
 	} catch (error) {
-		if (error instanceof BookingProviderError) return json({ message: error.message }, { status: error.status });
+		if (error instanceof BookingProviderError) return json({ message: error.message, field: error.field }, { status: error.status });
 		console.error('Hackathon booking failed', error);
 		return json({ message: 'Die Buchung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.' }, { status: 503 });
 	}

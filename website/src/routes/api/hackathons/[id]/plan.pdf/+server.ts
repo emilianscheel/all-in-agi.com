@@ -3,7 +3,7 @@ import { isHackathonId } from '$lib/public-id';
 import {
 	getConfirmedHackathonRecord,
 	recordToBookingConfiguration,
-	recordToBookingSummary
+	recordToPrepCallBookingSummary
 } from '$lib/server/hackathons';
 import { error } from '@sveltejs/kit';
 
@@ -13,7 +13,7 @@ export async function GET({ params }) {
 	const record = await getConfirmedHackathonRecord(id);
 	if (!record) error(404, 'Hackathon nicht gefunden');
 	const bytes = await createPlanPdf(recordToBookingConfiguration(record), {
-		booking: recordToBookingSummary(record),
+		booking: recordToPrepCallBookingSummary(record),
 		hackathonId: id
 	});
 	return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), {

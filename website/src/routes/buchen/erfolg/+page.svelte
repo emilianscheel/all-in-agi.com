@@ -6,9 +6,11 @@
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
 	import { formatDate, type BookingConfiguration } from '$lib/booking';
+	import { formatEventTimeRange } from '$lib/event-time';
 
 	type SuccessSummary = BookingConfiguration & {
-		booking: BookingResultSummary;
+		prepCallBooking: BookingResultSummary;
+		hackathonBooking: BookingResultSummary;
 		planUrl: string;
 		hackathonId?: string;
 		detailUrl?: string;
@@ -46,12 +48,12 @@
 
 	function downloadCalendar() {
 		if (!summary) return;
-		downloadBlob(new Blob([createPrepCallIcs(summary, summary.booking)], { type: 'text/calendar;charset=utf-8' }), 'all-in-agi-prep-call.ics');
+		downloadBlob(new Blob([createPrepCallIcs(summary, summary.prepCallBooking)], { type: 'text/calendar;charset=utf-8' }), 'all-in-agi-prep-call.ics');
 	}
 </script>
 
 <svelte:head>
-	<title>Erstgespräch gebucht — ALL-IN-AGI</title>
+	<title>Hackathon gebucht — ALL-IN-AGI</title>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
@@ -62,9 +64,10 @@
 		</div>
 		<section class="success-panel" aria-labelledby="success-title">
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
-			<h1 id="success-title">Erstgespräch gebucht</h1>
+			<h1 id="success-title">Hackathon gebucht</h1>
 			{#if summary}
-				<p class="success-date">{formatDate(summary.booking.start || summary.consultationSlot, true)} Uhr</p>
+				<p class="success-date">{formatEventTimeRange(summary.hackathonBooking.start || summary.eventStart, summary.hackathonBooking.end || summary.eventEnd)}</p>
+				<p>Prep Call: {formatDate(summary.prepCallBooking.start || summary.consultationSlot, true)} Uhr</p>
 				<MiniContactCards />
 				<div class="success-actions">
 					{#if summary.hackathonId}

@@ -15,6 +15,7 @@ import { formatPrice, getPrice, type BookingConfiguration } from './booking';
 import { bookingOverviewRows, type BookingOverviewRowId } from './booking-overview';
 import type { BookingResultSummary } from './booking-ics';
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from './contact';
+import { formatEventTimeRange } from './event-time';
 
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
@@ -315,7 +316,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 
 	drawRoundedCard(page, LEFT, 612, RIGHT - LEFT, 82, 16, surface);
 	page.drawText('EVENT', { x: 66, y: 670, font: bold, size: 7.5, color: muted });
-	drawWrapped(page, longDateLabel(config.preferredEventDate), 66, 651, 208, bold, 12, ink, 1);
+	drawWrapped(page, formatEventTimeRange(config.eventStart, config.eventEnd), 66, 651, 208, bold, 10.5, ink, 2);
 	drawWrapped(
 		page,
 		`${config.address.street}, ${config.address.postalCode} ${config.address.city}`,

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, check, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import type { CodingTool, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 
 export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed']);
@@ -21,19 +21,25 @@ export const hackathons = pgTable('hackathons', {
 	codingTools: jsonb('coding_tools').$type<CodingTool[]>().notNull(),
 	customCodingTool: text('custom_coding_tool').notNull().default(''),
 	address: jsonb('address').$type<EventAddress>().notNull(),
-	preferredEventDate: date('preferred_event_date', { mode: 'string' }).notNull(),
+	eventStart: timestamp('event_start', { withTimezone: true, mode: 'string' }).notNull(),
+	eventEnd: timestamp('event_end', { withTimezone: true, mode: 'string' }).notNull(),
 	consultationSlot: timestamp('consultation_slot', { withTimezone: true, mode: 'string' }).notNull(),
 	basePrice: integer('base_price').notNull(),
 	venueSurcharge: integer('venue_surcharge').notNull(),
 	lunchAdjustment: integer('lunch_adjustment').notNull(),
 	toolsAdjustment: integer('tools_adjustment').notNull(),
 	totalPrice: integer('total_price').notNull(),
-	bookingUid: text('booking_uid'),
-	bookingIcsUid: text('booking_ics_uid'),
-	bookingTitle: text('booking_title'),
-	bookingStart: timestamp('booking_start', { withTimezone: true, mode: 'string' }),
-	bookingEnd: timestamp('booking_end', { withTimezone: true, mode: 'string' }),
-	meetingUrl: text('meeting_url'),
+	prepCallBookingUid: text('prep_call_booking_uid'),
+	prepCallBookingIcsUid: text('prep_call_booking_ics_uid'),
+	prepCallBookingTitle: text('prep_call_booking_title'),
+	prepCallBookingStart: timestamp('prep_call_booking_start', { withTimezone: true, mode: 'string' }),
+	prepCallBookingEnd: timestamp('prep_call_booking_end', { withTimezone: true, mode: 'string' }),
+	prepCallMeetingUrl: text('prep_call_meeting_url'),
+	hackathonBookingUid: text('hackathon_booking_uid'),
+	hackathonBookingIcsUid: text('hackathon_booking_ics_uid'),
+	hackathonBookingTitle: text('hackathon_booking_title'),
+	hackathonBookingStart: timestamp('hackathon_booking_start', { withTimezone: true, mode: 'string' }),
+	hackathonBookingEnd: timestamp('hackathon_booking_end', { withTimezone: true, mode: 'string' }),
 	demoMode: boolean('demo_mode').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()

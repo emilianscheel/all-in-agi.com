@@ -32,6 +32,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
 - `CAL_EVENT_TYPE_ID`: ID des 60-minütigen Cal.com Event Types
+- `CAL_HACKATHON_EVENT_TYPE_ID`: ID des Cal.com Event Types für den Hackathontag; unterstützt die angebotenen Dauern in 30-Minuten-Schritten
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account-ID für den E-Mail-Versand
 - `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
@@ -53,7 +54,7 @@ Nach einer bestätigten Buchung versendet der Server zwei reine Text-E-Mails üb
 - Betreiberangaben im Impressum ergänzen und rechtlich prüfen
 - vollständige Datenschutzerklärung für Hosting, Cal.com, OpenFreeMap, Photon und MapLibre bereitstellen
 - OpenFreeMap-Kartenstil und Photon-Fallback im Zielhosting testen
-- Cal.com Event Type, Zeitzone, Verfügbarkeit und Bestätigungs-E-Mails prüfen
+- Beide Cal.com Event Types, Zeitzone, Verfügbarkeit, unterstützte Hackathon-Dauern und Bestätigungs-E-Mails prüfen
 - finale Domain in Sitemap, strukturierten Daten und Social-Metadaten bestätigen
 - ALL-IN-AGI Wort-/Bildmarke rechtlich prüfen
 

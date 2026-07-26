@@ -43,6 +43,7 @@
 		<div class="footer-links">
 			<a href="/impressum">Impressum</a>
 			<a href="/datenschutz">Datenschutz</a>
+			<a href="/verwalten">Buchung verwalten</a>
 		</div>
 	</div>
 </footer>

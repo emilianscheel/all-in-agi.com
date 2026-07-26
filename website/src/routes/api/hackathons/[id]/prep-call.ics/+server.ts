@@ -3,7 +3,7 @@ import { isHackathonId } from '$lib/public-id';
 import {
 	getConfirmedHackathonRecord,
 	recordToBookingConfiguration,
-	recordToBookingSummary
+	recordToPrepCallBookingSummary
 } from '$lib/server/hackathons';
 import { error } from '@sveltejs/kit';
 
@@ -12,7 +12,7 @@ export async function GET({ params }) {
 	if (!isHackathonId(id)) error(404, 'Hackathon nicht gefunden');
 	const record = await getConfirmedHackathonRecord(id);
 	if (!record) error(404, 'Hackathon nicht gefunden');
-	const calendar = createPrepCallIcs(recordToBookingConfiguration(record), recordToBookingSummary(record));
+	const calendar = createPrepCallIcs(recordToBookingConfiguration(record), recordToPrepCallBookingSummary(record));
 	return new Response(calendar, {
 		headers: {
 			'content-type': 'text/calendar; charset=utf-8',

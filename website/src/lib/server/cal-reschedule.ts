@@ -1,7 +1,7 @@
 import type { ConfirmedBooking } from './hackathons';
 
 export class BookingProviderError extends Error {
-	constructor(message: string, readonly status: number) {
+	constructor(message: string, readonly status: number, readonly field?: 'hackathon' | 'prep-call') {
 		super(message);
 	}
 }
@@ -11,11 +11,12 @@ export async function reschedulePrepCallWithToken(
 	startValue: string,
 	requestFetch: typeof fetch,
 	demo: boolean,
-	token?: string
+	token?: string,
+	options: { end?: string; title?: string; reason?: string; field?: 'hackathon' | 'prep-call' } = {}
 ): Promise<ConfirmedBooking> {
 	const start = new Date(startValue);
-	if (Number.isNaN(start.getTime())) throw new BookingProviderError('Der neue Vorbereitungstermin ist ungültig.', 400);
-	const end = new Date(start.getTime() + 60 * 60_000);
+	if (Number.isNaN(start.getTime())) throw new BookingProviderError('Der neue Termin ist ungültig.', 400, options.field);
+	const end = options.end ? new Date(options.end) : new Date(start.getTime() + 60 * 60_000);
 	if (demo) {
 		const uid = bookingUid ?? `demo-${Date.now()}`;
 		return {
@@ -23,14 +24,14 @@ export async function reschedulePrepCallWithToken(
 			demo: true,
 			uid,
 			icsUid: `${uid}@all-in-agi.com`,
-			title: 'ALL-IN-AGI Prep Call',
+			title: options.title ?? 'ALL-IN-AGI Prep Call',
 			start: start.toISOString(),
 			end: end.toISOString(),
 			meetingUrl: ''
 		};
 	}
 
-	if (!token || !bookingUid) throw new BookingProviderError('Der gebuchte Vorbereitungstermin kann derzeit nicht geändert werden.', 503);
+	if (!token || !bookingUid) throw new BookingProviderError('Der gebuchte Termin kann derzeit nicht geändert werden.', 503, options.field);
 	try {
 		const response = await requestFetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(bookingUid)}/reschedule`, {
 			method: 'POST',
@@ -41,15 +42,18 @@ export async function reschedulePrepCallWithToken(
 			},
 			body: JSON.stringify({
 				start: start.toISOString(),
-				reschedulingReason: 'Über die Hackathon-Detailseite geändert'
+				reschedulingReason: options.reason ?? 'Über die Hackathon-Detailseite geändert'
 			})
 		});
 		const result = await response.json();
 		if (!response.ok) {
 			const conflict = response.status === 409 || /slot|available|conflict/i.test(JSON.stringify(result));
 			throw new BookingProviderError(
-				conflict ? 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Slot.' : 'Der Vorbereitungstermin konnte nicht geändert werden.',
-				conflict ? 409 : response.status
+				conflict
+					? 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Slot.'
+					: options.field === 'hackathon' ? 'Der Hackathon-Termin konnte nicht geändert werden.' : 'Der Vorbereitungstermin konnte nicht geändert werden.',
+				conflict ? 409 : response.status,
+				options.field
 			);
 		}
 		return {
@@ -64,6 +68,6 @@ export async function reschedulePrepCallWithToken(
 		};
 	} catch (error) {
 		if (error instanceof BookingProviderError) throw error;
-		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502);
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, options.field);
 	}
 }

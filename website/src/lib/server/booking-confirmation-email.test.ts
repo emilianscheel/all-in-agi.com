@@ -28,7 +28,8 @@ const config: BookingConfiguration = {
 		city: 'Berlin',
 		country: 'Deutschland'
 	},
-	preferredEventDate: '2099-06-20',
+	eventStart: '2099-06-20T07:00:00.000Z',
+	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z'
 };
 

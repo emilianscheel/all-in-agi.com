@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { decryptPlan, encryptPlan } from './plan-token';
-import type { SharedPlanV1, SharedPlanV2, SharedPlanV3 } from '$lib/shared-plan';
+import type { SharedPlanV1, SharedPlanV2, SharedPlanV3, SharedPlanV4 } from '$lib/shared-plan';
 
-const plan: SharedPlanV3 = {
-	v: 3,
+const plan: SharedPlanV4 = {
+	v: 4,
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
@@ -18,13 +18,16 @@ const plan: SharedPlanV3 = {
 	phone: '+49 30 123456',
 	message: 'Bitte vegetarische Optionen einplanen.',
 	address: { label: 'Musterstraße 1, Berlin', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland', latitude: 52.5, longitude: 13.4 },
-	preferredEventDate: '2099-06-20',
+	eventStart: '2099-06-20T07:00:00.000Z',
+	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z',
 	consultationMode: 'custom',
 	customConsultationDate: '2099-05-10'
 };
 
-const { message: _message, ...planWithoutMessage } = plan;
+const { eventStart: _eventStart, eventEnd: _eventEnd, ...planWithoutTimes } = plan;
+const v3Plan: SharedPlanV3 = { ...planWithoutTimes, v: 3, preferredEventDate: '2099-06-20' };
+const { message: _message, ...planWithoutMessage } = v3Plan;
 const v2Plan: SharedPlanV2 = { ...planWithoutMessage, v: 2 };
 
 const legacyPlan: SharedPlanV1 = {
@@ -39,7 +42,7 @@ const legacyPlan: SharedPlanV1 = {
 	email: plan.email,
 	phone: plan.phone,
 	address: plan.address,
-	preferredEventDate: plan.preferredEventDate,
+	preferredEventDate: v3Plan.preferredEventDate,
 	consultationSlot: plan.consultationSlot,
 	consultationMode: plan.consultationMode,
 	customConsultationDate: plan.customConsultationDate
@@ -54,12 +57,14 @@ describe('encrypted plan tokens', () => {
 
 	test('migrates a v2 plan with an empty message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(v2Plan));
-		expect(migrated).toEqual({ ...v2Plan, v: 3, message: '' });
+		const { preferredEventDate: _preferredEventDate, ...legacy } = v2Plan;
+		expect(migrated).toEqual({ ...legacy, v: 4, message: '', eventStart: plan.eventStart, eventEnd: plan.eventEnd });
 	});
 
-	test('migrates a v1 plan to v3 with unanswered tools and message', async () => {
+	test('migrates a v1 plan to v4 with default event times, unanswered tools and message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(legacyPlan));
-		expect(migrated).toEqual({ ...legacyPlan, v: 3, toolProvision: null, codingTools: [], customCodingTool: '', message: '' });
+		const { preferredEventDate: _preferredEventDate, ...legacy } = legacyPlan;
+		expect(migrated).toEqual({ ...legacy, v: 4, eventStart: plan.eventStart, eventEnd: plan.eventEnd, toolProvision: null, codingTools: [], customCodingTool: '', message: '' });
 	});
 
 	test('rejects tampered tokens', async () => {

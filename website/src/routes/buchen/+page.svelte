@@ -8,9 +8,10 @@
 	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
 	import { eventDateBounds } from '$lib/event-date';
 	import AnimatedValue from '$lib/AnimatedValue.svelte';
-	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
+	import EventDateTimeEditor from '$lib/EventDateTimeEditor.svelte';
+	import { formatEventTimeRange } from '$lib/event-time';
 	import { lunchIconKind } from '$lib/lunch-icon';
-	import type { SharedPlanV3 } from '$lib/shared-plan';
+	import type { SharedPlanV4 } from '$lib/shared-plan';
 	import { reveal } from '$lib/motion';
 	import MapPreview from '$lib/MapPreview.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
@@ -33,7 +34,8 @@
 	let email = $state('');
 	let phone = $state('');
 	let message = $state('');
-	let preferredEventDate = $state('');
+	let eventStart = $state('');
+	let eventEnd = $state('');
 	let consultationSlot = $state('');
 	let consultationMode = $state<'quick' | 'custom'>('quick');
 	let customConsultationDate = $state('');
@@ -176,7 +178,8 @@
 			phone,
 			message,
 			address,
-			preferredEventDate,
+			eventStart,
+			eventEnd,
 			consultationSlot
 		};
 	}
@@ -185,16 +188,16 @@
 		return overviewRows.find((row) => row.id === id)!;
 	}
 
-	function buildSharedPlan(): SharedPlanV3 {
-		return { v: 3, ...buildConfiguration(), consultationMode, customConsultationDate };
+	function buildSharedPlan(): SharedPlanV4 {
+		return { v: 4, ...buildConfiguration(), consultationMode, customConsultationDate };
 	}
 
-	function applySharedPlan(plan: SharedPlanV3) {
+	function applySharedPlan(plan: SharedPlanV4) {
 		capacity = plan.capacity; venueProvided = plan.venueProvided; equipment = plan.equipment; lunch = plan.lunch; customLunch = plan.customLunch;
 		toolProvision = plan.toolProvision; codingTools = plan.toolProvision === 'needed' ? plan.codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool)) : plan.codingTools; customCodingTool = plan.toolProvision === 'needed' ? '' : plan.customCodingTool;
 		companyName = plan.companyName; contactName = plan.contactName; email = plan.email; phone = plan.phone; message = plan.message; address = plan.address;
 		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
-		preferredEventDate = plan.preferredEventDate; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
+		eventStart = plan.eventStart; eventEnd = plan.eventEnd; consultationSlot = plan.consultationSlot; consultationMode = plan.consultationMode; customConsultationDate = plan.customConsultationDate;
 	}
 
 	async function encodePlan(plan = buildSharedPlan(), updateUrl = true) {
@@ -209,7 +212,7 @@
 		return `${location.origin}${path}`;
 	}
 
-	function schedulePlanUrl(plan: SharedPlanV3) {
+	function schedulePlanUrl(plan: SharedPlanV4) {
 		if (!browser || !planHydrated) return;
 		if (planDebounce) clearTimeout(planDebounce);
 		planDebounce = setTimeout(() => encodePlan(plan).catch((error) => { if ((error as Error).name !== 'AbortError') planError = (error as Error).message; }), 400);
@@ -240,7 +243,7 @@
 			const response = await fetch('/api/book', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(config) });
 			const result = await response.json();
 			if (!response.ok) {
-				if (response.status === 409) {
+				if (response.status === 409 && result.field === 'prep-call') {
 					consultationSlot = '';
 					customConsultationDate = '';
 					consultationMode = 'quick';
@@ -252,7 +255,8 @@
 			if (browser) sessionStorage.setItem('all-in-agi-booking', JSON.stringify({
 				...config,
 				...price,
-				booking: result,
+				prepCallBooking: result.prepCallBooking,
+				hackathonBooking: result.hackathonBooking,
 				planUrl,
 				hackathonId: result.hackathonId,
 				detailUrl: result.detailUrl
@@ -367,7 +371,7 @@
 					<div class="event-card-top"><h2>{companyName.trim() || 'Ihr Hackathon'}</h2><div class="event-card-price"><AnimatedValue value={formatPrice(price.totalPrice)} /></div></div>
 					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
 					<div class="event-details">
-						<div class:event-detail-unselected={!preferredEventDate} class="event-detail" aria-hidden={!preferredEventDate}><small>Event Date</small><b><AnimatedValue value={formatDate(preferredEventDate)} active={Boolean(preferredEventDate)} /></b></div>
+						<div class:event-detail-unselected={!eventStart} class="event-detail" aria-hidden={!eventStart}><small>Event Date</small><b><AnimatedValue value={formatEventTimeRange(eventStart, eventEnd)} active={Boolean(eventStart)} /></b></div>
 						<div class="event-detail"><small>Team</small><b><AnimatedValue value={`Bis ${capacity} Personen`} /></b></div>
 						<div class="event-detail"><small>Location</small><b><AnimatedValue value={venueProvided ? 'Eigener Raum' : 'Von uns organisiert'} /></b></div>
 						<div class:event-detail-unselected={!toolProvision || !codingToolLabels.length} class="event-detail" aria-hidden={!toolProvision || !codingToolLabels.length}><small>Tools</small><b><AnimatedValue value={toolsPreviewLabel} active={Boolean(toolProvision && codingToolLabels.length)} /></b></div>
@@ -402,7 +406,7 @@
 				<AddressEditor value={address} onchange={(value) => (address = value)} idPrefix="booking-address" />
 			</section>
 
-			<section class="config-section" use:reveal><h2>Veranstaltungsdatum</h2><EventDateCalendar value={preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(date) => (preferredEventDate = date)} /></section>
+			<section class="config-section" use:reveal><h2>Veranstaltungsdatum und Uhrzeit</h2><EventDateTimeEditor {eventStart} {eventEnd} minValue={minEventDate} maxValue={maxEventDate} onchange={(value) => ({ eventStart, eventEnd } = value)} /></section>
 
 			<section class="config-section" use:reveal><h2>Kontakt</h2><ContactFields
 				{companyName}
@@ -440,7 +444,7 @@
 				<div class="summary-row"><MapPin size={18} aria-hidden="true" /><span><small>{overviewRow('location').label}</small><AnimatedValue value={overviewRow('location').value} /></span><b><AnimatedValue value={overviewRow('location').status} /></b></div>
 				{#if toolProvision}<div class="summary-row"><Code2 size={18} aria-hidden="true" /><span><small>{overviewRow('tools').label}</small><AnimatedValue value={overviewRow('tools').value} /></span><b><AnimatedValue value={overviewRow('tools').status} /></b></div>{/if}
 				<div class="summary-row"><Monitor size={18} aria-hidden="true" /><span><small>{overviewRow('equipment').label}</small><AnimatedValue value={overviewRow('equipment').value} /></span><b>{overviewRow('equipment').status}</b></div>
-				{#if preferredEventDate}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>{overviewRow('event-date').label}</small><AnimatedValue value={overviewRow('event-date').value} /></span><b>{overviewRow('event-date').status}</b></div>{/if}
+				{#if eventStart}<div class="summary-row"><CalendarDays size={18} aria-hidden="true" /><span><small>{overviewRow('event-date').label}</small><AnimatedValue value={overviewRow('event-date').value} /></span><b>{overviewRow('event-date').status}</b></div>{/if}
 				{#if consultationSlot}<div class="summary-row"><Clock3 size={18} aria-hidden="true" /><span><small>{overviewRow('prep-call').label}</small><AnimatedValue value={overviewRow('prep-call').value} /></span><b>{overviewRow('prep-call').status}</b></div>{/if}
 				<div class="summary-row"><LunchIcon size={18} aria-hidden="true" /><span><small>{overviewRow('lunch').label}</small><AnimatedValue value={overviewRow('lunch').value} /></span><b><AnimatedValue value={overviewRow('lunch').status} /></b></div>
 				<div class="summary-row"><Award size={18} aria-hidden="true" /><span><small>{overviewRow('winner-poster').label}</small>{overviewRow('winner-poster').value}</span><b>{overviewRow('winner-poster').status}</b></div>
@@ -450,7 +454,7 @@
 				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>{overviewRow('total').value}</span><b><AnimatedValue value={overviewRow('total').status} /></b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
-			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Erstgespräch buchen'}</button>
+			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Hackathon und Prep Call buchen'}</button>
 			<SharePlanButton getUrl={getShareUrl} />
 			</section>
 		</form>

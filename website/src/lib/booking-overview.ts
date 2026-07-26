@@ -6,6 +6,7 @@ import {
 	type BookingConfiguration
 } from './booking';
 import type { BookingResultSummary } from './booking-ics';
+import { formatEventTimeRange } from './event-time';
 
 export type BookingOverviewRowId =
 	| 'team'
@@ -84,7 +85,7 @@ export function bookingOverviewRows(
 		{
 			id: 'event-date',
 			label: 'Event Date',
-			value: formatDate(config.preferredEventDate),
+			value: formatEventTimeRange(config.eventStart, config.eventEnd),
 			status: 'Geplant'
 		},
 		{

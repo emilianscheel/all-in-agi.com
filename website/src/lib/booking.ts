@@ -1,3 +1,5 @@
+import { isValidEventTimeRange } from './event-time';
+
 export type Capacity = 15 | 30 | 50;
 export type Equipment = 'projector' | 'tv' | 'none';
 export type Lunch = 'pizza' | 'custom' | 'none' | 'self-organized';
@@ -41,7 +43,8 @@ export interface BookingConfiguration {
 	phone: string;
 	message: string;
 	address: EventAddress;
-	preferredEventDate: string;
+	eventStart: string;
+	eventEnd: string;
 	consultationSlot: string;
 }
 
@@ -76,7 +79,8 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 	return {
 		company: config.companyName,
 		capacity: String(config.capacity),
-		preferredEventDate: config.preferredEventDate,
+		eventStart: config.eventStart,
+		eventEnd: config.eventEnd,
 		venueProvided: String(config.venueProvided),
 		equipment: config.equipment,
 		lunch: config.lunch,
@@ -127,10 +131,9 @@ export function validateConfiguration(config: BookingConfiguration) {
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
 		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
 	}
-	if (!config.preferredEventDate || new Date(config.preferredEventDate) <= new Date()) {
-		errors.push('Bitte wählen Sie einen zukünftigen Event-Wunschtermin.');
-	}
-	if (!config.consultationSlot) errors.push('Bitte wählen Sie einen Termin für das Erstgespräch.');
+	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie für den Hackathon ein zukünftiges Zeitfenster von 1 bis 12 Stunden in 30-Minuten-Schritten.');
+	const consultationDate = new Date(config.consultationSlot);
+	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.');
 	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push('Bitte beschreiben Sie Ihren Catering-Wunsch.');
 	if (!config.toolProvision || !['existing', 'needed'].includes(config.toolProvision)) {
 		errors.push('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.');

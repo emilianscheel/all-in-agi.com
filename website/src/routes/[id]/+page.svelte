@@ -26,12 +26,13 @@
 	import MessageField from '$lib/config/MessageField.svelte';
 	import PrepCallEditor from '$lib/config/PrepCallEditor.svelte';
 	import EditableSummaryRow from '$lib/EditableSummaryRow.svelte';
-	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
+	import EventDateTimeEditor from '$lib/EventDateTimeEditor.svelte';
+	import { formatEventTimeRange } from '$lib/event-time';
 	import MapPreview from '$lib/MapPreview.svelte';
 	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { eventDateBounds } from '$lib/event-date';
-	import { formatDate, formatPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration } from '$lib/booking';
+	import { formatPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration } from '$lib/booking';
 	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
 	import { untrack } from 'svelte';
@@ -66,7 +67,7 @@
 		codingTools: draft.codingTools,
 		customCodingTool: draft.customCodingTool
 	});
-	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.booking));
+	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.prepCallBooking));
 
 	function configurationFromHackathon(value: typeof data.hackathon): BookingConfiguration {
 		return {
@@ -84,7 +85,8 @@
 			phone: value.phone,
 			message: value.message,
 			address: { ...value.address },
-			preferredEventDate: value.preferredEventDate,
+			eventStart: value.eventStart,
+			eventEnd: value.eventEnd,
 			consultationSlot: value.consultationSlot
 		};
 	}
@@ -123,7 +125,7 @@
 			case 'equipment': return { section, equipment: draft.equipment };
 			case 'lunch': return { section, lunch: draft.lunch, customLunch: draft.customLunch };
 			case 'address': return { section, address: draft.address };
-			case 'event-date': return { section, preferredEventDate: draft.preferredEventDate };
+			case 'event-time': return { section, eventStart: draft.eventStart, eventEnd: draft.eventEnd };
 			case 'prep-call': return { section, consultationSlot: draft.consultationSlot };
 			case 'company': return { section, companyName: draft.companyName };
 			case 'contact': return { section, contactName: draft.contactName, email: draft.email, phone: draft.phone };
@@ -180,7 +182,7 @@
 					</div>
 					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
 					<div class="event-details">
-						<div class="event-detail"><small>Event Date</small><b>{formatDate(hackathon.preferredEventDate)}</b></div>
+						<div class="event-detail"><small>Event Date</small><b>{formatEventTimeRange(hackathon.eventStart, hackathon.eventEnd)}</b></div>
 						<div class="event-detail"><small>Team</small><b>Bis {hackathon.capacity} Personen</b></div>
 						<div class="event-detail"><small>Location</small><b>{hackathon.venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
@@ -195,7 +197,7 @@
 				<span class="detail-id">{hackathon.id}</span>
 			</div>
 			<h1 id="detail-title">Hackathon für {hackathon.companyName}</h1>
-			<p class="success-date">{formatDate(hackathon.preferredEventDate)}</p>
+			<p class="success-date">{formatEventTimeRange(hackathon.eventStart, hackathon.eventEnd)}</p>
 
 			<MiniContactCards />
 			<div class="success-actions">
@@ -233,8 +235,8 @@
 				<EditableSummaryRow icon={Monitor} label={overviewRow('equipment').label} value={overviewRow('equipment').value} status={overviewRow('equipment').status} active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="equipment" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-equipment" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={CalendarDays} label={overviewRow('event-date').label} value={overviewRow('event-date').value} status={overviewRow('event-date').status} active={activeSection === 'event-date'} {saving} error={activeSection === 'event-date' ? editError : ''} onedit={() => openEditor('event-date')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<EventDateCalendar value={draft.preferredEventDate} minValue={minEventDate} maxValue={maxEventDate} onchange={(preferredEventDate) => (draft = { ...draft, preferredEventDate })} />{/snippet}
+				<EditableSummaryRow icon={CalendarDays} label={overviewRow('event-date').label} value={overviewRow('event-date').value} status={overviewRow('event-date').status} active={activeSection === 'event-time'} {saving} error={activeSection === 'event-time' ? editError : ''} onedit={() => openEditor('event-time')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}<EventDateTimeEditor eventStart={draft.eventStart} eventEnd={draft.eventEnd} minValue={minEventDate} maxValue={maxEventDate} onchange={(value) => (draft = { ...draft, ...value })} />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Clock3} label={overviewRow('prep-call').label} value={overviewRow('prep-call').value} status={overviewRow('prep-call').status} active={activeSection === 'prep-call'} {saving} error={activeSection === 'prep-call' ? editError : ''} onedit={() => openEditor('prep-call')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<PrepCallEditor value={draft.consultationSlot} mode={prepCallMode} customDate={customPrepCallDate} onchange={(consultationSlot) => (draft = { ...draft, consultationSlot })} onmodechange={(value) => (prepCallMode = value)} oncustomdatechange={(value) => (customPrepCallDate = value)} />{/snippet}

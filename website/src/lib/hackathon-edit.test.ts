@@ -17,7 +17,8 @@ const config: BookingConfiguration = {
 	phone: '+49 30 123456',
 	message: '',
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
-	preferredEventDate: '2099-06-20',
+	eventStart: '2099-06-20T07:00:00.000Z',
+	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z'
 };
 
@@ -29,7 +30,7 @@ describe('hackathon section updates', () => {
 		[{ section: 'equipment', equipment: 'none' }, { equipment: 'none' }],
 		[{ section: 'lunch', lunch: 'custom', customLunch: 'Bowls' }, { lunch: 'custom', customLunch: 'Bowls' }],
 		[{ section: 'address', address: { label: '', street: 'Neue Straße 2', postalCode: '20095', city: 'Hamburg', country: 'Deutschland' } }, { address: { label: '', street: 'Neue Straße 2', postalCode: '20095', city: 'Hamburg', country: 'Deutschland' } }],
-		[{ section: 'event-date', preferredEventDate: '2099-07-01' }, { preferredEventDate: '2099-07-01' }],
+		[{ section: 'event-time', eventStart: '2099-07-01T07:00:00.000Z', eventEnd: '2099-07-01T15:00:00.000Z' }, { eventStart: '2099-07-01T07:00:00.000Z', eventEnd: '2099-07-01T15:00:00.000Z' }],
 		[{ section: 'prep-call', consultationSlot: '2099-05-11T10:00:00.000Z' }, { consultationSlot: '2099-05-11T10:00:00.000Z' }],
 		[{ section: 'company', companyName: 'Neue Firma' }, { companyName: 'Neue Firma' }],
 		[{ section: 'contact', contactName: 'Grace Beispiel', email: 'grace@example.com', phone: '+49 40 123456' }, { contactName: 'Grace Beispiel', email: 'grace@example.com', phone: '+49 40 123456' }],
@@ -37,7 +38,7 @@ describe('hackathon section updates', () => {
 	] as const)('parses and applies %s without replacing unrelated fields', (input, expected) => {
 		const next = applyHackathonUpdate(config, parseHackathonUpdate(input));
 		expect(next).toMatchObject(expected);
-		expect(next.preferredEventDate).toBe('preferredEventDate' in expected ? expected.preferredEventDate : config.preferredEventDate);
+		expect(next.eventStart).toBe('eventStart' in expected ? expected.eventStart : config.eventStart);
 		expect(next.companyName).toBe('companyName' in expected ? expected.companyName : config.companyName);
 	});
 

@@ -16,7 +16,7 @@ export type HackathonUpdate =
 	| { section: 'equipment'; equipment: Equipment }
 	| { section: 'lunch'; lunch: Lunch; customLunch: string }
 	| { section: 'address'; address: EventAddress }
-	| { section: 'event-date'; preferredEventDate: string }
+	| { section: 'event-time'; eventStart: string; eventEnd: string }
 	| { section: 'prep-call'; consultationSlot: string }
 	| { section: 'company'; companyName: string }
 	| { section: 'contact'; contactName: string; email: string; phone: string }
@@ -84,8 +84,12 @@ export function parseHackathonUpdate(value: unknown): HackathonUpdate {
 			return { section: update.section, lunch: update.lunch as Lunch, customLunch: string(update.customLunch, 'Der Catering-Wunsch') };
 		case 'address':
 			return { section: update.section, address: parseAddress(update.address) };
-		case 'event-date':
-			return { section: update.section, preferredEventDate: string(update.preferredEventDate, 'Das Veranstaltungsdatum', 32) };
+		case 'event-time':
+			return {
+				section: update.section,
+				eventStart: string(update.eventStart, 'Der Veranstaltungsbeginn', 64),
+				eventEnd: string(update.eventEnd, 'Das Veranstaltungsende', 64)
+			};
 		case 'prep-call':
 			return { section: update.section, consultationSlot: string(update.consultationSlot, 'Der Vorbereitungstermin', 64) };
 		case 'company':
@@ -112,7 +116,7 @@ export function applyHackathonUpdate(config: BookingConfiguration, update: Hacka
 		case 'equipment': return { ...config, equipment: update.equipment };
 		case 'lunch': return { ...config, lunch: update.lunch, customLunch: update.lunch === 'custom' ? update.customLunch : '' };
 		case 'address': return { ...config, address: update.address };
-		case 'event-date': return { ...config, preferredEventDate: update.preferredEventDate };
+		case 'event-time': return { ...config, eventStart: update.eventStart, eventEnd: update.eventEnd };
 		case 'prep-call': return { ...config, consultationSlot: update.consultationSlot };
 		case 'company': return { ...config, companyName: update.companyName };
 		case 'contact': return { ...config, contactName: update.contactName, email: update.email, phone: update.phone };

@@ -18,19 +18,25 @@ const record = {
 	codingTools: ['codex'],
 	customCodingTool: '',
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
-	preferredEventDate: '2099-06-20',
+	eventStart: '2099-06-20T07:00:00.000Z',
+	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z',
 	basePrice: 4000,
 	venueSurcharge: 0,
 	lunchAdjustment: 0,
 	toolsAdjustment: 0,
 	totalPrice: 4000,
-	bookingUid: 'booking-1',
-	bookingIcsUid: 'booking-1@example.com',
-	bookingTitle: 'ALL-IN-AGI Prep Call',
-	bookingStart: '2099-05-10T10:00:00.000Z',
-	bookingEnd: '2099-05-10T11:00:00.000Z',
-	meetingUrl: '',
+	prepCallBookingUid: 'prep-1',
+	prepCallBookingIcsUid: 'prep-1@example.com',
+	prepCallBookingTitle: 'ALL-IN-AGI Prep Call',
+	prepCallBookingStart: '2099-05-10T10:00:00.000Z',
+	prepCallBookingEnd: '2099-05-10T11:00:00.000Z',
+	prepCallMeetingUrl: '',
+	hackathonBookingUid: 'hackathon-1',
+	hackathonBookingIcsUid: 'hackathon-1@example.com',
+	hackathonBookingTitle: 'ALL-IN-AGI Hackathon',
+	hackathonBookingStart: '2099-06-20T07:00:00.000Z',
+	hackathonBookingEnd: '2099-06-20T15:00:00.000Z',
 	demoMode: false,
 	createdAt: '2099-01-01T00:00:00.000Z',
 	updatedAt: '2099-01-01T00:00:00.000Z'
@@ -41,7 +47,8 @@ describe('public hackathon mapping', () => {
 		const result = toPublicHackathon(record);
 		expect(result.companyName).toBe('Musterwerke GmbH');
 		expect(result.price.totalPrice).toBe(4000);
-		expect(result.booking.uid).toBe('booking-1');
+		expect(result.prepCallBooking.uid).toBe('prep-1');
+		expect(result.hackathonBooking.uid).toBe('hackathon-1');
 		expect(result.contactName).toBe('Ada Beispiel');
 		expect(result.email).toBe('ada@example.com');
 		expect(result.phone).toBe('+49 30 123456');
