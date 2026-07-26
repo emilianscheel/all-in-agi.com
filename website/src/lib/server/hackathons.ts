@@ -24,6 +24,14 @@ export interface PublicHackathon extends BookingConfiguration {
 	prepCallBooking: BookingResultSummary;
 }
 
+export interface PublicHackathonTimer {
+	id: string;
+	eventStart: string;
+	eventEnd: string;
+	lunch: BookingConfiguration['lunch'];
+	customLunch: string;
+}
+
 function pendingValues(id: string, config: BookingConfiguration) {
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
 	return {
@@ -197,4 +205,26 @@ export function toPublicHackathon(record: HackathonRecord): PublicHackathon {
 export async function getPublicHackathon(id: string) {
 	const record = await getConfirmedHackathonRecord(id);
 	return record ? toPublicHackathon(record) : null;
+}
+
+export function toPublicHackathonTimer(record: Pick<HackathonRecord, 'id' | 'eventStart' | 'eventEnd' | 'lunch' | 'customLunch'>): PublicHackathonTimer {
+	return {
+		id: record.id,
+		eventStart: record.eventStart,
+		eventEnd: record.eventEnd,
+		lunch: record.lunch,
+		customLunch: record.customLunch
+	};
+}
+
+export async function getPublicHackathonTimer(id: string) {
+	const db = await getDb();
+	const [record] = await db.select({
+		id: hackathons.id,
+		eventStart: hackathons.eventStart,
+		eventEnd: hackathons.eventEnd,
+		lunch: hackathons.lunch,
+		customLunch: hackathons.customLunch
+	}).from(hackathons).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).limit(1);
+	return record ? toPublicHackathonTimer(record) : null;
 }
