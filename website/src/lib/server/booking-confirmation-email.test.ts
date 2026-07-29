@@ -96,15 +96,15 @@ describe("booking confirmation email", () => {
             },
         });
         expect(html).toContain("Hallo Ada &lt;Admin&gt; &amp; Co.,");
-        expect(html).toContain("<strong>Bis 15 Personen</strong>");
-        expect(html).toContain("<strong>Bowls &lt;vegan&gt; &amp; Salat</strong>");
+        expect(html).toContain("<strong>Team:</strong> Bis 15 Personen");
+        expect(html).toContain("<strong>Lunch:</strong> Bowls &lt;vegan&gt; &amp; Salat");
         expect(html).not.toContain("Inklusive");
         expect(html).toContain(
             '<a href="https://all-in-agi.com/HAA-AAA-AAA">Buchung verwalten</a>',
         );
         expect(html).toContain('<a href="tel:+4915257257750">0152 57257750</a>');
         expect(html).toContain('<a href="mailto:go@all-in-agi.com">go@all-in-agi.com</a>');
-        expect(html).toContain("height:2.5em");
+        expect(html).not.toMatch(/<!doctype|<html|<body|<table|style=/i);
         expect(html).not.toContain("Ada <Admin>");
     });
 
@@ -155,7 +155,7 @@ describe("booking confirmation email", () => {
         expect(organizerBody.text).not.toBe(customerBody.text);
         expect(organizerBody.html).not.toBe(customerBody.html);
         expect(organizerBody.attachments).toEqual(customerBody.attachments);
-        expect(customerBody.html).toContain("<strong>Bis 15 Personen</strong>");
+        expect(customerBody.html).toContain("<strong>Team:</strong> Bis 15 Personen");
         expect(customerBody.text).toContain("Wir freuen uns auf Sie!");
         expect(organizerBody.text).not.toContain("Wir freuen uns auf Sie!");
         expect(

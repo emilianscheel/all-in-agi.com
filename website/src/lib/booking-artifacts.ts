@@ -8,6 +8,7 @@ import {
 	rgb,
 	type Color,
 	type PDFFont,
+	type PDFImage,
 	type PDFPage
 } from 'pdf-lib';
 import logoAsset from '../../static/brand/all-in-agi-logo.png?inline';
@@ -17,17 +18,17 @@ import type { BookingResultSummary } from './booking-ics';
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from './contact';
 import { formatEventTimeRange } from './event-time';
 
-const PAGE_WIDTH = 595.28;
-const PAGE_HEIGHT = 841.89;
-const LEFT = 48;
-const RIGHT = PAGE_WIDTH - LEFT;
+export const PAGE_WIDTH = 595.28;
+export const PAGE_HEIGHT = 841.89;
+export const LEFT = 48;
+export const RIGHT = PAGE_WIDTH - LEFT;
 const SITE_ORIGIN = 'https://all-in-agi.com';
 
 export function hackathonDetailUrl(id: string) {
 	return `${SITE_ORIGIN}/${encodeURIComponent(id)}`;
 }
 
-function safeText(value: unknown) {
+export function safeText(value: unknown) {
 	return String(value ?? '')
 		.replace(/[–—−]/g, '-')
 		.replace(/·/g, '-')
@@ -59,7 +60,7 @@ function wrap(text: string, font: PDFFont, size: number, maxWidth: number, maxLi
 	return lines;
 }
 
-function drawWrapped(
+export function drawWrapped(
 	page: PDFPage,
 	text: string,
 	x: number,
@@ -78,7 +79,7 @@ function drawWrapped(
 	return lines.length;
 }
 
-function drawRight(
+export function drawRight(
 	page: PDFPage,
 	text: string,
 	right: number,
@@ -97,7 +98,7 @@ function drawRight(
 	});
 }
 
-function drawRoundedCard(
+export function drawRoundedCard(
 	page: PDFPage,
 	x: number,
 	y: number,
@@ -268,14 +269,24 @@ function loadBrandAssets() {
 	return brandAssets;
 }
 
-export interface PlanPdfOptions {
-	booking?: BookingResultSummary;
-	hackathonId?: string;
-	generatedAt?: Date;
+export interface BrandPdfContext {
+	pdf: PDFDocument;
+	page: PDFPage;
+	regular: PDFFont;
+	bold: PDFFont;
+	brandFont: PDFFont;
+	logo: PDFImage;
+	colors: {
+		orange: Color;
+		ink: Color;
+		muted: Color;
+		line: Color;
+		surface: Color;
+		white: Color;
+	};
 }
 
-export async function createPlanPdf(config: BookingConfiguration, options: PlanPdfOptions = {}) {
-	const generatedAt = options.generatedAt ?? new Date();
+export async function createBrandPdf(): Promise<BrandPdfContext> {
 	const pdf = await PDFDocument.create();
 	pdf.registerFontkit(fontkit);
 	const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
@@ -284,20 +295,49 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	const assets = await loadBrandAssets();
 	const brandFont = await pdf.embedFont(assets.instrumentSerif, { subset: true });
 	const logo = await pdf.embedPng(assets.logo);
+	return {
+		pdf,
+		page,
+		regular,
+		bold,
+		brandFont,
+		logo,
+		colors: {
+			orange: rgb(1, 0.31, 0.094),
+			ink: rgb(0.11, 0.11, 0.12),
+			muted: rgb(0.43, 0.43, 0.45),
+			line: rgb(0.87, 0.87, 0.89),
+			surface: rgb(0.96, 0.96, 0.97),
+			white: rgb(1, 1, 1)
+		}
+	};
+}
 
-	const orange = rgb(1, 0.31, 0.094);
-	const ink = rgb(0.11, 0.11, 0.12);
-	const muted = rgb(0.43, 0.43, 0.45);
-	const line = rgb(0.87, 0.87, 0.89);
-	const surface = rgb(0.96, 0.96, 0.97);
-	const white = rgb(1, 1, 1);
+export function drawBrandChrome(context: BrandPdfContext, footerLeft: string) {
+	const { page, regular, brandFont, logo, colors } = context;
+	page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 10, width: PAGE_WIDTH, height: 10, color: colors.orange });
+	page.drawImage(logo, { x: LEFT, y: 778, width: 28, height: 28 });
+	page.drawText('ALL IN AGI', { x: LEFT + 38, y: 784, font: brandFont, size: 16.5, color: colors.ink });
+	page.drawText(safeText(footerLeft), { x: LEFT, y: 38, font: regular, size: 8.5, color: colors.muted });
+	const footerContact = `${CONTACT_PHONE_DISPLAY}  |  ${CONTACT_EMAIL}  |  all-in-agi.com`;
+	drawRight(page, footerContact, RIGHT, 38, regular, 8.5, colors.muted);
+}
+
+export interface PlanPdfOptions {
+	booking?: BookingResultSummary;
+	hackathonId?: string;
+	generatedAt?: Date;
+}
+
+export async function createPlanPdf(config: BookingConfiguration, options: PlanPdfOptions = {}) {
+	const generatedAt = options.generatedAt ?? new Date();
+	const context = await createBrandPdf();
+	const { pdf, page, regular, bold } = context;
+	const { orange, ink, muted, line, surface, white } = context.colors;
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
 	const rows = bookingOverviewRows(config, options.booking);
-
-	page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 10, width: PAGE_WIDTH, height: 10, color: orange });
-
-	page.drawImage(logo, { x: LEFT, y: 778, width: 28, height: 28 });
-	page.drawText('ALL IN AGI', { x: LEFT + 38, y: 784, font: brandFont, size: 16.5, color: ink });
+	const generatedLabel = `Planungsstand ${new Intl.DateTimeFormat('de-DE').format(generatedAt)}`;
+	drawBrandChrome(context, generatedLabel);
 	if (options.hackathonId) {
 		const detailUrl = hackathonDetailUrl(options.hackathonId);
 		drawQrCode(page, detailUrl, RIGHT - 68, 754, 68);
@@ -391,11 +431,6 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	drawWrapped(page, config.contactName, 62, supportY + 11, 144, bold, 8.7, ink, 1);
 	drawWrapped(page, config.email, 210, supportY + 11, 190, regular, 8.5, muted, 1);
 	drawRight(page, config.phone, RIGHT - 14, supportY + 11, regular, 8.5, muted);
-
-	const generatedLabel = `Planungsstand ${new Intl.DateTimeFormat('de-DE').format(generatedAt)}`;
-	page.drawText(generatedLabel, { x: LEFT, y: 38, font: regular, size: 8.5, color: muted });
-	const footerContact = `${CONTACT_PHONE_DISPLAY}  |  ${CONTACT_EMAIL}  |  all-in-agi.com`;
-	drawRight(page, footerContact, RIGHT, 38, regular, 8.5, muted);
 
 	return pdf.save();
 }

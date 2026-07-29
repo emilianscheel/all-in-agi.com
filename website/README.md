@@ -35,6 +35,8 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `CAL_HACKATHON_EVENT_TYPE_ID`: ID des Cal.com Event Types für den Hackathontag; unterstützt die angebotenen Dauern in 30-Minuten-Schritten
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account-ID für den E-Mail-Versand
 - `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`
+- `INVOICE_TAX_ID_LABEL` und `INVOICE_TAX_ID_VALUE`: Bezeichnung und Wert der Steuerkennung auf Rechnungen, zum Beispiel `USt-IdNr.`
+- `INVOICE_ACCOUNT_HOLDER`, `INVOICE_IBAN` und `INVOICE_BIC`: Zahlungsdaten für Rechnungen; ohne vollständige Werte bleibt die Rechnungserstellung deaktiviert
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
 - `DATABASE_URL`: einzige PostgreSQL-Konfiguration für Anwendung, Drizzle und lokale Entwicklung; der lokale Container übernimmt daraus Benutzername, Passwort, Datenbankname und Port
 - `BETTER_AUTH_SECRET`: mindestens 32 Zeichen langes Secret für Better-Auth-Sessions
@@ -58,7 +60,9 @@ Das Drizzle-Schema liegt unter `src/lib/server/db/schema.ts`; generierte und gep
 
 Die Karte verwendet den Positron-Stil von OpenFreeMap. Die optionale deutsche Adresssuche nutzt die öffentliche Photon-Instanz. Photon hat keine Verfügbarkeitsgarantie; deshalb bleiben alle Adressfelder immer manuell editierbar.
 
-Nach einer bestätigten Buchung versendet der Server über Cloudflare Email Service eine HTML-Bestätigung mit Text-Fallback an den Kunden und eine inhaltlich angepasste Benachrichtigung an `go@all-in-agi.com`. Absender und Antwortadresse sind `go@all-in-agi.com`. Beide E-Mails enthalten den öffentlichen Buchungslink sowie den vollständigen PDF-Plan und den Vorbereitungstermin als Anhänge. Der Vorbereitungstermin im E-Mail-Anhang verlinkt ebenfalls auf die Buchungsverwaltung. Ein Fehler beim E-Mail-Versand macht die bereits bestätigte Cal.com- und Datenbankbuchung nicht rückgängig.
+Nach einer bestätigten Buchung versendet der Server über Cloudflare Email Service eine minimal formatierte Rich-Text-Bestätigung mit Text-Fallback an den Kunden und eine inhaltlich angepasste Benachrichtigung an `go@all-in-agi.com`. Absender und Antwortadresse sind `go@all-in-agi.com`. Beide E-Mails enthalten den öffentlichen Buchungslink sowie den vollständigen PDF-Plan und den Vorbereitungstermin als Anhänge. Der Vorbereitungstermin im E-Mail-Anhang verlinkt ebenfalls auf die Buchungsverwaltung. Ein Fehler beim E-Mail-Versand macht die bereits bestätigte Cal.com- und Datenbankbuchung nicht rückgängig.
+
+Autorisierte Admins können auf der Hackathon-Detailseite eine Rechnung herunterladen oder an den Kunden senden. Beim ersten Download oder Versand werden Rechnungsdatum, Leistungsdaten, Empfänger, Positionen, 19 Prozent Umsatzsteuer und Zahlungsdaten unveränderlich gespeichert. Weitere Downloads und erneute Sendungen verwenden exakt diesen Stand. Stornierte Buchungen können keine neue Rechnung erhalten; eine bereits ausgestellte Rechnung bleibt für Admins abrufbar.
 
 ## Vor einem Livegang zwingend erledigen
 

@@ -48,11 +48,17 @@
 	type EditSection = HackathonUpdate['section'];
 
 	const initialHackathon = untrack(() => data.hackathon);
+	const initialInvoice = untrack(() => data.invoice);
 	let hackathon = $state(initialHackathon);
 	let activeSection = $state<EditSection | null>(null);
 	let saving = $state(false);
 	let editError = $state('');
 	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let invoiceDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
+	let invoiceEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let invoiceIssued = $state(Boolean(initialInvoice?.issued));
+	let invoiceEmailSentAt = $state<string | null>(initialInvoice?.emailSentAt ?? null);
+	let invoiceMessage = $state('');
 	let cancellationBusy = $state(false);
 	let cancellationMessage = $state('');
 	let cancelDialogOpen = $state(false);
@@ -190,6 +196,51 @@
 		}
 	}
 
+	async function downloadInvoice() {
+		if (invoiceDownloadState === 'loading') return;
+		invoiceDownloadState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/invoice.pdf`, { method: 'POST' });
+			if (!response.ok) {
+				const result = await response.json().catch(() => ({}));
+				throw new Error(result.message ?? 'Die Rechnung konnte nicht heruntergeladen werden.');
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `all-in-agi-rechnung-${hackathon.id}.pdf`;
+			document.body.append(link);
+			link.click();
+			link.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 0);
+			invoiceIssued = true;
+			invoiceDownloadState = 'idle';
+		} catch (error) {
+			invoiceDownloadState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : 'Die Rechnung konnte nicht heruntergeladen werden.';
+		}
+	}
+
+	async function sendInvoice() {
+		if (invoiceEmailState === 'loading') return;
+		invoiceEmailState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/invoice-email`, { method: 'POST' });
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(result.message ?? 'Die Rechnungs-E-Mail konnte nicht gesendet werden.');
+			invoiceIssued = true;
+			invoiceEmailSentAt = result.sentAt;
+			invoiceEmailState = 'sent';
+			invoiceMessage = 'Die Rechnung wurde per E-Mail gesendet.';
+		} catch (error) {
+			invoiceEmailState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : 'Die Rechnungs-E-Mail konnte nicht gesendet werden.';
+		}
+	}
+
 	async function cancelBooking() {
 		if (cancellationBusy) return;
 		cancellationBusy = true;
@@ -274,6 +325,20 @@
 
 			{#if data.admin.authorized}
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
+					{#if !readOnly || invoiceIssued}
+						<button class="button-secondary action-button" type="button" onclick={downloadInvoice} disabled={invoiceDownloadState === 'loading'}>
+							<Download size={18} aria-hidden="true" />{invoiceDownloadState === 'loading' ? 'Rechnung wird erstellt …' : invoiceDownloadState === 'error' ? 'Download erneut versuchen' : 'Rechnung herunterladen'}
+						</button>
+					{/if}
+					{#if !readOnly}
+						<button class="button-secondary action-button" type="button" onclick={sendInvoice} disabled={invoiceEmailState === 'loading'} aria-live="polite">
+							{#if invoiceEmailState === 'sent'}
+								<Check size={18} aria-hidden="true" />Rechnung erneut senden
+							{:else}
+								<Mail size={18} aria-hidden="true" />{invoiceEmailState === 'loading' ? 'Rechnung wird gesendet …' : invoiceEmailState === 'error' ? 'Senden erneut versuchen' : invoiceEmailSentAt ? 'Rechnung erneut senden' : 'Rechnung senden'}
+							{/if}
+						</button>
+					{/if}
 					{#if !readOnly}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
 							<ExternalLink size={18} aria-hidden="true" />Timer
@@ -298,6 +363,7 @@
 							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird fortgesetzt …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
 						</button>
 					{/if}
+					{#if invoiceMessage}<p class="admin-action-message" role="status">{invoiceMessage}</p>{/if}
 					{#if cancellationMessage}<p class="admin-action-message" role="status">{cancellationMessage}</p>{/if}
 				</div>
 			{/if}

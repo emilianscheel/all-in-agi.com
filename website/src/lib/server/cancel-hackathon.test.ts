@@ -12,6 +12,7 @@ function cancellationRecord(): HackathonRecord {
 		prepCallBookingUid: 'prep-1', prepCallBookingIcsUid: null, prepCallBookingTitle: null, prepCallBookingStart: null, prepCallBookingEnd: null, prepCallMeetingUrl: null,
 		hackathonBookingUid: 'event-1', hackathonBookingIcsUid: null, hackathonBookingTitle: null, hackathonBookingStart: null, hackathonBookingEnd: null,
 		hackathonCancelledAt: null, prepCallCancelledAt: null, cancelledAt: null, cancellationEmailSentAt: null, cancellationEmailMessageId: null, cancellationProcessingAt: null,
+		invoiceSnapshot: null, invoiceIssuedAt: null, invoiceEmailSentAt: null, invoiceEmailMessageId: null,
 		demoMode: false, createdAt: '2099-01-01T00:00:00.000Z', updatedAt: '2099-01-01T00:00:00.000Z'
 	};
 }
@@ -86,4 +87,3 @@ describe('hackathon cancellation orchestration', () => {
 		expect(log).toEqual([]);
 	});
 });
-

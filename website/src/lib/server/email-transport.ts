@@ -23,14 +23,17 @@ export interface EmailAttachment {
 	disposition: 'attachment';
 }
 
-export interface EmailMessage {
+interface EmailMessageBase {
 	to: { address: string; name: string };
 	subject: string;
-	text: string;
-	html: string;
 	headers?: Record<string, string>;
 	attachments?: EmailAttachment[];
 }
+
+export type EmailMessage = EmailMessageBase & (
+	| { text: string; html?: string }
+	| { text?: string; html: string }
+);
 
 export interface EmailTransportDependencies {
 	fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -120,4 +123,3 @@ export async function sendEmailMessage(message: EmailMessage, dependencies: Emai
 		status: delivered ? 'delivered' as const : queued ? 'queued' as const : 'accepted' as const
 	};
 }
-

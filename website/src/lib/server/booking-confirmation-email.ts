@@ -182,30 +182,22 @@ export function buildBookingConfirmationHtml(
     const detailUrl = escapeHtml(bookingDetailUrl(input.id));
     const options = rows
         .map((row) => {
-            const status =
-                row.status === "Inklusive"
-                    ? ""
-                    : `<span style="color:#5f6368;"> — ${escapeHtml(row.status)}</span>`;
-            return `<tr><td style="padding:6px 16px 6px 0;vertical-align:top;">${escapeHtml(row.label)}</td><td style="padding:6px 0;vertical-align:top;"><strong>${escapeHtml(row.value)}</strong>${status}</td></tr>`;
+            const status = row.status === "Inklusive" ? "" : ` — ${escapeHtml(row.status)}`;
+            return `<strong>${escapeHtml(row.label)}:</strong> ${escapeHtml(row.value)}${status}`;
         })
-        .join("");
+        .join("<br>");
     const contact = customer
-        ? `<p style="margin:24px 0 8px;">Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
-			<p style="margin:0;"><a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p>
-			<p style="margin:24px 0 0;">Wir freuen uns auf Sie!</p>`
+        ? `<p>Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
+			<p><strong>Telefon:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>E-Mail:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p>
+			<p>Wir freuen uns auf Sie!</p>`
         : "";
 
-    return `<!doctype html>
-<html lang="de">
-<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#171717;">
-	<p style="margin:0 0 16px;">${customer ? `Hallo ${escapeHtml(input.config.contactName)},` : "Hallo ALL IN AGI,"}</p>
-	<p style="margin:0 0 20px;">${customer ? "vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt." : "Es wurde ein neuer Hackathon gebucht."}</p>
-	<table role="presentation" style="border-collapse:collapse;margin:0 0 20px;">${options}</table>
-	<p style="margin:0;"><a href="${detailUrl}">Buchung verwalten</a></p>
+    return `<p>${customer ? `Hallo ${escapeHtml(input.config.contactName)},` : "Hallo ALL IN AGI,"}</p>
+	<p>${customer ? "vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt." : "Es wurde ein neuer Hackathon gebucht."}</p>
+	<p>${options}</p>
+	<p><a href="${detailUrl}">Buchung verwalten</a></p>
 	${contact}
-	<div style="height:2.5em;line-height:1.25em;" aria-hidden="true">&nbsp;</div>
-</body>
-</html>`;
+	<p><br><br></p>`;
 }
 
 async function prepareBookingConfirmation(

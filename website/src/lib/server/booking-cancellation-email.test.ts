@@ -14,6 +14,7 @@ describe('booking cancellation email', () => {
 		const html = buildCancellationEmailHtml(record);
 		expect(html).toContain('Ada &amp; Co');
 		expect(html).toContain('&lt;Musterwerke&gt;');
+		expect(html).not.toMatch(/<!doctype|<html|<body|<table|style=/i);
 	});
 
 	test('sends one attachment-free customer message through the shared transport', async () => {
@@ -30,4 +31,3 @@ describe('booking cancellation email', () => {
 		expect(payload.attachments).toBeUndefined();
 	});
 });
-

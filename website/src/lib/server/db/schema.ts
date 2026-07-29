@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import type { CodingTool, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
+import type { InvoiceSnapshot } from '$lib/invoice';
 
 export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed', 'cancellation_pending', 'cancelled']);
 
@@ -46,6 +47,10 @@ export const hackathons = pgTable('hackathons', {
 	cancellationEmailSentAt: timestamp('cancellation_email_sent_at', { withTimezone: true, mode: 'string' }),
 	cancellationEmailMessageId: text('cancellation_email_message_id'),
 	cancellationProcessingAt: timestamp('cancellation_processing_at', { withTimezone: true, mode: 'string' }),
+	invoiceSnapshot: jsonb('invoice_snapshot').$type<InvoiceSnapshot>(),
+	invoiceIssuedAt: timestamp('invoice_issued_at', { withTimezone: true, mode: 'string' }),
+	invoiceEmailSentAt: timestamp('invoice_email_sent_at', { withTimezone: true, mode: 'string' }),
+	invoiceEmailMessageId: text('invoice_email_message_id'),
 	demoMode: boolean('demo_mode').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()

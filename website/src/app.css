@@ -523,6 +523,8 @@ img { display: block; max-width: 100%; }
 .summary-edit-actions { margin-top: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .summary-edit-actions button { min-width: 112px; min-height: 44px; }
 .action-button { width: 100%; margin-top: 0; gap: 8px; font-weight: 400; }
+.booking-submit-actions { width: 100%; margin-top: 18px; display: grid; gap: 10px; }
+.booking-submit-actions > * { width: 100%; }
 .error-box { margin: 16px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--error-bg); color: var(--error-ink); font-size: 13px; line-height: 1.4; }
 .error-box ul { margin: 0; padding-left: 18px; }
 

@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import { getPrice, type BookingConfiguration, type Capacity } from '$lib/booking';
 import type { BookingResultSummary } from '$lib/booking-ics';
+import type { InvoiceSnapshot } from '$lib/invoice';
 import { generatePublicId, HACKATHON_ID_PREFIX } from '$lib/public-id';
 import { getDb } from './db';
 import { hackathons } from './db/schema';
@@ -122,6 +123,30 @@ export async function getCustomerHackathonRecord(id: string) {
 	const [record] = await db.select().from(hackathons)
 		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['confirmed', 'cancellation_pending', 'cancelled'])))
 		.limit(1);
+	return record ?? null;
+}
+
+export async function freezeInvoiceSnapshot(id: string, snapshot: InvoiceSnapshot, issuedAt: string) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		invoiceSnapshot: snapshot,
+		invoiceIssuedAt: issuedAt,
+		updatedAt: issuedAt
+	}).where(and(
+		eq(hackathons.id, id),
+		eq(hackathons.status, 'confirmed'),
+		isNull(hackathons.invoiceSnapshot)
+	)).returning();
+	return record ?? null;
+}
+
+export async function markInvoiceEmailSent(id: string, messageId?: string, at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		invoiceEmailSentAt: at,
+		invoiceEmailMessageId: messageId ?? null,
+		updatedAt: at
+	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();
 	return record ?? null;
 }
 

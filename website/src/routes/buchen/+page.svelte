@@ -459,8 +459,10 @@
 				<div class="summary-row total"><ReceiptEuro size={20} aria-hidden="true" /><span>{overviewRow('total').value}</span><b><AnimatedValue value={overviewRow('total').status} /></b></div>
 			</div>
 			{#if errors.length}<div class="error-box" role="alert"><ul>{#each errors as error}<li>{error}</li>{/each}</ul></div>{/if}
-			<button class="button-primary" style="width:100%;margin-top:18px" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Hackathon und Prep Call buchen'}</button>
-			<SharePlanButton getUrl={getShareUrl} />
+			<div class="booking-submit-actions">
+				<button class="button-primary" type="submit" disabled={submitting || slotsLoading}>{submitting ? 'Wird gebucht …' : 'Hackathon und Prep Call buchen'}</button>
+				<SharePlanButton getUrl={getShareUrl} />
+			</div>
 			</section>
 		</form>
 	</div>

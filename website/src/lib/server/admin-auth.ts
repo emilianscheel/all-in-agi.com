@@ -1,4 +1,3 @@
-import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { error } from '@sveltejs/kit';
 import { getDb } from './db';
@@ -20,7 +19,7 @@ export function normalizeEmail(value: unknown) {
 }
 
 export function seedAdminEmail() {
-	return normalizeEmail(env.SEED_ADMIN_EMAIL);
+	return normalizeEmail(process.env.SEED_ADMIN_EMAIL);
 }
 
 export function isSeedAdminEmail(value: unknown) {
