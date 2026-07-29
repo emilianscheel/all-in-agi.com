@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { installGlobalHaptics } from '$lib/haptics';
 	import { robotsDirective } from '$lib/seo';
+	import GtmFooter from '$lib/GtmFooter.svelte';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children, data } = $props();
@@ -75,6 +76,7 @@
 <main id="main" class:presentation-main={presentationRoute}>{@render children()}</main>
 
 {#if !presentationRoute}
+	{#if page.url.pathname === '/'}<GtmFooter />{/if}
 	<footer class="site-footer">
 	<div class="footer-inner">
 		<div class="footer-links">

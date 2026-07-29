@@ -1,11 +1,15 @@
+import { gtmPaths } from '$lib/gtm-pages';
+
 export const SITE_ORIGIN = 'https://all-in-agi.com';
 export const SOCIAL_IMAGE_URL = `${SITE_ORIGIN}/images/all-in-agi-event.webp`;
 export const SOCIAL_IMAGE_ALT = 'Team arbeitet gemeinsam an einem Agentic Engineering Hackathon-Projekt';
 
-const INDEXABLE_PATHS = new Set(['/', '/impressum', '/datenschutz', '/buchen']);
+export const INDEXABLE_PATHS = ['/', '/impressum', '/datenschutz', '/buchen', ...gtmPaths];
+
+const indexablePathSet = new Set<string>(INDEXABLE_PATHS);
 
 export function isIndexablePath(pathname: string) {
-	return INDEXABLE_PATHS.has(pathname);
+	return indexablePathSet.has(pathname);
 }
 
 export function robotsDirective(pathname: string) {

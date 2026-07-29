@@ -8,7 +8,7 @@
 	}: {
 		title: string;
 		description: string;
-		path: '/' | '/impressum' | '/datenschutz' | '/buchen';
+		path: string;
 	} = $props();
 
 	let canonicalUrl = $derived(`${SITE_ORIGIN}${path}`);

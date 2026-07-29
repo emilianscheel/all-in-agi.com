@@ -280,6 +280,15 @@ img { display: block; max-width: 100%; }
 .footer-links { display: flex; justify-content: center; gap: 18px; }
 .footer-links a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 
+.gtm-footer { border-bottom: 1px solid var(--soft-line); background: var(--surface); color: var(--muted); }
+.gtm-footer-inner { max-width: 1120px; margin: 0 auto; padding: 54px 24px 48px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 34px; }
+.gtm-footer-column { min-width: 0; }
+.gtm-footer-column h2 { margin: 0 0 17px; color: var(--secondary-ink); font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.gtm-footer-column ul { margin: 0; padding: 0; display: grid; gap: 12px; list-style: none; }
+.gtm-footer-column a { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); font-size: 13px; line-height: 1.35; transition: color .18s ease; }
+.gtm-footer-column a:hover, .gtm-footer-column a:focus-visible { color: var(--ink); }
+.gtm-footer-column svg { flex: 0 0 auto; margin-top: 1px; }
+
 /* Admin */
 .admin-header { background: color-mix(in srgb, var(--surface) 92%, transparent); border-color: var(--soft-line); }
 .admin-nav-inner { grid-template-columns: 1fr auto 1fr; }
@@ -654,6 +663,7 @@ img { display: block; max-width: 100%; }
 	.success-map .map-shell { height: 480px; min-height: 0; }
 	.success-panel { min-height: 580px; }
 	.detail-map { position: static; height: auto; }
+	.gtm-footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (hover: none) {
@@ -701,6 +711,7 @@ img { display: block; max-width: 100%; }
 	.agenda-card { min-height: 250px; }
 	.closing { margin: 8px 8px 100px; min-height: 520px; padding: 0; border-radius: 22px; }
 	.footer-inner { flex-direction: column; align-items: center; }
+	.gtm-footer-inner { padding: 42px 22px; grid-template-columns: 1fr; gap: 32px; }
 	.config-intro { padding-top: 36px; flex-direction: column; }
 	.price-pill { margin-top: 0; }
 	.demo-banner { margin-top: -50px; padding: 0 22px; }

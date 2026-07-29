@@ -1,10 +1,17 @@
 import { describe, expect, test } from 'bun:test';
-import { isIndexablePath, robotsDirective } from './seo';
+import { gtmPaths } from './gtm-pages';
+import { INDEXABLE_PATHS, isIndexablePath, robotsDirective } from './seo';
 
 describe('SEO indexing policy', () => {
-	test.each(['/', '/impressum', '/datenschutz', '/buchen'])('allows %s', (pathname) => {
+	test.each(INDEXABLE_PATHS)('allows %s', (pathname) => {
 		expect(isIndexablePath(pathname)).toBe(true);
 		expect(robotsDirective(pathname)).toBe('index, follow, max-image-preview:large');
+	});
+
+	test('contains the four core pages and all GTM pages', () => {
+		expect(INDEXABLE_PATHS).toHaveLength(24);
+		expect(INDEXABLE_PATHS.slice(0, 4)).toEqual(['/', '/impressum', '/datenschutz', '/buchen']);
+		expect(INDEXABLE_PATHS.slice(4)).toEqual(gtmPaths);
 	});
 
 	test.each([
