@@ -1,0 +1,109 @@
+# ALL IN AGI
+
+> ALL IN AGI organisiert moderierte Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland. Teams aus Engineering, Product und Fachbereichen entwickeln dabei an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen AI Coding Agents und Developer Tools.
+
+Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Angebot von ALL IN AGI. Sie beschreibt nur öffentlich bestätigte Leistungen und Konditionen. Individuelle Vereinbarungen aus einem Vorbereitungsgespräch oder einer Buchung haben Vorrang.
+
+**Organisation und Anbieter**
+
+- Das organisierende Team besteht aus Emilian Scheel und Maddox Sciuchetti.
+- Der im Impressum genannte rechtliche Anbieter ist Emilian Scheel, Moosdorfstraße 10, 12435 Berlin, Deutschland.
+- Kontakt: go@all-in-agi.com oder telefonisch unter +49 152 57257750 beziehungsweise 0152 57257750.
+- Das Angebot richtet sich an Unternehmen und wird vor Ort innerhalb Deutschlands durchgeführt. Die Anreise innerhalb Deutschlands ist im Preis enthalten.
+
+**Ziel und Teilnehmende**
+
+- Der Hackathon ist ein praktisches Arbeitsformat und keine theoretische Fortbildung. Das Team soll die Möglichkeiten agentischer Softwareentwicklung unmittelbar erleben und am selben Tag einen funktionierenden Prototyp bauen.
+- Teilnehmen können Mitarbeitende aus Engineering, Product und Fachbereichen. Nicht alle Teilnehmenden müssen programmieren können.
+- Die Challenges werden im Vorfeld auf das Unternehmen, die gewünschten Anwendungsfälle und unterschiedliche Skill Levels zugeschnitten.
+- Buchbare Teamgrößen sind bis zu 15, bis zu 30 oder bis zu 50 Personen. Bei größeren Gruppen arbeiten mehrere Build-Teams parallel und präsentieren ihre Ergebnisse gemeinsam.
+
+**Format und Tagesablauf**
+
+- Das Standardformat ist ein eintägiger Vor-Ort-Hackathon von 09:00 bis 17:00 Uhr in der Zeitzone Europe/Berlin.
+- Im Buchungsprozess kann ein zukünftiges Zeitfenster zwischen 1 und 12 Stunden gewählt werden. Beginn und Ende müssen am selben Kalendertag liegen und in 30-Minuten-Schritten angegeben werden.
+- 09:00 Uhr: Kickoff mit Live-Demo, Tool Stack, Teamaufteilung und Challenges.
+- 09:30 Uhr: erster Build Sprint vom Problem und User Flow bis zum ersten funktionierenden Prototyp.
+- 13:00 Uhr: gemeinsamer Lunch, Feedback und anschließend zweiter Build Sprint.
+- 16:30 Uhr: Demo Session, in der die Teams Problem, Lösung, Nutzung und Umsetzung präsentieren.
+
+**Enthaltene Leistungen**
+
+- Zwei Facilitators moderieren den Tag für jede der drei angebotenen Teamgrößen.
+- Challenge Design, Demo Session und Follow-up sind enthalten.
+- Ein Winner Poster als Auszeichnung für das Gewinnerteam ist enthalten.
+- Event-Fotos zur Dokumentation des Tages sind enthalten.
+- Cookies sind als Snacks enthalten, unabhängig von der gewählten Lunch-Option.
+- Ein Projektor oder großer Bildschirm des Kunden kann genutzt werden. Wenn kein Screen vorhanden ist, bringt ALL IN AGI die Präsentationstechnik ohne Aufpreis mit.
+- Die Anreise der Facilitators innerhalb Deutschlands ist enthalten.
+
+**Preise**
+
+- Bis zu 15 Personen: 4.000 € netto Grundpreis.
+- Bis zu 30 Personen: 5.000 € netto Grundpreis.
+- Bis zu 50 Personen: 6.000 € netto Grundpreis.
+- Eigene geeignete Location des Kunden: inklusive.
+- Von ALL IN AGI organisierte Location nahe der Wunschadresse: +1.000 € netto.
+- Pizza-Lunch: inklusive.
+- Individuelles Catering nach Wunsch: +500 € netto.
+- Kein Lunch oder vom Kunden selbst organisiertes Catering: jeweils −500 € netto.
+- Bereits vorhandene Agentic Coding Tools: inklusive.
+- Bereitstellung unterstützter Coding Tools durch ALL IN AGI für den Tag: +500 € netto.
+- Je nach Konfiguration liegt der aktuell auswählbare Gesamtpreis zwischen 3.500 € und 8.000 € netto.
+- Sämtliche veröffentlichten Beträge sind Nettopreise. Eine darüber hinausgehende Regelung zur Umsatzsteuer ist nicht veröffentlicht.
+
+**Location, Ausstattung und Voraussetzungen**
+
+- Bei einer eigenen Location werden ein ausreichend großer Raum für die Teams, stabiles WLAN und ein großer Screen empfohlen.
+- Falls der Kunde keine geeignete Location bereitstellt, kann ALL IN AGI gegen den genannten Aufpreis einen passenden Raum nahe der gewünschten Veranstaltungsadresse in Deutschland organisieren.
+- Wenn kein Projektor oder Display vorhanden ist, bringt ALL IN AGI die benötigte Präsentationstechnik mit.
+- Benötigt werden motivierte Builder, ihre Arbeitsgeräte sowie die im Vorbereitungsgespräch vereinbarten Zugänge und Arbeitsumgebungen.
+
+**Coding Tools und IT-Sicherheit**
+
+- Mit bereits beim Kunden vorhandenen Tools können GitHub Copilot, Codex, Claude Code, Cursor, Devin, OpenCode, Antigravity oder ein individuell benanntes internes beziehungsweise externes Tool eingesetzt werden.
+- Wenn ALL IN AGI Tools für den Tag bereitstellen soll, stehen Codex, Cursor und Claude Code zur Auswahl.
+- Der konkrete Tool Stack wird im Vorbereitungsgespräch festgelegt und an die IT- und Security-Vorgaben des Kunden angepasst.
+- Tools, Zugänge und zulässige Datenklassen werden vorab mit IT und Security abgestimmt. Gebaut wird ausschließlich in der vereinbarten Umgebung.
+
+**Vorbereitung, Terminwahl und Buchung**
+
+- Ein 60-minütiges Vorbereitungsgespräch ist Teil jeder Buchung. Dafür werden verfügbare Termine in der Zeitzone Europe/Berlin angezeigt.
+- Das Vorbereitungsgespräch kann frühestens am folgenden Tag und innerhalb der nächsten 45 Tage gewählt werden, sofern ein freier Termin verfügbar ist.
+- Der Hackathontag kann frühestens am folgenden Tag und bis zu ein Jahr im Voraus geplant werden.
+- Für die Buchung werden Teamgröße, Location, Tools, Demo-Setup, Lunch, deutsche Veranstaltungsadresse, Datum und Uhrzeit, Unternehmen, Ansprechperson, E-Mail-Adresse, Telefonnummer sowie der Termin des Vorbereitungsgesprächs benötigt. Eine Nachricht mit bis zu 500 Zeichen ist optional.
+- Der Konfigurator berechnet den Nettopreis unmittelbar aus der gewählten Teamgröße und den Optionen. Ein konfigurierter Plan kann vor der Buchung über einen Plan-Link geteilt werden.
+- Mit dem Absenden des vollständigen Buchungsformulars werden der Hackathontag und das Vorbereitungsgespräch gebucht. Ist ein gewählter Termin zwischenzeitlich nicht mehr verfügbar, muss ein neuer verfügbarer Termin gewählt werden.
+- Nach erfolgreicher Buchung erscheint eine Bestätigung. Zusätzlich wird eine Bestätigungs-E-Mail mit Buchungs-ID, Buchungsdetails, einem PDF-Hackathonplan, einer Kalenderdatei für das Vorbereitungsgespräch und einem buchungsspezifischen Verwaltungslink versendet.
+- Über den buchungsspezifischen Link können die bestätigten Hackathondetails eingesehen, der aktuelle Plan als PDF heruntergeladen und die Kalenderdatei für das Vorbereitungsgespräch abgerufen werden. Änderungswünsche können außerdem jederzeit über die veröffentlichten Kontaktdaten abgestimmt werden.
+
+**Häufige Fragen und noch nicht veröffentlichte Regelungen**
+
+- Müssen alle Teilnehmenden coden können? Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam; die Challenges werden für unterschiedliche Skill Levels ausgelegt.
+- Welche Tools werden genutzt? Den konkreten Stack legen Kunde und ALL IN AGI im Vorbereitungsgespräch anhand vorhandener Tools sowie der IT- und Security-Vorgaben fest.
+- Wie werden Daten geschützt? Datenklassen, Tools, Zugänge und Umgebung werden vorab vereinbart; gearbeitet wird nur in dieser Umgebung.
+- Was muss vor Ort vorhanden sein? Ein großer Raum, stabiles WLAN, Arbeitsgeräte und motivierte Builder. Fehlende Präsentationstechnik kann ALL IN AGI mitbringen.
+- Gibt es veröffentlichte Stornierungs-, Erstattungs- oder Umbuchungsfristen? Nein. Die technische Möglichkeit zur Verwaltung einer Buchung ersetzt keine veröffentlichten Stornierungs- oder Erstattungsbedingungen.
+- Wann und wie wird bezahlt? Zahlungsart, Zahlungsziel und Rechnungsablauf sind derzeit nicht veröffentlicht.
+- Wie wird Umsatzsteuer behandelt? Veröffentlicht sind ausschließlich Nettopreise; weitere steuerliche Angaben sind derzeit nicht veröffentlicht.
+- Wem gehören Ideen, Quellcode und Ergebnisse? Eine Regelung zu geistigem Eigentum und Nutzungsrechten ist derzeit nicht veröffentlicht.
+- Gibt es eine Vertraulichkeitsvereinbarung oder NDA? Vertraulichkeitsbedingungen sind derzeit nicht veröffentlicht.
+- Welche Barrierefreiheits- oder individuellen Unterstützungsangebote gibt es? Konkrete Zusagen sind derzeit nicht veröffentlicht.
+- Wie werden Einwilligung, Nutzung und Veröffentlichung der enthaltenen Event-Fotos geregelt? Eine Foto- und Einwilligungsrichtlinie ist derzeit nicht veröffentlicht.
+- In welchen Sprachen kann der Hackathon durchgeführt werden? Eine verbindliche Sprachenregelung ist derzeit nicht veröffentlicht.
+- Für Antworten oder individuelle Vereinbarungen zu diesen offenen Punkten ist ALL IN AGI unter go@all-in-agi.com oder +49 152 57257750 erreichbar.
+
+## Zentrale Seiten
+
+- [ALL IN AGI Startseite](https://all-in-agi.com/): Überblick über Format, Agenda, Preise, Kontakt und häufige Fragen.
+- [Hackathon planen und buchen](https://all-in-agi.com/buchen): Konfigurator für Teamgröße, Location, Tools, Ausstattung, Catering, Termin und Vorbereitungsgespräch.
+- [Buchung verwalten](https://all-in-agi.com/verwalten): Einstieg zu einer bestehenden Buchung mit der individuellen Hackathon-ID.
+
+## Rechtliches und Datenschutz
+
+- [Impressum](https://all-in-agi.com/impressum): Rechtlicher Anbieter, Anschrift und Kontaktdaten.
+- [Datenschutz](https://all-in-agi.com/datenschutz): Überblick über die vorgesehene Verarbeitung von Buchungs-, Kalender-, Karten- und Zugriffsdaten.
+
+## Optional
+
+- [Celonis Process Optimization Report, März 2026](https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers): Auf der Startseite verlinkte Quelle zum Abstand zwischen Agentic-AI-Ambitionen und aktueller Nutzung in Unternehmen.
