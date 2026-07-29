@@ -50,8 +50,7 @@
 <footer class="gtm-footer">
 	<nav class="gtm-footer-inner" aria-label="Hackathon-Themen">
 		{#each GTM_GROUPS as group}
-			<section class="gtm-footer-column" aria-labelledby={`gtm-footer-${group}`}>
-				<h2 id={`gtm-footer-${group}`}>{group}</h2>
+			<section class="gtm-footer-column" aria-label={group}>
 				<ul>
 					{#each gtmPagesForGroup(group) as item}
 						{@const Icon = icons[item.icon]}

@@ -283,7 +283,6 @@ img { display: block; max-width: 100%; }
 .gtm-footer { border-bottom: 1px solid var(--soft-line); background: var(--surface); color: var(--muted); }
 .gtm-footer-inner { max-width: 1120px; margin: 0 auto; padding: 54px 24px 48px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 34px; }
 .gtm-footer-column { min-width: 0; }
-.gtm-footer-column h2 { margin: 0 0 17px; color: var(--secondary-ink); font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .gtm-footer-column ul { margin: 0; padding: 0; display: grid; gap: 12px; list-style: none; }
 .gtm-footer-column a { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); font-size: 13px; line-height: 1.35; transition: color .18s ease; }
 .gtm-footer-column a:hover, .gtm-footer-column a:focus-visible { color: var(--ink); }
