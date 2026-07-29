@@ -276,7 +276,7 @@
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
 					{#if !readOnly}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
-							<ExternalLink size={18} aria-hidden="true" />Open timer
+							<ExternalLink size={18} aria-hidden="true" />Timer
 						</a>
 						<AlertDialog.Root bind:open={cancelDialogOpen}>
 							<AlertDialog.Trigger class="button-primary action-button"><Ban size={18} aria-hidden="true" />Cancel booking</AlertDialog.Trigger>
