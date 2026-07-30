@@ -6,6 +6,7 @@
 	import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from '$lib/contact';
 	import { reveal } from '$lib/motion';
 	import SeoHead from '$lib/SeoHead.svelte';
+	import JsonLd from '$lib/JsonLd.svelte';
 
 	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
 	const carouselRepeats = [0, 1, 2, 3];
@@ -98,7 +99,7 @@
 	path="/"
 />
 
-<svelte:head><script type="application/ld+json">{JSON.stringify(schema)}</script></svelte:head>
+<JsonLd data={schema} />
 
 <section class="hero">
 	<div class="hero-copy" use:reveal>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SeoHead from '$lib/SeoHead.svelte';
+	import JsonLd from '$lib/JsonLd.svelte';
 	import { getGtmPage } from '$lib/gtm-pages';
 	import { SITE_ORIGIN } from '$lib/seo';
 
@@ -49,9 +50,7 @@
 
 <SeoHead title={`${page.title} | ALL IN AGI`} description={page.description} {path} />
 
-<svelte:head>
-	<script type="application/ld+json">{JSON.stringify(schema)}</script>
-</svelte:head>
+<JsonLd data={schema} />
 
 <div class="simple-page gtm-page">
 	<article class="simple-card gtm-card">
