@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { ArrowUp, Check, Link as LinkIcon, Mail } from 'lucide-svelte';
+	import { ArrowUp, Check, Link as LinkIcon, Mail, MessageCircle, Send } from 'lucide-svelte';
 	import SeoHead from '$lib/SeoHead.svelte';
 	import JsonLd from '$lib/JsonLd.svelte';
 	import ClosingCta from '$lib/ClosingCta.svelte';
@@ -24,6 +24,15 @@
 	);
 	let linkedinUrl = $derived(
 		`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonicalUrl)}`
+	);
+	let xUrl = $derived(
+		`https://x.com/intent/post?url=${encodeURIComponent(canonicalUrl)}&text=${encodeURIComponent(page.title)}`
+	);
+	let whatsappUrl = $derived(
+		`https://wa.me/?text=${encodeURIComponent(`${page.title}\n${canonicalUrl}`)}`
+	);
+	let telegramUrl = $derived(
+		`https://t.me/share/url?url=${encodeURIComponent(canonicalUrl)}&text=${encodeURIComponent(page.title)}`
 	);
 	let emailUrl = $derived(
 		`mailto:?subject=${encodeURIComponent(page.title)}&body=${encodeURIComponent(`${page.title}\n\n${canonicalUrl}`)}`
@@ -60,7 +69,7 @@
 		window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
 	}
 
-	async function copyArticleLink() {
+	async function copyCanonicalLink(successMessage = 'Link kopiert') {
 		try {
 			if (navigator.clipboard?.writeText) {
 				await navigator.clipboard.writeText(canonicalUrl);
@@ -77,7 +86,7 @@
 			}
 
 			copied = true;
-			copyStatus = 'Link kopiert';
+			copyStatus = successMessage;
 			if (copyResetTimer) clearTimeout(copyResetTimer);
 			copyResetTimer = setTimeout(() => {
 				copied = false;
@@ -87,6 +96,27 @@
 			copied = false;
 			copyStatus = 'Link konnte nicht kopiert werden';
 		}
+	}
+
+	async function copyArticleLink() {
+		await copyCanonicalLink();
+	}
+
+	async function shareToInstagram() {
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: page.title,
+					text: page.description,
+					url: canonicalUrl
+				});
+				return;
+			} catch (error) {
+				if (error instanceof DOMException && error.name === 'AbortError') return;
+			}
+		}
+
+		await copyCanonicalLink('Link für Instagram kopiert');
 	}
 
 	onDestroy(() => {
@@ -152,6 +182,49 @@
 					title="Auf LinkedIn teilen"
 				>
 					<span class="linkedin-mark" aria-hidden="true">in</span>
+				</a>
+				<a
+					class="share-button"
+					href={xUrl}
+					target="_blank"
+					rel="noreferrer"
+					aria-label="Auf X teilen"
+					title="Auf X teilen"
+				>
+					<span class="x-mark" aria-hidden="true">X</span>
+				</a>
+				<button
+					class="share-button"
+					type="button"
+					onclick={shareToInstagram}
+					aria-label="Für Instagram teilen"
+					title="Für Instagram teilen"
+				>
+					<svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+						<rect x="3" y="3" width="18" height="18" rx="5" />
+						<circle cx="12" cy="12" r="4" />
+						<circle class="brand-icon-dot" cx="17.4" cy="6.6" r="1.15" />
+					</svg>
+				</button>
+				<a
+					class="share-button"
+					href={whatsappUrl}
+					target="_blank"
+					rel="noreferrer"
+					aria-label="Über WhatsApp teilen"
+					title="Über WhatsApp teilen"
+				>
+					<MessageCircle size={18} strokeWidth={1.8} aria-hidden="true" />
+				</a>
+				<a
+					class="share-button"
+					href={telegramUrl}
+					target="_blank"
+					rel="noreferrer"
+					aria-label="Über Telegram teilen"
+					title="Über Telegram teilen"
+				>
+					<Send size={18} strokeWidth={1.8} aria-hidden="true" />
 				</a>
 				<a class="share-button" href={emailUrl} aria-label="Per E-Mail teilen" title="Per E-Mail teilen">
 					<Mail size={19} strokeWidth={1.8} aria-hidden="true" />
@@ -329,6 +402,25 @@
 		font-weight: 700;
 		letter-spacing: -.06em;
 		line-height: 1;
+	}
+
+	.x-mark {
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 1;
+	}
+
+	.brand-icon {
+		width: 18px;
+		height: 18px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.8;
+	}
+
+	.brand-icon-dot {
+		fill: currentColor;
+		stroke: none;
 	}
 
 	.share-status {
