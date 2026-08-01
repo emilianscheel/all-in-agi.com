@@ -33,11 +33,95 @@ describe('Cal.com booking contracts', () => {
 			eventTypeId: 456,
 			lengthInMinutes: 480,
 			allowBookingOutOfBounds: true,
-			attendee: { name: 'Ada Beispiel', email: 'ada@example.com', timeZone: 'Europe/Berlin' },
+			attendee: { name: 'Ada Beispiel', email: 'ada@example.com', phoneNumber: '+4930123456', timeZone: 'Europe/Berlin' },
 			location: { type: 'attendeeAddress', address: 'Musterstraße 1, 10115 Berlin, Deutschland' },
 			metadata: { company: 'Musterwerke GmbH' }
 		});
 		expect(result.uid).toBe('event-1');
+	});
+
+	test('normalizes a local German attendee phone number for Cal.com', async () => {
+		let body: any;
+		const mockFetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+			body = JSON.parse(String(init?.body));
+			return new Response(JSON.stringify({ data: { uid: 'event-2' } }), {
+				status: 201, headers: { 'content-type': 'application/json' }
+			});
+		}) as typeof fetch;
+		await createCalBookingWithToken({ ...configuration, phone: '030 123456' }, mockFetch, false, {
+			eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
+			title: 'ALL IN AGI Hackathon', field: 'hackathon'
+		}, 'cal_test');
+		expect(body.attendee.phoneNumber).toBe('+4930123456');
+	});
+
+	test('omits a phone number that cannot be normalized safely', async () => {
+		let body: any;
+		const mockFetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+			body = JSON.parse(String(init?.body));
+			return new Response(JSON.stringify({ data: { uid: 'event-3' } }), {
+				status: 201, headers: { 'content-type': 'application/json' }
+			});
+		}) as typeof fetch;
+		await createCalBookingWithToken({ ...configuration, phone: '123456' }, mockFetch, false, {
+			eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
+			title: 'ALL IN AGI Hackathon', field: 'hackathon'
+		}, 'cal_test');
+		expect(body.attendee).not.toHaveProperty('phoneNumber');
+	});
+
+	test('maps Cal.com validation failures to actionable customer warnings', async () => {
+		const cases = [
+			{
+				result: { error: { details: 'Invalid phone number format' } },
+				message: 'Die Telefonnummer konnte nicht verarbeitet werden. Bitte verwenden Sie ein internationales Format, zum Beispiel +49 30 123456.'
+			},
+			{
+				result: { error: { details: 'Validation failed for attendeeAddress location' } },
+				message: 'Die Veranstaltungsadresse konnte nicht verarbeitet werden. Bitte prüfen Sie Straße, PLZ und Ort.'
+			},
+			{
+				result: { error: { details: 'lengthInMinutes is not one of the event type durations' } },
+				message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.'
+			}
+		];
+		const originalConsoleError = console.error;
+		console.error = () => {};
+		try {
+			for (const testCase of cases) {
+				const mockFetch = (async () => new Response(JSON.stringify(testCase.result), {
+					status: 400, headers: { 'content-type': 'application/json' }
+				})) as unknown as typeof fetch;
+				const promise = createCalBookingWithToken(configuration, mockFetch, false, {
+					eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
+					title: 'ALL IN AGI Hackathon', field: 'hackathon', location: 'Musterstraße 1, 10115 Berlin, Deutschland'
+				}, 'cal_test');
+				await expect(promise).rejects.toEqual(expect.objectContaining({ message: testCase.message, status: 400, field: 'hackathon' }));
+			}
+		} finally {
+			console.error = originalConsoleError;
+		}
+	});
+
+	test('turns provider configuration failures into a retryable service warning', async () => {
+		const originalConsoleError = console.error;
+		console.error = () => {};
+		try {
+			const mockFetch = (async () => new Response(JSON.stringify({ error: { message: 'Event type not found' } }), {
+				status: 404, headers: { 'content-type': 'application/json' }
+			})) as unknown as typeof fetch;
+			const promise = createCalBookingWithToken(configuration, mockFetch, false, {
+				eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
+				title: 'ALL IN AGI Hackathon', field: 'hackathon'
+			}, 'cal_test');
+			await expect(promise).rejects.toEqual(expect.objectContaining({
+				message: 'Unser Buchungskalender ist derzeit nicht vollständig verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns.',
+				status: 503,
+				field: 'hackathon'
+			}));
+		} finally {
+			console.error = originalConsoleError;
+		}
 	});
 
 	test('cancels a non-demo booking through Cal.com', async () => {
