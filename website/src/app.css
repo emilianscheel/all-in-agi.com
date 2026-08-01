@@ -135,7 +135,7 @@ img { display: block; max-width: 100%; }
 }
 .tool-carousel {
 	width: 100%; overflow: hidden; padding: 25px 0 96px;
-	background: #fff;
+	background: var(--page);
 }
 .tool-carousel-window {
 	overflow: hidden;
