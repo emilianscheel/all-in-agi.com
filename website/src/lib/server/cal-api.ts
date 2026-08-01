@@ -41,7 +41,7 @@ export async function createCalBookingWithToken(
 				attendee: { name: config.contactName, email: config.email, phoneNumber: config.phone, timeZone: 'Europe/Berlin', language: 'de' },
 				metadata: bookingMetadata(config),
 				lengthInMinutes: eventDurationMinutes(options.start, options.end),
-				...(options.location ? { location: { type: 'address', address: options.location } } : {}),
+				...(options.location ? { location: { type: 'attendeeAddress', address: options.location } } : {}),
 				...(options.allowBookingOutOfBounds ? { allowBookingOutOfBounds: true } : {})
 			})
 		});

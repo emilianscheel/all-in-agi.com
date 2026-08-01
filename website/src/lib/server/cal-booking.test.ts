@@ -34,7 +34,7 @@ describe('Cal.com booking contracts', () => {
 			lengthInMinutes: 480,
 			allowBookingOutOfBounds: true,
 			attendee: { name: 'Ada Beispiel', email: 'ada@example.com', timeZone: 'Europe/Berlin' },
-			location: { type: 'address', address: 'Musterstraße 1, 10115 Berlin, Deutschland' },
+			location: { type: 'attendeeAddress', address: 'Musterstraße 1, 10115 Berlin, Deutschland' },
 			metadata: { company: 'Musterwerke GmbH' }
 		});
 		expect(result.uid).toBe('event-1');
