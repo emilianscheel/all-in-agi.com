@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { GTM_GROUPS, GTM_ICON_NAMES, getGtmPage, gtmPages, gtmPagesForGroup } from './gtm-pages';
+import { GTM_HERO_IMAGES } from './gtm-images';
+import { GTM_GROUPS, GTM_ICON_NAMES, GTM_PUBLICATION_DATE, getGtmPage, gtmPages, gtmPagesForGroup } from './gtm-pages';
 
 function contentWords(page: (typeof gtmPages)[number]) {
 	return [
@@ -40,6 +41,14 @@ describe('GTM page catalog', () => {
 			expect(page.description.length).toBeLessThanOrEqual(170);
 			expect(contentWords(page)).toBeGreaterThanOrEqual(350);
 			expect(getGtmPage(page.slug)).toBe(page);
+			expect(page.publishedAt).toBe(GTM_PUBLICATION_DATE);
+			expect(GTM_HERO_IMAGES[page.heroImage]).toBeDefined();
 		}
+	});
+
+	test('assigns every curated hero image to at least one article', () => {
+		expect(new Set(gtmPages.map((page) => page.heroImage))).toEqual(
+			new Set(Object.keys(GTM_HERO_IMAGES) as Array<keyof typeof GTM_HERO_IMAGES>)
+		);
 	});
 });

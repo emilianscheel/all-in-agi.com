@@ -45,6 +45,8 @@
 		RefreshCw,
 		LockKeyhole
 	};
+
+	let { currentSlug }: { currentSlug?: string } = $props();
 </script>
 
 <footer class="gtm-footer">
@@ -55,7 +57,11 @@
 					{#each gtmPagesForGroup(group) as item}
 						{@const Icon = icons[item.icon]}
 						<li>
-							<a href={`/${item.slug}`}>
+							<a
+								href={`/${item.slug}`}
+								class:active={currentSlug === item.slug}
+								aria-current={currentSlug === item.slug ? 'page' : undefined}
+							>
 								<Icon size={16} strokeWidth={1.7} aria-hidden="true" />
 								<span>{item.footerLabel}</span>
 							</a>

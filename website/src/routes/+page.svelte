@@ -7,6 +7,7 @@
 	import { reveal } from '$lib/motion';
 	import SeoHead from '$lib/SeoHead.svelte';
 	import JsonLd from '$lib/JsonLd.svelte';
+	import ClosingCta from '$lib/ClosingCta.svelte';
 
 	const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
 	const carouselRepeats = [0, 1, 2, 3];
@@ -272,9 +273,4 @@
 	</div>
 </section>
 
-<section class="closing">
-	<div class="closing-inner" use:reveal>
-		<h2 class="section-title">Was shippt Ihr Team an einem Tag?</h2>
-		<a class="button-primary" href="/buchen">Hackathon planen</a>
-	</div>
-</section>
+<ClosingCta />

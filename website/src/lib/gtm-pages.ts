@@ -1,3 +1,5 @@
+import type { GtmHeroKey } from '$lib/gtm-images';
+
 export const GTM_GROUPS = ['Standorte', 'Branchen', 'Ziele', 'Formate'] as const;
 
 export type GtmGroup = (typeof GTM_GROUPS)[number];
@@ -33,6 +35,8 @@ export type GtmPage = {
 	title: string;
 	footerLabel: string;
 	icon: GtmIconName;
+	publishedAt: string;
+	heroImage: GtmHeroKey;
 	description: string;
 	lead: [string, string];
 	relevanceTitle: string;
@@ -45,7 +49,11 @@ export type GtmPage = {
 	outcome: [string, string];
 };
 
-export const gtmPages: GtmPage[] = [
+type GtmPageContent = Omit<GtmPage, 'publishedAt' | 'heroImage'>;
+
+export const GTM_PUBLICATION_DATE = '2026-07-29';
+
+const gtmPageContent: GtmPageContent[] = [
 	{
 		slug: 'hackathon-unternehmen-berlin',
 		group: 'Standorte',
@@ -887,6 +895,40 @@ export const gtmPages: GtmPage[] = [
 		]
 	}
 ];
+
+const GTM_HERO_BY_SLUG: Record<string, GtmHeroKey> = {
+	'hackathon-unternehmen-berlin': 'event',
+	'hackathon-unternehmen-hamburg': 'event',
+	'hackathon-unternehmen-muenchen': 'event',
+	'hackathon-unternehmen-stuttgart': 'event',
+	'hackathon-unternehmen-frankfurt': 'event',
+	'ki-hackathon-industrie': 'event',
+	'hackathon-softwareunternehmen': 'engineering',
+	'ki-hackathon-logistik-handel': 'event',
+	'ki-hackathon-banken-versicherungen': 'event',
+	'hackathon-maschinenbau-automatisierung': 'event',
+	'ki-adoption-engineering': 'adoption',
+	'coding-agent-rollout-hackathon': 'engineering',
+	'developer-experience-ai-tools': 'engineering',
+	'ki-strategie-working-prototype': 'adoption',
+	'interne-ai-champions': 'adoption',
+	'interner-ki-hackathon': 'event',
+	'hack-week-coding-agents': 'event',
+	'ai-innovation-day': 'adoption',
+	'legacy-modernisierung-coding-agents': 'engineering',
+	'security-konformer-ki-hackathon': 'engineering'
+};
+
+export const gtmPages: GtmPage[] = gtmPageContent.map((page) => {
+	const heroImage = GTM_HERO_BY_SLUG[page.slug];
+	if (!heroImage) throw new Error(`Missing hero image for GTM page: ${page.slug}`);
+
+	return {
+		...page,
+		publishedAt: GTM_PUBLICATION_DATE,
+		heroImage
+	};
+});
 
 export const gtmPaths = gtmPages.map((page) => `/${page.slug}` as const);
 
