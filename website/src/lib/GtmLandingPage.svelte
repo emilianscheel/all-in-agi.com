@@ -126,7 +126,7 @@
 					<span class="linkedin-mark" aria-hidden="true">in</span>
 				</a>
 				<a class="share-button" href={emailUrl} aria-label="Per E-Mail teilen" title="Per E-Mail teilen">
-					<Mail size={22} strokeWidth={1.8} aria-hidden="true" />
+					<Mail size={19} strokeWidth={1.8} aria-hidden="true" />
 				</a>
 				<button
 					class="share-button"
@@ -136,9 +136,9 @@
 					title={copied ? 'Link kopiert' : 'Link kopieren'}
 				>
 					{#if copied}
-						<Check size={22} strokeWidth={1.8} aria-hidden="true" />
+						<Check size={19} strokeWidth={1.8} aria-hidden="true" />
 					{:else}
-						<LinkIcon size={22} strokeWidth={1.8} aria-hidden="true" />
+						<LinkIcon size={19} strokeWidth={1.8} aria-hidden="true" />
 					{/if}
 				</button>
 				<span class="share-status" aria-live="polite">{copyStatus}</span>
@@ -223,12 +223,12 @@
 
 	.article-header,
 	.article-hero {
-		width: min(100%, 1180px);
+		width: min(100%, 1080px);
 		margin-inline: auto;
 	}
 
 	.article-heading {
-		width: min(100%, 900px);
+		width: min(100%, 800px);
 		margin-inline: auto;
 	}
 
@@ -250,9 +250,9 @@
 	}
 
 	h1 {
-		max-width: 900px;
+		max-width: 800px;
 		margin: 0;
-		font-size: clamp(48px, 6.2vw, 82px);
+		font-size: clamp(44px, 5vw, 68px);
 		font-weight: 700;
 		line-height: .99;
 		letter-spacing: -.058em;
@@ -264,29 +264,27 @@
 		margin-top: 52px;
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: 12px;
 	}
 
 	.share-button {
-		width: 42px;
-		height: 42px;
+		width: 28px;
+		height: 32px;
 		padding: 0;
 		display: inline-grid;
 		place-items: center;
 		border: 0;
-		border-radius: 50%;
-		background: var(--surface);
+		background: transparent;
 		color: var(--muted);
-		transition: color .2s ease, transform .2s ease, background .2s ease;
+		transition: color .2s ease;
 	}
 
 	.share-button:hover {
 		color: var(--ink);
-		transform: translateY(-1px);
 	}
 
 	.linkedin-mark {
-		font-size: 18px;
+		font-size: 16px;
 		font-weight: 700;
 		letter-spacing: -.06em;
 		line-height: 1;
@@ -318,7 +316,7 @@
 	}
 
 	.article-hero figcaption {
-		width: min(100% - 40px, 760px);
+		width: min(100% - 40px, 700px);
 		margin: 16px auto 0;
 		color: var(--muted);
 		font-size: 13px;
@@ -327,7 +325,7 @@
 	}
 
 	.article-body {
-		width: min(100%, 760px);
+		width: min(100%, 700px);
 		margin: 58px auto 0;
 	}
 
@@ -352,24 +350,22 @@
 	}
 
 	.article-lead p {
-		font-size: clamp(21px, 2vw, 25px);
+		font-size: clamp(19px, 1.7vw, 22px);
 		line-height: 1.48;
 		letter-spacing: -.025em;
 	}
 
-	.article-body h2 {
+	.article-body h2,
+	.article-body h3 {
 		margin: 0 0 26px;
-		font-size: clamp(32px, 4vw, 45px);
-		line-height: 1.08;
-		letter-spacing: -.045em;
+		font-size: clamp(26px, 3vw, 34px);
+		line-height: 1.12;
+		letter-spacing: -.04em;
 		text-wrap: balance;
 	}
 
 	.article-body h3 {
-		margin: 0 0 14px;
-		font-size: clamp(23px, 2.5vw, 29px);
-		line-height: 1.18;
-		letter-spacing: -.035em;
+		margin-bottom: 14px;
 	}
 
 	.article-subsection {
@@ -417,7 +413,7 @@
 		}
 
 		h1 {
-			font-size: clamp(42px, 13vw, 58px);
+			font-size: clamp(38px, 11vw, 50px);
 		}
 
 		.share-row {
@@ -454,7 +450,7 @@
 		}
 
 		.article-lead p {
-			font-size: 20px;
+			font-size: 19px;
 		}
 	}
 </style>
