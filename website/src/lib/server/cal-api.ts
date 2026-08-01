@@ -60,7 +60,6 @@ export interface CreateCalBookingOptions {
 	title: string;
 	field: 'hackathon' | 'prep-call';
 	location?: string;
-	allowBookingOutOfBounds?: boolean;
 }
 
 export async function createCalBookingWithToken(
@@ -90,8 +89,7 @@ export async function createCalBookingWithToken(
 				attendee: { name: config.contactName, email: config.email, ...(phoneNumber ? { phoneNumber } : {}), timeZone: 'Europe/Berlin', language: 'de' },
 				metadata: bookingMetadata(config),
 				lengthInMinutes: eventDurationMinutes(options.start, options.end),
-				...(options.location ? { location: { type: 'attendeeAddress', address: options.location } } : {}),
-				...(options.allowBookingOutOfBounds ? { allowBookingOutOfBounds: true } : {})
+				...(options.location ? { location: { type: 'attendeeAddress', address: options.location } } : {})
 			})
 		});
 		const result = await response.json() as any;

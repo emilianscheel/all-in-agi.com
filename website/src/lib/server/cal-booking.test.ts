@@ -23,7 +23,7 @@ describe('Cal.com booking contracts', () => {
 		}) as typeof fetch;
 		const result = await createCalBookingWithToken(configuration, mockFetch, false, {
 			eventTypeId: '456', start: configuration.eventStart, end: configuration.eventEnd,
-			title: 'ALL IN AGI Hackathon', field: 'hackathon', location: 'Musterstraße 1, 10115 Berlin, Deutschland', allowBookingOutOfBounds: true
+			title: 'ALL IN AGI Hackathon', field: 'hackathon', location: 'Musterstraße 1, 10115 Berlin, Deutschland'
 		}, 'cal_test');
 		const body = JSON.parse(String(request?.init?.body));
 		expect(request?.url).toBe('https://api.cal.com/v2/bookings');
@@ -32,11 +32,11 @@ describe('Cal.com booking contracts', () => {
 			start: configuration.eventStart,
 			eventTypeId: 456,
 			lengthInMinutes: 480,
-			allowBookingOutOfBounds: true,
 			attendee: { name: 'Ada Beispiel', email: 'ada@example.com', phoneNumber: '+4930123456', timeZone: 'Europe/Berlin' },
 			location: { type: 'attendeeAddress', address: 'Musterstraße 1, 10115 Berlin, Deutschland' },
 			metadata: { company: 'Musterwerke GmbH' }
 		});
+		expect(body).not.toHaveProperty('allowBookingOutOfBounds');
 		expect(result.uid).toBe('event-1');
 	});
 

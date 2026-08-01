@@ -98,6 +98,8 @@
     let planError = $state("");
     let slotsLoading = $state(true);
     let availabilityKey = $state(0);
+    let eventSlotsLoading = $state(true);
+    let eventAvailabilityKey = $state(0);
     let submitting = $state(false);
     let errors = $state<string[]>([]);
     let eventCard: HTMLElement;
@@ -358,6 +360,9 @@
                     customConsultationDate = "";
                     consultationMode = "quick";
                     availabilityKey += 1;
+                }
+                if (response.status === 409 && result.field === "hackathon") {
+                    eventAvailabilityKey += 1;
                 }
                 throw new Error(result.message ?? "Die Buchung konnte nicht abgeschlossen werden.");
             }
@@ -656,13 +661,16 @@
 
             <section class="config-section" use:reveal>
                 <h2>Veranstaltungsdatum und Uhrzeit</h2>
-                <EventDateTimeEditor
-                    {eventStart}
-                    {eventEnd}
-                    minValue={minEventDate}
-                    maxValue={maxEventDate}
-                    onchange={(value) => ({ eventStart, eventEnd } = value)}
-                />
+                {#key eventAvailabilityKey}
+                    <EventDateTimeEditor
+                        {eventStart}
+                        {eventEnd}
+                        minValue={minEventDate}
+                        maxValue={maxEventDate}
+                        onloadingchange={(value) => (eventSlotsLoading = value)}
+                        onchange={(value) => ({ eventStart, eventEnd } = value)}
+                    />
+                {/key}
             </section>
 
             <section class="config-section" use:reveal>
@@ -799,7 +807,7 @@
                     <button
                         class="button-primary"
                         type="submit"
-                        disabled={submitting || slotsLoading}
+                        disabled={submitting || slotsLoading || eventSlotsLoading}
                         >{submitting ? "Wird gebucht …" : "Hackathon und Prep Call buchen"}</button
                     >
                     <SharePlanButton getUrl={getShareUrl} />

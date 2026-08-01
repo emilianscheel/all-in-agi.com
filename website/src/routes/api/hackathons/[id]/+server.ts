@@ -4,6 +4,7 @@ import { applyHackathonUpdate, HackathonUpdateError, parseHackathonUpdate } from
 import { isHackathonId } from '$lib/public-id';
 import {
 	bookHackathonDay,
+	assertHackathonDayAvailable,
 	cancelCalBooking,
 	rescheduleHackathonDay,
 	reschedulePrepCall,
@@ -60,6 +61,7 @@ export async function PATCH({ params, request, fetch }) {
 
 		if (update.section === 'event-time' && (next.eventStart !== current.eventStart || next.eventEnd !== current.eventEnd)) {
 			const currentBooking = confirmedFromRecord(record);
+			await assertHackathonDayAvailable(next, fetch, dev, record.hackathonBookingUid ?? undefined);
 			if (!record.hackathonBookingUid) {
 				const created = await bookHackathonDay(next, fetch, dev);
 				try {

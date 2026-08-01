@@ -131,7 +131,7 @@ export function validateConfiguration(config: BookingConfiguration) {
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
 		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
 	}
-	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie für den Hackathon ein zukünftiges Zeitfenster von 5, 6, 7, 8, 9 oder 10 Stunden.');
+	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.');
 	const consultationDate = new Date(config.consultationSlot);
 	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.');
 	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push('Bitte beschreiben Sie Ihren Catering-Wunsch.');

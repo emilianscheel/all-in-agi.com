@@ -52,6 +52,8 @@
 	let hackathon = $state(initialHackathon);
 	let activeSection = $state<EditSection | null>(null);
 	let saving = $state(false);
+	let eventSlotsLoading = $state(false);
+	let eventAvailabilityKey = $state(0);
 	let editError = $state('');
 	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
@@ -167,7 +169,10 @@
 				body: JSON.stringify(updatePayload(activeSection))
 			});
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Die Änderungen konnten nicht gespeichert werden.');
+			if (!response.ok) {
+				if (response.status === 409 && result.field === 'hackathon') eventAvailabilityKey += 1;
+				throw new Error(result.message ?? 'Die Änderungen konnten nicht gespeichert werden.');
+			}
 			hackathon = result.hackathon;
 			draft = configurationFromHackathon(result.hackathon);
 			activeSection = null;
@@ -393,8 +398,8 @@
 				<EditableSummaryRow icon={Monitor} label={overviewRow('equipment').label} value={overviewRow('equipment').value} status={overviewRow('equipment').status} active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="equipment" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-equipment" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={CalendarDays} label={overviewRow('event-date').label} value={overviewRow('event-date').value} status={overviewRow('event-date').status} active={activeSection === 'event-time'} {saving} error={activeSection === 'event-time' ? editError : ''} onedit={() => openEditor('event-time')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<EventDateTimeEditor eventStart={draft.eventStart} eventEnd={draft.eventEnd} minValue={minEventDate} maxValue={maxEventDate} onchange={(value) => (draft = { ...draft, ...value })} />{/snippet}
+				<EditableSummaryRow icon={CalendarDays} label={overviewRow('event-date').label} value={overviewRow('event-date').value} status={overviewRow('event-date').status} active={activeSection === 'event-time'} saving={saving || eventSlotsLoading} error={activeSection === 'event-time' ? editError : ''} onedit={() => openEditor('event-time')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}{#key eventAvailabilityKey}<EventDateTimeEditor eventStart={draft.eventStart} eventEnd={draft.eventEnd} minValue={minEventDate} maxValue={maxEventDate} hackathonId={hackathon.id} onloadingchange={(value) => (eventSlotsLoading = value)} onchange={(value) => (draft = { ...draft, ...value })} />{/key}{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Clock3} label={overviewRow('prep-call').label} value={overviewRow('prep-call').value} status={overviewRow('prep-call').status} active={activeSection === 'prep-call'} {saving} error={activeSection === 'prep-call' ? editError : ''} onedit={() => openEditor('prep-call')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<PrepCallEditor value={draft.consultationSlot} mode={prepCallMode} customDate={customPrepCallDate} onchange={(consultationSlot) => (draft = { ...draft, consultationSlot })} onmodechange={(value) => (prepCallMode = value)} oncustomdatechange={(value) => (customPrepCallDate = value)} />{/snippet}

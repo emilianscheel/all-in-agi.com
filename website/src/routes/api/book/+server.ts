@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { validateConfiguration, type BookingConfiguration } from '$lib/booking';
 import { completeHackathonBookingWithConfirmation } from '$lib/server/book-hackathon';
-import { bookHackathonDay, bookPrepCall, cancelCalBooking, BookingProviderError } from '$lib/server/cal-booking';
+import { assertHackathonDayAvailable, bookHackathonDay, bookPrepCall, cancelCalBooking, BookingProviderError } from '$lib/server/cal-booking';
 import {
 	BookingConfirmationEmailError,
 	sendBookingConfirmationEmails,
@@ -63,6 +63,7 @@ export async function POST({ request, fetch }) {
 	const errors = validateConfiguration(config);
 	if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 	try {
+		await assertHackathonDayAvailable(config, fetch, dev);
 		const result = await completeHackathonBookingWithConfirmation(
 			config,
 			{

@@ -2,7 +2,8 @@ import { env } from '$env/dynamic/private';
 import type { BookingConfiguration } from '$lib/booking';
 import type { ConfirmedBooking } from './hackathons';
 import { cancelCalBookingWithToken, createCalBookingWithToken } from './cal-api';
-import { reschedulePrepCallWithToken } from './cal-reschedule';
+import { CalAvailabilityError, isCalHackathonSlotAvailable } from './cal-hackathon-availability';
+import { BookingProviderError, reschedulePrepCallWithToken } from './cal-reschedule';
 
 export { BookingProviderError } from './cal-reschedule';
 
@@ -14,9 +15,38 @@ export function bookHackathonDay(config: BookingConfiguration, requestFetch: typ
 		end: config.eventEnd,
 		title: 'ALL IN AGI Hackathon',
 		field: 'hackathon',
-		location,
-		allowBookingOutOfBounds: true
+		location
 	}, env.CAL_API_KEY);
+}
+
+export async function assertHackathonDayAvailable(
+	config: BookingConfiguration,
+	requestFetch: typeof fetch,
+	development: boolean,
+	bookingUidToReschedule?: string
+) {
+	const token = env.CAL_API_KEY;
+	const eventTypeId = env.CAL_HACKATHON_EVENT_TYPE_ID;
+	if (!token || !eventTypeId) {
+		if (development) return;
+		throw new BookingProviderError('Die Hackathon-Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'hackathon');
+	}
+	try {
+		const available = await isCalHackathonSlotAvailable(requestFetch, {
+			token,
+			eventTypeId,
+			start: config.eventStart,
+			end: config.eventEnd,
+			bookingUidToReschedule
+		});
+		if (!available) throw new BookingProviderError('Dieser Hackathon-Termin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'hackathon');
+	} catch (error) {
+		if (error instanceof BookingProviderError) throw error;
+		if (error instanceof CalAvailabilityError) {
+			throw new BookingProviderError(error.message, error.status >= 500 ? error.status : 502, 'hackathon');
+		}
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'hackathon');
+	}
 }
 
 export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof fetch, development: boolean) {

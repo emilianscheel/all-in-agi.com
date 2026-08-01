@@ -1,14 +1,6 @@
 export const BERLIN_TIME_ZONE = 'Europe/Berlin';
 export const DEFAULT_EVENT_START_TIME = '09:00';
 export const DEFAULT_EVENT_END_TIME = '17:00';
-export const EVENT_TIME_STEP_MINUTES = 30;
-export const EVENT_DURATION_STEP_MINUTES = 60;
-export const MIN_EVENT_DURATION_MINUTES = 5 * 60;
-export const MAX_EVENT_DURATION_MINUTES = 10 * 60;
-export const EVENT_DURATION_OPTIONS_MINUTES = Array.from(
-	{ length: (MAX_EVENT_DURATION_MINUTES - MIN_EVENT_DURATION_MINUTES) / EVENT_DURATION_STEP_MINUTES + 1 },
-	(_, index) => MIN_EVENT_DURATION_MINUTES + index * EVENT_DURATION_STEP_MINUTES
-);
 
 function localParts(value: Date) {
 	const parts = new Intl.DateTimeFormat('en-CA', {
@@ -70,9 +62,7 @@ export function isValidEventTimeRange(eventStart: string, eventEnd: string, now 
 	const endLocal = berlinInputsFromIso(eventEnd);
 	const duration = eventDurationMinutes(eventStart, eventEnd);
 	return startLocal.date === endLocal.date
-		&& EVENT_DURATION_OPTIONS_MINUTES.includes(duration)
-		&& Number(startLocal.time.slice(3)) % EVENT_TIME_STEP_MINUTES === 0
-		&& Number(endLocal.time.slice(3)) % EVENT_TIME_STEP_MINUTES === 0;
+		&& duration > 0;
 }
 
 export function formatEventTimeRange(eventStart: string, eventEnd: string) {
@@ -87,26 +77,3 @@ export function formatEventTimeRange(eventStart: string, eventEnd: string) {
 	}).format(value);
 	return `${date}, ${time(start)}–${time(end)} Uhr`;
 }
-
-export const EVENT_TIME_OPTIONS = Array.from({ length: 48 }, (_, index) => {
-	const hours = String(Math.floor(index / 2)).padStart(2, '0');
-	const minutes = index % 2 ? '30' : '00';
-	return `${hours}:${minutes}`;
-});
-
-function timeToMinutes(time: string) {
-	const match = /^(\d{2}):(\d{2})$/.exec(time);
-	if (!match) return Number.NaN;
-	return Number(match[1]) * 60 + Number(match[2]);
-}
-
-export function eventEndTimeOptions(startTime: string) {
-	const startMinutes = timeToMinutes(startTime);
-	return EVENT_TIME_OPTIONS.filter((endTime) =>
-		EVENT_DURATION_OPTIONS_MINUTES.includes(timeToMinutes(endTime) - startMinutes)
-	);
-}
-
-export const EVENT_START_TIME_OPTIONS = EVENT_TIME_OPTIONS.filter(
-	(startTime) => eventEndTimeOptions(startTime).length > 0
-);

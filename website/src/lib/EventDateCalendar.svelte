@@ -2,6 +2,7 @@
 	import { Calendar } from 'bits-ui';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { parseDate } from '@internationalized/date';
+	import { onMount } from 'svelte';
 
 	let {
 		value = '',
@@ -10,6 +11,7 @@
 		availableDates,
 		calendarLabel = 'Wunschtermin für den Hackathon',
 		emptyText = 'Bitte wählen Sie einen Wunschtermin.',
+		onmonthchange,
 		onchange
 	}: {
 		value?: string;
@@ -18,6 +20,7 @@
 		availableDates?: string[];
 		calendarLabel?: string;
 		emptyText?: string;
+		onmonthchange?: (month: string) => void;
 		onchange: (value: string) => void;
 	} = $props();
 
@@ -26,6 +29,16 @@
 	let maximum = $derived(parseDate(maxValue));
 	let years = $derived(Array.from({ length: maximum.year - minimum.year + 1 }, (_, index) => minimum.year + index));
 	let availableDateSet = $derived(availableDates ? new Set(availableDates) : undefined);
+	let reportedMonth = '';
+
+	function reportMonth(value: { year: number; month: number }) {
+		const month = `${value.year}-${String(value.month).padStart(2, '0')}`;
+		if (month === reportedMonth) return;
+		reportedMonth = month;
+		onmonthchange?.(month);
+	}
+
+	onMount(() => reportMonth(calendarValue ?? minimum));
 </script>
 
 <div class="event-date-picker">
@@ -35,6 +48,7 @@
 		value={calendarValue}
 		onValueChange={(nextValue) => onchange(nextValue?.toString() ?? '')}
 		placeholder={calendarValue ?? minimum}
+		onPlaceholderChange={reportMonth}
 		minValue={minimum}
 		maxValue={maximum}
 		locale="de-DE"
