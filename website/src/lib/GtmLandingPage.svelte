@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import { Check, Link as LinkIcon, Mail } from 'lucide-svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import { ArrowUp, Check, Link as LinkIcon, Mail } from 'lucide-svelte';
 	import SeoHead from '$lib/SeoHead.svelte';
 	import JsonLd from '$lib/JsonLd.svelte';
 	import ClosingCta from '$lib/ClosingCta.svelte';
@@ -30,7 +30,35 @@
 	);
 	let copied = $state(false);
 	let copyStatus = $state('');
+	let showScrollTop = $state(false);
 	let copyResetTimer: ReturnType<typeof setTimeout> | undefined;
+
+	onMount(() => {
+		let frame: number | undefined;
+
+		function updateScrollButton() {
+			frame = undefined;
+			showScrollTop = window.scrollY > 480;
+		}
+
+		function scheduleScrollButtonUpdate() {
+			if (frame !== undefined) return;
+			frame = requestAnimationFrame(updateScrollButton);
+		}
+
+		window.addEventListener('scroll', scheduleScrollButtonUpdate, { passive: true });
+		updateScrollButton();
+
+		return () => {
+			if (frame !== undefined) cancelAnimationFrame(frame);
+			window.removeEventListener('scroll', scheduleScrollButtonUpdate);
+		};
+	});
+
+	function scrollToTop() {
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+	}
 
 	async function copyArticleLink() {
 		try {
@@ -159,7 +187,7 @@
 	</figure>
 
 	<div class="article-body">
-		<div class="article-lead">
+		<div>
 			{#each page.lead as paragraph}
 				<p>{paragraph}</p>
 			{/each}
@@ -214,6 +242,19 @@
 </article>
 
 <ClosingCta />
+
+<button
+	class="scroll-top-button"
+	class:visible={showScrollTop}
+	type="button"
+	onclick={scrollToTop}
+	aria-label="Zum Seitenanfang scrollen"
+	aria-hidden={!showScrollTop}
+	tabindex={showScrollTop ? 0 : -1}
+	title="Zum Seitenanfang"
+>
+	<ArrowUp size={19} strokeWidth={1.9} aria-hidden="true" />
+</button>
 
 <style>
 	.article-page {
@@ -349,12 +390,6 @@
 		margin-top: 28px;
 	}
 
-	.article-lead p {
-		font-size: clamp(17px, 1.5vw, 20px);
-		line-height: 1.48;
-		letter-spacing: -.025em;
-	}
-
 	.article-body h2,
 	.article-body h3 {
 		margin: 0 0 26px;
@@ -403,6 +438,39 @@
 		font-weight: 600;
 	}
 
+	.scroll-top-button {
+		position: fixed;
+		right: clamp(16px, 2.4vw, 32px);
+		bottom: clamp(16px, 2.4vw, 32px);
+		z-index: 45;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		border: 0;
+		border-radius: 50%;
+		background: var(--surface);
+		color: var(--muted);
+		box-shadow: 0 5px 18px rgba(0, 0, 0, .1);
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transform: translateY(8px);
+		transition: opacity .24s ease, visibility .24s ease, transform .24s ease, color .2s ease;
+	}
+
+	.scroll-top-button.visible {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: translateY(0);
+	}
+
+	.scroll-top-button:hover {
+		color: var(--ink);
+	}
+
 	@media (max-width: 640px) {
 		.article-page {
 			padding: 58px 20px 100px;
@@ -449,8 +517,5 @@
 			line-height: 1.58;
 		}
 
-		.article-lead p {
-			font-size: 17px;
-		}
 	}
 </style>
