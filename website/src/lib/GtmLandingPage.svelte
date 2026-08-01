@@ -237,13 +237,13 @@
 		display: grid;
 		gap: 5px;
 		color: var(--muted);
-		font-size: 15px;
+		font-size: 13px;
 		font-weight: 600;
 		line-height: 1.25;
 	}
 
 	.article-meta span {
-		font-size: 13px;
+		font-size: 11px;
 		font-weight: 700;
 		letter-spacing: .075em;
 		text-transform: uppercase;
@@ -252,7 +252,7 @@
 	h1 {
 		max-width: 800px;
 		margin: 0;
-		font-size: clamp(44px, 5vw, 68px);
+		font-size: clamp(38px, 4.25vw, 58px);
 		font-weight: 700;
 		line-height: .99;
 		letter-spacing: -.058em;
@@ -284,7 +284,7 @@
 	}
 
 	.linkedin-mark {
-		font-size: 16px;
+		font-size: 15px;
 		font-weight: 700;
 		letter-spacing: -.06em;
 		line-height: 1;
@@ -319,7 +319,7 @@
 		width: min(100% - 40px, 700px);
 		margin: 16px auto 0;
 		color: var(--muted);
-		font-size: 13px;
+		font-size: 12px;
 		font-weight: 600;
 		line-height: 1.35;
 	}
@@ -336,7 +336,7 @@
 	.article-body p,
 	.article-body li {
 		color: var(--ink);
-		font-size: clamp(18px, 1.65vw, 21px);
+		font-size: clamp(16px, 1.35vw, 18px);
 		line-height: 1.56;
 		letter-spacing: -.018em;
 	}
@@ -350,7 +350,7 @@
 	}
 
 	.article-lead p {
-		font-size: clamp(19px, 1.7vw, 22px);
+		font-size: clamp(17px, 1.5vw, 20px);
 		line-height: 1.48;
 		letter-spacing: -.025em;
 	}
@@ -358,7 +358,7 @@
 	.article-body h2,
 	.article-body h3 {
 		margin: 0 0 26px;
-		font-size: clamp(26px, 3vw, 34px);
+		font-size: clamp(22px, 2.35vw, 28px);
 		line-height: 1.12;
 		letter-spacing: -.04em;
 		text-wrap: balance;
@@ -413,7 +413,7 @@
 		}
 
 		h1 {
-			font-size: clamp(38px, 11vw, 50px);
+			font-size: clamp(34px, 10vw, 44px);
 		}
 
 		.share-row {
@@ -445,12 +445,12 @@
 
 		.article-body p,
 		.article-body li {
-			font-size: 17px;
+			font-size: 16px;
 			line-height: 1.58;
 		}
 
 		.article-lead p {
-			font-size: 19px;
+			font-size: 17px;
 		}
 	}
 </style>
