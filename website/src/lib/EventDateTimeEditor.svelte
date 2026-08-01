@@ -1,9 +1,10 @@
 <script lang="ts">
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import {
-		EVENT_TIME_OPTIONS,
+		EVENT_START_TIME_OPTIONS,
 		berlinDateTimeToIso,
 		berlinInputsFromIso,
+		eventEndTimeOptions,
 		eventTimesForDate
 	} from '$lib/event-time';
 
@@ -23,6 +24,7 @@
 
 	let startParts = $derived(berlinInputsFromIso(eventStart));
 	let endParts = $derived(berlinInputsFromIso(eventEnd));
+	let endTimeOptions = $derived(eventEndTimeOptions(startParts.time));
 
 	function selectDate(date: string) {
 		if (!date) return onchange({ eventStart: '', eventEnd: '' });
@@ -31,7 +33,13 @@
 
 	function selectStart(time: string) {
 		if (!startParts.date) return;
-		onchange({ eventStart: berlinDateTimeToIso(startParts.date, time), eventEnd });
+		const validEndTimes = eventEndTimeOptions(time);
+		const endTime = validEndTimes.includes(endParts.time) ? endParts.time : validEndTimes[0];
+		if (!endTime) return;
+		onchange({
+			eventStart: berlinDateTimeToIso(startParts.date, time),
+			eventEnd: berlinDateTimeToIso(startParts.date, endTime)
+		});
 	}
 
 	function selectEnd(time: string) {
@@ -54,13 +62,13 @@
 			<div class="field">
 				<label for="event-start-time">Start</label>
 				<select id="event-start-time" value={startParts.time} onchange={(event) => selectStart(event.currentTarget.value)}>
-					{#each EVENT_TIME_OPTIONS as time}<option value={time}>{time} Uhr</option>{/each}
+					{#each EVENT_START_TIME_OPTIONS as time}<option value={time}>{time} Uhr</option>{/each}
 				</select>
 			</div>
 			<div class="field">
 				<label for="event-end-time">Ende</label>
 				<select id="event-end-time" value={endParts.time} onchange={(event) => selectEnd(event.currentTarget.value)}>
-					{#each EVENT_TIME_OPTIONS as time}<option value={time}>{time} Uhr</option>{/each}
+					{#each endTimeOptions as time}<option value={time}>{time} Uhr</option>{/each}
 				</select>
 			</div>
 		</div>
