@@ -31,6 +31,16 @@ quick presentation/ document that includes all these questions
 
 # specifics
 
+## introduction
+
+- presentation on how ai developed over the recent years and how we came to agentic coding agents
+- demo on how to install and setup coding tools
+- roadmap for today
+
+## during the day
+
+- 1:1 for questions during the whole period
+
 ## lunch (12 am or 1 pm)
 
 - find a restaurant nearby that delivers to the location
@@ -79,3 +89,12 @@ thesis: most will just go with pizza & cookies
 - we do photos with our iphone cameras during the event
 - we make the look good with pixelmator on mac
 - we send them two days after the event
+
+## finish
+
+- buy 3 [ikea lomviken, 7 €](https://www.ikea.com/de/de/p/lomviken-rahmen-schwarz-90314303/) frames for the winner poster
+- print designs in a4
+- 3d print a sculpture matching the hackathons theme
+- everyone presents their tools within 2 minutes at the front stage
+- 3 people/ teams get chosen the winners by the audience
+- hand over the poster + sculpture to the winners + applause
