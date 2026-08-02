@@ -9,10 +9,12 @@ function cancellationRecord(): HackathonRecord {
 		address: { label: '', street: 'Teststraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 		eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z', consultationSlot: '2099-05-10T10:00:00.000Z',
 		basePrice: 4000, venueSurcharge: 0, lunchAdjustment: 0, toolsAdjustment: 0, totalPrice: 4000,
+		billingModel: 'legacy_full',
 		prepCallBookingUid: 'prep-1', prepCallBookingIcsUid: null, prepCallBookingTitle: null, prepCallBookingStart: null, prepCallBookingEnd: null, prepCallMeetingUrl: null,
 		hackathonBookingUid: 'event-1', hackathonBookingIcsUid: null, hackathonBookingTitle: null, hackathonBookingStart: null, hackathonBookingEnd: null,
 		hackathonCancelledAt: null, prepCallCancelledAt: null, cancelledAt: null, cancellationEmailSentAt: null, cancellationEmailMessageId: null, cancellationProcessingAt: null,
 		invoiceSnapshot: null, invoiceIssuedAt: null, invoiceEmailSentAt: null, invoiceEmailMessageId: null,
+		downPaymentInvoiceSnapshot: null, downPaymentInvoiceIssuedAt: null, downPaymentInvoiceEmailSentAt: null, downPaymentInvoiceEmailMessageId: null, downPaymentPaidAt: null,
 		demoMode: false, createdAt: '2099-01-01T00:00:00.000Z', updatedAt: '2099-01-01T00:00:00.000Z'
 	};
 }

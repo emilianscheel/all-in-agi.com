@@ -43,19 +43,19 @@ Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Ang
 - Bis zu 30 Personen: 5.000 € netto Grundpreis.
 - Bis zu 50 Personen: 6.000 € netto Grundpreis.
 - Eigene geeignete Location des Kunden: inklusive.
-- Von ALL IN AGI organisierte Location nahe der Wunschadresse: +1.000 € netto.
+- Von ALL IN AGI organisierte Location im gewünschten Suchgebiet: +500 € für bis zu 15 Personen, +1.000 € für bis zu 30 Personen oder +1.500 € für bis zu 50 Personen netto. Die genaue Location wird anschließend bestätigt.
 - Pizza-Lunch: inklusive.
 - Individuelles Catering nach Wunsch: +500 € netto.
 - Kein Lunch oder vom Kunden selbst organisiertes Catering: jeweils −500 € netto.
 - Bereits vorhandene Agentic Coding Tools: inklusive.
-- Bereitstellung unterstützter Coding Tools durch ALL IN AGI für den Tag: +500 € netto.
-- Je nach Konfiguration liegt der aktuell auswählbare Gesamtpreis zwischen 3.500 € und 8.000 € netto.
+- Bereitstellung unterstützter Coding Tools durch ALL IN AGI für den Tag: +500 € für bis zu 15 Personen, +1.000 € für bis zu 30 Personen oder +1.500 € für bis zu 50 Personen netto.
+- Je nach Konfiguration liegt der aktuell auswählbare Gesamtpreis zwischen 3.500 € und 9.500 € netto.
 - Sämtliche veröffentlichten Beträge sind Nettopreise. Eine darüber hinausgehende Regelung zur Umsatzsteuer ist nicht veröffentlicht.
 
 **Location, Ausstattung und Voraussetzungen**
 
 - Bei einer eigenen Location werden ein ausreichend großer Raum für die Teams, stabiles WLAN und ein großer Screen empfohlen.
-- Falls der Kunde keine geeignete Location bereitstellt, kann ALL IN AGI gegen den genannten Aufpreis einen passenden Raum nahe der gewünschten Veranstaltungsadresse in Deutschland organisieren.
+- Falls der Kunde keine geeignete Location bereitstellt, kann ALL IN AGI gegen den genannten Aufpreis einen passenden Raum im gewünschten Suchgebiet in Deutschland organisieren.
 - Wenn kein Projektor oder Display vorhanden ist, bringt ALL IN AGI die benötigte Präsentationstechnik mit.
 - Benötigt werden motivierte Builder, ihre Arbeitsgeräte sowie die im Vorbereitungsgespräch vereinbarten Zugänge und Arbeitsumgebungen.
 
@@ -71,7 +71,7 @@ Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Ang
 - Ein 60-minütiges Vorbereitungsgespräch ist Teil jeder Buchung. Dafür werden verfügbare Termine in der Zeitzone Europe/Berlin angezeigt.
 - Das Vorbereitungsgespräch kann frühestens am folgenden Tag und innerhalb der nächsten 45 Tage gewählt werden, sofern ein freier Termin verfügbar ist.
 - Der Hackathontag kann frühestens am folgenden Tag und bis zu ein Jahr im Voraus geplant werden.
-- Für die Buchung werden Teamgröße, Location, Tools, Demo-Setup, Lunch, deutsche Veranstaltungsadresse, Datum und Uhrzeit, Unternehmen, Ansprechperson, E-Mail-Adresse, Telefonnummer sowie der Termin des Vorbereitungsgesprächs benötigt. Eine Nachricht mit bis zu 500 Zeichen ist optional.
+- Für die Buchung werden Teamgröße, Location, Tools, Demo-Setup, Lunch, deutsche Veranstaltungsadresse beziehungsweise gewünschtes Suchgebiet, Datum und Uhrzeit, Unternehmen, Ansprechperson, E-Mail-Adresse, Telefonnummer sowie der Termin des Vorbereitungsgesprächs benötigt. Eine Nachricht mit bis zu 500 Zeichen ist optional.
 - Der Konfigurator berechnet den Nettopreis unmittelbar aus der gewählten Teamgröße und den Optionen. Ein konfigurierter Plan kann vor der Buchung über einen Plan-Link geteilt werden.
 - Mit dem Absenden des vollständigen Buchungsformulars werden der Hackathontag und das Vorbereitungsgespräch gebucht. Ist ein gewählter Termin zwischenzeitlich nicht mehr verfügbar, muss ein neuer verfügbarer Termin gewählt werden.
 - Nach erfolgreicher Buchung erscheint eine Bestätigung. Zusätzlich wird eine Bestätigungs-E-Mail mit Buchungs-ID, Buchungsdetails, einem PDF-Hackathonplan, einer Kalenderdatei für das Vorbereitungsgespräch und einem buchungsspezifischen Verwaltungslink versendet.

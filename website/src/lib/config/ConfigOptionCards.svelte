@@ -5,6 +5,8 @@
 		CAPACITY_PRICES,
 		CODING_TOOLS,
 		PROVIDED_CODING_TOOLS,
+		TOOLS_SURCHARGES,
+		VENUE_SURCHARGES,
 		formatPrice,
 		type Capacity,
 		type CodingTool,
@@ -80,7 +82,7 @@
 		</label>
 		<label class:selected={!values.venueProvided} class="choice">
 			<input type="radio" name={`${idPrefix}-venue`} checked={!values.venueProvided} onchange={() => onchange({ venueProvided: false })} />
-			<b>Location organisieren lassen</b><small>Passender Raum nahe Ihrer Wunschadresse.</small><span class="choice-price">+ 1.000 €</span>
+			<b>Location organisieren lassen</b><small>Passender Raum im gewünschten Suchgebiet. Die genaue Location wird bestätigt.</small><span class="choice-price">+ {formatPrice(VENUE_SURCHARGES[values.capacity])}</span>
 		</label>
 	</div>
 {:else if kind === 'tools'}
@@ -91,7 +93,7 @@
 		</label>
 		<label class:selected={values.toolProvision === 'needed'} class="choice">
 			<input type="radio" name={`${idPrefix}-tool-provision`} checked={values.toolProvision === 'needed'} onchange={() => selectToolProvision('needed')} />
-			<b>Wir brauchen welche für den Tag</b><span class="choice-price">+ 500 €</span>
+			<b>Wir brauchen welche für den Tag</b><span class="choice-price">+ {formatPrice(TOOLS_SURCHARGES[values.capacity])}</span>
 		</label>
 	</div>
 	{#if values.toolProvision}

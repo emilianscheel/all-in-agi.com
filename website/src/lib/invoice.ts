@@ -34,8 +34,7 @@ export interface InvoicePayment {
 	termsDays: number;
 }
 
-export interface InvoiceSnapshot {
-	version: 1;
+interface InvoiceSnapshotBase {
 	hackathonId: string;
 	invoiceNumber: string;
 	issueDate: string;
@@ -50,6 +49,17 @@ export interface InvoiceSnapshot {
 	grossTotalCents: number;
 	payment: InvoicePayment;
 }
+
+export interface LegacyInvoiceSnapshot extends InvoiceSnapshotBase {
+	version: 1;
+}
+
+export interface SplitInvoiceSnapshot extends InvoiceSnapshotBase {
+	version: 2;
+	kind: 'down-payment' | 'final';
+}
+
+export type InvoiceSnapshot = LegacyInvoiceSnapshot | SplitInvoiceSnapshot;
 
 export interface InvoiceLegalConfiguration {
 	taxIdLabel: string;
@@ -162,6 +172,100 @@ export function createInvoiceSnapshot(
 			termsDays: 14
 		}
 	};
+}
+
+function splitInvoiceBase(
+	source: InvoiceSource,
+	legal: InvoiceLegalConfiguration,
+	invoiceNumber: string,
+	issueDate: string,
+	dueDate: string,
+	items: InvoiceLineItem[],
+	kind: SplitInvoiceSnapshot['kind']
+): SplitInvoiceSnapshot {
+	const netTotalCents = items.reduce((sum, item) => sum + item.netAmountCents, 0);
+	const vatAmountCents = Math.round(netTotalCents * 0.19);
+	return {
+		version: 2,
+		kind,
+		hackathonId: source.id,
+		invoiceNumber,
+		issueDate,
+		serviceDate: dateInBerlin(source.eventStart),
+		dueDate,
+		seller: {
+			legalName: 'Emilian Scheel',
+			brandName: 'ALL IN AGI',
+			address: { street: 'Moosdorfstraße 10', postalCode: '12435', city: 'Berlin', country: 'Deutschland' },
+			email: 'go@all-in-agi.com',
+			phone: '0152 57257750',
+			taxIdLabel: legal.taxIdLabel,
+			taxIdValue: legal.taxIdValue
+		},
+		customer: {
+			companyName: source.companyName,
+			contactName: source.contactName,
+			email: source.contactEmail,
+			address: { ...source.address }
+		},
+		items,
+		netTotalCents,
+		vatRatePercent: 19,
+		vatAmountCents,
+		grossTotalCents: netTotalCents + vatAmountCents,
+		payment: {
+			accountHolder: legal.accountHolder,
+			iban: legal.iban,
+			bic: legal.bic,
+			termsDays: kind === 'down-payment' ? 7 : 14
+		}
+	};
+}
+
+export function createDownPaymentInvoiceSnapshot(
+	source: InvoiceSource,
+	legal: InvoiceLegalConfiguration,
+	issuedAt = new Date()
+) {
+	const issueDate = dateInBerlin(issuedAt);
+	const netAmountCents = Math.round(eurosToCents(source.totalPrice) * 0.3);
+	return splitInvoiceBase(
+		source,
+		legal,
+		`RE-${source.id}-AZ`,
+		issueDate,
+		addCalendarDays(issueDate, 7),
+		[{ description: `30 % Anzahlung – Agentic Engineering Hackathon für bis zu ${source.capacity} Personen`, netAmountCents }],
+		'down-payment'
+	);
+}
+
+export function createFinalInvoiceSnapshot(
+	source: InvoiceSource,
+	legal: InvoiceLegalConfiguration,
+	downPayment: SplitInvoiceSnapshot,
+	issuedAt = new Date()
+) {
+	if (downPayment.kind !== 'down-payment') throw new Error('A down-payment invoice is required.');
+	const items: InvoiceLineItem[] = [
+		{ description: `Agentic Engineering Hackathon - bis ${source.capacity} Personen`, netAmountCents: eurosToCents(source.basePrice) }
+	];
+	for (const [description, amount] of [
+		['Raumorganisation', source.venueSurcharge],
+		[source.lunchAdjustment < 0 ? 'Catering-Abzug' : 'Catering', source.lunchAdjustment],
+		['Coding-Tool-Bereitstellung', source.toolsAdjustment]
+	] as const) {
+		if (amount !== 0) items.push({ description, netAmountCents: eurosToCents(amount) });
+	}
+	if (items.reduce((sum, item) => sum + item.netAmountCents, 0) !== eurosToCents(source.totalPrice)) {
+		throw new Error('Invoice line items do not match the stored total.');
+	}
+	items.push({
+		description: `Erhaltene Anzahlung ${downPayment.invoiceNumber} (enthaltene USt. ${formatInvoiceMoney(downPayment.vatAmountCents)})`,
+		netAmountCents: -downPayment.netTotalCents
+	});
+	const issueDate = dateInBerlin(issuedAt);
+	return splitInvoiceBase(source, legal, `RE-${source.id}-ER`, issueDate, addCalendarDays(issueDate, 14), items, 'final');
 }
 
 export function formatInvoiceMoney(cents: number) {

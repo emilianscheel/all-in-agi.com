@@ -22,16 +22,19 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	const context = await createBrandPdf();
 	const { pdf, page, regular, bold } = context;
 	const { orange, ink, muted, line, surface } = context.colors;
-	drawBrandChrome(context, `Rechnung ${snapshot.invoiceNumber}`);
+	const invoiceTitle = snapshot.version === 2
+		? snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : 'Endrechnung'
+		: 'Rechnung';
+	drawBrandChrome(context, `${invoiceTitle} ${snapshot.invoiceNumber}`);
 
-	page.drawText('Rechnung', { x: LEFT, y: 724, font: bold, size: 30, color: ink });
+	page.drawText(invoiceTitle, { x: LEFT, y: 724, font: bold, size: invoiceTitle.length > 14 ? 25 : 30, color: ink });
 	page.drawText(safeText(snapshot.invoiceNumber), { x: LEFT, y: 698, font: regular, size: 12, color: orange });
 
 	const metaLabelX = 360;
 	const metaValueRight = RIGHT;
 	for (const [index, [label, value]] of [
 		['RECHNUNGSDATUM', formatInvoiceDate(snapshot.issueDate)],
-		['LEISTUNGSDATUM', formatInvoiceDate(snapshot.serviceDate)],
+		[snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'VORAUSS. LEISTUNGSDATUM' : 'LEISTUNGSDATUM', formatInvoiceDate(snapshot.serviceDate)],
 		['ZAHLBAR BIS', formatInvoiceDate(snapshot.dueDate)]
 	].entries()) {
 		const y = 729 - index * 28;

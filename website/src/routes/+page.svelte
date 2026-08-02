@@ -239,7 +239,7 @@
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort oder organisierte Location</li>
+                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
                 </ul>
             </article>
             <article class="price-card featured">
@@ -251,7 +251,7 @@
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort oder organisierte Location</li>
+                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
                 </ul>
             </article>
             <article class="price-card">
@@ -262,7 +262,7 @@
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort oder organisierte Location</li>
+                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
                 </ul>
             </article>
         </div>

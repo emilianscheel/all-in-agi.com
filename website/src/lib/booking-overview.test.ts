@@ -50,13 +50,13 @@ describe('booking overview rows', () => {
 		]);
 		expect(rows.find(({ id }) => id === 'tools')).toMatchObject({
 			value: 'Für den Tag benötigt: Codex',
-			status: '+ 500 €'
+			status: '+ 1.000 €'
 		});
 		expect(rows.find(({ id }) => id === 'lunch')).toMatchObject({
 			value: 'Vegetarische Bowls',
 			status: '+ 500 €'
 		});
 		expect(rows.find(({ id }) => id === 'prep-call')?.value).toContain('14:00');
-		expect(rows.at(-1)).toMatchObject({ status: '7.000 € netto', total: true });
+		expect(rows.at(-1)).toMatchObject({ status: '7.500 € netto', total: true });
 	});
 });

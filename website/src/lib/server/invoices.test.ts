@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { InvoiceLegalConfiguration } from '$lib/invoice';
-import { getOrCreateInvoice, InvoiceNotIssuableError } from './invoices';
+import { getOrCreateDownPaymentInvoice, getOrCreateInvoice, InvoiceNotIssuableError } from './invoices';
 import type { HackathonRecord } from './hackathons';
 
 const legal: InvoiceLegalConfiguration = {
@@ -12,7 +12,7 @@ function record(): HackathonRecord {
 	return {
 		id: 'HAA-AAA-AAA', status: 'confirmed', companyName: 'Musterwerke GmbH', contactName: 'Ada Beispiel',
 		contactEmail: 'ada@example.com', address: { street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
-		eventStart: '2099-06-20T07:00:00.000Z', capacity: 15, basePrice: 4000, venueSurcharge: 0,
+		eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z', capacity: 15, basePrice: 4000, venueSurcharge: 0,
 		lunchAdjustment: 0, toolsAdjustment: 0, totalPrice: 4000, invoiceSnapshot: null
 	} as HackathonRecord;
 }
@@ -62,5 +62,37 @@ describe('invoice persistence orchestration', () => {
 		const cancelled = { ...confirmed, status: 'cancelled' as const, invoiceSnapshot: snapshot };
 		const result = await getOrCreateInvoice(cancelled.id, { getRecord: async () => cancelled });
 		expect(result.snapshot).toEqual(snapshot);
+	});
+
+	test('requires a received down payment and completed event before freezing the final invoice', async () => {
+		let current = { ...record(), billingModel: 'deposit_30' as const };
+		const downPayment = await getOrCreateDownPaymentInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2099-05-01T10:00:00.000Z'),
+			freezeDownPayment: async (_id, snapshot, issuedAt) => {
+				current = { ...current, downPaymentInvoiceSnapshot: snapshot, downPaymentInvoiceIssuedAt: issuedAt };
+				return current;
+			}
+		});
+		expect(downPayment.snapshot.invoiceNumber).toBe('RE-HAA-AAA-AAA-AZ');
+
+		await expect(getOrCreateInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2099-06-21T10:00:00.000Z')
+		})).rejects.toBeInstanceOf(InvoiceNotIssuableError);
+
+		current = { ...current, downPaymentPaidAt: '2099-05-08T10:00:00.000Z' };
+		const final = await getOrCreateInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2099-06-21T10:00:00.000Z'),
+			freeze: async (_id, snapshot, issuedAt) => {
+				current = { ...current, invoiceSnapshot: snapshot, invoiceIssuedAt: issuedAt };
+				return current;
+			}
+		});
+		expect(final.snapshot).toMatchObject({ version: 2, kind: 'final', netTotalCents: 280000 });
 	});
 });

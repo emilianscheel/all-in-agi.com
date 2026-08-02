@@ -6,11 +6,13 @@
 	let {
 		value,
 		onchange,
-		idPrefix = 'address'
+		idPrefix = 'address',
+		searchArea = false
 	}: {
 		value: EventAddress;
 		onchange: (value: EventAddress) => void;
 		idPrefix?: string;
+		searchArea?: boolean;
 	} = $props();
 
 	let addressQuery = $state('');
@@ -75,7 +77,7 @@
 
 <div class="field-grid">
 	<div class="field full address-search-wrap">
-		<label for={`${idPrefix}-search`}>Adresse suchen</label>
+		<label for={`${idPrefix}-search`}>{searchArea ? 'Gewünschtes Suchgebiet' : 'Adresse suchen'}</label>
 		<input
 			id={`${idPrefix}-search`}
 			autocomplete="off"

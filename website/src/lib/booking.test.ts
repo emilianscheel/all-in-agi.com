@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { bookingMetadata, getPrice, validateConfiguration, type BookingConfiguration } from './booking';
+import { bookingMetadata, getPrice, hackathonCalendarLocation, validateConfiguration, type BookingConfiguration } from './booking';
 
 const validConfiguration: BookingConfiguration = {
 	capacity: 15,
@@ -45,11 +45,24 @@ describe('price calculation', () => {
 
 	test('adds the tool surcharge only when tools are needed', () => {
 		expect(getPrice(15, true, 'self-organized', 'needed')).toMatchObject({ lunchAdjustment: -500, toolsAdjustment: 500, totalPrice: 4000 });
+		expect(getPrice(30, true, 'pizza', 'needed')).toMatchObject({ toolsAdjustment: 1000, totalPrice: 6000 });
+		expect(getPrice(50, true, 'pizza', 'needed')).toMatchObject({ toolsAdjustment: 1500, totalPrice: 7500 });
 		expect(getPrice(15, true, 'pizza', 'existing')).toMatchObject({ toolsAdjustment: 0, totalPrice: 4000 });
+	});
+
+	test('scales organized venue and tools together with capacity', () => {
+		expect(getPrice(15, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 500, toolsAdjustment: 500, totalPrice: 5000 });
+		expect(getPrice(30, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 1000, toolsAdjustment: 1000, totalPrice: 7000 });
+		expect(getPrice(50, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 1500, toolsAdjustment: 1500, totalPrice: 9000 });
 	});
 });
 
 describe('booking validation', () => {
+	test('uses customer venues but leaves organized locations pending in the calendar', () => {
+		expect(hackathonCalendarLocation(validConfiguration)).toBe('Musterstraße 1, 10115 Berlin, Deutschland');
+		expect(hackathonCalendarLocation({ ...validConfiguration, venueProvided: false })).toBeUndefined();
+	});
+
 	test('accepts a complete future configuration', () => {
 		expect(validateConfiguration(validConfiguration)).toEqual([]);
 	});

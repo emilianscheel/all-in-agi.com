@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { createInvoiceSnapshot, formatInvoiceMoney, type InvoiceLegalConfiguration, type InvoiceSource } from './invoice';
+import {
+	createDownPaymentInvoiceSnapshot,
+	createFinalInvoiceSnapshot,
+	createInvoiceSnapshot,
+	formatInvoiceMoney,
+	type InvoiceLegalConfiguration,
+	type InvoiceSource
+} from './invoice';
 
 const legal: InvoiceLegalConfiguration = {
 	taxIdLabel: 'USt-IdNr.',
@@ -50,5 +57,32 @@ describe('invoice snapshot', () => {
 		}, legal);
 		expect(minimal.items).toHaveLength(1);
 		expect(() => createInvoiceSnapshot({ ...source, totalPrice: 1 }, legal)).toThrow('do not match');
+	});
+
+	test('creates a seven-day 30 percent down-payment invoice and a reconciled final invoice', () => {
+		const downPayment = createDownPaymentInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));
+		expect(downPayment).toMatchObject({
+			version: 2,
+			kind: 'down-payment',
+			invoiceNumber: 'RE-HAA-AAA-AAA-AZ',
+			dueDate: '2099-05-08',
+			netTotalCents: 195000,
+			vatAmountCents: 37050,
+			grossTotalCents: 232050
+		});
+
+		const finalInvoice = createFinalInvoiceSnapshot(source, legal, downPayment, new Date('2099-06-21T10:00:00.000Z'));
+		expect(finalInvoice).toMatchObject({
+			version: 2,
+			kind: 'final',
+			invoiceNumber: 'RE-HAA-AAA-AAA-ER',
+			dueDate: '2099-07-05',
+			netTotalCents: 455000,
+			vatAmountCents: 86450,
+			grossTotalCents: 541450
+		});
+		expect(finalInvoice.items.at(-1)).toMatchObject({ netAmountCents: -195000 });
+		expect(finalInvoice.items.at(-1)?.description).toContain('enthaltene USt.');
+		expect(finalInvoice.grossTotalCents + downPayment.grossTotalCents).toBe(773500);
 	});
 });

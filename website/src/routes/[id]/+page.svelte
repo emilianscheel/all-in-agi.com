@@ -60,6 +60,12 @@
 	let invoiceEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceIssued = $state(Boolean(initialInvoice?.issued));
 	let invoiceEmailSentAt = $state<string | null>(initialInvoice?.emailSentAt ?? null);
+	let downPaymentDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
+	let downPaymentEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let downPaymentIssued = $state(Boolean(initialInvoice?.downPayment.issued));
+	let downPaymentEmailSentAt = $state<string | null>(initialInvoice?.downPayment.emailSentAt ?? null);
+	let downPaymentPaidAt = $state<string | null>(initialInvoice?.downPayment.paidAt ?? null);
+	let downPaymentPaidBusy = $state(false);
 	let invoiceMessage = $state('');
 	let cancellationBusy = $state(false);
 	let cancellationMessage = $state('');
@@ -87,6 +93,8 @@
 	});
 	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.prepCallBooking));
 	let readOnly = $derived(hackathon.status !== 'confirmed');
+	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
+	let finalInvoiceAvailable = $derived(!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd)));
 
 	function configurationFromHackathon(value: typeof data.hackathon): BookingConfiguration {
 		return {
@@ -246,6 +254,68 @@
 		}
 	}
 
+	async function downloadDownPaymentInvoice() {
+		if (downPaymentDownloadState === 'loading') return;
+		downPaymentDownloadState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment.pdf`, { method: 'POST' });
+			if (!response.ok) {
+				const result = await response.json().catch(() => ({}));
+				throw new Error(result.message ?? 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.');
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `all-in-agi-anzahlung-${hackathon.id}.pdf`;
+			document.body.append(link);
+			link.click();
+			link.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 0);
+			downPaymentIssued = true;
+			downPaymentDownloadState = 'idle';
+		} catch (error) {
+			downPaymentDownloadState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.';
+		}
+	}
+
+	async function sendDownPaymentInvoice() {
+		if (downPaymentEmailState === 'loading') return;
+		downPaymentEmailState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment-email`, { method: 'POST' });
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(result.message ?? 'Die Anzahlungsrechnung konnte nicht gesendet werden.');
+			downPaymentIssued = true;
+			downPaymentEmailSentAt = result.sentAt;
+			downPaymentEmailState = 'sent';
+			invoiceMessage = 'Die Anzahlungsrechnung wurde per E-Mail gesendet.';
+		} catch (error) {
+			downPaymentEmailState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : 'Die Anzahlungsrechnung konnte nicht gesendet werden.';
+		}
+	}
+
+	async function markDownPaymentReceived() {
+		if (downPaymentPaidBusy || downPaymentPaidAt) return;
+		downPaymentPaidBusy = true;
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment-paid`, { method: 'POST' });
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(result.message ?? 'Der Zahlungseingang konnte nicht gespeichert werden.');
+			downPaymentPaidAt = result.paidAt;
+			invoiceMessage = 'Der Zahlungseingang wurde gespeichert.';
+		} catch (error) {
+			invoiceMessage = error instanceof Error ? error.message : 'Der Zahlungseingang konnte nicht gespeichert werden.';
+		} finally {
+			downPaymentPaidBusy = false;
+		}
+	}
+
 	async function cancelBooking() {
 		if (cancellationBusy) return;
 		cancellationBusy = true;
@@ -287,11 +357,11 @@
 						<h2>{hackathon.companyName}</h2>
 						<div class="event-card-price">{formatPrice(hackathon.price.totalPrice)}</div>
 					</div>
-					{#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
+					{#if eventAddressLabel}<p class="event-address">{hackathon.venueProvided ? eventAddressLabel : `Suchgebiet: ${eventAddressLabel}`}</p>{/if}
 					<div class="event-details">
 						<div class="event-detail"><small>Event Date</small><b>{formatEventTimeRange(hackathon.eventStart, hackathon.eventEnd)}</b></div>
 						<div class="event-detail"><small>Team</small><b>Bis {hackathon.capacity} Personen</b></div>
-						<div class="event-detail"><small>Location</small><b>{hackathon.venueProvided ? 'Eigener Raum' : 'Von uns organisiert'}</b></div>
+						<div class="event-detail"><small>Location</small><b>{hackathon.venueProvided ? 'Eigener Raum' : 'Wird bestätigt'}</b></div>
 						<div class="event-detail"><small>Screen</small><b>{equipmentLabel}</b></div>
 					</div>
 				</article>
@@ -330,19 +400,35 @@
 
 			{#if data.admin.authorized}
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
-					{#if !readOnly || invoiceIssued}
+					{#if invoiceIssued || (!readOnly && finalInvoiceAvailable)}
 						<button class="button-secondary action-button" type="button" onclick={downloadInvoice} disabled={invoiceDownloadState === 'loading'}>
-							<Download size={18} aria-hidden="true" />{invoiceDownloadState === 'loading' ? 'Rechnung wird erstellt …' : invoiceDownloadState === 'error' ? 'Download erneut versuchen' : 'Rechnung herunterladen'}
+							<Download size={18} aria-hidden="true" />{invoiceDownloadState === 'loading' ? 'Rechnung wird erstellt …' : invoiceDownloadState === 'error' ? 'Download erneut versuchen' : splitBilling ? 'Endrechnung herunterladen' : 'Rechnung herunterladen'}
 						</button>
 					{/if}
-					{#if !readOnly}
+					{#if !readOnly && finalInvoiceAvailable}
 						<button class="button-secondary action-button" type="button" onclick={sendInvoice} disabled={invoiceEmailState === 'loading'} aria-live="polite">
 							{#if invoiceEmailState === 'sent'}
-								<Check size={18} aria-hidden="true" />Rechnung erneut senden
+								<Check size={18} aria-hidden="true" />{splitBilling ? 'Endrechnung erneut senden' : 'Rechnung erneut senden'}
 							{:else}
-								<Mail size={18} aria-hidden="true" />{invoiceEmailState === 'loading' ? 'Rechnung wird gesendet …' : invoiceEmailState === 'error' ? 'Senden erneut versuchen' : invoiceEmailSentAt ? 'Rechnung erneut senden' : 'Rechnung senden'}
+								<Mail size={18} aria-hidden="true" />{invoiceEmailState === 'loading' ? 'Rechnung wird gesendet …' : invoiceEmailState === 'error' ? 'Senden erneut versuchen' : invoiceEmailSentAt ? (splitBilling ? 'Endrechnung erneut senden' : 'Rechnung erneut senden') : (splitBilling ? 'Endrechnung senden' : 'Rechnung senden')}
 							{/if}
 						</button>
+					{/if}
+					{#if splitBilling && (!readOnly || downPaymentIssued)}
+						<button class="button-secondary action-button" type="button" onclick={downloadDownPaymentInvoice} disabled={downPaymentDownloadState === 'loading'}>
+							<Download size={18} aria-hidden="true" />{downPaymentDownloadState === 'loading' ? 'Anzahlungsrechnung wird erstellt …' : downPaymentDownloadState === 'error' ? 'Download erneut versuchen' : 'Anzahlungsrechnung herunterladen'}
+						</button>
+					{/if}
+					{#if splitBilling && !readOnly}
+						<button class="button-secondary action-button" type="button" onclick={sendDownPaymentInvoice} disabled={downPaymentEmailState === 'loading'} aria-live="polite">
+							<Mail size={18} aria-hidden="true" />{downPaymentEmailState === 'loading' ? 'Anzahlungsrechnung wird gesendet …' : downPaymentEmailState === 'error' ? 'Senden erneut versuchen' : downPaymentEmailSentAt ? 'Anzahlungsrechnung erneut senden' : 'Anzahlungsrechnung senden'}
+						</button>
+						{#if downPaymentIssued}
+							<button class="button-secondary action-button" type="button" onclick={markDownPaymentReceived} disabled={downPaymentPaidBusy || Boolean(downPaymentPaidAt)}>
+								<Check size={18} aria-hidden="true" />{downPaymentPaidAt ? 'Zahlung eingegangen' : downPaymentPaidBusy ? 'Wird gespeichert …' : 'Zahlung eingegangen'}
+							</button>
+						{/if}
+						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">Endrechnung nach dem Hackathon verfügbar.</p>{/if}
 					{/if}
 					{#if !readOnly}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
@@ -389,8 +475,8 @@
 				<EditableSummaryRow icon={MapPin} label={overviewRow('location').label} value={overviewRow('location').value} status={overviewRow('location').status} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="venue" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-venue" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={MapPinned} label="Veranstaltungsadresse" value={eventAddressLabel} status="Geplant" active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<AddressEditor value={draft.address} onchange={(address) => (draft = { ...draft, address })} idPrefix="detail-address" />{/snippet}
+				<EditableSummaryRow icon={MapPinned} label={hackathon.venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'} value={eventAddressLabel} status={hackathon.venueProvided ? 'Geplant' : 'Location wird bestätigt'} active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}<AddressEditor value={draft.address} onchange={(address) => (draft = { ...draft, address })} idPrefix="detail-address" searchArea={!draft.venueProvided} />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Code2} label={overviewRow('tools').label} value={overviewRow('tools').value} status={overviewRow('tools').status} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="tools" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-tools" />{/snippet}

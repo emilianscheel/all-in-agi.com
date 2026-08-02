@@ -11,8 +11,16 @@ export async function load({ params, locals }) {
 	return {
 		hackathon: toPublicHackathon(record),
 		invoice: locals.admin.authorized ? {
+			billingModel: record.billingModel,
 			issued: Boolean(record.invoiceSnapshot),
-			emailSentAt: record.invoiceEmailSentAt
+			emailSentAt: record.invoiceEmailSentAt,
+			finalAvailable: record.billingModel === 'legacy_full'
+				|| (Boolean(record.downPaymentPaidAt) && new Date() >= new Date(record.eventEnd)),
+			downPayment: {
+				issued: Boolean(record.downPaymentInvoiceSnapshot),
+				emailSentAt: record.downPaymentInvoiceEmailSentAt,
+				paidAt: record.downPaymentPaidAt
+			}
 		} : null
 	};
 }

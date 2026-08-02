@@ -651,11 +651,12 @@
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>Veranstaltungsadresse</h2>
+				<h2>{venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'}</h2>
                 <AddressEditor
                     value={address}
                     onchange={(value) => (address = value)}
                     idPrefix="booking-address"
+					searchArea={!venueProvided}
                 />
             </section>
 

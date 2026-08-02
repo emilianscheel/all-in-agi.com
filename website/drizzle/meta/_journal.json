@@ -36,6 +36,13 @@
       "when": 1785341841202,
       "tag": "0004_next_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785667868181,
+      "tag": "0005_worthless_shadowcat",
+      "breakpoints": true
     }
   ]
 }

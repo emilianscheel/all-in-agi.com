@@ -67,7 +67,7 @@ export function bookingOverviewRows(
 		{
 			id: 'location',
 			label: 'Location',
-			value: config.venueProvided ? 'Wir kommen zu Ihnen' : 'Location organisiert',
+			value: config.venueProvided ? 'Wir kommen zu Ihnen' : 'Location wird bestätigt',
 			status: config.venueProvided ? 'Inklusive' : formatPrice(price.venueSurcharge)
 		},
 		{

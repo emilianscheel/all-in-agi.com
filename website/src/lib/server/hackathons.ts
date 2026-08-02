@@ -58,6 +58,7 @@ function pendingValues(id: string, config: BookingConfiguration) {
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
 		consultationSlot: new Date(config.consultationSlot).toISOString(),
+		billingModel: 'deposit_30' as const,
 		...price
 	};
 }
@@ -150,7 +151,49 @@ export async function markInvoiceEmailSent(id: string, messageId?: string, at = 
 	return record ?? null;
 }
 
-export async function updateConfirmedHackathon(id: string, config: BookingConfiguration, bookings: Partial<ConfirmedBookings> = {}) {
+export async function freezeDownPaymentInvoiceSnapshot(id: string, snapshot: InvoiceSnapshot, issuedAt: string) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		downPaymentInvoiceSnapshot: snapshot,
+		downPaymentInvoiceIssuedAt: issuedAt,
+		updatedAt: issuedAt
+	}).where(and(
+		eq(hackathons.id, id),
+		eq(hackathons.status, 'confirmed'),
+		eq(hackathons.billingModel, 'deposit_30'),
+		isNull(hackathons.downPaymentInvoiceSnapshot)
+	)).returning();
+	return record ?? null;
+}
+
+export async function markDownPaymentInvoiceEmailSent(id: string, messageId?: string, at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({
+		downPaymentInvoiceEmailSentAt: at,
+		downPaymentInvoiceEmailMessageId: messageId ?? null,
+		updatedAt: at
+	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'), eq(hackathons.billingModel, 'deposit_30'))).returning();
+	return record ?? null;
+}
+
+export async function markDownPaymentPaid(id: string, at = new Date().toISOString()) {
+	const db = await getDb();
+	const [record] = await db.update(hackathons).set({ downPaymentPaidAt: at, updatedAt: at })
+		.where(and(
+			eq(hackathons.id, id),
+			eq(hackathons.status, 'confirmed'),
+			eq(hackathons.billingModel, 'deposit_30'),
+			isNull(hackathons.downPaymentPaidAt)
+		)).returning();
+	return record ?? null;
+}
+
+export async function updateConfirmedHackathon(
+	id: string,
+	config: BookingConfiguration,
+	bookings: Partial<ConfirmedBookings> = {},
+	reprice = false
+) {
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
 	const db = await getDb();
 	const [record] = await db.update(hackathons).set({
@@ -171,7 +214,7 @@ export async function updateConfirmedHackathon(id: string, config: BookingConfig
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
 		consultationSlot: new Date(config.consultationSlot).toISOString(),
-		...price,
+		...(reprice ? price : {}),
 		...bookingValues(bookings),
 		updatedAt: new Date().toISOString()
 	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();

@@ -3,6 +3,8 @@ import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp
 import type { CodingTool, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 import type { InvoiceSnapshot } from '$lib/invoice';
 
+export type BillingModel = 'legacy_full' | 'deposit_30';
+
 export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed', 'cancellation_pending', 'cancelled']);
 
 export const hackathons = pgTable('hackathons', {
@@ -30,6 +32,7 @@ export const hackathons = pgTable('hackathons', {
 	lunchAdjustment: integer('lunch_adjustment').notNull(),
 	toolsAdjustment: integer('tools_adjustment').notNull(),
 	totalPrice: integer('total_price').notNull(),
+	billingModel: text('billing_model').$type<BillingModel>().notNull().default('legacy_full'),
 	prepCallBookingUid: text('prep_call_booking_uid'),
 	prepCallBookingIcsUid: text('prep_call_booking_ics_uid'),
 	prepCallBookingTitle: text('prep_call_booking_title'),
@@ -51,6 +54,11 @@ export const hackathons = pgTable('hackathons', {
 	invoiceIssuedAt: timestamp('invoice_issued_at', { withTimezone: true, mode: 'string' }),
 	invoiceEmailSentAt: timestamp('invoice_email_sent_at', { withTimezone: true, mode: 'string' }),
 	invoiceEmailMessageId: text('invoice_email_message_id'),
+	downPaymentInvoiceSnapshot: jsonb('down_payment_invoice_snapshot').$type<InvoiceSnapshot>(),
+	downPaymentInvoiceIssuedAt: timestamp('down_payment_invoice_issued_at', { withTimezone: true, mode: 'string' }),
+	downPaymentInvoiceEmailSentAt: timestamp('down_payment_invoice_email_sent_at', { withTimezone: true, mode: 'string' }),
+	downPaymentInvoiceEmailMessageId: text('down_payment_invoice_email_message_id'),
+	downPaymentPaidAt: timestamp('down_payment_paid_at', { withTimezone: true, mode: 'string' }),
 	demoMode: boolean('demo_mode').notNull().default(false),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()

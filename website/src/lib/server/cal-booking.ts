@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { BookingConfiguration } from '$lib/booking';
+import { hackathonCalendarLocation, type BookingConfiguration } from '$lib/booking';
 import { berlinInputsFromIso } from '$lib/event-time';
 import type { ConfirmedBooking } from './hackathons';
 import { cancelCalBookingWithToken, createCalBookingWithToken } from './cal-api';
@@ -10,7 +10,7 @@ import { BookingProviderError, reschedulePrepCallWithToken } from './cal-resched
 export { BookingProviderError } from './cal-reschedule';
 
 export function bookHackathonDay(config: BookingConfiguration, requestFetch: typeof fetch, development: boolean) {
-	const location = [config.address.street, `${config.address.postalCode} ${config.address.city}`, config.address.country].filter(Boolean).join(', ');
+	const location = hackathonCalendarLocation(config);
 	return createCalBookingWithToken(config, requestFetch, development, {
 		eventTypeId: env.CAL_HACKATHON_EVENT_TYPE_ID,
 		start: config.eventStart,

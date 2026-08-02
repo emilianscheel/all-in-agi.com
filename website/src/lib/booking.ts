@@ -54,16 +54,24 @@ export const CAPACITY_PRICES: Record<Capacity, number> = {
 	50: 6000
 };
 
-export const VENUE_SURCHARGE = 1000;
+export const VENUE_SURCHARGES: Record<Capacity, number> = {
+	15: 500,
+	30: 1000,
+	50: 1500
+};
 export const CUSTOM_LUNCH_SURCHARGE = 500;
 export const NO_LUNCH_DISCOUNT = -500;
-export const TOOLS_SURCHARGE = 500;
+export const TOOLS_SURCHARGES: Record<Capacity, number> = {
+	15: 500,
+	30: 1000,
+	50: 1500
+};
 
 export function getPrice(capacity: Capacity, venueProvided: boolean, lunch: Lunch = 'pizza', toolProvision: ToolProvision | null = null) {
 	const basePrice = CAPACITY_PRICES[capacity];
-	const venueSurcharge = venueProvided ? 0 : VENUE_SURCHARGE;
+	const venueSurcharge = venueProvided ? 0 : VENUE_SURCHARGES[capacity];
 	const lunchAdjustment = lunch === 'custom' ? CUSTOM_LUNCH_SURCHARGE : lunch === 'none' || lunch === 'self-organized' ? NO_LUNCH_DISCOUNT : 0;
-	const toolsAdjustment = toolProvision === 'needed' ? TOOLS_SURCHARGE : 0;
+	const toolsAdjustment = toolProvision === 'needed' ? TOOLS_SURCHARGES[capacity] : 0;
 	return { basePrice, venueSurcharge, lunchAdjustment, toolsAdjustment, totalPrice: basePrice + venueSurcharge + lunchAdjustment + toolsAdjustment };
 }
 
@@ -92,6 +100,12 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 		message: config.message.trim(),
 		totalPrice: String(price.totalPrice)
 	};
+}
+
+export function hackathonCalendarLocation(config: BookingConfiguration) {
+	return config.venueProvided
+		? [config.address.street, `${config.address.postalCode} ${config.address.city}`, config.address.country].filter(Boolean).join(', ')
+		: undefined;
 }
 
 export function formatPrice(value: number) {
