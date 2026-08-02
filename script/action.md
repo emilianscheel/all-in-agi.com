@@ -73,3 +73,9 @@ thesis: most will just go with pizza & cookies
 
 - all the people need admin rights
 - personal laptops are allowed if the company allows it
+
+## photos
+
+- we do photos with our iphone cameras during the event
+- we make the look good with pixelmator on mac
+- we send them two days after the event
