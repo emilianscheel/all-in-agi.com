@@ -4,6 +4,7 @@
 	import SeoHead from '$lib/SeoHead.svelte';
 	import JsonLd from '$lib/JsonLd.svelte';
 	import ClosingCta from '$lib/ClosingCta.svelte';
+	import ProgressiveImage from '$lib/ProgressiveImage.svelte';
 	import { gtmArticleSchema } from '$lib/gtm-article';
 	import { GTM_HERO_IMAGES } from '$lib/gtm-images';
 	import { getGtmPage } from '$lib/gtm-pages';
@@ -248,13 +249,13 @@
 	</header>
 
 	<figure class="article-hero">
-		<img
+		<ProgressiveImage
+			class="article-hero-image"
 			src={hero.src}
+			placeholderSrc={hero.placeholderSrc}
 			alt={hero.alt}
 			width={hero.width}
 			height={hero.height}
-			fetchpriority="high"
-			decoding="async"
 		/>
 		<figcaption>{hero.caption}</figcaption>
 	</figure>
@@ -439,13 +440,9 @@
 		margin-top: 66px;
 	}
 
-	.article-hero img {
+	.article-hero :global(.article-hero-image) {
 		width: 100%;
-		height: auto;
-		aspect-ratio: 2400 / 1619;
 		border-radius: 26px;
-		object-fit: cover;
-		background: var(--surface);
 	}
 
 	.article-hero figcaption {
@@ -584,10 +581,9 @@
 			margin-top: 46px;
 		}
 
-		.article-hero img {
+		.article-hero :global(.article-hero-image) {
 			min-height: 290px;
 			border-radius: 20px;
-			object-position: center;
 		}
 
 		.article-hero figcaption {

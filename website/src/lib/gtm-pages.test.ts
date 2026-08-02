@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 import { GTM_HERO_IMAGES } from './gtm-images';
 import { GTM_GROUPS, GTM_ICON_NAMES, GTM_PUBLICATION_DATE, getGtmPage, gtmPages, gtmPagesForGroup } from './gtm-pages';
@@ -50,5 +51,12 @@ describe('GTM page catalog', () => {
 		expect(new Set(gtmPages.map((page) => page.heroImage))).toEqual(
 			new Set(Object.keys(GTM_HERO_IMAGES) as Array<keyof typeof GTM_HERO_IMAGES>)
 		);
+	});
+
+	test('provides a local WebP placeholder for every hero image', () => {
+		for (const hero of Object.values(GTM_HERO_IMAGES)) {
+			expect(hero.placeholderSrc).toMatch(/^\/images\/placeholders\/[a-z0-9-]+\.webp$/);
+			expect(existsSync(new URL(`../../static${hero.placeholderSrc}`, import.meta.url))).toBe(true);
+		}
 	});
 });

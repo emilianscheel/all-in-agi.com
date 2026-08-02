@@ -1,6 +1,7 @@
 export const GTM_HERO_IMAGES = {
 	event: {
 		src: '/images/all-in-agi-event.webp',
+		placeholderSrc: '/images/placeholders/all-in-agi-event.webp',
 		width: 2400,
 		height: 1619,
 		alt: 'Teilnehmende arbeiten gemeinsam bei einem ALL IN AGI Hackathon',
@@ -8,6 +9,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	adoption: {
 		src: '/images/ai-adoption-hackathon.webp',
+		placeholderSrc: '/images/placeholders/ai-adoption-hackathon.webp',
 		width: 2400,
 		height: 1619,
 		alt: 'Team während einer Arbeitsphase bei einem AI-Adoption-Hackathon',
@@ -15,6 +17,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	engineering: {
 		src: '/images/team-meeting.webp',
+		placeholderSrc: '/images/placeholders/team-meeting.webp',
 		width: 2400,
 		height: 1604,
 		alt: 'Softwareteam bespricht gemeinsam einen technischen Prototyp',
@@ -22,6 +25,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	industry: {
 		src: '/images/article-industry.webp',
+		placeholderSrc: '/images/placeholders/article-industry.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Industriefachkräfte steigen gemeinsam eine Anlage hinauf',
@@ -29,6 +33,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	munich: {
 		src: '/images/article-munich.webp',
+		placeholderSrc: '/images/placeholders/article-munich.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Die Türme der Frauenkirche über den Dächern von München',
@@ -36,6 +41,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	berlin: {
 		src: '/images/article-berlin.webp',
+		placeholderSrc: '/images/placeholders/article-berlin.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Das Brandenburger Tor in Berlin bei Tageslicht',
@@ -43,6 +49,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	machinery: {
 		src: '/images/article-machinery.webp',
+		placeholderSrc: '/images/placeholders/article-machinery.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Industrieroboter in einer automatisierten Fertigungshalle',
@@ -50,6 +57,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	logistics: {
 		src: '/images/article-logistics.webp',
+		placeholderSrc: '/images/placeholders/article-logistics.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Hochregale mit Paletten und Waren in einem Logistiklager',
@@ -57,6 +65,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	frankfurt: {
 		src: '/images/article-frankfurt.webp',
+		placeholderSrc: '/images/placeholders/article-frankfurt.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Frankfurter Skyline mit Hochhäusern und Eiserner Steg',
@@ -64,6 +73,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	hamburg: {
 		src: '/images/article-hamburg.webp',
+		placeholderSrc: '/images/placeholders/article-hamburg.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Hamburger Innenstadt und Kirchtürme an der Binnenalster',
@@ -71,6 +81,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	stuttgart: {
 		src: '/images/article-stuttgart.webp',
+		placeholderSrc: '/images/placeholders/article-stuttgart.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Historische Gebäude in einer Stuttgarter Straße',
@@ -78,6 +89,7 @@ export const GTM_HERO_IMAGES = {
 	},
 	finance: {
 		src: '/images/article-finance.webp',
+		placeholderSrc: '/images/placeholders/article-finance.webp',
 		width: 2400,
 		height: 1600,
 		alt: 'Blick nach oben zwischen modernen Bürohochhäusern',
