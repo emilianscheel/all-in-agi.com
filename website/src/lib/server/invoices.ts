@@ -5,6 +5,7 @@ import {
 	type InvoiceLegalConfiguration,
 	type InvoiceSnapshot
 } from '$lib/invoice';
+import { validateBillingDetails } from '$lib/booking';
 import { getInvoiceLegalConfiguration } from './invoice-config';
 import {
 	freezeInvoiceSnapshot,
@@ -64,6 +65,7 @@ export async function getOrCreateInvoice(
 	if (!current) throw new InvoiceNotFoundError();
 	if (current.invoiceSnapshot) return { record: current, snapshot: current.invoiceSnapshot };
 	if (!['contracted', 'confirmed', 'completed'].includes(current.status)) throw new InvoiceNotIssuableError();
+	if (current.billingModel === 'deposit_30' && validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
 
 	const now = dependencies.now?.() ?? new Date();
 	const legal = (dependencies.getConfiguration ?? getInvoiceLegalConfiguration)();
@@ -100,6 +102,7 @@ export async function getOrCreateDownPaymentInvoice(
 	if (!['contracted', 'confirmed', 'completed'].includes(current.status) || current.billingModel !== 'deposit_30' || current.invoiceSnapshot) {
 		throw new InvoiceNotIssuableError();
 	}
+	if (validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
 	const now = dependencies.now?.() ?? new Date();
 	const snapshot = createDownPaymentInvoiceSnapshot(
 		current,

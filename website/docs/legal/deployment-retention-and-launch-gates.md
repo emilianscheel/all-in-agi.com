@@ -2,7 +2,7 @@
 
 ## Harte Produktiv-Sperren
 
-- [ ] Deutsche Rechtsberatung hat AGB-Version, Stornopauschalen, Haftung, Location-, Catering-, Geräte- und Tool-Module schriftlich freigegeben.
+- [ ] Deutsche Rechtsberatung hat AGB-Version, Stornopauschalen, Haftung, Kundenlocation-, Pizza-, Foto- und Tool-Regelungen schriftlich freigegeben.
 - [ ] Steuerberatung hat die Behandlung des gebündelten Hackathon-Angebots mit 19 % sowie Anzahlungs-/Schlussrechnungslogik schriftlich bestätigt.
 - [ ] Versicherer hat die in `supplier-insurance-safety-checklists.md` aufgeführten Risiken und Ausschlüsse schriftlich bestätigt.
 - [ ] `LEGAL_DOCUMENT_STATUS` wird erst nach Freigabe von `review-required` auf `published` gestellt; Inhalt, Version und SHA-256 werden danach nicht mehr verändert.
@@ -39,8 +39,7 @@
 | Anfrage ohne Vertrag | sechs Monate nach letztem Kontakt | geplanter Löschlauf mit dokumentierter Ausnahme für Rechtsansprüche |
 | Vertrags-/Änderungs-/Rücktrittsnachweise | bis Ende der gesetzlichen Anspruchs-/Nachweisfrist | unveränderliche Snapshots und Audit-Events |
 | Rechnungen und eingebettete strukturierte Originale | acht Jahre | unveränderliche Speicherung; Korrektur nur durch neuen Beleg |
-| Geräteprotokolle | drei Jahre nach Rückgabe, länger nur bei offenem Schaden | Seriennummern und Vorfallbezug minimieren |
 | Fotoeinwilligung/Widerruf | solange Nutzung plus erforderliche Nachweisfrist | Zweck-/Kanal-Matrix und Removal-Status |
-| Temporäre Geräte-/Tooldaten | unmittelbar nach Rückgabe beziehungsweise Eventabschluss | Reset-/Löschprotokoll |
+| Temporäre Tooldaten | unmittelbar nach Eventabschluss | Sitzungs-/Löschprotokoll |
 
 Löschläufe müssen offene Verträge, Rechnungsaufbewahrung, Rechtsansprüche, Widerrufe und Legal Holds berücksichtigen und werden protokolliert, ohne gelöschte Inhalte erneut zu speichern.

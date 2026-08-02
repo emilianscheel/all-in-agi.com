@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { bookingMetadata, getPrice, hackathonCalendarLocation, validateConfiguration, type BookingConfiguration } from './booking';
+import { bookingMetadata, getPrice, hackathonCalendarLocation, validateBillingDetails, validateConfiguration, validateInquiryConfiguration, type BookingConfiguration } from './booking';
 
 const validConfiguration: BookingConfiguration = {
 	capacity: 15,
@@ -73,6 +73,21 @@ describe('price calculation', () => {
 });
 
 describe('booking validation', () => {
+	test('accepts the fixed standard offer without billing or B2B confirmations', () => {
+		const { billing: _billing, businessCustomerConfirmed: _business, authorityConfirmed: _authority, ...inquiry } = validConfiguration;
+		expect(validateInquiryConfiguration(inquiry)).toEqual([]);
+		expect(validateBillingDetails(undefined)).not.toEqual([]);
+	});
+
+	test('rejects removed offerings in new inquiries while retaining legacy validation', () => {
+		for (const changed of [
+			{ venueProvided: false },
+			{ lunch: 'custom' as const, customLunch: 'Bowls' },
+			{ deviceProvision: 'needed' as const, deviceCount: 2 },
+			{ eventPhotos: false }
+		]) expect(validateInquiryConfiguration({ ...validConfiguration, ...changed })).not.toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, lunch: 'custom', customLunch: 'Bowls' })).toEqual([]);
+	});
 	test('uses customer venues but leaves organized locations pending in the calendar', () => {
 		expect(hackathonCalendarLocation(validConfiguration)).toBe('Musterstraße 1, 10115 Berlin, Deutschland');
 		expect(hackathonCalendarLocation({ ...validConfiguration, venueProvided: false })).toBeUndefined();

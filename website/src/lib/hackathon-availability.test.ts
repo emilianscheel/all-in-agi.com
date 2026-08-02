@@ -39,10 +39,10 @@ describe('hackathon availability model', () => {
 		expect(preferredHackathonSlot(slots, '2099-08-19', slots[0].start, slots[0].end)).toEqual(slots[0]);
 	});
 
-	test('formats configured durations for the existing end-time select', () => {
+	test('formats configured durations for the selectable time-window cards', () => {
 		expect(formatHackathonDuration(300)).toBe('5 Std.');
 		expect(formatHackathonDuration(330)).toBe('5,5 Std.');
 		const fullDay = slots.find((slot) => slot.duration === 480)!;
-		expect(formatHackathonSlot(fullDay)).toBe('09:00–17:00 Uhr · 8 Std.');
+		expect(formatHackathonSlot(fullDay)).toBe('09–17 Uhr · 8 Std.');
 	});
 });

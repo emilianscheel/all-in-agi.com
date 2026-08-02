@@ -1,4 +1,4 @@
-import { validateConfiguration } from '$lib/booking';
+import { validateBillingDetails, validateConfiguration } from '$lib/booking';
 import { eventDurationMinutes } from '$lib/event-time';
 import { applyHackathonUpdate, HackathonUpdateError, parseHackathonUpdate } from '$lib/hackathon-edit';
 import { isHackathonId } from '$lib/public-id';
@@ -18,6 +18,7 @@ import {
 	updateConfirmedHackathon,
 	type ConfirmedBooking
 } from '$lib/server/hackathons';
+import { recordBillingDetailsUpdated } from '$lib/server/legal-contracts';
 import { dev } from '$app/environment';
 import { json } from '@sveltejs/kit';
 
@@ -25,7 +26,7 @@ function confirmedFromRecord(record: NonNullable<Awaited<ReturnType<typeof getCo
 	return { status: 'success', demo: record.demoMode, ...recordToHackathonBookingSummary(record) };
 }
 
-export async function PATCH({ params, request, fetch }) {
+export async function PATCH({ params, request, fetch, locals }) {
 	const id = params.id.toUpperCase();
 	if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
 	const record = await getConfirmedHackathonRecord(id);
@@ -44,6 +45,7 @@ export async function PATCH({ params, request, fetch }) {
 		const current = recordToBookingConfiguration(record);
 		const next = applyHackathonUpdate(current, update);
 		const errors = validateConfiguration(next);
+		if (update.section === 'billing') errors.push(...validateBillingDetails(next.billing));
 		if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 
 		if (update.section === 'prep-call' && next.consultationSlot !== current.consultationSlot) {
@@ -114,6 +116,7 @@ export async function PATCH({ params, request, fetch }) {
 		}
 
 		const updated = await updateConfirmedHackathon(id, next, {}, priceAffecting);
+		if (update.section === 'billing') await recordBillingDetailsUpdated(id, locals.admin.authorized ? 'admin' : 'customer');
 		return json({ hackathon: toPublicHackathon(updated) });
 	} catch (error) {
 		if (error instanceof HackathonUpdateError) return json({ message: error.message }, { status: 400 });

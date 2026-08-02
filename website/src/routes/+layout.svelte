@@ -84,7 +84,7 @@
 	<div class="footer-inner">
 		<div class="footer-links">
 			<a href="/impressum">Impressum</a>
-			<a href="/agb">AGB</a>
+			<a href="/agb">Allgemeine Geschäftsbedingungen</a>
 			<a href="/datenschutz">Datenschutz</a>
 			<a href="/verwalten">Buchung verwalten</a>
 		</div>

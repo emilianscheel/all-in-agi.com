@@ -1,6 +1,6 @@
 import type { BookingConfiguration } from './booking';
 
-export const LEGAL_DOCUMENT_VERSION = '2026-08-02';
+export const LEGAL_DOCUMENT_VERSION = '2026-08-02.2';
 export const LEGAL_DOCUMENT_STATUS = 'review-required' as const;
 
 export type LegalModule = 'venue' | 'catering' | 'organizer_devices' | 'tool_accounts' | 'event_photos';
@@ -22,9 +22,7 @@ export interface LegalDocumentSnapshot {
 }
 
 export const LEGAL_MODULES: ReadonlyArray<{ id: LegalModule; label: string; shortLabel: string }> = [
-	{ id: 'venue', label: 'Location durch ALL IN AGI', shortLabel: 'Location' },
-	{ id: 'catering', label: 'Catering durch ALL IN AGI', shortLabel: 'Catering' },
-	{ id: 'organizer_devices', label: 'Veranstaltergeräte', shortLabel: 'Geräte' },
+	{ id: 'catering', label: 'Pizza-Catering', shortLabel: 'Pizza-Catering' },
 	{ id: 'tool_accounts', label: 'AI-Tool-Zugänge', shortLabel: 'AI-Tools' },
 	{ id: 'event_photos', label: 'Eventfoto-Service', shortLabel: 'Eventfotos' }
 ];
@@ -54,7 +52,8 @@ export const BASE_LEGAL_SECTIONS: LegalSection[] = [
 		paragraphs: [
 			'Maßgeblich sind die eingefrorene Leistungsbestätigung und die darin ausgewählten Module. Allgemeine Leistungsbeschreibungen, Präsentationen und Website-Inhalte werden nur Vertragsbestandteil, soweit die Leistungsbestätigung darauf Bezug nimmt.',
 			'Der Kunde benennt rechtzeitig eine entscheidungsbefugte Kontaktperson, stellt die vereinbarten Zugänge, Informationen und eigenen Ressourcen bereit und informiert seine Teilnehmenden über Hausordnung, Sicherheitsvorgaben, zulässige Tool- und Gerätenutzung sowie den freiwilligen Umgang mit Fotoaufnahmen.',
-			'Änderungen an Termin, Teilnehmendenzahl, Location, Catering, Geräten oder Tools bedürfen einer dokumentierten Änderungsbestätigung. Preis- oder leistungsrelevante Änderungen ersetzen nicht stillschweigend die ursprüngliche Vereinbarung.'
+			'Der Hackathon findet in den vom Kunden angegebenen Räumen statt. Der Kunde stellt ausreichend Platz für die Teams, stabiles WLAN, einen großen Screen sowie Kundengeräte mit Administratorrechten oder entsprechend berechtigte virtuelle Maschinen bereit.',
+			'Änderungen an Termin, Teilnehmendenzahl, Veranstaltungsadresse, Demo-Setup oder Tools bedürfen einer dokumentierten Änderungsbestätigung. Preis- oder leistungsrelevante Änderungen ersetzen nicht stillschweigend die ursprüngliche Vereinbarung.'
 		]
 	},
 	{
@@ -71,7 +70,7 @@ export const BASE_LEGAL_SECTIONS: LegalSection[] = [
 		title: '5. Stornierung durch den Kunden',
 		paragraphs: [
 			'Nach Ablauf des kostenlosen zweitägigen Lösungsrechts kann der Kunde den Auftrag in Textform stornieren. Maßgeblich ist der Zugang der Erklärung bei ALL IN AGI.',
-			'Bei Zugang bis einschließlich 14 Kalendertage vor Veranstaltungsbeginn beträgt der pauschalierte Schadensersatz 1.000 Euro netto für die 15-Personen-Variante, 1.500 Euro netto für die 30-Personen-Variante oder 2.000 Euro netto für die 50-Personen-Variante. Wurden Veranstaltergeräte gebucht, kommen 500 Euro netto hinzu.',
+			'Bei Zugang bis einschließlich 14 Kalendertage vor Veranstaltungsbeginn beträgt der pauschalierte Schadensersatz 1.000 Euro netto für die 15-Personen-Variante, 1.500 Euro netto für die 30-Personen-Variante oder 2.000 Euro netto für die 50-Personen-Variante.',
 			'Bei späterem Zugang werden 100 Prozent des vereinbarten Nettoentgelts abzüglich ersparter Aufwendungen und Erlöse aus einer anderweitigen Verwendung der reservierten Ressourcen berechnet. Dem Kunden bleibt ausdrücklich der Nachweis gestattet, dass kein oder ein wesentlich geringerer Schaden entstanden ist. ALL IN AGI darf einen höheren konkret entstandenen Schaden nachweisen. Geleistete Anzahlungen werden angerechnet; Überschüsse werden erstattet.'
 		]
 	},
@@ -130,38 +129,22 @@ export const BASE_LEGAL_SECTIONS: LegalSection[] = [
 
 export const MODULE_LEGAL_SECTIONS: LegalSection[] = [
 	{
-		id: 'module-venue', module: 'venue', title: 'Zusatzmodul: Location durch ALL IN AGI',
+		id: 'module-catering', module: 'catering', title: 'Pizza-Catering',
 		paragraphs: [
-			'ALL IN AGI organisiert die in der Leistungsbestätigung beschriebene Location als eigener Vertragspartner des Kunden. Die endgültige Location steht unter dem Vorbehalt der dokumentierten Verfügbarkeit und Eignung. Wesentliche Abweichungen bei Ort, Kapazität oder Ausstattung bedürfen der Zustimmung des Kunden.',
-			'ALL IN AGI prüft vor Bestätigung insbesondere die zulässige Veranstaltungs- und Drittnutzung, Kapazität, Brandschutzvorgaben, Fluchtwege, Hausordnung, Zugänglichkeit, Rückgabe- und Schlüsselpflichten sowie einen gegebenenfalls verlangten Versicherungsnachweis. Bei angemieteten Räumen muss die erforderliche Erlaubnis zur Überlassung an den Kunden und seine Teilnehmenden vorliegen.',
-			'Der Kunde haftet nach den gesetzlichen Vorschriften für schuldhaft von ihm oder seinen Teilnehmenden verursachte Schäden. Normale Abnutzung ist kein Schaden. Zustand und außergewöhnliche Schäden werden nachvollziehbar dokumentiert.'
-		]
-	},
-	{
-		id: 'module-catering', module: 'catering', title: 'Zusatzmodul: Catering durch ALL IN AGI',
-		paragraphs: [
-			'ALL IN AGI beschafft Speisen und alkoholfreie Getränke über geeignete gewerbliche Anbieter. Art und Umfang ergeben sich aus der Leistungsbestätigung. Lieferzeiten und geringfügige, zumutbare Sortimentsänderungen können vom Drittanbieter abhängen.',
+			'ALL IN AGI beschafft Pizza über geeignete gewerbliche Anbieter. Vorgesehen sind Margherita, Salami und vegetarische Sorten in einer zur bestätigten Teilnehmendenzahl passenden Menge. Lieferzeiten und geringfügige, zumutbare Sortimentsänderungen können vom Drittanbieter abhängen.',
 			'Allergeninformationen für lose Lebensmittel werden vor Ausgabe zugänglich gemacht. Der Kunde übermittelt Ernährungswünsche möglichst als anonyme Mengen. Teilnehmende mit Allergien oder Unverträglichkeiten müssen die verfügbaren Angaben eigenverantwortlich prüfen und bei Zweifeln auf den Verzehr verzichten; eine Haftung für schuldhaft verursachte Gesundheitsverletzungen wird dadurch nicht ausgeschlossen.',
 			'Eigene Mitarbeitende von ALL IN AGI übernehmen keine erlaubnis- oder belehrungspflichtige gewerbliche Lebensmittelhandhabung ohne die gesetzlich erforderlichen Nachweise.'
 		]
 	},
 	{
-		id: 'module-devices', module: 'organizer_devices', title: 'Zusatzmodul: Veranstaltergeräte',
-		paragraphs: [
-			'Anzahl, Seriennummern, Zubehör, Zustand sowie Ausgabe und Rückgabe werden in einem Übergabeprotokoll festgehalten. Die Geräte dürfen nur während des vereinbarten Zeitraums, für den Hackathon und entsprechend der Nutzungs- und Sicherheitsregeln verwendet und nicht an unbeteiligte Dritte weitergegeben werden.',
-			'Es dürfen ausschließlich synthetische oder nicht vertrauliche Daten verarbeitet werden. Personenbezogene Daten, Produktivdaten, Geschäftsgeheimnisse, Zugangsdaten und vertraulicher Quellcode sind ohne gesonderte schriftliche Sicherheits- und Auftragsverarbeitungsvereinbarung unzulässig. Lokale Daten und Sitzungen werden nach Rückgabe nach dem dokumentierten Löschprozess entfernt.',
-			'Verlust, Diebstahl und Schäden sind unverzüglich zu melden. Die Haftung richtet sich nach Verschulden und nachgewiesenem Schaden; bei wirtschaftlichem Totalschaden ist grundsätzlich der Zeitwert maßgeblich. Normale Abnutzung wird nicht berechnet. Bei gemieteten Geräten stellt ALL IN AGI vor Ausgabe sicher, dass Weitergabe, Versicherung und Softwarelizenzierung gestattet sind.'
-		]
-	},
-	{
-		id: 'module-tools', module: 'tool_accounts', title: 'Zusatzmodul: AI-Tool-Zugänge',
+		id: 'module-tools', module: 'tool_accounts', title: 'AI-Tool-Zugänge',
 		paragraphs: [
 			'ALL IN AGI stellt nur solche Zugänge bereit, deren Vertrags- und Lizenzbedingungen die vorgesehene Nutzung erlauben. Accounts werden, soweit der Anbieter dies verlangt, individuell zugeordnet; eine unzulässige gemeinsame Nutzung von Passwörtern findet nicht statt.',
-			'Für bereitgestellte Tool-Zugänge gelten dieselben Beschränkungen für personenbezogene Daten, Produktivdaten, Geheimnisse und vertraulichen Quellcode wie für Veranstaltergeräte. Der Kunde sorgt für geeignete Testdaten. Funktionen, Verfügbarkeit und Ausgaben der Drittanbieter können sich ändern und werden nicht als fehlerfrei oder für einen bestimmten Produktivzweck geeignet garantiert.'
+			'Über bereitgestellte Tool-Zugänge dürfen ohne gesonderte Sicherheits- und Auftragsverarbeitungsvereinbarung keine personenbezogenen Daten, Produktivdaten, Geheimnisse oder vertraulicher Quellcode verarbeitet werden. Der Kunde sorgt für geeignete synthetische oder nicht vertrauliche Testdaten. Funktionen, Verfügbarkeit und Ausgaben der Drittanbieter können sich ändern und werden nicht als fehlerfrei oder für einen bestimmten Produktivzweck geeignet garantiert.'
 		]
 	},
 	{
-		id: 'module-photos', module: 'event_photos', title: 'Zusatzmodul: Eventfoto-Service',
+		id: 'module-photos', module: 'event_photos', title: 'Eventfoto-Service',
 		paragraphs: [
 			'Fotoaufnahmen und deren geschützte Bereitstellung an den Kunden beziehungsweise an Teilnehmende erfolgen nur im vereinbarten Umfang und auf einer tragfähigen Rechtsgrundlage. Der Kunde unterstützt einen klar erkennbaren No-Photo-Prozess; Personen ohne erforderliche Rechtsgrundlage werden nicht gezielt aufgenommen beziehungsweise vor einer Nutzung ausgesondert.',
 			'Website-, Social-Media-, Werbe- oder Sales-Nutzung erfolgt nur für die konkret benannten Kanäle und Zwecke, in die die abgebildete Person getrennt eingewilligt hat. Ein Widerruf wirkt für die Zukunft und wird für kontrollierbare eigene Kanäle unverzüglich umgesetzt. Bereits rechtmäßig veröffentlichte Druckmedien und Weiterverbreitungen durch unabhängige Dritte können technisch nicht vollständig zurückgeholt werden.'
@@ -171,9 +154,7 @@ export const MODULE_LEGAL_SECTIONS: LegalSection[] = [
 
 export function legalModulesForConfiguration(config: Pick<BookingConfiguration, 'venueProvided' | 'lunch' | 'deviceProvision' | 'toolProvision' | 'eventPhotos'>): LegalModule[] {
 	return [
-		...(!config.venueProvided ? ['venue' as const] : []),
-		...(config.lunch === 'pizza' || config.lunch === 'custom' ? ['catering' as const] : []),
-		...(config.deviceProvision === 'needed' ? ['organizer_devices' as const] : []),
+		'catering',
 		...(config.toolProvision === 'needed' ? ['tool_accounts' as const] : []),
 		...(config.eventPhotos ? ['event_photos' as const] : [])
 	];
@@ -183,7 +164,7 @@ export function legalDocumentPlainText(modules: readonly LegalModule[] = LEGAL_M
 	const selected = new Set(modules);
 	const sections = [...BASE_LEGAL_SECTIONS, ...MODULE_LEGAL_SECTIONS.filter((section) => section.module && selected.has(section.module))];
 	return [
-		'B2B-AGB FÜR AGENTIC ENGINEERING HACKATHONS',
+		'ALLGEMEINE GESCHÄFTSBEDINGUNGEN FÜR AGENTIC ENGINEERING HACKATHONS',
 		`Version ${LEGAL_DOCUMENT_VERSION}`,
 		'',
 		...sections.flatMap((section) => [section.title, ...section.paragraphs, ...(section.items ?? []).map((item) => `- ${item}`), ''])

@@ -12,6 +12,7 @@ function record(): HackathonRecord {
 	return {
 		id: 'HAA-AAA-AAA', status: 'confirmed', companyName: 'Musterwerke GmbH', contactName: 'Ada Beispiel',
 		contactEmail: 'ada@example.com', address: { street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
+		billing: { companyName: 'Musterwerke GmbH', legalForm: '', contactName: 'Ada Beispiel', email: 'rechnung@example.com', vatId: '', purchaseOrder: '', address: { street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' } },
 		eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z', capacity: 15, basePrice: 4000, venueSurcharge: 0,
 		lunchAdjustment: 0, toolsAdjustment: 0, deviceCount: 0, devicesAdjustment: 0, totalPrice: 4000, invoiceSnapshot: null
 	} as HackathonRecord;

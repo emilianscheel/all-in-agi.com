@@ -1,5 +1,5 @@
 import { dev } from '$app/environment';
-import { validateConfiguration, type BookingConfiguration } from '$lib/booking';
+import { validateInquiryConfiguration, type BookingConfiguration } from '$lib/booking';
 import { completeHackathonBookingWithConfirmation } from '$lib/server/book-hackathon';
 import { assertHackathonDayAvailable, assertPrepCallAvailable, bookHackathonDay, bookPrepCall, cancelCalBooking, BookingProviderError } from '$lib/server/cal-booking';
 import {
@@ -60,7 +60,7 @@ export async function POST({ request, fetch }) {
 		const body = await request.json() as Partial<BookingConfiguration>;
 		config = { ...body, message: typeof body.message === 'string' ? body.message : '' } as BookingConfiguration;
 	} catch { return json({ message: 'Die Buchungsdaten sind ungültig.' }, { status: 400 }); }
-	const errors = validateConfiguration(config);
+	const errors = validateInquiryConfiguration(config);
 	if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 	try {
 		await Promise.all([

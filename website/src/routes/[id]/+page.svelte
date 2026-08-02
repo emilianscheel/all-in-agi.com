@@ -39,9 +39,10 @@
 	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { eventDateBounds } from '$lib/event-date';
-	import { formatPrice, selectedCodingToolLabels, validateConfiguration, type BookingConfiguration } from '$lib/booking';
+	import { formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
 	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
+	import { LEGAL_DOCUMENT_VERSION } from '$lib/legal';
 	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 
@@ -104,6 +105,25 @@
 	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
 	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
 	let finalInvoiceAvailable = $derived(!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd)));
+	let standardOffer = $derived(hackathon.legalVersion === LEGAL_DOCUMENT_VERSION);
+	let billingComplete = $derived(validateBillingDetails(hackathon.billing).length === 0);
+
+	function billingDraft(value: typeof data.hackathon): BillingDetails {
+		return value.billing ?? {
+			companyName: value.companyName,
+			legalForm: '',
+			contactName: value.contactName,
+			email: value.email,
+			vatId: '',
+			purchaseOrder: '',
+			address: {
+				street: value.address.street,
+				postalCode: value.address.postalCode,
+				city: value.address.city,
+				country: 'Deutschland'
+			}
+		};
+	}
 
 	function configurationFromHackathon(value: typeof data.hackathon): BookingConfiguration {
 		return {
@@ -127,7 +147,7 @@
 			eventStart: value.eventStart,
 			eventEnd: value.eventEnd,
 			consultationSlot: value.consultationSlot,
-			billing: value.billing,
+			billing: billingDraft(value),
 			businessCustomerConfirmed: value.businessCustomerConfirmed,
 			authorityConfirmed: value.authorityConfirmed
 		};
@@ -194,6 +214,14 @@
 		draft = next;
 	}
 
+	function updateDraftBilling(patch: Partial<BillingDetails>) {
+		draft = { ...draft, billing: { ...draft.billing!, ...patch } };
+	}
+
+	function updateDraftBillingAddress(patch: Partial<BillingDetails['address']>) {
+		draft = { ...draft, billing: { ...draft.billing!, address: { ...draft.billing!.address, ...patch } } };
+	}
+
 	function openEditor(section: EditSection) {
 		if (readOnly) return;
 		if (activeSection === section) {
@@ -226,6 +254,7 @@
 			case 'prep-call': return { section, consultationSlot: draft.consultationSlot };
 			case 'company': return { section, companyName: draft.companyName };
 			case 'contact': return { section, contactName: draft.contactName, email: draft.email, phone: draft.phone };
+			case 'billing': return { section, billing: draft.billing! };
 			case 'message': return { section, message: draft.message };
 		}
 	}
@@ -233,6 +262,7 @@
 	async function saveEditor() {
 		if (!activeSection) return;
 		const errors = validateConfiguration(draft);
+		if (activeSection === 'billing') errors.push(...validateBillingDetails(draft.billing));
 		if (errors.length) {
 			editError = errors[0];
 			return;
@@ -483,7 +513,8 @@
 						<div class="contract-admin-form">
 							<div class="field"><label for="agreement-customer">Zustimmende Person Kunde</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
 							<div class="field"><label for="agreement-organizer">Zustimmende Person ALL IN AGI</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
-							<button class="button-primary action-button" type="button" onclick={recordAgreement} disabled={contractBusy}>Beiderseitige Zustimmung dokumentieren</button>
+							{#if !billingComplete}<p class="admin-action-message">Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.</p>{/if}
+							<button class="button-primary action-button" type="button" onclick={recordAgreement} disabled={contractBusy || !billingComplete}>Beiderseitige Zustimmung und B2B-Vertretungsbefugnis dokumentieren</button>
 						</div>
 					{:else if hackathon.status === 'exit_window'}
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
@@ -558,24 +589,47 @@
 				<EditableSummaryRow icon={Contact} label="Kontakt" value={`${hackathon.contactName} · ${hackathon.email} · ${hackathon.phone}`} status="Gespeichert" active={activeSection === 'contact'} {saving} error={activeSection === 'contact' ? editError : ''} onedit={() => openEditor('contact')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ContactFields companyName={draft.companyName} contactName={draft.contactName} email={draft.email} phone={draft.phone} showCompany={false} idPrefix="detail-contact" onchange={(patch) => (draft = { ...draft, ...patch })} />{/snippet}
 				</EditableSummaryRow>
+				<EditableSummaryRow icon={ReceiptEuro} label="Rechnungsdaten" value={hackathon.billing ? `${hackathon.billing.companyName}${hackathon.billing.legalForm ? ` ${hackathon.billing.legalForm}` : ''} · ${hackathon.billing.email}` : 'Noch nicht hinterlegt'} status={billingComplete ? 'Vollständig' : 'Vor Vertragsschluss erforderlich'} active={activeSection === 'billing'} {saving} error={activeSection === 'billing' ? editError : ''} onedit={() => openEditor('billing')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}
+						<div class="field-grid billing-fields">
+							<div class="field"><label for="detail-billing-company">Firma</label><input id="detail-billing-company" autocomplete="organization" value={draft.billing!.companyName} oninput={(event) => updateDraftBilling({ companyName: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-legal-form">Rechtsform <small>(optional)</small></label><input id="detail-billing-legal-form" placeholder="z. B. GmbH" value={draft.billing!.legalForm} oninput={(event) => updateDraftBilling({ legalForm: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-contact">Rechnungskontakt</label><input id="detail-billing-contact" autocomplete="name" value={draft.billing!.contactName} oninput={(event) => updateDraftBilling({ contactName: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-email">Rechnungs-E-Mail</label><input id="detail-billing-email" type="email" autocomplete="email" value={draft.billing!.email} oninput={(event) => updateDraftBilling({ email: event.currentTarget.value })} /></div>
+							<div class="field full"><label for="detail-billing-street">Straße und Hausnummer</label><input id="detail-billing-street" autocomplete="billing street-address" value={draft.billing!.address.street} oninput={(event) => updateDraftBillingAddress({ street: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-postal">Postleitzahl</label><input id="detail-billing-postal" autocomplete="billing postal-code" value={draft.billing!.address.postalCode} oninput={(event) => updateDraftBillingAddress({ postalCode: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-city">Ort</label><input id="detail-billing-city" autocomplete="billing address-level2" value={draft.billing!.address.city} oninput={(event) => updateDraftBillingAddress({ city: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-vat">USt-IdNr. <small>(optional)</small></label><input id="detail-billing-vat" value={draft.billing!.vatId} oninput={(event) => updateDraftBilling({ vatId: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-po">Bestellnummer <small>(optional)</small></label><input id="detail-billing-po" value={draft.billing!.purchaseOrder} oninput={(event) => updateDraftBilling({ purchaseOrder: event.currentTarget.value })} /></div>
+						</div>
+					{/snippet}
+				</EditableSummaryRow>
 				<EditableSummaryRow icon={MessageSquareText} label="Ihre Nachricht" value={hackathon.message || 'Keine Nachricht hinterlegt'} status={hackathon.message ? 'Vorhanden' : 'Optional'} active={activeSection === 'message'} {saving} error={activeSection === 'message' ? editError : ''} onedit={() => openEditor('message')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<MessageField value={draft.message} onchange={(message) => (draft = { ...draft, message })} id="detail-message" />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Users} label={overviewRow('team').label} value={overviewRow('team').value} status={overviewRow('team').status} active={activeSection === 'capacity'} {saving} error={activeSection === 'capacity' ? editError : ''} onedit={() => openEditor('capacity')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="capacity" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-capacity" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={MapPin} label={overviewRow('location').label} value={overviewRow('location').value} status={overviewRow('location').status} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<ConfigOptionCards kind="venue" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-venue" />{/snippet}
-				</EditableSummaryRow>
+				{#if standardOffer}
+					<EditableSummaryRow icon={MapPin} label="Veranstaltungsort" value="Räume des Kunden" status="Vorausgesetzt" />
+				{:else}
+					<EditableSummaryRow icon={MapPin} label={overviewRow('location').label} value={overviewRow('location').value} status={overviewRow('location').status} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
+						{#snippet editor()}<ConfigOptionCards kind="venue" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-venue" />{/snippet}
+					</EditableSummaryRow>
+				{/if}
 				<EditableSummaryRow icon={MapPinned} label={hackathon.venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'} value={eventAddressLabel} status={hackathon.venueProvided ? 'Geplant' : 'Location wird bestätigt'} active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<AddressEditor value={draft.address} onchange={(address) => (draft = { ...draft, address })} idPrefix="detail-address" searchArea={!draft.venueProvided} />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Code2} label={overviewRow('tools').label} value={overviewRow('tools').value} status={overviewRow('tools').status} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="tools" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-tools" />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Laptop} label={overviewRow('devices').label} value={overviewRow('devices').value} status={overviewRow('devices').status} active={activeSection === 'devices'} {saving} error={activeSection === 'devices' ? editError : ''} onedit={() => openEditor('devices')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<ConfigOptionCards kind="devices" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-devices" />{/snippet}
-				</EditableSummaryRow>
+				{#if standardOffer}
+					<EditableSummaryRow icon={Laptop} label="Devices" value="Kundengeräte mit Administratorrechten" status="Vorausgesetzt" />
+				{:else}
+					<EditableSummaryRow icon={Laptop} label={overviewRow('devices').label} value={overviewRow('devices').value} status={overviewRow('devices').status} active={activeSection === 'devices'} {saving} error={activeSection === 'devices' ? editError : ''} onedit={() => openEditor('devices')} onsave={saveEditor} oncancel={cancelEditor}>
+						{#snippet editor()}<ConfigOptionCards kind="devices" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-devices" />{/snippet}
+					</EditableSummaryRow>
+				{/if}
 				<EditableSummaryRow icon={Monitor} label={overviewRow('equipment').label} value={overviewRow('equipment').value} status={overviewRow('equipment').status} active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="equipment" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-equipment" />{/snippet}
 				</EditableSummaryRow>
@@ -585,9 +639,13 @@
 				<EditableSummaryRow icon={Clock3} label={overviewRow('prep-call').label} value={overviewRow('prep-call').value} status={overviewRow('prep-call').status} active={activeSection === 'prep-call'} {saving} error={activeSection === 'prep-call' ? editError : ''} onedit={() => openEditor('prep-call')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<PrepCallEditor value={draft.consultationSlot} mode={prepCallMode} customDate={customPrepCallDate} onchange={(consultationSlot) => (draft = { ...draft, consultationSlot })} onmodechange={(value) => (prepCallMode = value)} oncustomdatechange={(value) => (customPrepCallDate = value)} />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Pizza} label={overviewRow('lunch').label} value={overviewRow('lunch').value} status={overviewRow('lunch').status} active={activeSection === 'lunch'} {saving} error={activeSection === 'lunch' ? editError : ''} onedit={() => openEditor('lunch')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<ConfigOptionCards kind="lunch" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-lunch" />{/snippet}
-				</EditableSummaryRow>
+				{#if standardOffer}
+					<EditableSummaryRow icon={Pizza} label="Mittagessen" value="Pizza: Margherita, Salami und vegetarische Sorten" status="Inklusive" />
+				{:else}
+					<EditableSummaryRow icon={Pizza} label={overviewRow('lunch').label} value={overviewRow('lunch').value} status={overviewRow('lunch').status} active={activeSection === 'lunch'} {saving} error={activeSection === 'lunch' ? editError : ''} onedit={() => openEditor('lunch')} onsave={saveEditor} oncancel={cancelEditor}>
+						{#snippet editor()}<ConfigOptionCards kind="lunch" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-lunch" />{/snippet}
+					</EditableSummaryRow>
+				{/if}
 				<EditableSummaryRow icon={Award} label={overviewRow('winner-poster').label} value={overviewRow('winner-poster').value} status={overviewRow('winner-poster').status} />
 				<EditableSummaryRow icon={Camera} label={overviewRow('event-photos').label} value={overviewRow('event-photos').value} status={overviewRow('event-photos').status} />
 				<EditableSummaryRow icon={Cookie} label={overviewRow('snacks').label} value={overviewRow('snacks').value} status={overviewRow('snacks').status} />

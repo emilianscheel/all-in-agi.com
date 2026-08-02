@@ -42,22 +42,17 @@ Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Ang
 - Bis zu 15 Personen: 4.000 € netto Grundpreis.
 - Bis zu 30 Personen: 5.000 € netto Grundpreis.
 - Bis zu 50 Personen: 6.000 € netto Grundpreis.
-- Eigene geeignete Location des Kunden: inklusive.
-- Von ALL IN AGI organisierte Location im gewünschten Suchgebiet: +500 € für bis zu 15 Personen, +1.000 € für bis zu 30 Personen oder +1.500 € für bis zu 50 Personen netto. Die genaue Location wird anschließend bestätigt.
-- Pizza-Lunch: inklusive.
-- Individuelles Catering nach Wunsch: +500 € netto.
-- Kein Lunch oder vom Kunden selbst organisiertes Catering: jeweils −500 € netto.
+- Durchführung in geeigneten Räumen des Kunden: inklusive und Voraussetzung.
+- Pizza-Lunch mit Margherita, Salami und vegetarischen Sorten: inklusive.
 - Bereits vorhandene Agentic Coding Tools: inklusive.
 - Bereitstellung unterstützter Coding Tools durch ALL IN AGI für den Tag: +500 € für bis zu 15 Personen, +1.000 € für bis zu 30 Personen oder +1.500 € für bis zu 50 Personen netto.
-- Unternehmenslaptops oder private Geräte: inklusive.
-- Von ALL IN AGI bereitgestellte Geräte für den Veranstaltungstag: +150 € netto pro Gerät, höchstens ein Gerät pro teilnehmender Person.
-- Je nach Konfiguration liegt der aktuell auswählbare Gesamtpreis zwischen 3.500 € und 17.000 € netto.
+- Kundengeräte mit Administratorrechten oder entsprechend berechtigte virtuelle Maschinen: Voraussetzung.
+- Je nach Teamgröße und Tool-Bereitstellung liegt der aktuell auswählbare Gesamtpreis zwischen 4.000 € und 7.500 € netto.
 - Sämtliche veröffentlichten Beträge sind Nettopreise. Eine darüber hinausgehende Regelung zur Umsatzsteuer ist nicht veröffentlicht.
 
 **Location, Ausstattung und Voraussetzungen**
 
-- Bei einer eigenen Location werden ein ausreichend großer Raum für die Teams, stabiles WLAN und ein großer Screen empfohlen.
-- Falls der Kunde keine geeignete Location bereitstellt, kann ALL IN AGI gegen den genannten Aufpreis einen passenden Raum im gewünschten Suchgebiet in Deutschland organisieren.
+- Der Kunde stellt einen ausreichend großen Raum für die Teams, stabiles WLAN und einen großen Screen bereit.
 - Wenn kein Projektor oder Display vorhanden ist, bringt ALL IN AGI die benötigte Präsentationstechnik mit.
 - Benötigt werden motivierte Builder, geeignete Arbeitsgeräte sowie die im Vorbereitungsgespräch vereinbarten Zugänge und Arbeitsumgebungen. Die Teilnehmenden benötigen Administratorrechte auf den Geräten oder Zugriff auf virtuelle Maschinen, auf denen sie Administratorrechte haben.
 
@@ -73,7 +68,7 @@ Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Ang
 - Ein 60-minütiges Vorbereitungsgespräch ist Teil jeder Buchung. Dafür werden verfügbare Termine in der Zeitzone Europe/Berlin angezeigt.
 - Das Vorbereitungsgespräch kann frühestens am folgenden Tag und innerhalb der nächsten 45 Tage gewählt werden, sofern ein freier Termin verfügbar ist.
 - Der Hackathontag kann frühestens am folgenden Tag und bis zu ein Jahr im Voraus geplant werden.
-- Für die Buchung werden Teamgröße, Location, Tools, Geräte, Demo-Setup, Lunch, deutsche Veranstaltungsadresse beziehungsweise gewünschtes Suchgebiet, Datum und Uhrzeit, Unternehmen, Ansprechperson, E-Mail-Adresse, Telefonnummer sowie der Termin des Vorbereitungsgesprächs benötigt. Eine Nachricht mit bis zu 500 Zeichen ist optional.
+- Für die Anfrage werden Teamgröße, Tools, Demo-Setup, deutsche Veranstaltungsadresse, Datum und Zeitfenster, Unternehmen, Ansprechperson, E-Mail-Adresse, Telefonnummer sowie der Termin des Vorbereitungsgesprächs benötigt. Eine Nachricht mit bis zu 500 Zeichen ist optional.
 - Der Konfigurator berechnet den Nettopreis unmittelbar aus der gewählten Teamgröße und den Optionen. Ein konfigurierter Plan kann vor der Buchung über einen Plan-Link geteilt werden.
 - Mit dem Absenden des vollständigen Buchungsformulars werden der Hackathontag und das Vorbereitungsgespräch gebucht. Ist ein gewählter Termin zwischenzeitlich nicht mehr verfügbar, muss ein neuer verfügbarer Termin gewählt werden.
 - Nach erfolgreicher Buchung erscheint eine Bestätigung. Zusätzlich wird eine Bestätigungs-E-Mail mit Buchungs-ID, Buchungsdetails, einem PDF-Hackathonplan, einer Kalenderdatei für das Vorbereitungsgespräch und einem buchungsspezifischen Verwaltungslink versendet.
@@ -86,8 +81,8 @@ Diese Datei ist die kompakte, maschinenlesbare Faktengrundlage zum Hackathon-Ang
 - Wie werden Daten geschützt? Datenklassen, Tools, Zugänge und Umgebung werden vorab vereinbart; gearbeitet wird nur in dieser Umgebung.
 - Was muss vor Ort vorhanden sein? Ein großer Raum, stabiles WLAN, Arbeitsgeräte und motivierte Builder. Fehlende Präsentationstechnik kann ALL IN AGI mitbringen.
 - Gibt es veröffentlichte Stornierungs-, Erstattungs- oder Umbuchungsfristen? Nein. Die technische Möglichkeit zur Verwaltung einer Buchung ersetzt keine veröffentlichten Stornierungs- oder Erstattungsbedingungen.
-- Wann und wie wird bezahlt? Zahlungsart, Zahlungsziel und Rechnungsablauf sind derzeit nicht veröffentlicht.
-- Wie wird Umsatzsteuer behandelt? Veröffentlicht sind ausschließlich Nettopreise; weitere steuerliche Angaben sind derzeit nicht veröffentlicht.
+- Wann und wie wird bezahlt? Nach Vertragsschluss werden 30 Prozent mit sieben Tagen Zahlungsziel berechnet; die Schlussrechnung folgt nach der Veranstaltung mit 14 Tagen Zahlungsziel.
+- Wie wird Umsatzsteuer behandelt? Die veröffentlichten Nettopreise werden derzeit zuzüglich 19 Prozent Umsatzsteuer abgerechnet.
 - Wem gehören Ideen, Quellcode und Ergebnisse? Eine Regelung zu geistigem Eigentum und Nutzungsrechten ist derzeit nicht veröffentlicht.
 - Gibt es eine Vertraulichkeitsvereinbarung oder NDA? Vertraulichkeitsbedingungen sind derzeit nicht veröffentlicht.
 - Welche Barrierefreiheits- oder individuellen Unterstützungsangebote gibt es? Konkrete Zusagen sind derzeit nicht veröffentlicht.

@@ -1,5 +1,6 @@
 import {
 	CODING_TOOLS,
+	type BillingDetails,
 	type BookingConfiguration,
 	type Capacity,
 	type CodingTool,
@@ -22,6 +23,7 @@ export type HackathonUpdate =
 	| { section: 'prep-call'; consultationSlot: string }
 	| { section: 'company'; companyName: string }
 	| { section: 'contact'; contactName: string; email: string; phone: string }
+	| { section: 'billing'; billing: BillingDetails }
 	| { section: 'message'; message: string };
 
 export class HackathonUpdateError extends Error {}
@@ -53,6 +55,26 @@ function parseAddress(value: unknown): EventAddress {
 		country: 'Deutschland',
 		...(typeof latitude === 'number' ? { latitude } : {}),
 		...(typeof longitude === 'number' ? { longitude } : {})
+	};
+}
+
+function parseBilling(value: unknown): BillingDetails {
+	const billing = object(value);
+	const address = object(billing.address);
+	if (address.country !== 'Deutschland') throw new HackathonUpdateError('Die Rechnungsanschrift ist ungültig.');
+	return {
+		companyName: string(billing.companyName, 'Der Rechnungsempfänger', 160),
+		legalForm: string(billing.legalForm, 'Die Rechtsform', 80),
+		contactName: string(billing.contactName, 'Der Rechnungskontakt', 160),
+		email: string(billing.email, 'Die Rechnungs-E-Mail', 320),
+		vatId: string(billing.vatId, 'Die USt-IdNr.', 40),
+		purchaseOrder: string(billing.purchaseOrder, 'Die Bestellnummer', 120),
+		address: {
+			street: string(address.street, 'Die Rechnungsstraße', 200),
+			postalCode: string(address.postalCode, 'Die Rechnungspostleitzahl', 20),
+			city: string(address.city, 'Der Rechnungsort', 120),
+			country: 'Deutschland'
+		}
 	};
 }
 
@@ -108,6 +130,8 @@ export function parseHackathonUpdate(value: unknown): HackathonUpdate {
 				email: string(update.email, 'Die E-Mail-Adresse', 320),
 				phone: string(update.phone, 'Die Telefonnummer', 80)
 			};
+		case 'billing':
+			return { section: update.section, billing: parseBilling(update.billing) };
 		case 'message':
 			return { section: update.section, message: string(update.message, 'Ihre Nachricht') };
 		default:
@@ -128,6 +152,7 @@ export function applyHackathonUpdate(config: BookingConfiguration, update: Hacka
 		case 'prep-call': return { ...config, consultationSlot: update.consultationSlot };
 		case 'company': return { ...config, companyName: update.companyName };
 		case 'contact': return { ...config, contactName: update.contactName, email: update.email, phone: update.phone };
+		case 'billing': return { ...config, billing: update.billing };
 		case 'message': return { ...config, message: update.message };
 	}
 }

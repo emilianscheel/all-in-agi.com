@@ -90,6 +90,15 @@ export const TOOLS_SURCHARGES: Record<Capacity, number> = {
 };
 export const DEVICE_PRICE = 150;
 
+export const STANDARD_HACKATHON_OPTIONS = {
+	venueProvided: true,
+	lunch: 'pizza',
+	customLunch: '',
+	deviceProvision: 'existing',
+	deviceCount: 0,
+	eventPhotos: true
+} as const;
+
 export function getPrice(
 	capacity: Capacity,
 	venueProvided: boolean,
@@ -179,14 +188,7 @@ export function validateConfiguration(config: BookingConfiguration) {
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
 		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
 	}
-	if (typeof config.eventPhotos !== 'boolean') errors.push('Bitte wählen Sie aus, ob Eventfotos gewünscht sind.');
-	if (!config.businessCustomerConfirmed) errors.push('Bitte bestätigen Sie, dass Sie als Unternehmen und nicht als Verbraucher anfragen.');
-	if (!config.authorityConfirmed) errors.push('Bitte bestätigen Sie Ihre Vertretungsbefugnis.');
-	if (!config.billing?.companyName?.trim() || !config.billing.contactName?.trim()) errors.push('Bitte vervollständigen Sie die Rechnungsdaten.');
-	if (!/^\S+@\S+\.\S+$/.test(config.billing?.email ?? '')) errors.push('Bitte geben Sie eine gültige Rechnungs-E-Mail-Adresse an.');
-	if (!config.billing?.address?.street?.trim() || !config.billing.address.postalCode?.trim() || !config.billing.address.city?.trim()) {
-		errors.push('Bitte vervollständigen Sie die Rechnungsanschrift.');
-	}
+	if (typeof config.eventPhotos !== 'boolean') errors.push('Die Fotoeinstellung ist ungültig.');
 	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.');
 	const consultationDate = new Date(config.consultationSlot);
 	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.');
@@ -210,4 +212,27 @@ export function validateConfiguration(config: BookingConfiguration) {
 		errors.push(`Bitte wählen Sie zwischen 1 und ${config.capacity} Geräten.`);
 	}
 	return errors;
+}
+
+export function validateBillingDetails(billing: BillingDetails | null | undefined) {
+	const errors: string[] = [];
+	if (!billing?.companyName?.trim() || !billing.contactName?.trim()) errors.push('Bitte vervollständigen Sie die Rechnungsdaten.');
+	if (!/^\S+@\S+\.\S+$/.test(billing?.email ?? '')) errors.push('Bitte geben Sie eine gültige Rechnungs-E-Mail-Adresse an.');
+	if (!billing?.address?.street?.trim() || !billing.address.postalCode?.trim() || !billing.address.city?.trim()) {
+		errors.push('Bitte vervollständigen Sie die Rechnungsanschrift.');
+	}
+	return errors;
+}
+
+export function validateInquiryConfiguration(config: BookingConfiguration) {
+	const errors = validateConfiguration(config);
+	if (config.venueProvided !== STANDARD_HACKATHON_OPTIONS.venueProvided) errors.push('Hackathons finden ausschließlich in den Räumen des Kunden statt.');
+	if (config.lunch !== STANDARD_HACKATHON_OPTIONS.lunch || config.customLunch !== '') errors.push('Im Standardangebot ist ausschließlich Pizza-Catering vorgesehen.');
+	if (config.deviceProvision !== STANDARD_HACKATHON_OPTIONS.deviceProvision || config.deviceCount !== 0) errors.push('Für den Hackathon werden ausschließlich Kundengeräte verwendet.');
+	if (config.eventPhotos !== STANDARD_HACKATHON_OPTIONS.eventPhotos) errors.push('Der Eventfoto-Service ist Bestandteil des Standardangebots.');
+	return errors;
+}
+
+export function validateContractReadiness(config: BookingConfiguration) {
+	return [...validateConfiguration(config), ...validateBillingDetails(config.billing)];
 }

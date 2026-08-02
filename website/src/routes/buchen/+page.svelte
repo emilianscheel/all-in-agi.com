@@ -3,31 +3,16 @@
     import { goto, replaceState } from "$app/navigation";
     import { onDestroy, onMount } from "svelte";
     import {
-        Apple,
         Award,
-        Beef,
-        CakeSlice,
         CalendarDays,
-        Camera,
-		Check,
         Clock3,
         Code2,
-        Coffee,
         Cookie,
-        Drumstick,
-        Fish,
-        IceCreamBowl,
-		Laptop,
         MapPin,
         Monitor,
         Pizza,
         Plane,
         ReceiptEuro,
-        Salad,
-        Sandwich,
-        Soup,
-        Utensils,
-        UtensilsCrossed,
         Users,
     } from "lucide-svelte";
     import {
@@ -36,13 +21,12 @@
         formatPrice,
         getPrice,
         selectedCodingToolLabels,
-        validateConfiguration,
+        validateInquiryConfiguration,
         type BookingConfiguration,
         type Capacity,
         type CodingTool,
         type Equipment,
         type EventAddress,
-		type BillingDetails,
         type Lunch,
         type ToolProvision,
 		type DeviceProvision,
@@ -53,7 +37,6 @@
     import AnimatedValue from "$lib/AnimatedValue.svelte";
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
-    import { lunchIconKind } from "$lib/lunch-icon";
     import type { SharedPlanV5 } from "$lib/shared-plan";
     import { reveal } from "$lib/motion";
     import MapPreview from "$lib/MapPreview.svelte";
@@ -64,35 +47,23 @@
     import MessageField from "$lib/config/MessageField.svelte";
     import PrepCallEditor from "$lib/config/PrepCallEditor.svelte";
     import SeoHead from "$lib/SeoHead.svelte";
-	import { legalModulesForConfiguration } from '$lib/legal';
 
     let capacity = $state<Capacity>(15);
-    let venueProvided = $state(true);
+    const venueProvided = true;
     let equipment = $state<Equipment>("projector");
-    let lunch = $state<Lunch>("pizza");
-    let customLunch = $state("");
+    const lunch: Lunch = "pizza";
+    const customLunch = "";
     let toolProvision = $state<ToolProvision | null>(null);
     let codingTools = $state<CodingTool[]>([]);
     let customCodingTool = $state("");
-    let deviceProvision = $state<DeviceProvision | null>(null);
-    let deviceCount = $state(0);
-	let eventPhotos = $state(true);
+    const deviceProvision: DeviceProvision = 'existing';
+    const deviceCount = 0;
+	const eventPhotos = true;
     let companyName = $state("");
     let contactName = $state("");
     let email = $state("");
     let phone = $state("");
     let message = $state("");
-	let billingCompanyName = $state("");
-	let billingLegalForm = $state("");
-	let billingContactName = $state("");
-	let billingEmail = $state("");
-	let billingVatId = $state("");
-	let billingPurchaseOrder = $state("");
-	let billingStreet = $state("");
-	let billingPostalCode = $state("");
-	let billingCity = $state("");
-	let businessCustomerConfirmed = $state(false);
-	let authorityConfirmed = $state(false);
     let eventStart = $state("");
     let eventEnd = $state("");
     let consultationSlot = $state("");
@@ -128,10 +99,8 @@
     let mapExpandedHeight = $state<number | undefined>();
     let previewFadeFrame: number | undefined;
     let reducedMotion: MediaQueryList | undefined;
-    let debouncedCustomLunch = $state("");
-    let customLunchDebounce: ReturnType<typeof setTimeout> | undefined;
 
-    let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision, deviceProvision, deviceCount));
+    let price = $derived(getPrice(capacity, true, 'pizza', toolProvision, 'existing', 0));
     let eventAddressLabel = $derived(
         [address.street, [address.postalCode, address.city].filter(Boolean).join(" ")]
             .filter(Boolean)
@@ -142,33 +111,8 @@
     let toolsPreviewLabel = $derived(
         toolProvision ? codingToolLabels.join(", ") || "Noch keine ausgewählt" : "Noch offen",
     );
-    let lunchPreviewLabel = $derived(
-        lunch === "pizza"
-            ? "Pizza"
-            : lunch === "custom"
-              ? debouncedCustomLunch || "Custom Catering"
-              : lunch === "self-organized"
-                ? "Selbstorganisiert"
-                : "Ohne Lunch",
-    );
-    let selectedLunchIconKind = $derived(lunchIconKind(lunch, debouncedCustomLunch));
-    let LunchIcon = $derived(
-        {
-            pizza: Pizza,
-            "utensils-crossed": UtensilsCrossed,
-            utensils: Utensils,
-            soup: Soup,
-            salad: Salad,
-            sandwich: Sandwich,
-            fish: Fish,
-            beef: Beef,
-            drumstick: Drumstick,
-            cake: CakeSlice,
-            "ice-cream": IceCreamBowl,
-            coffee: Coffee,
-            apple: Apple,
-        }[selectedLunchIconKind],
-    );
+    const lunchPreviewLabel = "Pizza";
+    const LunchIcon = Pizza;
     let optionValues = $derived<OptionValues>({
         capacity,
         venueProvided,
@@ -182,32 +126,15 @@
 		deviceCount,
     });
     let overviewRows = $derived(bookingOverviewRows(buildConfiguration()));
-	let legalModulesUrl = $derived(`/agb?selection=custom&${legalModulesForConfiguration(buildConfiguration()).map((module) => `module=${encodeURIComponent(module)}`).join('&')}`);
 
     const { min: minEventDate, max: maxEventDate } = eventDateBounds();
 
-    $effect(() => {
-        const nextCustomLunch = customLunch.trim();
-        if (customLunchDebounce) clearTimeout(customLunchDebounce);
-        customLunchDebounce = setTimeout(() => {
-            debouncedCustomLunch = nextCustomLunch;
-        }, 280);
-    });
-
     function updateOptionValues(patch: Partial<OptionValues>) {
-        if (patch.capacity !== undefined) {
-			capacity = patch.capacity;
-			if (deviceProvision === 'needed' && deviceCount > capacity) deviceCount = capacity;
-		}
-        if (patch.venueProvided !== undefined) venueProvided = patch.venueProvided;
+        if (patch.capacity !== undefined) capacity = patch.capacity;
         if (patch.equipment !== undefined) equipment = patch.equipment;
-        if (patch.lunch !== undefined) lunch = patch.lunch;
-        if (patch.customLunch !== undefined) customLunch = patch.customLunch;
         if (patch.toolProvision !== undefined) toolProvision = patch.toolProvision;
         if (patch.codingTools !== undefined) codingTools = patch.codingTools;
         if (patch.customCodingTool !== undefined) customCodingTool = patch.customCodingTool;
-		if (patch.deviceProvision !== undefined) deviceProvision = patch.deviceProvision;
-		if (patch.deviceCount !== undefined) deviceCount = patch.deviceCount;
     }
 
 	function updateSuggestions() {
@@ -243,15 +170,6 @@
 
 
     function buildConfiguration(): BookingConfiguration {
-		const billing: BillingDetails = {
-			companyName: billingCompanyName,
-			legalForm: billingLegalForm,
-			contactName: billingContactName,
-			email: billingEmail,
-			vatId: billingVatId,
-			purchaseOrder: billingPurchaseOrder,
-			address: { street: billingStreet, postalCode: billingPostalCode, city: billingCity, country: 'Deutschland' }
-		};
         return {
             capacity,
             venueProvided,
@@ -273,9 +191,6 @@
             eventStart,
             eventEnd,
             consultationSlot,
-			billing,
-			businessCustomerConfirmed,
-			authorityConfirmed,
         };
     }
 
@@ -284,25 +199,18 @@
     }
 
     function buildSharedPlan(): SharedPlanV5 {
-		const { billing: _billing, businessCustomerConfirmed: _business, authorityConfirmed: _authority, ...shareable } = buildConfiguration();
-		return { v: 5, ...shareable, consultationMode, customConsultationDate };
+		return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
     }
 
     function applySharedPlan(plan: SharedPlanV5) {
         capacity = plan.capacity;
-        venueProvided = plan.venueProvided;
         equipment = plan.equipment;
-        lunch = plan.lunch;
-        customLunch = plan.customLunch;
         toolProvision = plan.toolProvision;
         codingTools =
             plan.toolProvision === "needed"
                 ? plan.codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool))
                 : plan.codingTools;
         customCodingTool = plan.toolProvision === "needed" ? "" : plan.customCodingTool;
-		deviceProvision = plan.deviceProvision;
-		deviceCount = plan.deviceCount;
-		eventPhotos = plan.eventPhotos ?? true;
         companyName = plan.companyName;
         contactName = plan.contactName;
         email = plan.email;
@@ -373,7 +281,7 @@
 
     async function submitBooking() {
         const config = buildConfiguration();
-        errors = validateConfiguration(config);
+        errors = validateInquiryConfiguration(config);
         if (errors.length) return;
         submitting = true;
         try {
@@ -477,7 +385,6 @@
         if (!browser) return;
         if (addressDebounce) clearTimeout(addressDebounce);
         if (planDebounce) clearTimeout(planDebounce);
-        if (customLunchDebounce) clearTimeout(customLunchDebounce);
         if (previewFadeFrame !== undefined) cancelAnimationFrame(previewFadeFrame);
         window.removeEventListener("scroll", schedulePreviewFade);
         window.removeEventListener("resize", schedulePreviewFade);
@@ -601,8 +508,8 @@
                                 /></b
                             >
                         </div>
-						<div class:event-detail-unselected={!deviceProvision} class="event-detail" aria-hidden={!deviceProvision}>
-							<small>Devices</small><b><AnimatedValue value={deviceProvision === 'needed' ? `${deviceCount} ${deviceCount === 1 ? 'Gerät' : 'Geräte'}` : 'Eigene Geräte'} active={Boolean(deviceProvision)} /></b>
+						<div class="event-detail">
+							<small>Devices</small><b>Eigene Geräte</b>
 						</div>
                         <div class="event-detail">
                             <small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b>
@@ -646,16 +553,7 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
-                <h2>Veranstaltungsort</h2>
-                <ConfigOptionCards
-                    kind="venue"
-                    values={optionValues}
-                    onchange={updateOptionValues}
-                />
-            </section>
-
-            <section class="config-section tools-section" use:reveal>
+			<section class="config-section tools-section" use:reveal>
                 <h2>Tools</h2>
                 <ConfigOptionCards
                     kind="tools"
@@ -665,11 +563,6 @@
             </section>
 
 			<section class="config-section" use:reveal>
-				<h2>Devices</h2>
-				<ConfigOptionCards kind="devices" values={optionValues} onchange={updateOptionValues} />
-			</section>
-
-            <section class="config-section" use:reveal>
                 <h2>Demo setup</h2>
                 <ConfigOptionCards
                     kind="equipment"
@@ -678,30 +571,13 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
-                <h2>Mittagessen</h2>
-                <ConfigOptionCards
-                    kind="lunch"
-                    values={optionValues}
-                    onchange={updateOptionValues}
-                />
-            </section>
-
 			<section class="config-section" use:reveal>
-				<h2>Eventfotos</h2>
-				<div class="option-grid">
-					<label class:selected={eventPhotos} class="choice"><input type="radio" name="booking-event-photos" checked={eventPhotos} onchange={() => (eventPhotos = true)} /><b>Event dokumentieren</b><small>Aufnahme und geschützte Bereitstellung im vereinbarten Umfang. Marketing nur mit separater Einwilligung.</small><span class="choice-price">Inklusive</span></label>
-					<label class:selected={!eventPhotos} class="choice"><input type="radio" name="booking-event-photos" checked={!eventPhotos} onchange={() => (eventPhotos = false)} /><b>Keine Eventfotos</b><small>Der Hackathon findet ohne Foto-Service von ALL IN AGI statt.</small><span class="choice-price">Abgewählt</span></label>
-				</div>
-			</section>
-
-            <section class="config-section" use:reveal>
-				<h2>{venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'}</h2>
+				<h2>Veranstaltungsadresse</h2>
                 <AddressEditor
                     value={address}
                     onchange={(value) => (address = value)}
                     idPrefix="booking-address"
-					searchArea={!venueProvided}
+					searchArea={false}
                 />
             </section>
 
@@ -736,30 +612,6 @@
                 />
             </section>
 
-			<section class="config-section" use:reveal>
-				<h2>Rechnungsdaten</h2>
-				<p class="section-note">Die Rechnungsanschrift wird getrennt von der Veranstaltungsadresse gespeichert.</p>
-				<div class="field-grid billing-fields">
-					<div class="field"><label for="billing-company">Firma</label><input id="billing-company" autocomplete="organization" bind:value={billingCompanyName} /></div>
-					<div class="field"><label for="billing-legal-form">Rechtsform <small>(optional)</small></label><input id="billing-legal-form" placeholder="z. B. GmbH" bind:value={billingLegalForm} /></div>
-					<div class="field"><label for="billing-contact">Rechnungskontakt</label><input id="billing-contact" autocomplete="name" bind:value={billingContactName} /></div>
-					<div class="field"><label for="billing-email">Rechnungs-E-Mail</label><input id="billing-email" type="email" autocomplete="email" bind:value={billingEmail} /></div>
-					<div class="field full"><label for="billing-street">Straße und Hausnummer</label><input id="billing-street" autocomplete="billing street-address" bind:value={billingStreet} /></div>
-					<div class="field"><label for="billing-postal">Postleitzahl</label><input id="billing-postal" autocomplete="billing postal-code" bind:value={billingPostalCode} /></div>
-					<div class="field"><label for="billing-city">Ort</label><input id="billing-city" autocomplete="billing address-level2" bind:value={billingCity} /></div>
-					<div class="field"><label for="billing-vat">USt-IdNr. <small>(optional)</small></label><input id="billing-vat" autocomplete="off" bind:value={billingVatId} /></div>
-					<div class="field"><label for="billing-po">Bestellnummer <small>(optional)</small></label><input id="billing-po" autocomplete="off" bind:value={billingPurchaseOrder} /></div>
-				</div>
-				<button class="copy-billing-button" type="button" onclick={() => {
-					billingCompanyName = companyName;
-					billingContactName = contactName;
-					billingEmail = email;
-					billingStreet = address.street;
-					billingPostalCode = address.postalCode;
-					billingCity = address.city;
-				}}>Kontakt und Veranstaltungsadresse übernehmen</button>
-			</section>
-
             <section class="config-section" use:reveal>
                 <h2>60 Min. Vorbereitungsgespräch</h2>
                 {#key availabilityKey}
@@ -785,21 +637,6 @@
                 />
             </section>
 
-			<section class="config-section legal-confirmations" use:reveal>
-				<h2>Unternehmensanfrage</h2>
-				<label class="coding-tool-option legal-confirmation-option">
-					<input type="checkbox" bind:checked={businessCustomerConfirmed} />
-					<span class="round-checkbox" aria-hidden="true">{#if businessCustomerConfirmed}<Check size={18} strokeWidth={2.4} />{/if}</span>
-					<span>Ich handle für ein Unternehmen beziehungsweise eine juristische Person und nicht als Verbraucher.</span>
-				</label>
-				<label class="coding-tool-option legal-confirmation-option">
-					<input type="checkbox" bind:checked={authorityConfirmed} />
-					<span class="round-checkbox" aria-hidden="true">{#if authorityConfirmed}<Check size={18} strokeWidth={2.4} />{/if}</span>
-					<span>Ich bin befugt, diese unverbindliche Anfrage für das angegebene Unternehmen zu stellen.</span>
-				</label>
-				<p class="section-note">Mit dem Absenden entsteht noch kein Vertrag. Die für Ihre Konfiguration geltenden <a href={legalModulesUrl} target="_blank" rel="noreferrer">B2B-AGB</a> werden vor dem Prep-Call bereitgestellt und bei einer späteren Zustimmung versioniert dokumentiert.</p>
-			</section>
-
             <section class="config-section" use:reveal>
                 <div class="summary-box overview-box" bind:this={overviewCard}>
                     <div class="summary-row">
@@ -823,9 +660,6 @@
                                 /></span
                             ><b><AnimatedValue value={overviewRow("tools").status} /></b>
                         </div>{/if}
-					{#if deviceProvision}<div class="summary-row">
-						<Laptop size={18} aria-hidden="true" /><span><small>{overviewRow("devices").label}</small><AnimatedValue value={overviewRow("devices").value} /></span><b><AnimatedValue value={overviewRow("devices").status} /></b>
-					</div>{/if}
                     <div class="summary-row">
                         <Monitor size={18} aria-hidden="true" /><span
                             ><small>{overviewRow("equipment").label}</small><AnimatedValue
@@ -860,13 +694,6 @@
                                 "winner-poster",
                             ).value}</span
                         ><b>{overviewRow("winner-poster").status}</b>
-                    </div>
-                    <div class="summary-row">
-                        <Camera size={18} aria-hidden="true" /><span
-                            ><small>{overviewRow("event-photos").label}</small>{overviewRow(
-                                "event-photos",
-                            ).value}</span
-                        ><b>{overviewRow("event-photos").status}</b>
                     </div>
                     <div class="summary-row">
                         <Cookie size={18} aria-hidden="true" /><span

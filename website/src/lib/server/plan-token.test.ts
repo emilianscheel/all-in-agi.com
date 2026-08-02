@@ -53,26 +53,36 @@ const legacyPlan: SharedPlanV1 = {
 };
 
 describe('encrypted plan tokens', () => {
-	test('round trips the complete plan', async () => {
+	const standardize = <T extends object>(value: T) => ({
+		...value,
+		venueProvided: true as const,
+		lunch: 'pizza' as const,
+		customLunch: '',
+		deviceProvision: 'existing' as const,
+		deviceCount: 0,
+		eventPhotos: true
+	});
+
+	test('normalizes the complete plan to the current standard offer', async () => {
 		const token = await encryptPlan(plan);
 		expect(token).not.toContain(plan.companyName);
-		expect(await decryptPlan(token)).toEqual(plan);
+		expect(await decryptPlan(token)).toEqual(standardize(plan));
 	});
 
 	test('migrates a v2 plan with an empty message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(v2Plan));
 		const { preferredEventDate: _preferredEventDate, ...legacy } = v2Plan;
-		expect(migrated).toEqual({ ...legacy, v: 5, message: '', eventStart: plan.eventStart, eventEnd: plan.eventEnd, deviceProvision: 'existing', deviceCount: 0 });
+		expect(migrated).toEqual(standardize({ ...legacy, v: 5, message: '', eventStart: plan.eventStart, eventEnd: plan.eventEnd }));
 	});
 
 	test('migrates a v1 plan to v5 with default event times, unanswered tools and message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(legacyPlan));
 		const { preferredEventDate: _preferredEventDate, ...legacy } = legacyPlan;
-		expect(migrated).toEqual({ ...legacy, v: 5, eventStart: plan.eventStart, eventEnd: plan.eventEnd, toolProvision: null, codingTools: [], customCodingTool: '', message: '', deviceProvision: 'existing', deviceCount: 0 });
+		expect(migrated).toEqual(standardize({ ...legacy, v: 5, eventStart: plan.eventStart, eventEnd: plan.eventEnd, toolProvision: null, codingTools: [], customCodingTool: '', message: '' }));
 	});
 
 	test('migrates a v4 plan to free existing devices', async () => {
-		expect(await decryptPlan(await encryptPlan(v4Plan))).toEqual({ ...v4Plan, v: 5, deviceProvision: 'existing', deviceCount: 0 });
+		expect(await decryptPlan(await encryptPlan(v4Plan))).toEqual(standardize({ ...v4Plan, v: 5 }));
 	});
 
 	test('rejects tampered tokens', async () => {

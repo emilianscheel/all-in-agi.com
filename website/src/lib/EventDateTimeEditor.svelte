@@ -2,13 +2,9 @@
 	import { onDestroy } from 'svelte';
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import {
-		formatHackathonDuration,
 		formatHackathonSlot,
-		formatHackathonSlotTime,
 		hackathonAvailableDates,
-		hackathonEndSlots,
 		hackathonSlotsForDate,
-		hackathonStartSlots,
 		normalizeHackathonSlots,
 		preferredHackathonSlot,
 		type HackathonAvailabilityResponse
@@ -37,8 +33,6 @@
 	let selectedDate = $state('');
 	let slots = $state<ReturnType<typeof normalizeHackathonSlots>>([]);
 	let availableDates = $derived(hackathonAvailableDates(slots));
-	let startOptions = $derived(hackathonStartSlots(slots, selectedDate));
-	let endOptions = $derived(hackathonEndSlots(slots, eventStart));
 	let combinationOptions = $derived(hackathonSlotsForDate(slots, selectedDate));
 	let loading = $state(true);
 	let loadError = $state('');
@@ -120,19 +114,6 @@
 			: { eventStart: '', eventEnd: '' });
 	}
 
-	function selectStart(start: string) {
-		const options = hackathonEndSlots(slots, start);
-		const currentDuration = (new Date(eventEnd).getTime() - new Date(eventStart).getTime()) / 60_000;
-		const selected = options.find((slot) => slot.duration === currentDuration)
-			?? [...options].sort((a, b) => b.duration - a.duration)[0];
-		if (selected) onchange({ eventStart: selected.start, eventEnd: selected.end });
-	}
-
-	function selectEnd(end: string) {
-		const selected = endOptions.find((slot) => slot.end === end);
-		if (selected) onchange({ eventStart: selected.start, eventEnd: selected.end });
-	}
-
 	function selectCombination(slot: (typeof combinationOptions)[number]) {
 		onchange({ eventStart: slot.start, eventEnd: slot.end });
 	}
@@ -159,22 +140,7 @@
 	{:else if availableDates.length === 0}
 		<p class="slot-status">In diesem Zeitraum sind keine Hackathon-Termine verfügbar.</p>
 	{:else if selectedDate}
-		<div class="event-time-fields">
-			<div class="field">
-				<label for="event-start-time">Start</label>
-				<select id="event-start-time" value={eventStart} onchange={(event) => selectStart(event.currentTarget.value)}>
-					{#each startOptions as slot}<option value={slot.start}>{formatHackathonSlotTime(slot.start)} Uhr</option>{/each}
-				</select>
-			</div>
-			<div class="field">
-				<label for="event-end-time">Ende</label>
-				<select id="event-end-time" value={eventEnd} onchange={(event) => selectEnd(event.currentTarget.value)}>
-					{#each endOptions as slot}<option value={slot.end}>{formatHackathonSlotTime(slot.end)} Uhr ({formatHackathonDuration(slot.duration)})</option>{/each}
-				</select>
-			</div>
-		</div>
 		<div class="hackathon-slot-combinations">
-			<p class="field-label">Alle verfügbaren Zeitfenster</p>
 			<div class="slots">
 				{#each combinationOptions as slot}
 					<button

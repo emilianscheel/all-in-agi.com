@@ -1,5 +1,5 @@
 import { createPlanPdf } from '$lib/booking-artifacts';
-import { validateConfiguration, type BookingConfiguration } from '$lib/booking';
+import { validateInquiryConfiguration, type BookingConfiguration } from '$lib/booking';
 import { isHackathonId } from '$lib/public-id';
 import { json } from '@sveltejs/kit';
 
@@ -17,7 +17,7 @@ export async function POST({ request }) {
 			}
 		}
 		const config = { ...body, message: typeof body.message === 'string' ? body.message : '' } as BookingConfiguration;
-		const errors = validateConfiguration(config);
+		const errors = validateInquiryConfiguration(config);
 		if (errors.length) return json({ message: errors[0] }, { status: 400 });
 		const bytes = await createPlanPdf(config, { hackathonId });
 		return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), { headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="all-in-agi-hackathon-plan.pdf"', 'cache-control': 'no-store' } });

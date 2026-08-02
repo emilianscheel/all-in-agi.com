@@ -1,4 +1,4 @@
-import { CODING_TOOLS, type BookingConfiguration } from './booking';
+import { CODING_TOOLS, STANDARD_HACKATHON_OPTIONS, type BookingConfiguration } from './booking';
 import { eventTimesForDate } from './event-time';
 
 type ShareableBookingConfiguration = Omit<BookingConfiguration, 'billing' | 'businessCustomerConfirmed' | 'authorityConfirmed'>;
@@ -82,26 +82,30 @@ export function isSharedPlan(value: unknown): value is SharedPlan {
 }
 
 export function toSharedPlanV5(plan: SharedPlan): SharedPlanV5 {
-	if (plan.v === 5) return plan;
-	if (plan.v === 4) return { ...plan, v: 5, deviceProvision: 'existing', deviceCount: 0 };
-	if (plan.v === 3) {
+	let migrated: SharedPlanV5;
+	if (plan.v === 5) migrated = plan;
+	else if (plan.v === 4) migrated = { ...plan, v: 5, deviceProvision: 'existing', deviceCount: 0 };
+	else if (plan.v === 3) {
 		const { preferredEventDate, ...legacy } = plan;
-		return { ...legacy, ...eventTimesForDate(preferredEventDate), v: 5, deviceProvision: 'existing', deviceCount: 0 };
+		migrated = { ...legacy, ...eventTimesForDate(preferredEventDate), v: 5, deviceProvision: 'existing', deviceCount: 0 };
 	}
-	if (plan.v === 2) {
+	else if (plan.v === 2) {
 		const { preferredEventDate, ...legacy } = plan;
-		return { ...legacy, ...eventTimesForDate(preferredEventDate), v: 5, message: '', deviceProvision: 'existing', deviceCount: 0 };
+		migrated = { ...legacy, ...eventTimesForDate(preferredEventDate), v: 5, message: '', deviceProvision: 'existing', deviceCount: 0 };
 	}
-	const { preferredEventDate, ...legacy } = plan;
-	return {
-		...legacy,
-		...eventTimesForDate(preferredEventDate),
-		v: 5,
-		toolProvision: null,
-		codingTools: [],
-		customCodingTool: '',
-		message: '',
-		deviceProvision: 'existing',
-		deviceCount: 0
-	};
+	else {
+		const { preferredEventDate, ...legacy } = plan;
+		migrated = {
+			...legacy,
+			...eventTimesForDate(preferredEventDate),
+			v: 5,
+			toolProvision: null,
+			codingTools: [],
+			customCodingTool: '',
+			message: '',
+			deviceProvision: 'existing',
+			deviceCount: 0
+		};
+	}
+	return { ...migrated, ...STANDARD_HACKATHON_OPTIONS };
 }

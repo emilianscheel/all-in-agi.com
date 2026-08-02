@@ -238,8 +238,8 @@
                     <li><Users size={17} />2 Facilitator</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
-                    <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
+                    <li><Pizza size={17} />Pizza & Cookies</li>
+                    <li><MapPin size={17} />Vor Ort in Ihren Räumen</li>
                 </ul>
             </article>
             <article class="price-card featured">
@@ -250,8 +250,8 @@
                     <li><Users size={17} />2 Facilitators</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
-                    <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
+                    <li><Pizza size={17} />Pizza & Cookies</li>
+                    <li><MapPin size={17} />Vor Ort in Ihren Räumen</li>
                 </ul>
             </article>
             <article class="price-card">
@@ -261,8 +261,8 @@
                     <li><Users size={17} />2 Facilitators</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
-                    <li><Pizza size={17} />Pizza & Cookies or custom</li>
-                    <li><MapPin size={17} />Vor Ort; organisierte Location optional</li>
+                    <li><Pizza size={17} />Pizza & Cookies</li>
+                    <li><MapPin size={17} />Vor Ort in Ihren Räumen</li>
                 </ul>
             </article>
         </div>

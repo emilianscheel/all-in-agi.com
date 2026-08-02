@@ -23,12 +23,12 @@ Der Vertrag ist mit der beiderseitigen Zustimmung zustande gekommen. Beide Parte
 ## Eingefrorene Leistung
 
 - Eventdatum und Uhrzeit:
-- Veranstaltungsadresse/Locationstatus:
+- Veranstaltungsadresse des Kunden:
 - Teilnehmendenpaket: 15 / 30 / 50
 - Moderation und Challenge-Design:
-- Catering:
+- Pizza-Catering:
 - AI-Tools:
-- Geräte einschließlich Anzahl:
+- Kundengeräte/virtuelle Maschinen mit Administratorrechten bestätigt: ja/nein
 - Eventfoto-Service:
 - Besondere Vereinbarungen:
 
@@ -41,4 +41,3 @@ Der Vertrag ist mit der beiderseitigen Zustimmung zustande gekommen. Beide Parte
 - Schlusszahlung nach Veranstaltung, fällig 14 Kalendertage nach Rechnung:
 
 Änderungen werden ausschließlich durch eine neue nummerierte Änderungsbestätigung dokumentiert. Die ursprüngliche Bestätigung bleibt unverändert archiviert.
-

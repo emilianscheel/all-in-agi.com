@@ -37,6 +37,7 @@ describe('hackathon section updates', () => {
 		[{ section: 'prep-call', consultationSlot: '2099-05-11T10:00:00.000Z' }, { consultationSlot: '2099-05-11T10:00:00.000Z' }],
 		[{ section: 'company', companyName: 'Neue Firma' }, { companyName: 'Neue Firma' }],
 		[{ section: 'contact', contactName: 'Grace Beispiel', email: 'grace@example.com', phone: '+49 40 123456' }, { contactName: 'Grace Beispiel', email: 'grace@example.com', phone: '+49 40 123456' }],
+		[{ section: 'billing', billing: { companyName: 'Musterwerke GmbH', legalForm: 'GmbH', contactName: 'Ada Beispiel', email: 'rechnung@example.com', vatId: 'DE123456789', purchaseOrder: 'PO-42', address: { street: 'Rechnungsstraße 2', postalCode: '10115', city: 'Berlin', country: 'Deutschland' } } }, { billing: { email: 'rechnung@example.com', purchaseOrder: 'PO-42' } }],
 		[{ section: 'message', message: 'Neue Nachricht' }, { message: 'Neue Nachricht' }]
 	] as const)('parses and applies %s without replacing unrelated fields', (input, expected) => {
 		const next = applyHackathonUpdate(config, parseHackathonUpdate(input));

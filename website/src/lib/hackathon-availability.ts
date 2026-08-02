@@ -75,7 +75,12 @@ export function preferredHackathonSlot(
 }
 
 export function formatHackathonSlot(slot: HackathonAvailabilitySlot) {
-	return `${formatHackathonSlotTime(slot.start)}–${formatHackathonSlotTime(slot.end)} Uhr · ${formatHackathonDuration(slot.duration)}`;
+	return `${formatCompactHackathonSlotTime(slot.start)}–${formatCompactHackathonSlotTime(slot.end)} Uhr · ${formatHackathonDuration(slot.duration)}`;
+}
+
+export function formatCompactHackathonSlotTime(value: string) {
+	const full = formatHackathonSlotTime(value);
+	return full.endsWith(':00') ? full.slice(0, -3) : full;
 }
 
 export function formatHackathonSlotTime(value: string) {
