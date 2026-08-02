@@ -1,8 +1,10 @@
 import { env } from '$env/dynamic/private';
 import type { BookingConfiguration } from '$lib/booking';
+import { berlinInputsFromIso } from '$lib/event-time';
 import type { ConfirmedBooking } from './hackathons';
 import { cancelCalBookingWithToken, createCalBookingWithToken } from './cal-api';
 import { CalAvailabilityError, isCalHackathonSlotAvailable } from './cal-hackathon-availability';
+import { CalPrepAvailabilityError, getCalPrepCallSlots } from './cal-prep-availability';
 import { BookingProviderError, reschedulePrepCallWithToken } from './cal-reschedule';
 
 export { BookingProviderError } from './cal-reschedule';
@@ -56,8 +58,38 @@ export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof 
 		start: start.toISOString(),
 		end: new Date(start.getTime() + 60 * 60_000).toISOString(),
 		title: 'ALL IN AGI Prep Call',
-		field: 'prep-call'
+		field: 'prep-call',
+		includeLengthInMinutes: false
 	}, env.CAL_API_KEY);
+}
+
+export async function assertPrepCallAvailable(
+	config: BookingConfiguration,
+	requestFetch: typeof fetch,
+	development: boolean
+) {
+	const token = env.CAL_API_KEY;
+	const eventTypeId = env.CAL_EVENT_TYPE_ID;
+	if (!token || !eventTypeId) {
+		if (development) return;
+		throw new BookingProviderError('Die Vorbereitungstermin-Buchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'prep-call');
+	}
+	const selected = new Date(config.consultationSlot);
+	if (Number.isNaN(selected.getTime())) throw new BookingProviderError('Bitte wählen Sie einen gültigen Vorbereitungstermin.', 400, 'prep-call');
+	const date = berlinInputsFromIso(selected.toISOString()).date;
+	try {
+		const slots = await getCalPrepCallSlots(requestFetch, { token, eventTypeId, start: date, end: date });
+		const selectedIso = selected.toISOString();
+		if (!slots.some((slot) => new Date(slot).toISOString() === selectedIso)) {
+			throw new BookingProviderError('Dieser Vorbereitungstermin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'prep-call');
+		}
+	} catch (error) {
+		if (error instanceof BookingProviderError) throw error;
+		if (error instanceof CalPrepAvailabilityError) {
+			throw new BookingProviderError(error.message, error.status >= 500 ? error.status : 502, 'prep-call');
+		}
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'prep-call');
+	}
 }
 
 export function cancelCalBooking(booking: ConfirmedBooking, requestFetch: typeof fetch, reason?: string) {

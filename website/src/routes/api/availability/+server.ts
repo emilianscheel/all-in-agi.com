@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
-import { normalizeAvailabilitySlots } from '$lib/prep-call';
+import { CalPrepAvailabilityError, getCalPrepCallSlots } from '$lib/server/cal-prep-availability';
 
 function demoSlots() {
 	const slots: string[] = [];
@@ -30,12 +30,12 @@ export async function GET({ url, fetch }) {
 	const end = url.searchParams.get('end');
 	if (!start || !end) return json({ message: 'Start- und Enddatum fehlen.' }, { status: 400 });
 	try {
-		const calUrl = new URL('https://api.cal.com/v2/slots');
-		for (const [key, value] of Object.entries({ eventTypeId, start, end, timeZone: url.searchParams.get('tz') ?? 'Europe/Berlin', duration: '60' })) calUrl.searchParams.set(key, value);
-		const response = await fetch(calUrl, { headers: { Authorization: `Bearer ${token}`, 'cal-api-version': '2024-09-04' } });
-		const result = await response.json();
-		if (!response.ok) return json({ message: 'Die Verfügbarkeit konnte nicht geladen werden.' }, { status: response.status });
-		const slots = normalizeAvailabilitySlots(Object.values(result.data ?? {}).flatMap((values) => (values as Array<{ start?: string } | string>).map((value) => typeof value === 'string' ? value : value.start).filter((value): value is string => Boolean(value))));
+		const slots = await getCalPrepCallSlots(fetch, {
+			token, eventTypeId, start, end, timeZone: url.searchParams.get('tz') ?? 'Europe/Berlin'
+		});
 		return json({ slots, demo: false });
-	} catch { return json({ message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar.' }, { status: 502 }); }
+	} catch (error) {
+		if (error instanceof CalPrepAvailabilityError) return json({ message: 'Die Verfügbarkeit konnte nicht geladen werden.' }, { status: error.status });
+		return json({ message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar.' }, { status: 502 });
+	}
 }

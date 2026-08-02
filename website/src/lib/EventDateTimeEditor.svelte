@@ -3,9 +3,11 @@
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import {
 		formatHackathonDuration,
+		formatHackathonSlot,
 		formatHackathonSlotTime,
 		hackathonAvailableDates,
 		hackathonEndSlots,
+		hackathonSlotsForDate,
 		hackathonStartSlots,
 		normalizeHackathonSlots,
 		preferredHackathonSlot,
@@ -37,6 +39,7 @@
 	let availableDates = $derived(hackathonAvailableDates(slots));
 	let startOptions = $derived(hackathonStartSlots(slots, selectedDate));
 	let endOptions = $derived(hackathonEndSlots(slots, eventStart));
+	let combinationOptions = $derived(hackathonSlotsForDate(slots, selectedDate));
 	let loading = $state(true);
 	let loadError = $state('');
 	let currentMonth = $state('');
@@ -130,6 +133,10 @@
 		if (selected) onchange({ eventStart: selected.start, eventEnd: selected.end });
 	}
 
+	function selectCombination(slot: (typeof combinationOptions)[number]) {
+		onchange({ eventStart: slot.start, eventEnd: slot.end });
+	}
+
 	onDestroy(() => abortController?.abort());
 </script>
 
@@ -164,6 +171,20 @@
 				<select id="event-end-time" value={eventEnd} onchange={(event) => selectEnd(event.currentTarget.value)}>
 					{#each endOptions as slot}<option value={slot.end}>{formatHackathonSlotTime(slot.end)} Uhr ({formatHackathonDuration(slot.duration)})</option>{/each}
 				</select>
+			</div>
+		</div>
+		<div class="hackathon-slot-combinations">
+			<p class="field-label">Alle verfügbaren Zeitfenster</p>
+			<div class="slots">
+				{#each combinationOptions as slot}
+					<button
+						type="button"
+						class="slot"
+						class:selected={slot.start === eventStart && slot.end === eventEnd}
+						aria-pressed={slot.start === eventStart && slot.end === eventEnd}
+						onclick={() => selectCombination(slot)}
+					>{formatHackathonSlot(slot)}</button>
+				{/each}
 			</div>
 		</div>
 	{/if}

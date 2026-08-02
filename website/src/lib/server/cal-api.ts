@@ -31,7 +31,9 @@ function bookingRejection(result: unknown, status: number, field: 'hackathon' | 
 		return { message: 'Die Veranstaltungsadresse konnte nicht verarbeitet werden. Bitte prüfen Sie Straße, PLZ und Ort.', status: 400 };
 	}
 	if (/length|duration|dauer/.test(details)) {
-		return { message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.', status: 400 };
+		return field === 'prep-call'
+			? { message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 60-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.', status: 503 }
+			: { message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.', status: 400 };
 	}
 	if (/booking.?window|out.?of.?bounds|minimum.?booking.?notice|too.?soon/.test(details)) {
 		return { message: 'Der gewählte Termin liegt außerhalb des buchbaren Zeitraums. Bitte wählen Sie ein anderes Datum.', status: 400 };
@@ -60,6 +62,7 @@ export interface CreateCalBookingOptions {
 	title: string;
 	field: 'hackathon' | 'prep-call';
 	location?: string;
+	includeLengthInMinutes?: boolean;
 }
 
 export async function createCalBookingWithToken(
@@ -88,7 +91,7 @@ export async function createCalBookingWithToken(
 				eventTypeId,
 				attendee: { name: config.contactName, email: config.email, ...(phoneNumber ? { phoneNumber } : {}), timeZone: 'Europe/Berlin', language: 'de' },
 				metadata: bookingMetadata(config),
-				lengthInMinutes: eventDurationMinutes(options.start, options.end),
+				...(options.includeLengthInMinutes === false ? {} : { lengthInMinutes: eventDurationMinutes(options.start, options.end) }),
 				...(options.location ? { location: { type: 'attendeeAddress', address: options.location } } : {})
 			})
 		});

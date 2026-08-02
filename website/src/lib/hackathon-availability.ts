@@ -67,8 +67,15 @@ export function preferredHackathonSlot(
 			&& berlinInputsFromIso(slot.end).time === DEFAULT_EVENT_END_TIME;
 	});
 	if (preferred) return preferred;
-	const firstStart = dateSlots[0]?.start;
-	return dateSlots.filter((slot) => slot.start === firstStart).sort((a, b) => b.duration - a.duration)[0];
+	const nineOClockSlots = dateSlots.filter((slot) => berlinInputsFromIso(slot.start).time === DEFAULT_EVENT_START_TIME);
+	if (nineOClockSlots.length) return nineOClockSlots.sort((a, b) => b.duration - a.duration)[0];
+	const firstStartAtOrAfterNine = dateSlots.find((slot) => berlinInputsFromIso(slot.start).time >= DEFAULT_EVENT_START_TIME)?.start;
+	const fallbackStart = firstStartAtOrAfterNine ?? dateSlots[0]?.start;
+	return dateSlots.filter((slot) => slot.start === fallbackStart).sort((a, b) => b.duration - a.duration)[0];
+}
+
+export function formatHackathonSlot(slot: HackathonAvailabilitySlot) {
+	return `${formatHackathonSlotTime(slot.start)}–${formatHackathonSlotTime(slot.end)} Uhr · ${formatHackathonDuration(slot.duration)}`;
 }
 
 export function formatHackathonSlotTime(value: string) {

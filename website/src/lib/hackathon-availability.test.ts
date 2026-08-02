@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
 	formatHackathonDuration,
+	formatHackathonSlot,
 	hackathonAvailableDates,
 	hackathonEndSlots,
 	hackathonStartSlots,
@@ -28,15 +29,20 @@ describe('hackathon availability model', () => {
 		expect(hackathonEndSlots(slots, '2099-08-19T07:00:00.000Z').map((slot) => slot.duration)).toEqual([300, 480]);
 	});
 
-	test('prefers 09:00–17:00 and otherwise the longest duration at the earliest start', () => {
+	test('prefers 09:00–17:00, then another 09:00 slot, and avoids an earlier 08:00 fallback', () => {
 		expect(preferredHackathonSlot(slots, '2099-08-19')?.duration).toBe(480);
-		const withoutDefault = slots.filter((slot) => slot.start !== '2099-08-19T07:00:00.000Z');
-		expect(preferredHackathonSlot(withoutDefault, '2099-08-19')?.start).toBe('2099-08-19T06:00:00.000Z');
+		const withLaterStart = normalizeHackathonSlots([
+			...slots.filter((slot) => slot.start !== '2099-08-19T07:00:00.000Z'),
+			{ start: '2099-08-19T11:00:00.000Z', end: '2099-08-19T16:00:00.000Z', duration: 300 }
+		]);
+		expect(preferredHackathonSlot(withLaterStart, '2099-08-19')?.start).toBe('2099-08-19T11:00:00.000Z');
 		expect(preferredHackathonSlot(slots, '2099-08-19', slots[0].start, slots[0].end)).toEqual(slots[0]);
 	});
 
 	test('formats configured durations for the existing end-time select', () => {
 		expect(formatHackathonDuration(300)).toBe('5 Std.');
 		expect(formatHackathonDuration(330)).toBe('5,5 Std.');
+		const fullDay = slots.find((slot) => slot.duration === 480)!;
+		expect(formatHackathonSlot(fullDay)).toBe('09:00–17:00 Uhr · 8 Std.');
 	});
 });

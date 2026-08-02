@@ -55,6 +55,21 @@ describe('Cal.com booking contracts', () => {
 		expect(body.attendee.phoneNumber).toBe('+4930123456');
 	});
 
+	test('omits lengthInMinutes for a fixed-length prep-call event type', async () => {
+		let body: any;
+		const mockFetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
+			body = JSON.parse(String(init?.body));
+			return new Response(JSON.stringify({ data: { uid: 'prep-1' } }), {
+				status: 201, headers: { 'content-type': 'application/json' }
+			});
+		}) as typeof fetch;
+		await createCalBookingWithToken(configuration, mockFetch, false, {
+			eventTypeId: '456', start: configuration.consultationSlot, end: '2099-05-10T11:00:00.000Z',
+			title: 'ALL IN AGI Prep Call', field: 'prep-call', includeLengthInMinutes: false
+		}, 'cal_test');
+		expect(body).not.toHaveProperty('lengthInMinutes');
+	});
+
 	test('omits a phone number that cannot be normalized safely', async () => {
 		let body: any;
 		const mockFetch = (async (_url: URL | RequestInfo, init?: RequestInit) => {
@@ -118,6 +133,27 @@ describe('Cal.com booking contracts', () => {
 				message: 'Unser Buchungskalender ist derzeit nicht vollständig verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns.',
 				status: 503,
 				field: 'hackathon'
+			}));
+		} finally {
+			console.error = originalConsoleError;
+		}
+	});
+
+	test('maps a fixed prep-call duration mismatch to a configuration warning', async () => {
+		const originalConsoleError = console.error;
+		console.error = () => {};
+		try {
+			const mockFetch = (async () => new Response(JSON.stringify({ error: { details: 'Unsupported duration' } }), {
+				status: 400, headers: { 'content-type': 'application/json' }
+			})) as unknown as typeof fetch;
+			const promise = createCalBookingWithToken(configuration, mockFetch, false, {
+				eventTypeId: '456', start: configuration.consultationSlot, end: '2099-05-10T11:00:00.000Z',
+				title: 'ALL IN AGI Prep Call', field: 'prep-call', includeLengthInMinutes: false
+			}, 'cal_test');
+			await expect(promise).rejects.toEqual(expect.objectContaining({
+				message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 60-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.',
+				status: 503,
+				field: 'prep-call'
 			}));
 		} finally {
 			console.error = originalConsoleError;
