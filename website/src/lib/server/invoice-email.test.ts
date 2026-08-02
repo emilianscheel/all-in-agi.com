@@ -10,7 +10,7 @@ const source = {
 	id: 'HAA-AAA-AAA', companyName: 'Musterwerke GmbH', contactName: 'Ada & Co', contactEmail: 'ada@example.com',
 	address: { street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z', capacity: 15, basePrice: 4000, venueSurcharge: 0,
-	lunchAdjustment: 0, toolsAdjustment: 0, totalPrice: 4000
+	lunchAdjustment: 0, toolsAdjustment: 0, deviceCount: 0, devicesAdjustment: 0, totalPrice: 4000
 } satisfies InvoiceSource;
 const snapshot = createInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));
 

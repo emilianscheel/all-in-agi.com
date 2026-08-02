@@ -4,6 +4,7 @@ export type Capacity = 15 | 30 | 50;
 export type Equipment = 'projector' | 'tv' | 'none';
 export type Lunch = 'pizza' | 'custom' | 'none' | 'self-organized';
 export type ToolProvision = 'existing' | 'needed';
+export type DeviceProvision = 'existing' | 'needed';
 export type CodingTool = 'github-copilot' | 'codex' | 'claude-code' | 'cursor' | 'devin' | 'opencode' | 'antigravity' | 'custom';
 export const PROVIDED_CODING_TOOLS: CodingTool[] = ['codex', 'cursor', 'claude-code'];
 
@@ -37,6 +38,8 @@ export interface BookingConfiguration {
 	toolProvision: ToolProvision | null;
 	codingTools: CodingTool[];
 	customCodingTool: string;
+	deviceProvision: DeviceProvision | null;
+	deviceCount: number;
 	companyName: string;
 	contactName: string;
 	email: string;
@@ -66,13 +69,22 @@ export const TOOLS_SURCHARGES: Record<Capacity, number> = {
 	30: 1000,
 	50: 1500
 };
+export const DEVICE_PRICE = 150;
 
-export function getPrice(capacity: Capacity, venueProvided: boolean, lunch: Lunch = 'pizza', toolProvision: ToolProvision | null = null) {
+export function getPrice(
+	capacity: Capacity,
+	venueProvided: boolean,
+	lunch: Lunch = 'pizza',
+	toolProvision: ToolProvision | null = null,
+	deviceProvision: DeviceProvision | null = null,
+	deviceCount = 0
+) {
 	const basePrice = CAPACITY_PRICES[capacity];
 	const venueSurcharge = venueProvided ? 0 : VENUE_SURCHARGES[capacity];
 	const lunchAdjustment = lunch === 'custom' ? CUSTOM_LUNCH_SURCHARGE : lunch === 'none' || lunch === 'self-organized' ? NO_LUNCH_DISCOUNT : 0;
 	const toolsAdjustment = toolProvision === 'needed' ? TOOLS_SURCHARGES[capacity] : 0;
-	return { basePrice, venueSurcharge, lunchAdjustment, toolsAdjustment, totalPrice: basePrice + venueSurcharge + lunchAdjustment + toolsAdjustment };
+	const devicesAdjustment = deviceProvision === 'needed' ? deviceCount * DEVICE_PRICE : 0;
+	return { basePrice, venueSurcharge, lunchAdjustment, toolsAdjustment, devicesAdjustment, totalPrice: basePrice + venueSurcharge + lunchAdjustment + toolsAdjustment + devicesAdjustment };
 }
 
 export function selectedCodingToolLabels(config: Pick<BookingConfiguration, 'codingTools' | 'customCodingTool'>) {
@@ -83,7 +95,7 @@ export function selectedCodingToolLabels(config: Pick<BookingConfiguration, 'cod
 }
 
 export function bookingMetadata(config: BookingConfiguration): Record<string, string> {
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	return {
 		company: config.companyName,
 		capacity: String(config.capacity),
@@ -96,6 +108,8 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 		toolProvision: config.toolProvision ?? '',
 		codingTools: selectedCodingToolLabels(config).join(', '),
 		customCodingTool: config.codingTools.includes('custom') ? config.customCodingTool : '',
+		deviceProvision: config.deviceProvision ?? '',
+		deviceCount: String(config.deviceCount),
 		address: [config.address.street, config.address.postalCode, config.address.city].join(', '),
 		message: config.message.trim(),
 		totalPrice: String(price.totalPrice)
@@ -158,5 +172,14 @@ export function validateConfiguration(config: BookingConfiguration) {
 	else if (codingTools.some((tool) => !validCodingTools.has(tool))) errors.push('Die Auswahl der Coding Tools ist ungültig.');
 	else if (config.toolProvision === 'needed' && codingTools.some((tool) => !PROVIDED_CODING_TOOLS.includes(tool))) errors.push('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.');
 	if (codingTools.includes('custom') && !config.customCodingTool?.trim()) errors.push('Bitte geben Sie das individuelle Coding Tool an.');
+	if (!config.deviceProvision || !['existing', 'needed'].includes(config.deviceProvision)) {
+		errors.push('Bitte wählen Sie aus, ob Geräte vorhanden sind.');
+	} else if (!Number.isInteger(config.deviceCount)) {
+		errors.push('Bitte geben Sie eine gültige ganze Geräteanzahl an.');
+	} else if (config.deviceProvision === 'existing' && config.deviceCount !== 0) {
+		errors.push('Bei eigenen Geräten muss die Geräteanzahl 0 sein.');
+	} else if (config.deviceProvision === 'needed' && (config.deviceCount < 1 || config.deviceCount > config.capacity)) {
+		errors.push(`Bitte wählen Sie zwischen 1 und ${config.capacity} Geräten.`);
+	}
 	return errors;
 }

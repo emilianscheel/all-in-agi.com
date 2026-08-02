@@ -1,18 +1,20 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
-	import { Check } from 'lucide-svelte';
+	import { Check, Minus, Plus } from 'lucide-svelte';
 	import {
 		CAPACITY_PRICES,
 		CODING_TOOLS,
 		PROVIDED_CODING_TOOLS,
 		TOOLS_SURCHARGES,
+		DEVICE_PRICE,
 		VENUE_SURCHARGES,
 		formatPrice,
 		type Capacity,
 		type CodingTool,
 		type Equipment,
 		type Lunch,
-		type ToolProvision
+		type ToolProvision,
+		type DeviceProvision
 	} from '$lib/booking';
 
 	export interface OptionValues {
@@ -24,6 +26,8 @@
 		toolProvision: ToolProvision | null;
 		codingTools: CodingTool[];
 		customCodingTool: string;
+		deviceProvision: DeviceProvision | null;
+		deviceCount: number;
 	}
 
 	let {
@@ -32,7 +36,7 @@
 		onchange,
 		idPrefix = 'config'
 	}: {
-		kind: 'capacity' | 'venue' | 'tools' | 'equipment' | 'lunch';
+		kind: 'capacity' | 'venue' | 'tools' | 'devices' | 'equipment' | 'lunch';
 		values: OptionValues;
 		onchange: (patch: Partial<OptionValues>) => void;
 		idPrefix?: string;
@@ -60,6 +64,18 @@
 				? values.codingTools.filter((selected) => selected !== tool)
 				: [...values.codingTools, tool]
 		});
+	}
+
+	function selectDeviceProvision(provision: DeviceProvision) {
+		onchange({ deviceProvision: provision, deviceCount: provision === 'needed' ? 1 : 0 });
+	}
+
+	function normalizeDeviceCount(value: number) {
+		return Math.min(values.capacity, Math.max(1, Number.isFinite(value) ? Math.round(value) : values.deviceCount || 1));
+	}
+
+	function changeDeviceCount(value: number) {
+		onchange({ deviceCount: normalizeDeviceCount(value) });
 	}
 </script>
 
@@ -130,6 +146,36 @@
 			<b>Kein Screen</b><small>Bringen wir mit.</small>
 		</label>
 	</div>
+{:else if kind === 'devices'}
+	<div class="option-grid devices-mode-grid">
+		<label class:selected={values.deviceProvision === 'existing'} class="choice">
+			<input type="radio" name={`${idPrefix}-device-provision`} checked={values.deviceProvision === 'existing'} onchange={() => selectDeviceProvision('existing')} />
+			<b>Unternehmenslaptops oder private Geräte</b><span class="choice-price">Inklusive</span>
+		</label>
+		<label class:selected={values.deviceProvision === 'needed'} class="choice">
+			<input type="radio" name={`${idPrefix}-device-provision`} checked={values.deviceProvision === 'needed'} onchange={() => selectDeviceProvision('needed')} />
+			<b>Wir brauchen welche für den Tag</b><span class="choice-price">+ {formatPrice(DEVICE_PRICE)} pro Gerät</span>
+		</label>
+	</div>
+	{#if values.deviceProvision === 'needed'}
+		<div class="device-count-panel" transition:slide={{ duration: 300 }}>
+			<label for={`${idPrefix}-device-count`}>Anzahl der Geräte</label>
+			<div class="device-stepper">
+				<button type="button" aria-label="Ein Gerät weniger" disabled={values.deviceCount <= 1} onclick={() => changeDeviceCount(values.deviceCount - 1)}><Minus size={18} /></button>
+				<input id={`${idPrefix}-device-count`} type="number" min="1" max={values.capacity} step="1" value={values.deviceCount} oninput={(event) => {
+					const next = event.currentTarget.valueAsNumber;
+					if (Number.isFinite(next)) onchange({ deviceCount: next });
+				}} onblur={(event) => {
+					const normalized = normalizeDeviceCount(event.currentTarget.valueAsNumber);
+					event.currentTarget.value = String(normalized);
+					onchange({ deviceCount: normalized });
+				}} />
+				<button type="button" aria-label="Ein Gerät mehr" disabled={values.deviceCount >= values.capacity} onclick={() => changeDeviceCount(values.deviceCount + 1)}><Plus size={18} /></button>
+			</div>
+			<p>{values.deviceCount} {values.deviceCount === 1 ? 'Gerät' : 'Geräte'} × {formatPrice(DEVICE_PRICE)} = <b>{formatPrice(values.deviceCount * DEVICE_PRICE)}</b></p>
+		</div>
+	{/if}
+	<p class="section-note device-admin-note">Die Teilnehmenden benötigen Administratorrechte auf diesen Geräten – oder Zugriff auf virtuelle Maschinen, auf denen sie Administratorrechte haben.</p>
 {:else}
 	<div class="option-grid lunch-grid">
 		<label class:selected={values.lunch === 'pizza'} class="choice"><input type="radio" name={`${idPrefix}-lunch`} checked={values.lunch === 'pizza'} onchange={() => onchange({ lunch: 'pizza' })} /><b>Pizza</b><small>Der Hackathon-Klassiker.</small><span class="choice-price">Inklusive</span></label>

@@ -1,6 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import type { CodingTool, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
+import type { CodingTool, DeviceProvision, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 import type { InvoiceSnapshot } from '$lib/invoice';
 
 export type BillingModel = 'legacy_full' | 'deposit_30';
@@ -23,6 +23,8 @@ export const hackathons = pgTable('hackathons', {
 	toolProvision: text('tool_provision').$type<ToolProvision>().notNull(),
 	codingTools: jsonb('coding_tools').$type<CodingTool[]>().notNull(),
 	customCodingTool: text('custom_coding_tool').notNull().default(''),
+	deviceProvision: text('device_provision').$type<DeviceProvision>().notNull().default('existing'),
+	deviceCount: integer('device_count').notNull().default(0),
 	address: jsonb('address').$type<EventAddress>().notNull(),
 	eventStart: timestamp('event_start', { withTimezone: true, mode: 'string' }).notNull(),
 	eventEnd: timestamp('event_end', { withTimezone: true, mode: 'string' }).notNull(),
@@ -31,6 +33,7 @@ export const hackathons = pgTable('hackathons', {
 	venueSurcharge: integer('venue_surcharge').notNull(),
 	lunchAdjustment: integer('lunch_adjustment').notNull(),
 	toolsAdjustment: integer('tools_adjustment').notNull(),
+	devicesAdjustment: integer('devices_adjustment').notNull().default(0),
 	totalPrice: integer('total_price').notNull(),
 	billingModel: text('billing_model').$type<BillingModel>().notNull().default('legacy_full'),
 	prepCallBookingUid: text('prep_call_booking_uid'),
@@ -64,7 +67,10 @@ export const hackathons = pgTable('hackathons', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
 }, (table) => [
 	check('hackathons_id_format_check', sql`${table.id} ~ '^H[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`),
-	check('hackathons_capacity_check', sql`${table.capacity} in (15, 30, 50)`)
+	check('hackathons_capacity_check', sql`${table.capacity} in (15, 30, 50)`),
+	check('hackathons_device_provision_check', sql`${table.deviceProvision} in ('existing', 'needed')`),
+	check('hackathons_device_count_check', sql`(${table.deviceProvision} = 'existing' and ${table.deviceCount} = 0) or (${table.deviceProvision} = 'needed' and ${table.deviceCount} between 1 and ${table.capacity})`),
+	check('hackathons_devices_adjustment_check', sql`${table.devicesAdjustment} = case when ${table.deviceProvision} = 'needed' then ${table.deviceCount} * 150 else 0 end`)
 ]);
 
 export const user = pgTable('user', {

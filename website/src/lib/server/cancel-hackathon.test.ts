@@ -5,10 +5,10 @@ import type { HackathonRecord } from './hackathons';
 function cancellationRecord(): HackathonRecord {
 	return {
 		id: 'HAA-AAA-AAA', status: 'confirmed', companyName: 'Musterwerke', contactName: 'Ada', contactEmail: 'ada@example.com', contactPhone: '', message: '',
-		capacity: 15, venueProvided: true, equipment: 'projector', lunch: 'pizza', customLunch: '', toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '',
+		capacity: 15, venueProvided: true, equipment: 'projector', lunch: 'pizza', customLunch: '', toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '', deviceProvision: 'existing', deviceCount: 0,
 		address: { label: '', street: 'Teststraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 		eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z', consultationSlot: '2099-05-10T10:00:00.000Z',
-		basePrice: 4000, venueSurcharge: 0, lunchAdjustment: 0, toolsAdjustment: 0, totalPrice: 4000,
+		basePrice: 4000, venueSurcharge: 0, lunchAdjustment: 0, toolsAdjustment: 0, devicesAdjustment: 0, totalPrice: 4000,
 		billingModel: 'legacy_full',
 		prepCallBookingUid: 'prep-1', prepCallBookingIcsUid: null, prepCallBookingTitle: null, prepCallBookingStart: null, prepCallBookingEnd: null, prepCallMeetingUrl: null,
 		hackathonBookingUid: 'event-1', hackathonBookingIcsUid: null, hackathonBookingTitle: null, hackathonBookingStart: null, hackathonBookingEnd: null,

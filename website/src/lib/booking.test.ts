@@ -10,6 +10,8 @@ const validConfiguration: BookingConfiguration = {
 	toolProvision: 'existing',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'existing',
+	deviceCount: 0,
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -54,6 +56,12 @@ describe('price calculation', () => {
 		expect(getPrice(15, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 500, toolsAdjustment: 500, totalPrice: 5000 });
 		expect(getPrice(30, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 1000, toolsAdjustment: 1000, totalPrice: 7000 });
 		expect(getPrice(50, false, 'pizza', 'needed')).toMatchObject({ venueSurcharge: 1500, toolsAdjustment: 1500, totalPrice: 9000 });
+	});
+
+	test('charges 150 euros per requested device and nothing for existing devices', () => {
+		expect(getPrice(15, true, 'pizza', 'existing', 'needed', 1)).toMatchObject({ devicesAdjustment: 150, totalPrice: 4150 });
+		expect(getPrice(15, true, 'pizza', 'existing', 'needed', 15)).toMatchObject({ devicesAdjustment: 2250, totalPrice: 6250 });
+		expect(getPrice(15, true, 'pizza', 'existing', 'existing', 0)).toMatchObject({ devicesAdjustment: 0, totalPrice: 4000 });
 	});
 });
 
@@ -101,6 +109,16 @@ describe('booking validation', () => {
 		expect(validateConfiguration({ ...validConfiguration, toolProvision: 'needed', codingTools: ['devin'] })).toContain('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.');
 		expect(validateConfiguration({ ...validConfiguration, toolProvision: 'needed', codingTools: ['codex', 'cursor', 'claude-code'] })).toEqual([]);
 	});
+
+	test('requires a consistent bounded whole-number device selection', () => {
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: null })).toContain('Bitte wählen Sie aus, ob Geräte vorhanden sind.');
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'needed', deviceCount: 0 })).toContain('Bitte wählen Sie zwischen 1 und 15 Geräten.');
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'needed', deviceCount: 1.5 })).toContain('Bitte geben Sie eine gültige ganze Geräteanzahl an.');
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'needed', deviceCount: -1 })).toContain('Bitte wählen Sie zwischen 1 und 15 Geräten.');
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'needed', deviceCount: 16 })).toContain('Bitte wählen Sie zwischen 1 und 15 Geräten.');
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'needed', deviceCount: 15 })).toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, deviceProvision: 'existing', deviceCount: 1 })).toContain('Bei eigenen Geräten muss die Geräteanzahl 0 sein.');
+	});
 });
 
 describe('booking metadata', () => {
@@ -111,12 +129,20 @@ describe('booking metadata', () => {
 			codingTools: ['codex', 'custom'],
 			customCodingTool: 'Internes Tool'
 		});
-		expect(metadata).toMatchObject({
+			expect(metadata).toMatchObject({
 			toolProvision: 'needed',
 			codingTools: 'Codex, Internes Tool',
 			customCodingTool: 'Internes Tool',
 			message: '',
 			totalPrice: '4500'
+		});
+	});
+
+	test('includes requested devices and their surcharge in metadata', () => {
+		expect(bookingMetadata({ ...validConfiguration, deviceProvision: 'needed', deviceCount: 3 })).toMatchObject({
+			deviceProvision: 'needed',
+			deviceCount: '3',
+			totalPrice: '4450'
 		});
 	});
 

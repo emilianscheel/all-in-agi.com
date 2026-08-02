@@ -334,7 +334,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	const context = await createBrandPdf();
 	const { pdf, page, regular, bold } = context;
 	const { orange, ink, muted, line, surface, white } = context.colors;
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	const rows = bookingOverviewRows(config, options.booking);
 	const generatedLabel = `Planungsstand ${new Intl.DateTimeFormat('de-DE').format(generatedAt)}`;
 	drawBrandChrome(context, generatedLabel);

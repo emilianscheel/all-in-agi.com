@@ -81,6 +81,8 @@ export interface InvoiceSource {
 	venueSurcharge: number;
 	lunchAdjustment: number;
 	toolsAdjustment: number;
+	deviceCount: number;
+	devicesAdjustment: number;
 	totalPrice: number;
 }
 
@@ -121,7 +123,8 @@ export function createInvoiceSnapshot(
 	for (const [description, amount] of [
 		['Raumorganisation', source.venueSurcharge],
 		[source.lunchAdjustment < 0 ? 'Catering-Abzug' : 'Catering', source.lunchAdjustment],
-		['Coding-Tool-Bereitstellung', source.toolsAdjustment]
+		['Coding-Tool-Bereitstellung', source.toolsAdjustment],
+		[`${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
 	] as const) {
 		if (amount !== 0) items.push({ description, netAmountCents: eurosToCents(amount) });
 	}
@@ -253,7 +256,8 @@ export function createFinalInvoiceSnapshot(
 	for (const [description, amount] of [
 		['Raumorganisation', source.venueSurcharge],
 		[source.lunchAdjustment < 0 ? 'Catering-Abzug' : 'Catering', source.lunchAdjustment],
-		['Coding-Tool-Bereitstellung', source.toolsAdjustment]
+		['Coding-Tool-Bereitstellung', source.toolsAdjustment],
+		[`${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
 	] as const) {
 		if (amount !== 0) items.push({ description, netAmountCents: eurosToCents(amount) });
 	}

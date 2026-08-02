@@ -15,6 +15,7 @@
 		ExternalLink,
 		MapPin,
 		MapPinned,
+		Laptop,
 		Mail,
 		MessageSquareText,
 		Monitor,
@@ -89,7 +90,9 @@
 		customLunch: draft.customLunch,
 		toolProvision: draft.toolProvision,
 		codingTools: draft.codingTools,
-		customCodingTool: draft.customCodingTool
+		customCodingTool: draft.customCodingTool,
+		deviceProvision: draft.deviceProvision,
+		deviceCount: draft.deviceCount
 	});
 	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.prepCallBooking));
 	let readOnly = $derived(hackathon.status !== 'confirmed');
@@ -106,6 +109,8 @@
 			toolProvision: value.toolProvision,
 			codingTools: [...value.codingTools],
 			customCodingTool: value.customCodingTool,
+			deviceProvision: value.deviceProvision,
+			deviceCount: value.deviceCount,
 			companyName: value.companyName,
 			contactName: value.contactName,
 			email: value.email,
@@ -123,7 +128,11 @@
 	}
 
 	function updateDraftOptions(patch: Partial<OptionValues>) {
-		draft = { ...draft, ...patch };
+		const next = { ...draft, ...patch };
+		if (patch.capacity !== undefined && next.deviceProvision === 'needed' && next.deviceCount > patch.capacity) {
+			next.deviceCount = patch.capacity;
+		}
+		draft = next;
 	}
 
 	function openEditor(section: EditSection) {
@@ -150,6 +159,7 @@
 			case 'capacity': return { section, capacity: draft.capacity };
 			case 'venue': return { section, venueProvided: draft.venueProvided };
 			case 'tools': return { section, toolProvision: draft.toolProvision!, codingTools: draft.codingTools, customCodingTool: draft.customCodingTool };
+			case 'devices': return { section, deviceProvision: draft.deviceProvision!, deviceCount: draft.deviceCount };
 			case 'equipment': return { section, equipment: draft.equipment };
 			case 'lunch': return { section, lunch: draft.lunch, customLunch: draft.customLunch };
 			case 'address': return { section, address: draft.address };
@@ -480,6 +490,9 @@
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Code2} label={overviewRow('tools').label} value={overviewRow('tools').value} status={overviewRow('tools').status} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="tools" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-tools" />{/snippet}
+				</EditableSummaryRow>
+				<EditableSummaryRow icon={Laptop} label={overviewRow('devices').label} value={overviewRow('devices').value} status={overviewRow('devices').status} active={activeSection === 'devices'} {saving} error={activeSection === 'devices' ? editError : ''} onedit={() => openEditor('devices')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}<ConfigOptionCards kind="devices" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-devices" />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Monitor} label={overviewRow('equipment').label} value={overviewRow('equipment').value} status={overviewRow('equipment').status} active={activeSection === 'equipment'} {saving} error={activeSection === 'equipment' ? editError : ''} onedit={() => openEditor('equipment')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="equipment" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-equipment" />{/snippet}

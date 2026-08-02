@@ -12,6 +12,7 @@ export type BookingOverviewRowId =
 	| 'team'
 	| 'location'
 	| 'tools'
+	| 'devices'
 	| 'equipment'
 	| 'event-date'
 	| 'prep-call'
@@ -48,7 +49,7 @@ export function bookingOverviewRows(
 	config: BookingConfiguration,
 	booking?: BookingResultSummary
 ): BookingOverviewRow[] {
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	const toolLabels = selectedCodingToolLabels(config).join(', ') || 'Noch keine Tools ausgewählt';
 	const toolsContext = config.toolProvision === 'needed'
 		? 'Für den Tag benötigt'
@@ -75,6 +76,14 @@ export function bookingOverviewRows(
 			label: 'Coding Tools',
 			value: `${toolsContext}: ${toolLabels}`,
 			status: adjustmentLabel(price.toolsAdjustment)
+		},
+		{
+			id: 'devices',
+			label: 'Devices',
+			value: config.deviceProvision === 'needed'
+				? `${config.deviceCount} ${config.deviceCount === 1 ? 'Gerät' : 'Geräte'} für den Tag`
+				: config.deviceProvision === 'existing' ? 'Unternehmenslaptops oder private Geräte' : 'Noch offen',
+			status: adjustmentLabel(price.devicesAdjustment)
 		},
 		{
 			id: 'equipment',

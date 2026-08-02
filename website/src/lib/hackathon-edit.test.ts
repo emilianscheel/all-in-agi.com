@@ -11,6 +11,8 @@ const config: BookingConfiguration = {
 	toolProvision: 'existing',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'existing',
+	deviceCount: 0,
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -27,6 +29,7 @@ describe('hackathon section updates', () => {
 		[{ section: 'capacity', capacity: 30 }, { capacity: 30 }],
 		[{ section: 'venue', venueProvided: false }, { venueProvided: false }],
 		[{ section: 'tools', toolProvision: 'needed', codingTools: ['cursor'], customCodingTool: '' }, { toolProvision: 'needed', codingTools: ['cursor'] }],
+		[{ section: 'devices', deviceProvision: 'needed', deviceCount: 8 }, { deviceProvision: 'needed', deviceCount: 8 }],
 		[{ section: 'equipment', equipment: 'none' }, { equipment: 'none' }],
 		[{ section: 'lunch', lunch: 'custom', customLunch: 'Bowls' }, { lunch: 'custom', customLunch: 'Bowls' }],
 		[{ section: 'address', address: { label: '', street: 'Neue Straße 2', postalCode: '20095', city: 'Hamburg', country: 'Deutschland' } }, { address: { label: '', street: 'Neue Straße 2', postalCode: '20095', city: 'Hamburg', country: 'Deutschland' } }],
@@ -42,6 +45,11 @@ describe('hackathon section updates', () => {
 		expect(next.companyName).toBe('companyName' in expected ? expected.companyName : config.companyName);
 	});
 
+	test('clamps requested devices when capacity is reduced', () => {
+		const next = applyHackathonUpdate({ ...config, capacity: 50, deviceProvision: 'needed', deviceCount: 40 }, parseHackathonUpdate({ section: 'capacity', capacity: 15 }));
+		expect(next).toMatchObject({ capacity: 15, deviceProvision: 'needed', deviceCount: 15 });
+	});
+
 	test('clears custom lunch when another lunch option is selected', () => {
 		const next = applyHackathonUpdate({ ...config, lunch: 'custom', customLunch: 'Bowls' }, parseHackathonUpdate({ section: 'lunch', lunch: 'pizza', customLunch: 'ignored' }));
 		expect(next.customLunch).toBe('');
@@ -51,5 +59,6 @@ describe('hackathon section updates', () => {
 		expect(() => parseHackathonUpdate({ section: 'unknown' })).toThrow(HackathonUpdateError);
 		expect(() => parseHackathonUpdate({ section: 'capacity', capacity: 20 })).toThrow('Die Teamgröße ist ungültig.');
 		expect(() => parseHackathonUpdate({ section: 'message', message: 'x'.repeat(501) })).toThrow('Ihre Nachricht ist ungültig.');
+		expect(() => parseHackathonUpdate({ section: 'devices', deviceProvision: 'needed', deviceCount: 1.5 })).toThrow('Die Geräteauswahl ist ungültig.');
 	});
 });

@@ -17,6 +17,8 @@ const record = {
 	toolProvision: 'existing',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'needed',
+	deviceCount: 3,
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z',
 	eventEnd: '2099-06-20T15:00:00.000Z',
@@ -25,7 +27,8 @@ const record = {
 	venueSurcharge: 0,
 	lunchAdjustment: 0,
 	toolsAdjustment: 0,
-	totalPrice: 4000,
+	devicesAdjustment: 450,
+	totalPrice: 4450,
 	prepCallBookingUid: 'prep-1',
 	prepCallBookingIcsUid: 'prep-1@example.com',
 	prepCallBookingTitle: 'ALL IN AGI Prep Call',
@@ -46,7 +49,8 @@ describe('public hackathon mapping', () => {
 	test('exposes editable booking and contact details', () => {
 		const result = toPublicHackathon(record);
 		expect(result.companyName).toBe('Musterwerke GmbH');
-		expect(result.price.totalPrice).toBe(4000);
+		expect(result.price).toMatchObject({ devicesAdjustment: 450, totalPrice: 4450 });
+		expect(result).toMatchObject({ deviceProvision: 'needed', deviceCount: 3 });
 		expect(result.prepCallBooking.uid).toBe('prep-1');
 		expect(result.hackathonBooking.uid).toBe('hackathon-1');
 		expect(result.contactName).toBe('Ada Beispiel');

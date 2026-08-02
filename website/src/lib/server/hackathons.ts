@@ -37,7 +37,7 @@ export interface PublicHackathonTimer {
 }
 
 function pendingValues(id: string, config: BookingConfiguration) {
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	return {
 		id,
 		status: 'pending' as const,
@@ -54,6 +54,8 @@ function pendingValues(id: string, config: BookingConfiguration) {
 		toolProvision: config.toolProvision!,
 		codingTools: config.codingTools,
 		customCodingTool: config.customCodingTool,
+		deviceProvision: config.deviceProvision!,
+		deviceCount: config.deviceCount,
 		address: config.address,
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
@@ -194,7 +196,7 @@ export async function updateConfirmedHackathon(
 	bookings: Partial<ConfirmedBookings> = {},
 	reprice = false
 ) {
-	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision);
+	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	const db = await getDb();
 	const [record] = await db.update(hackathons).set({
 		companyName: config.companyName,
@@ -210,6 +212,8 @@ export async function updateConfirmedHackathon(
 		toolProvision: config.toolProvision!,
 		codingTools: config.codingTools,
 		customCodingTool: config.customCodingTool,
+		deviceProvision: config.deviceProvision!,
+		deviceCount: config.deviceCount,
 		address: config.address,
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
@@ -232,6 +236,8 @@ export function recordToBookingConfiguration(record: HackathonRecord): BookingCo
 		toolProvision: record.toolProvision,
 		codingTools: record.codingTools,
 		customCodingTool: record.customCodingTool,
+		deviceProvision: record.deviceProvision,
+		deviceCount: record.deviceCount,
 		companyName: record.companyName,
 		contactName: record.contactName,
 		email: record.contactEmail,
@@ -277,6 +283,7 @@ export function toPublicHackathon(record: HackathonRecord): PublicHackathon {
 			venueSurcharge: record.venueSurcharge,
 			lunchAdjustment: record.lunchAdjustment,
 			toolsAdjustment: record.toolsAdjustment,
+			devicesAdjustment: record.devicesAdjustment,
 			totalPrice: record.totalPrice
 		},
 		hackathonBooking: recordToHackathonBookingSummary(record),

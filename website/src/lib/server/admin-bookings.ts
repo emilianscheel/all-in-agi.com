@@ -43,8 +43,8 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		'ID', 'Status', 'Unternehmen', 'Kontakt', 'E-Mail', 'Telefon', 'Nachricht',
 		'Event Start', 'Event Ende', 'Prep Call', 'Kapazität', 'Location gestellt',
 		'Equipment', 'Lunch', 'Custom Lunch', 'Tool-Bereitstellung', 'Coding Tools',
-		'Custom Coding Tool', 'Straße', 'PLZ', 'Stadt', 'Land', 'Basispreis',
-		'Location-Aufpreis', 'Lunch-Anpassung', 'Tools-Anpassung', 'Gesamtpreis netto',
+		'Custom Coding Tool', 'Geräte-Bereitstellung', 'Geräteanzahl', 'Straße', 'PLZ', 'Stadt', 'Land', 'Basispreis',
+		'Location-Aufpreis', 'Lunch-Anpassung', 'Tools-Anpassung', 'Geräte-Anpassung', 'Gesamtpreis netto',
 		'Erstellt am', 'Aktualisiert am', 'Storniert am', 'Stornierungs-E-Mail gesendet am'
 	];
 	const rows = bookings.map((booking) => [
@@ -66,6 +66,8 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		csvCell(booking.toolProvision),
 		csvCell(booking.codingTools.join(', '), true),
 		csvCell(booking.customCodingTool, true),
+		csvCell(booking.deviceProvision),
+		csvCell(booking.deviceCount),
 		csvCell(booking.address.street, true),
 		csvCell(booking.address.postalCode, true),
 		csvCell(booking.address.city, true),
@@ -74,6 +76,7 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		csvCell(booking.venueSurcharge),
 		csvCell(booking.lunchAdjustment),
 		csvCell(booking.toolsAdjustment),
+		csvCell(booking.devicesAdjustment),
 		csvCell(booking.totalPrice),
 		csvCell(booking.createdAt),
 		csvCell(booking.updatedAt),
@@ -82,4 +85,3 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 	].join(','));
 	return `\uFEFF${headers.map((header) => csvCell(header)).join(',')}\r\n${rows.join('\r\n')}\r\n`;
 }
-

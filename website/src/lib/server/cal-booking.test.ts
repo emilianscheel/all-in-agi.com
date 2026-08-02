@@ -5,7 +5,7 @@ import { reschedulePrepCallWithToken } from './cal-reschedule';
 
 const configuration: BookingConfiguration = {
 	capacity: 15, venueProvided: true, equipment: 'projector', lunch: 'pizza', customLunch: '',
-	toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '', companyName: 'Musterwerke GmbH',
+	toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '', deviceProvision: 'existing', deviceCount: 0, companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel', email: 'ada@example.com', phone: '+49 30 123456', message: '',
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z',

@@ -11,6 +11,8 @@ const config: BookingConfiguration = {
 	toolProvision: 'needed',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'needed',
+	deviceCount: 5,
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -38,6 +40,7 @@ describe('booking overview rows', () => {
 			'Team',
 			'Location',
 			'Coding Tools',
+			'Devices',
 			'Demo Setup',
 			'Event Date',
 			'Prep Call',
@@ -56,7 +59,8 @@ describe('booking overview rows', () => {
 			value: 'Vegetarische Bowls',
 			status: '+ 500 €'
 		});
+		expect(rows.find(({ id }) => id === 'devices')).toMatchObject({ value: '5 Geräte für den Tag', status: '+ 750 €' });
 		expect(rows.find(({ id }) => id === 'prep-call')?.value).toContain('14:00');
-		expect(rows.at(-1)).toMatchObject({ status: '7.500 € netto', total: true });
+		expect(rows.at(-1)).toMatchObject({ status: '8.250 € netto', total: true });
 	});
 });

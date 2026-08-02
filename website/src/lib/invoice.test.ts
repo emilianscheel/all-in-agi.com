@@ -28,6 +28,8 @@ const source: InvoiceSource = {
 	venueSurcharge: 1000,
 	lunchAdjustment: -500,
 	toolsAdjustment: 1000,
+	deviceCount: 0,
+	devicesAdjustment: 0,
 	totalPrice: 6500
 };
 
@@ -57,6 +59,12 @@ describe('invoice snapshot', () => {
 		}, legal);
 		expect(minimal.items).toHaveLength(1);
 		expect(() => createInvoiceSnapshot({ ...source, totalPrice: 1 }, legal)).toThrow('do not match');
+	});
+
+	test('adds requested devices as a separate line item', () => {
+		const result = createInvoiceSnapshot({ ...source, deviceCount: 3, devicesAdjustment: 450, totalPrice: 6950 }, legal);
+		expect(result.items.at(-1)).toMatchObject({ description: '3 Leihgeräte × 150 €', netAmountCents: 45000 });
+		expect(result.netTotalCents).toBe(695000);
 	});
 
 	test('creates a seven-day 30 percent down-payment invoice and a reconciled final invoice', () => {

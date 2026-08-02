@@ -23,6 +23,8 @@ const record = {
 	toolProvision: 'existing',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'existing',
+	deviceCount: 0,
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z',
 	eventEnd: '2099-06-20T15:00:00.000Z',

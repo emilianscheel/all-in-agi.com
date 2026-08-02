@@ -3,6 +3,7 @@ import {
 	type BookingConfiguration,
 	type Capacity,
 	type CodingTool,
+	type DeviceProvision,
 	type Equipment,
 	type EventAddress,
 	type Lunch,
@@ -13,6 +14,7 @@ export type HackathonUpdate =
 	| { section: 'capacity'; capacity: Capacity }
 	| { section: 'venue'; venueProvided: boolean }
 	| { section: 'tools'; toolProvision: ToolProvision; codingTools: CodingTool[]; customCodingTool: string }
+	| { section: 'devices'; deviceProvision: DeviceProvision; deviceCount: number }
 	| { section: 'equipment'; equipment: Equipment }
 	| { section: 'lunch'; lunch: Lunch; customLunch: string }
 	| { section: 'address'; address: EventAddress }
@@ -79,6 +81,11 @@ export function parseHackathonUpdate(value: unknown): HackathonUpdate {
 		case 'equipment':
 			if (!['projector', 'tv', 'none'].includes(update.equipment as string)) throw new HackathonUpdateError('Das Demo Setup ist ungültig.');
 			return { section: update.section, equipment: update.equipment as Equipment };
+		case 'devices':
+			if (!['existing', 'needed'].includes(update.deviceProvision as string) || !Number.isInteger(update.deviceCount)) {
+				throw new HackathonUpdateError('Die Geräteauswahl ist ungültig.');
+			}
+			return { section: update.section, deviceProvision: update.deviceProvision as DeviceProvision, deviceCount: update.deviceCount as number };
 		case 'lunch':
 			if (!['pizza', 'custom', 'none', 'self-organized'].includes(update.lunch as string)) throw new HackathonUpdateError('Die Lunch-Auswahl ist ungültig.');
 			return { section: update.section, lunch: update.lunch as Lunch, customLunch: string(update.customLunch, 'Der Catering-Wunsch') };
@@ -110,9 +117,10 @@ export function parseHackathonUpdate(value: unknown): HackathonUpdate {
 
 export function applyHackathonUpdate(config: BookingConfiguration, update: HackathonUpdate): BookingConfiguration {
 	switch (update.section) {
-		case 'capacity': return { ...config, capacity: update.capacity };
+		case 'capacity': return { ...config, capacity: update.capacity, deviceCount: config.deviceProvision === 'needed' ? Math.min(config.deviceCount, update.capacity) : 0 };
 		case 'venue': return { ...config, venueProvided: update.venueProvided };
 		case 'tools': return { ...config, toolProvision: update.toolProvision, codingTools: update.codingTools, customCodingTool: update.customCodingTool };
+		case 'devices': return { ...config, deviceProvision: update.deviceProvision, deviceCount: update.deviceProvision === 'needed' ? update.deviceCount : 0 };
 		case 'equipment': return { ...config, equipment: update.equipment };
 		case 'lunch': return { ...config, lunch: update.lunch, customLunch: update.lunch === 'custom' ? update.customLunch : '' };
 		case 'address': return { ...config, address: update.address };

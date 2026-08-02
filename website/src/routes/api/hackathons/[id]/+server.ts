@@ -37,7 +37,7 @@ export async function PATCH({ params, request, fetch }) {
 
 	try {
 		const update = parseHackathonUpdate(body);
-		const priceAffecting = ['capacity', 'venue', 'tools', 'lunch'].includes(update.section);
+		const priceAffecting = ['capacity', 'venue', 'tools', 'devices', 'lunch'].includes(update.section);
 		if (priceAffecting && (record.invoiceSnapshot || record.downPaymentInvoiceSnapshot)) {
 			return json({ message: 'Preisrelevante Angaben können nach Ausstellung einer Rechnung nicht mehr geändert werden.' }, { status: 409 });
 		}

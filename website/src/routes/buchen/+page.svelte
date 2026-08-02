@@ -16,6 +16,7 @@
         Drumstick,
         Fish,
         IceCreamBowl,
+		Laptop,
         MapPin,
         Monitor,
         Pizza,
@@ -42,6 +43,7 @@
         type EventAddress,
         type Lunch,
         type ToolProvision,
+		type DeviceProvision,
     } from "$lib/booking";
     import { bookingOverviewRows, type BookingOverviewRowId } from "$lib/booking-overview";
     import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from "$lib/photon";
@@ -50,7 +52,7 @@
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
     import { lunchIconKind } from "$lib/lunch-icon";
-    import type { SharedPlanV4 } from "$lib/shared-plan";
+    import type { SharedPlanV5 } from "$lib/shared-plan";
     import { reveal } from "$lib/motion";
     import MapPreview from "$lib/MapPreview.svelte";
     import SharePlanButton from "$lib/SharePlanButton.svelte";
@@ -69,6 +71,8 @@
     let toolProvision = $state<ToolProvision | null>(null);
     let codingTools = $state<CodingTool[]>([]);
     let customCodingTool = $state("");
+    let deviceProvision = $state<DeviceProvision | null>(null);
+    let deviceCount = $state(0);
     let companyName = $state("");
     let contactName = $state("");
     let email = $state("");
@@ -112,7 +116,7 @@
     let debouncedCustomLunch = $state("");
     let customLunchDebounce: ReturnType<typeof setTimeout> | undefined;
 
-    let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision));
+    let price = $derived(getPrice(capacity, venueProvided, lunch, toolProvision, deviceProvision, deviceCount));
     let eventAddressLabel = $derived(
         [address.street, [address.postalCode, address.city].filter(Boolean).join(" ")]
             .filter(Boolean)
@@ -159,6 +163,8 @@
         toolProvision,
         codingTools,
         customCodingTool,
+		deviceProvision,
+		deviceCount,
     });
     let overviewRows = $derived(bookingOverviewRows(buildConfiguration()));
 
@@ -173,7 +179,10 @@
     });
 
     function updateOptionValues(patch: Partial<OptionValues>) {
-        if (patch.capacity !== undefined) capacity = patch.capacity;
+        if (patch.capacity !== undefined) {
+			capacity = patch.capacity;
+			if (deviceProvision === 'needed' && deviceCount > capacity) deviceCount = capacity;
+		}
         if (patch.venueProvided !== undefined) venueProvided = patch.venueProvided;
         if (patch.equipment !== undefined) equipment = patch.equipment;
         if (patch.lunch !== undefined) lunch = patch.lunch;
@@ -181,6 +190,8 @@
         if (patch.toolProvision !== undefined) toolProvision = patch.toolProvision;
         if (patch.codingTools !== undefined) codingTools = patch.codingTools;
         if (patch.customCodingTool !== undefined) customCodingTool = patch.customCodingTool;
+		if (patch.deviceProvision !== undefined) deviceProvision = patch.deviceProvision;
+		if (patch.deviceCount !== undefined) deviceCount = patch.deviceCount;
     }
 
     function updateSuggestions() {
@@ -240,6 +251,8 @@
             toolProvision,
             codingTools,
             customCodingTool: codingTools.includes("custom") ? customCodingTool : "",
+			deviceProvision,
+			deviceCount,
             companyName,
             contactName,
             email,
@@ -256,11 +269,11 @@
         return overviewRows.find((row) => row.id === id)!;
     }
 
-    function buildSharedPlan(): SharedPlanV4 {
-        return { v: 4, ...buildConfiguration(), consultationMode, customConsultationDate };
+    function buildSharedPlan(): SharedPlanV5 {
+        return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
     }
 
-    function applySharedPlan(plan: SharedPlanV4) {
+    function applySharedPlan(plan: SharedPlanV5) {
         capacity = plan.capacity;
         venueProvided = plan.venueProvided;
         equipment = plan.equipment;
@@ -272,6 +285,8 @@
                 ? plan.codingTools.filter((tool) => PROVIDED_CODING_TOOLS.includes(tool))
                 : plan.codingTools;
         customCodingTool = plan.toolProvision === "needed" ? "" : plan.customCodingTool;
+		deviceProvision = plan.deviceProvision;
+		deviceCount = plan.deviceCount;
         companyName = plan.companyName;
         contactName = plan.contactName;
         email = plan.email;
@@ -307,7 +322,7 @@
         return `${location.origin}${path}`;
     }
 
-    function schedulePlanUrl(plan: SharedPlanV4) {
+    function schedulePlanUrl(plan: SharedPlanV5) {
         if (!browser || !planHydrated) return;
         if (planDebounce) clearTimeout(planDebounce);
         planDebounce = setTimeout(
@@ -572,6 +587,9 @@
                                 /></b
                             >
                         </div>
+						<div class:event-detail-unselected={!deviceProvision} class="event-detail" aria-hidden={!deviceProvision}>
+							<small>Devices</small><b><AnimatedValue value={deviceProvision === 'needed' ? `${deviceCount} ${deviceCount === 1 ? 'Gerät' : 'Geräte'}` : 'Eigene Geräte'} active={Boolean(deviceProvision)} /></b>
+						</div>
                         <div class="event-detail">
                             <small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b>
                         </div>
@@ -631,6 +649,11 @@
                     onchange={updateOptionValues}
                 />
             </section>
+
+			<section class="config-section" use:reveal>
+				<h2>Devices</h2>
+				<ConfigOptionCards kind="devices" values={optionValues} onchange={updateOptionValues} />
+			</section>
 
             <section class="config-section" use:reveal>
                 <h2>Demo setup</h2>
@@ -739,6 +762,9 @@
                                 /></span
                             ><b><AnimatedValue value={overviewRow("tools").status} /></b>
                         </div>{/if}
+					{#if deviceProvision}<div class="summary-row">
+						<Laptop size={18} aria-hidden="true" /><span><small>{overviewRow("devices").label}</small><AnimatedValue value={overviewRow("devices").value} /></span><b><AnimatedValue value={overviewRow("devices").status} /></b>
+					</div>{/if}
                     <div class="summary-row">
                         <Monitor size={18} aria-hidden="true" /><span
                             ><small>{overviewRow("equipment").label}</small><AnimatedValue

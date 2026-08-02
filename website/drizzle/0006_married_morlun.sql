@@ -1,0 +1,6 @@
+ALTER TABLE "hackathons" ADD COLUMN "device_provision" text DEFAULT 'existing' NOT NULL;--> statement-breakpoint
+ALTER TABLE "hackathons" ADD COLUMN "device_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "hackathons" ADD COLUMN "devices_adjustment" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "hackathons" ADD CONSTRAINT "hackathons_device_provision_check" CHECK ("hackathons"."device_provision" in ('existing', 'needed'));--> statement-breakpoint
+ALTER TABLE "hackathons" ADD CONSTRAINT "hackathons_device_count_check" CHECK (("hackathons"."device_provision" = 'existing' and "hackathons"."device_count" = 0) or ("hackathons"."device_provision" = 'needed' and "hackathons"."device_count" between 1 and "hackathons"."capacity"));--> statement-breakpoint
+ALTER TABLE "hackathons" ADD CONSTRAINT "hackathons_devices_adjustment_check" CHECK ("hackathons"."devices_adjustment" = case when "hackathons"."device_provision" = 'needed' then "hackathons"."device_count" * 150 else 0 end);

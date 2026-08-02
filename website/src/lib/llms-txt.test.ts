@@ -24,6 +24,7 @@ describe('/llms.txt', () => {
 			'+500 € für bis zu 15 Personen',
 			'+1.000 € für bis zu 30 Personen',
 			'+1.500 € für bis zu 50 Personen',
+			'+150 € netto pro Gerät',
 			'−500 € netto'
 		]) {
 			expect(content).toContain(detail);

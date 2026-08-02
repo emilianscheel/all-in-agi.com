@@ -11,7 +11,7 @@ const source = {
 	id: 'HAA-AAA-AAA', companyName: 'Musterwerke GmbH', contactName: 'Ada Beispiel', contactEmail: 'ada@example.com',
 	address: { street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z', capacity: 30, basePrice: 5000, venueSurcharge: 1000,
-	lunchAdjustment: -500, toolsAdjustment: 1000, totalPrice: 6500
+	lunchAdjustment: -500, toolsAdjustment: 1000, deviceCount: 0, devicesAdjustment: 0, totalPrice: 6500
 } satisfies InvoiceSource;
 
 describe('invoice PDF', () => {

@@ -16,6 +16,8 @@ const configuration: BookingConfiguration = {
 	toolProvision: 'existing',
 	codingTools: ['codex'],
 	customCodingTool: '',
+	deviceProvision: 'existing',
+	deviceCount: 0,
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
