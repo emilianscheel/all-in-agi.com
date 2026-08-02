@@ -21,4 +21,15 @@ describe('GTM article schema', () => {
 			height: hero.height
 		});
 	});
+
+	test('uses BlogPosting metadata for editorial pages', () => {
+		const page = getGtmPage('codex-best-practices');
+		const schema = gtmArticleSchema(page);
+
+		expect(schema['@type']).toBe('BlogPosting');
+		expect(schema.headline).toBe('Hör auf zu prompten.');
+		expect(schema.datePublished).toBe('2026-08-02');
+		expect(schema.mainEntityOfPage).toBe(`${SITE_ORIGIN}/codex-best-practices`);
+		expect('dateModified' in schema).toBe(false);
+	});
 });

@@ -1,6 +1,16 @@
 import type { GtmHeroKey } from '$lib/gtm-images';
+import { editorialPageContent } from '$lib/gtm-content';
 
-export const GTM_GROUPS = ['Standorte', 'Branchen', 'Ziele', 'Formate'] as const;
+export const GTM_GROUPS = [
+	'Standorte',
+	'Hackathon-Branchen',
+	'Ziele',
+	'Formate',
+	'Tools',
+	'Gesellschaft',
+	'Branchen-Blueprints',
+	'Mittelstand'
+] as const;
 
 export type GtmGroup = (typeof GTM_GROUPS)[number];
 
@@ -24,12 +34,32 @@ export const GTM_ICON_NAMES = [
 	'CalendarDays',
 	'Lightbulb',
 	'RefreshCw',
-	'LockKeyhole'
+	'LockKeyhole',
+	'Terminal',
+	'FileText',
+	'GitCompareArrows',
+	'TestTubeDiagonal',
+	'Workflow',
+	'UserRoundCheck',
+	'Clock3',
+	'Flag',
+	'BriefcaseBusiness',
+	'Globe',
+	'RadioTower',
+	'Warehouse',
+	'CircuitBoard',
+	'Calculator',
+	'ShoppingCart',
+	'Crown',
+	'MapPinned',
+	'Building2',
+	'Cpu',
+	'Pickaxe'
 ] as const;
 
 export type GtmIconName = (typeof GTM_ICON_NAMES)[number];
 
-export type GtmPage = {
+export type GtmPageBase = {
 	slug: string;
 	group: GtmGroup;
 	title: string;
@@ -38,6 +68,10 @@ export type GtmPage = {
 	publishedAt: string;
 	heroImage: GtmHeroKey;
 	description: string;
+};
+
+export type GtmOfferPage = GtmPageBase & {
+	kind: 'offer';
 	lead: [string, string];
 	relevanceTitle: string;
 	relevance: [string, string];
@@ -49,7 +83,39 @@ export type GtmPage = {
 	outcome: [string, string];
 };
 
-type GtmPageContent = Omit<GtmPage, 'publishedAt' | 'heroImage'>;
+export type EditorialParagraph = {
+	text: string;
+	sourceIds?: string[];
+};
+
+export type EditorialSection = {
+	title: string;
+	paragraphs: EditorialParagraph[];
+	bullets?: EditorialParagraph[];
+};
+
+export type EditorialSource = {
+	id: string;
+	label: string;
+	publisher: string;
+	url: string;
+};
+
+export type EditorialGtmPage = GtmPageBase & {
+	kind: 'editorial';
+	seoTitle: string;
+	dek: string;
+	sections: EditorialSection[];
+	sources: EditorialSource[];
+	relatedSlugs: string[];
+	dateModified?: string;
+	blueprint?: boolean;
+};
+
+export type GtmPage = GtmOfferPage | EditorialGtmPage;
+
+type GtmPageContent = Omit<GtmOfferPage, 'kind' | 'publishedAt' | 'heroImage'>;
+export type EditorialPageContent = Omit<EditorialGtmPage, 'heroImage'>;
 
 export const GTM_PUBLICATION_DATE = '2026-07-29';
 
@@ -266,7 +332,7 @@ const gtmPageContent: GtmPageContent[] = [
 	},
 	{
 		slug: 'ki-hackathon-industrie',
-		group: 'Branchen',
+		group: 'Hackathon-Branchen',
 		title: 'KI-Hackathon für Industrieunternehmen',
 		footerLabel: 'KI-Hackathon für Industrie',
 		icon: 'Factory',
@@ -308,7 +374,7 @@ const gtmPageContent: GtmPageContent[] = [
 	},
 	{
 		slug: 'hackathon-softwareunternehmen',
-		group: 'Branchen',
+		group: 'Hackathon-Branchen',
 		title: 'Agentic Engineering Hackathon für Softwareunternehmen',
 		footerLabel: 'Hackathon für Softwareteams',
 		icon: 'Code2',
@@ -350,7 +416,7 @@ const gtmPageContent: GtmPageContent[] = [
 	},
 	{
 		slug: 'ki-hackathon-logistik-handel',
-		group: 'Branchen',
+		group: 'Hackathon-Branchen',
 		title: 'KI-Hackathon für Logistik und Handel',
 		footerLabel: 'KI-Hackathon für Logistik',
 		icon: 'Truck',
@@ -392,7 +458,7 @@ const gtmPageContent: GtmPageContent[] = [
 	},
 	{
 		slug: 'ki-hackathon-banken-versicherungen',
-		group: 'Branchen',
+		group: 'Hackathon-Branchen',
 		title: 'KI-Hackathon für Banken und Versicherungen',
 		footerLabel: 'KI-Hackathon für Finance',
 		icon: 'ShieldCheck',
@@ -434,7 +500,7 @@ const gtmPageContent: GtmPageContent[] = [
 	},
 	{
 		slug: 'hackathon-maschinenbau-automatisierung',
-		group: 'Branchen',
+		group: 'Hackathon-Branchen',
 		title: 'Hackathon für Maschinenbau und Automatisierung',
 		footerLabel: 'Hackathon für Maschinenbau',
 		icon: 'Cog',
@@ -916,19 +982,49 @@ const GTM_HERO_BY_SLUG: Record<string, GtmHeroKey> = {
 	'hack-week-coding-agents': 'event',
 	'ai-innovation-day': 'adoption',
 	'legacy-modernisierung-coding-agents': 'engineering',
-	'security-konformer-ki-hackathon': 'engineering'
+	'security-konformer-ki-hackathon': 'engineering',
+	'codex-best-practices': 'event',
+	'claude-code-best-practices': 'berlin',
+	'coding-agents-vergleich-unternehmen': 'industry',
+	'coding-agent-tests-verifikation': 'engineering',
+	'vibe-coding-im-unternehmen': 'hamburg',
+	'wird-ki-uns-ersetzen': 'machinery',
+	'san-francisco-lebt-in-der-zukunft': 'adoption',
+	'deutschland-hat-ein-umsetzungsproblem': 'munich',
+	'ki-produktivitaet-ohne-stellenabbau': 'logistics',
+	'europas-chance-mit-ki': 'stuttgart',
+	'ki-hackathon-sensorik-automatisierung': 'finance',
+	'ki-hackathon-intralogistik': 'frankfurt',
+	'ki-hackathon-robotik': 'event',
+	'ki-hackathon-steuersoftware': 'berlin',
+	'ki-hackathon-digital-commerce': 'industry',
+	'ki-fuer-den-mittelstand': 'engineering',
+	'ki-hackathon-ostdeutschland': 'hamburg',
+	'ki-hackathon-ostwestfalen-lippe': 'machinery',
+	'ki-hackathon-nuernberg-franken': 'adoption',
+	'ki-hackathon-ruhrgebiet': 'munich'
 };
 
-export const gtmPages: GtmPage[] = gtmPageContent.map((page) => {
+const offerPages: GtmOfferPage[] = gtmPageContent.map((page) => {
 	const heroImage = GTM_HERO_BY_SLUG[page.slug];
 	if (!heroImage) throw new Error(`Missing hero image for GTM page: ${page.slug}`);
 
 	return {
 		...page,
+		kind: 'offer',
 		publishedAt: GTM_PUBLICATION_DATE,
 		heroImage
 	};
 });
+
+const editorialPages: EditorialGtmPage[] = editorialPageContent.map((page) => {
+	const heroImage = GTM_HERO_BY_SLUG[page.slug];
+	if (!heroImage) throw new Error(`Missing hero image for GTM page: ${page.slug}`);
+
+	return { ...page, heroImage };
+});
+
+export const gtmPages: GtmPage[] = [...offerPages, ...editorialPages];
 
 export const gtmPaths = gtmPages.map((page) => `/${page.slug}` as const);
 

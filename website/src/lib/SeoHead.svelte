@@ -10,7 +10,9 @@
 		imageWidth = 2400,
 		imageHeight = 1619,
 		ogType = 'website',
-		publishedAt
+		publishedAt,
+		modifiedAt,
+		socialTitle = title
 	}: {
 		title: string;
 		description: string;
@@ -21,6 +23,8 @@
 		imageHeight?: number;
 		ogType?: 'website' | 'article';
 		publishedAt?: string;
+		modifiedAt?: string;
+		socialTitle?: string;
 	} = $props();
 
 	let canonicalUrl = $derived(`${SITE_ORIGIN}${path}`);
@@ -31,7 +35,7 @@
 	<meta name="description" content={description} />
 	<link rel="canonical" href={canonicalUrl} />
 
-	<meta property="og:title" content={title} />
+	<meta property="og:title" content={socialTitle} />
 	<meta property="og:description" content={description} />
 	<meta property="og:url" content={canonicalUrl} />
 	<meta property="og:site_name" content="ALL IN AGI" />
@@ -42,9 +46,10 @@
 	<meta property="og:image:height" content={String(imageHeight)} />
 	<meta property="og:image:alt" content={imageAlt} />
 	{#if ogType === 'article' && publishedAt}<meta property="article:published_time" content={publishedAt} />{/if}
+	{#if ogType === 'article' && modifiedAt}<meta property="article:modified_time" content={modifiedAt} />{/if}
 
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={title} />
+	<meta name="twitter:title" content={socialTitle} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={imageUrl} />
 	<meta name="twitter:image:alt" content={imageAlt} />

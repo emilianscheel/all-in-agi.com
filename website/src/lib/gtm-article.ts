@@ -8,11 +8,12 @@ export function gtmArticleSchema(page: GtmPage) {
 
 	return {
 		'@context': 'https://schema.org',
-		'@type': 'Article',
+		'@type': page.kind === 'editorial' ? 'BlogPosting' : 'Article',
 		headline: page.title,
 		description: page.description,
 		inLanguage: 'de-DE',
 		datePublished: page.publishedAt,
+		...(page.kind === 'editorial' && page.dateModified ? { dateModified: page.dateModified } : {}),
 		articleSection: page.group,
 		mainEntityOfPage: canonicalUrl,
 		url: canonicalUrl,

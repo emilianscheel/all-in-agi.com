@@ -281,7 +281,7 @@ img { display: block; max-width: 100%; }
 .footer-links a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 
 .gtm-footer { border-bottom: 1px solid var(--soft-line); background: var(--surface); color: var(--muted); }
-.gtm-footer-inner { max-width: 1120px; margin: 0 auto; padding: 54px 24px 48px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 34px; }
+.gtm-footer-inner { max-width: 1120px; margin: 0 auto; padding: 54px 24px 48px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 34px; row-gap: 52px; }
 .gtm-footer-column { min-width: 0; }
 .gtm-footer-column ul { margin: 0; padding: 0; display: grid; gap: 12px; list-style: none; }
 .gtm-footer-column a { display: flex; align-items: flex-start; gap: 9px; color: var(--muted); font-size: 13px; line-height: 1.35; transition: color .18s ease; }

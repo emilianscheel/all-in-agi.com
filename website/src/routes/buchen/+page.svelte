@@ -29,11 +29,11 @@
         type EventAddress,
         type Lunch,
         type ToolProvision,
-		type DeviceProvision,
+        type DeviceProvision,
     } from "$lib/booking";
     import { bookingOverviewRows, type BookingOverviewRowId } from "$lib/booking-overview";
     import { eventDateBounds } from "$lib/event-date";
-	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
+    import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from "$lib/photon";
     import AnimatedValue from "$lib/AnimatedValue.svelte";
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
@@ -56,9 +56,9 @@
     let toolProvision = $state<ToolProvision | null>(null);
     let codingTools = $state<CodingTool[]>([]);
     let customCodingTool = $state("");
-    const deviceProvision: DeviceProvision = 'existing';
+    const deviceProvision: DeviceProvision = "existing";
     const deviceCount = 0;
-	const eventPhotos = true;
+    const eventPhotos = true;
     let companyName = $state("");
     let contactName = $state("");
     let email = $state("");
@@ -76,11 +76,11 @@
         city: "",
         country: "Deutschland",
     });
-	let addressQuery = $state('');
-	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
-	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
-	let addressAbort: AbortController | undefined;
-	let addressDebounce: ReturnType<typeof setTimeout> | undefined;
+    let addressQuery = $state("");
+    let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
+    let searchStatus = $state<"idle" | "loading" | "empty" | "error">("idle");
+    let addressAbort: AbortController | undefined;
+    let addressDebounce: ReturnType<typeof setTimeout> | undefined;
     let planAbort: AbortController | undefined;
     let planDebounce: ReturnType<typeof setTimeout> | undefined;
     let planHydrated = $state(false);
@@ -100,7 +100,7 @@
     let previewFadeFrame: number | undefined;
     let reducedMotion: MediaQueryList | undefined;
 
-    let price = $derived(getPrice(capacity, true, 'pizza', toolProvision, 'existing', 0));
+    let price = $derived(getPrice(capacity, true, "pizza", toolProvision, "existing", 0));
     let eventAddressLabel = $derived(
         [address.street, [address.postalCode, address.city].filter(Boolean).join(" ")]
             .filter(Boolean)
@@ -122,8 +122,8 @@
         toolProvision,
         codingTools,
         customCodingTool,
-		deviceProvision,
-		deviceCount,
+        deviceProvision,
+        deviceCount,
     });
     let overviewRows = $derived(bookingOverviewRows(buildConfiguration()));
 
@@ -137,37 +137,50 @@
         if (patch.customCodingTool !== undefined) customCodingTool = patch.customCodingTool;
     }
 
-	function updateSuggestions() {
-		if (addressDebounce) clearTimeout(addressDebounce);
-		addressAbort?.abort();
-		const query = addressQuery.trim();
-		if (query.length < 3) { suggestions = []; searchStatus = 'idle'; return; }
-		addressDebounce = setTimeout(() => searchAddress(query), 250);
-	}
+    function updateSuggestions() {
+        if (addressDebounce) clearTimeout(addressDebounce);
+        addressAbort?.abort();
+        const query = addressQuery.trim();
+        if (query.length < 3) {
+            suggestions = [];
+            searchStatus = "idle";
+            return;
+        }
+        addressDebounce = setTimeout(() => searchAddress(query), 250);
+    }
 
-	async function searchAddress(query: string) {
-		addressAbort?.abort();
-		addressAbort = new AbortController();
-		searchStatus = 'loading';
-		try {
-			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: 'de', limit: '5' });
-			const response = await fetch(`/api/geocode?${params}`, { signal: addressAbort.signal });
-			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
-			const result = await response.json() as { features?: PhotonFeature[] };
-			suggestions = (result.features ?? []).map((feature) => ({ label: photonFeatureLabel(feature), feature })).filter((suggestion) => suggestion.label);
-			searchStatus = suggestions.length ? 'idle' : 'empty';
-		} catch (error) {
-			if ((error as Error).name !== 'AbortError') { suggestions = []; searchStatus = 'error'; }
-		}
-	}
+    async function searchAddress(query: string) {
+        addressAbort?.abort();
+        addressAbort = new AbortController();
+        searchStatus = "loading";
+        try {
+            const params = new URLSearchParams({
+                q: query,
+                countrycode: "DE",
+                lang: "de",
+                limit: "5",
+            });
+            const response = await fetch(`/api/geocode?${params}`, { signal: addressAbort.signal });
+            if (!response.ok) throw new Error("Adresssuche nicht verfügbar");
+            const result = (await response.json()) as { features?: PhotonFeature[] };
+            suggestions = (result.features ?? [])
+                .map((feature) => ({ label: photonFeatureLabel(feature), feature }))
+                .filter((suggestion) => suggestion.label);
+            searchStatus = suggestions.length ? "idle" : "empty";
+        } catch (error) {
+            if ((error as Error).name !== "AbortError") {
+                suggestions = [];
+                searchStatus = "error";
+            }
+        }
+    }
 
-	function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
-		addressQuery = suggestion.label;
-		suggestions = [];
-		searchStatus = 'idle';
-		address = normalizePhotonAddress(suggestion.feature);
-	}
-
+    function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
+        addressQuery = suggestion.label;
+        suggestions = [];
+        searchStatus = "idle";
+        address = normalizePhotonAddress(suggestion.feature);
+    }
 
     function buildConfiguration(): BookingConfiguration {
         return {
@@ -179,9 +192,9 @@
             toolProvision,
             codingTools,
             customCodingTool: codingTools.includes("custom") ? customCodingTool : "",
-			deviceProvision,
-			deviceCount,
-			eventPhotos,
+            deviceProvision,
+            deviceCount,
+            eventPhotos,
             companyName,
             contactName,
             email,
@@ -199,7 +212,7 @@
     }
 
     function buildSharedPlan(): SharedPlanV5 {
-		return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
+        return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
     }
 
     function applySharedPlan(plan: SharedPlanV5) {
@@ -217,7 +230,9 @@
         phone = plan.phone;
         message = plan.message;
         address = plan.address;
-		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
+        addressQuery =
+            plan.address.label ||
+            [plan.address.street, plan.address.city].filter(Boolean).join(", ");
         eventStart = plan.eventStart;
         eventEnd = plan.eventEnd;
         consultationSlot = plan.consultationSlot;
@@ -508,9 +523,9 @@
                                 /></b
                             >
                         </div>
-						<div class="event-detail">
-							<small>Devices</small><b>Eigene Geräte</b>
-						</div>
+                        <div class="event-detail">
+                            <small>Devices</small><b>Eigene Geräte</b>
+                        </div>
                         <div class="event-detail">
                             <small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b>
                         </div>
@@ -553,7 +568,7 @@
                 />
             </section>
 
-			<section class="config-section tools-section" use:reveal>
+            <section class="config-section tools-section" use:reveal>
                 <h2>Tools</h2>
                 <ConfigOptionCards
                     kind="tools"
@@ -562,7 +577,7 @@
                 />
             </section>
 
-			<section class="config-section" use:reveal>
+            <section class="config-section" use:reveal>
                 <h2>Demo setup</h2>
                 <ConfigOptionCards
                     kind="equipment"
@@ -571,13 +586,13 @@
                 />
             </section>
 
-			<section class="config-section" use:reveal>
-				<h2>Veranstaltungsadresse</h2>
+            <section class="config-section" use:reveal>
+                <h2>Veranstaltungsadresse</h2>
                 <AddressEditor
                     value={address}
                     onchange={(value) => (address = value)}
                     idPrefix="booking-address"
-					searchArea={false}
+                    searchArea={false}
                 />
             </section>
 
@@ -723,7 +738,7 @@
                         class="button-primary"
                         type="submit"
                         disabled={submitting || slotsLoading || eventSlotsLoading}
-                        >{submitting ? "Anfrage wird gesendet …" : "Unverbindlich anfragen & Prep Call reservieren"}</button
+                        >{submitting ? "Anfrage wird gesendet …" : "Gespräch reservieren"}</button
                     >
                     <SharePlanButton getUrl={getShareUrl} />
                 </div>

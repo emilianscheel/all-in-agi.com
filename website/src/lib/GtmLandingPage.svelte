@@ -15,6 +15,15 @@
 	let path = $derived(`/${page.slug}`);
 	let canonicalUrl = $derived(`${SITE_ORIGIN}${path}`);
 	let hero = $derived(GTM_HERO_IMAGES[page.heroImage]);
+	let seoTitle = $derived(page.kind === 'editorial' ? page.seoTitle : page.title);
+	let categoryLabel = $derived(page.kind === 'editorial' && page.blueprint ? 'Branchen-Blueprint' : page.group);
+	let modifiedAt = $derived(page.kind === 'editorial' ? page.dateModified : undefined);
+	let sourceById = $derived(
+		page.kind === 'editorial' ? new Map(page.sources.map((source) => [source.id, source])) : new Map()
+	);
+	let relatedPages = $derived(
+		page.kind === 'editorial' ? page.relatedSlugs.map((relatedSlug) => getGtmPage(relatedSlug)) : []
+	);
 	let publishedLabel = $derived(
 		new Intl.DateTimeFormat('de-DE', {
 			day: 'numeric',
@@ -152,7 +161,8 @@
 </script>
 
 <SeoHead
-	title={`${page.title} | ALL IN AGI`}
+	title={`${seoTitle} | ALL IN AGI`}
+	socialTitle={page.title}
 	description={page.description}
 	{path}
 	imageUrl={`${SITE_ORIGIN}${hero.src}`}
@@ -161,6 +171,7 @@
 	imageHeight={hero.height}
 	ogType="article"
 	publishedAt={page.publishedAt}
+	{modifiedAt}
 />
 
 <JsonLd data={schema} />
@@ -169,7 +180,7 @@
 	<header class="article-header">
 		<div class="article-heading">
 			<p class="article-meta">
-				<span>{page.group}</span>
+				<span>{categoryLabel}</span>
 				<time datetime={page.publishedAt}>{publishedLabel}</time>
 			</p>
 			<h1>{page.title}</h1>
@@ -261,57 +272,100 @@
 	</figure>
 
 	<div class="article-body">
-		<div>
-			{#each page.lead as paragraph}
-				<p>{paragraph}</p>
+		{#if page.kind === 'offer'}
+			<div>
+				{#each page.lead as paragraph}<p>{paragraph}</p>{/each}
+			</div>
+
+			<section aria-labelledby="relevance-title">
+				<h2 id="relevance-title">{page.relevanceTitle}</h2>
+				{#each page.relevance as paragraph}<p>{paragraph}</p>{/each}
+			</section>
+
+			<section aria-labelledby="prototype-title">
+				<h2 id="prototype-title">Was Ihr Team prototypisch bauen kann</h2>
+				<p>Die konkrete Auswahl richtet sich nach Ihrem Bereich und dem freigegebenen Setup. Geeignete Challenges sind unter anderem:</p>
+				<ul>{#each page.challenges as challenge}<li>{challenge}</li>{/each}</ul>
+			</section>
+
+			<section aria-labelledby="activation-title">
+				<h2 id="activation-title">So wird aus einem Tag ein Activation Pilot</h2>
+				{#each phases as phase}
+					<div class="article-subsection">
+						<h3>{phase.title}</h3>
+						{#each phase.paragraphs as paragraph}<p>{paragraph}</p>{/each}
+					</div>
+				{/each}
+			</section>
+
+			<section aria-labelledby="audience-title">
+				<h2 id="audience-title">{page.audienceTitle}</h2>
+				<p>{page.audienceIntro}</p>
+				<ul>{#each page.audience as audience}<li>{audience}</li>{/each}</ul>
+			</section>
+
+			<section aria-labelledby="security-title">
+				<h2 id="security-title">Tools, Daten und Security</h2>
+				{#each page.security as paragraph}<p>{paragraph}</p>{/each}
+			</section>
+
+			<section aria-labelledby="outcome-title">
+				<h2 id="outcome-title">Was nach dem Tag bleibt</h2>
+				{#each page.outcome as paragraph}<p>{paragraph}</p>{/each}
+				<p class="article-summary">
+					ALL IN AGI moderiert den Hackathon vor Ort für 15 bis 50 Personen. Im Preis enthalten sind
+					zwei Facilitator, Challenge Design, Demo Day, Follow-up und Lunch. Der passende Umfang wird
+					im Vorbereitungsgespräch anhand von Team, Tool-Stack und Challenges festgelegt.
+				</p>
+			</section>
+		{:else}
+			<p class="article-dek">{page.dek}</p>
+			{#each page.sections as section, sectionIndex}
+				<section aria-labelledby={`editorial-section-${sectionIndex}`}>
+					<h2 id={`editorial-section-${sectionIndex}`}>{section.title}</h2>
+					{#each section.paragraphs as paragraph}
+						<p>
+							{paragraph.text}
+							{#each paragraph.sourceIds ?? [] as sourceId}
+								{@const source = sourceById.get(sourceId)}
+								{#if source}<a class="citation" href={`#source-${sourceId}`} aria-label={`Quelle: ${source.label}`}>[{page.sources.indexOf(source) + 1}]</a>{/if}
+							{/each}
+						</p>
+					{/each}
+					{#if section.bullets}
+						<ul>
+							{#each section.bullets as bullet}
+								<li>
+									{bullet.text}
+									{#each bullet.sourceIds ?? [] as sourceId}
+										{@const source = sourceById.get(sourceId)}
+										{#if source}<a class="citation" href={`#source-${sourceId}`} aria-label={`Quelle: ${source.label}`}>[{page.sources.indexOf(source) + 1}]</a>{/if}
+									{/each}
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</section>
 			{/each}
-		</div>
 
-		<section aria-labelledby="relevance-title">
-			<h2 id="relevance-title">{page.relevanceTitle}</h2>
-			{#each page.relevance as paragraph}<p>{paragraph}</p>{/each}
-		</section>
+			<section aria-labelledby="related-title">
+				<h2 id="related-title">Weiterlesen</h2>
+				<ul class="related-links">
+					{#each relatedPages as related}<li><a href={`/${related.slug}`}>{related.footerLabel}</a></li>{/each}
+				</ul>
+			</section>
 
-		<section aria-labelledby="prototype-title">
-			<h2 id="prototype-title">Was Ihr Team prototypisch bauen kann</h2>
-			<p>Die konkrete Auswahl richtet sich nach Ihrem Bereich und dem freigegebenen Setup. Geeignete Challenges sind unter anderem:</p>
-			<ul>
-				{#each page.challenges as challenge}<li>{challenge}</li>{/each}
-			</ul>
-		</section>
-
-		<section aria-labelledby="activation-title">
-			<h2 id="activation-title">So wird aus einem Tag ein Activation Pilot</h2>
-			{#each phases as phase}
-				<div class="article-subsection">
-					<h3>{phase.title}</h3>
-					{#each phase.paragraphs as paragraph}<p>{paragraph}</p>{/each}
-				</div>
-			{/each}
-		</section>
-
-		<section aria-labelledby="audience-title">
-			<h2 id="audience-title">{page.audienceTitle}</h2>
-			<p>{page.audienceIntro}</p>
-			<ul>
-				{#each page.audience as audience}<li>{audience}</li>{/each}
-			</ul>
-		</section>
-
-		<section aria-labelledby="security-title">
-			<h2 id="security-title">Tools, Daten und Security</h2>
-			{#each page.security as paragraph}<p>{paragraph}</p>{/each}
-		</section>
-
-		<section aria-labelledby="outcome-title">
-			<h2 id="outcome-title">Was nach dem Tag bleibt</h2>
-			{#each page.outcome as paragraph}<p>{paragraph}</p>{/each}
-			<p class="article-summary">
-				ALL IN AGI moderiert den Hackathon vor Ort für 15 bis 50 Personen. Im Preis enthalten sind
-				zwei Facilitator, Challenge Design, Demo Day, Follow-up und Lunch. Der passende Umfang wird
-				im Vorbereitungsgespräch anhand von Team, Tool-Stack und Challenges festgelegt.
-			</p>
-		</section>
+			<section class="article-sources" aria-labelledby="sources-title">
+				<h2 id="sources-title">Quellen</h2>
+				<ol>
+					{#each page.sources as source}
+						<li id={`source-${source.id}`}>
+							<a href={source.url} target="_blank" rel="noreferrer">{source.publisher}: {source.label}</a>
+						</li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
 	</div>
 </article>
 
@@ -479,6 +533,21 @@
 		margin-top: 28px;
 	}
 
+	.article-body .article-dek {
+		font-size: clamp(20px, 1.8vw, 24px);
+		font-weight: 600;
+		line-height: 1.42;
+		letter-spacing: -.028em;
+	}
+
+	.citation {
+		margin-left: 4px;
+		color: var(--orange);
+		font-size: .72em;
+		font-weight: 700;
+		vertical-align: super;
+	}
+
 	.article-body h2,
 	.article-body h3 {
 		margin: 0 0 26px;
@@ -518,6 +587,40 @@
 		height: 7px;
 		border-radius: 50%;
 		background: var(--orange);
+	}
+
+	.article-body .related-links a {
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 4px;
+	}
+
+	.article-sources {
+		padding-top: 8px;
+		border-top: 1px solid var(--line);
+	}
+
+	.article-sources ol {
+		margin: 24px 0 0;
+		padding-left: 22px;
+	}
+
+	.article-sources li {
+		padding: 8px 0 8px 6px;
+		border: 0;
+		color: var(--muted);
+		font-size: 14px;
+		line-height: 1.45;
+	}
+
+	.article-sources li::before {
+		display: none;
+	}
+
+	.article-sources a {
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
 	}
 
 	.article-summary {
