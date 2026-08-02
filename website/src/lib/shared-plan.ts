@@ -1,7 +1,9 @@
 import { CODING_TOOLS, type BookingConfiguration } from './booking';
 import { eventTimesForDate } from './event-time';
 
-interface LegacyBookingConfiguration extends Omit<BookingConfiguration, 'eventStart' | 'eventEnd' | 'deviceProvision' | 'deviceCount'> {
+type ShareableBookingConfiguration = Omit<BookingConfiguration, 'billing' | 'businessCustomerConfirmed' | 'authorityConfirmed'>;
+
+interface LegacyBookingConfiguration extends Omit<ShareableBookingConfiguration, 'eventStart' | 'eventEnd' | 'deviceProvision' | 'deviceCount' | 'eventPhotos'> {
 	preferredEventDate: string;
 }
 
@@ -24,13 +26,13 @@ export interface SharedPlanV3 extends LegacyBookingConfiguration {
 	customConsultationDate: string;
 }
 
-export interface SharedPlanV4 extends Omit<BookingConfiguration, 'deviceProvision' | 'deviceCount'> {
+export interface SharedPlanV4 extends Omit<ShareableBookingConfiguration, 'deviceProvision' | 'deviceCount' | 'eventPhotos'> {
 	v: 4;
 	consultationMode: 'quick' | 'custom';
 	customConsultationDate: string;
 }
 
-export interface SharedPlanV5 extends BookingConfiguration {
+export interface SharedPlanV5 extends ShareableBookingConfiguration {
 	v: 5;
 	consultationMode: 'quick' | 'custom';
 	customConsultationDate: string;
@@ -70,6 +72,7 @@ export function isSharedPlan(value: unknown): value is SharedPlan {
 		&& plan.codingTools.every((tool) => validToolIds.has(tool));
 	if (!validTools) return false;
 	if (version !== 5) return true;
+	if (plan.eventPhotos !== undefined && typeof plan.eventPhotos !== 'boolean') return false;
 	if (!Number.isInteger(plan.deviceCount)) return false;
 	if (plan.deviceProvision === null) return plan.deviceCount === 0;
 	return ['existing', 'needed'].includes(String(plan.deviceProvision ?? ''))

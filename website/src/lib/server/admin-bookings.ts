@@ -1,11 +1,12 @@
 import { desc, inArray, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import { hackathons, type hackathonStatus } from './db/schema';
+import { finalizeDueContracts } from './legal-contracts';
 
 export type CustomerBookingStatus = Exclude<(typeof hackathonStatus.enumValues)[number], 'pending'>;
 export type AdminBooking = typeof hackathons.$inferSelect;
 
-const CUSTOMER_STATUSES: CustomerBookingStatus[] = ['confirmed', 'cancellation_pending', 'cancelled'];
+const CUSTOMER_STATUSES: CustomerBookingStatus[] = ['requested', 'prep_scheduled', 'exit_window', 'contracted', 'withdrawn', 'declined', 'confirmed', 'cancellation_pending', 'cancelled', 'completed'];
 
 export async function listCustomerBookings() {
 	const db = await getDb();
@@ -19,11 +20,12 @@ export async function getDashboardSummary() {
 	const [summary] = await db.select({
 		bookingCount: sql<number>`count(*)::int`,
 		totalRevenue: sql<number>`coalesce(sum(${hackathons.totalPrice}), 0)::int`
-	}).from(hackathons).where(inArray(hackathons.status, ['confirmed']));
+	}).from(hackathons).where(inArray(hackathons.status, ['contracted', 'confirmed', 'completed']));
 	return summary ?? { bookingCount: 0, totalRevenue: 0 };
 }
 
 export async function getDashboardBookings() {
+	await finalizeDueContracts();
 	const [bookings, summary] = await Promise.all([listCustomerBookings(), getDashboardSummary()]);
 	return { bookings, summary };
 }
@@ -41,10 +43,12 @@ function csvCell(value: unknown, customerControlled = false) {
 export function bookingsCsv(bookings: AdminBooking[]) {
 	const headers = [
 		'ID', 'Status', 'Unternehmen', 'Kontakt', 'E-Mail', 'Telefon', 'Nachricht',
+		'Rechnungsfirma', 'Rechnungs-Rechtsform', 'Rechnungskontakt', 'Rechnungs-E-Mail', 'Rechnungsstraße', 'Rechnungs-PLZ', 'Rechnungsort', 'USt-IdNr.', 'Bestellnummer',
 		'Event Start', 'Event Ende', 'Prep Call', 'Kapazität', 'Location gestellt',
 		'Equipment', 'Lunch', 'Custom Lunch', 'Tool-Bereitstellung', 'Coding Tools',
-		'Custom Coding Tool', 'Geräte-Bereitstellung', 'Geräteanzahl', 'Straße', 'PLZ', 'Stadt', 'Land', 'Basispreis',
+		'Custom Coding Tool', 'Geräte-Bereitstellung', 'Geräteanzahl', 'Eventfotos', 'Straße', 'PLZ', 'Stadt', 'Land', 'Basispreis',
 		'Location-Aufpreis', 'Lunch-Anpassung', 'Tools-Anpassung', 'Geräte-Anpassung', 'Gesamtpreis netto',
+		'AGB-Version', 'AGB-SHA-256', 'AGB-Module', 'Mündliche Zustimmung am', 'Lösungsfrist', 'Vertraglich am',
 		'Erstellt am', 'Aktualisiert am', 'Storniert am', 'Stornierungs-E-Mail gesendet am'
 	];
 	const rows = bookings.map((booking) => [
@@ -55,6 +59,15 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		csvCell(booking.contactEmail, true),
 		csvCell(booking.contactPhone, true),
 		csvCell(booking.message, true),
+		csvCell(booking.billing?.companyName, true),
+		csvCell(booking.billing?.legalForm, true),
+		csvCell(booking.billing?.contactName, true),
+		csvCell(booking.billing?.email, true),
+		csvCell(booking.billing?.address.street, true),
+		csvCell(booking.billing?.address.postalCode, true),
+		csvCell(booking.billing?.address.city, true),
+		csvCell(booking.billing?.vatId, true),
+		csvCell(booking.billing?.purchaseOrder, true),
 		csvCell(booking.eventStart),
 		csvCell(booking.eventEnd),
 		csvCell(booking.consultationSlot),
@@ -68,6 +81,7 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		csvCell(booking.customCodingTool, true),
 		csvCell(booking.deviceProvision),
 		csvCell(booking.deviceCount),
+		csvCell(booking.eventPhotos ? 'Ja' : 'Nein'),
 		csvCell(booking.address.street, true),
 		csvCell(booking.address.postalCode, true),
 		csvCell(booking.address.city, true),
@@ -78,6 +92,12 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 		csvCell(booking.toolsAdjustment),
 		csvCell(booking.devicesAdjustment),
 		csvCell(booking.totalPrice),
+		csvCell(booking.legalVersion),
+		csvCell(booking.legalContentHash),
+		csvCell(booking.legalModules?.join(', ')),
+		csvCell(booking.oralAgreementAt),
+		csvCell(booking.exitDeadline),
+		csvCell(booking.contractedAt),
 		csvCell(booking.createdAt),
 		csvCell(booking.updatedAt),
 		csvCell(booking.cancelledAt),

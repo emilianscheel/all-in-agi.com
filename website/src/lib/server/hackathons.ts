@@ -1,10 +1,12 @@
 import { and, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import { getPrice, type BookingConfiguration, type Capacity } from '$lib/booking';
+import { calculateCancellationCharge } from '$lib/cancellation';
 import type { BookingResultSummary } from '$lib/booking-ics';
 import type { InvoiceSnapshot } from '$lib/invoice';
 import { generatePublicId, HACKATHON_ID_PREFIX } from '$lib/public-id';
 import { getDb } from './db';
 import { hackathons } from './db/schema';
+import { createLegalSnapshot, registerLegalSnapshot } from './legal-contracts';
 
 export type HackathonRecord = typeof hackathons.$inferSelect;
 
@@ -20,9 +22,14 @@ export interface ConfirmedBookings {
 
 export interface PublicHackathon extends BookingConfiguration {
 	id: string;
-	status: 'confirmed' | 'cancellation_pending' | 'cancelled';
+	status: 'requested' | 'prep_scheduled' | 'exit_window' | 'contracted' | 'withdrawn' | 'declined' | 'confirmed' | 'cancellation_pending' | 'cancelled' | 'completed';
 	cancelledAt: string | null;
 	cancellationEmailSentAt: string | null;
+	legalVersion: string | null;
+	legalContentHash: string | null;
+	legalModules: HackathonRecord['legalModules'];
+	exitDeadline: string | null;
+	contractedAt: string | null;
 	price: ReturnType<typeof getPrice>;
 	hackathonBooking: BookingResultSummary;
 	prepCallBooking: BookingResultSummary;
@@ -36,7 +43,7 @@ export interface PublicHackathonTimer {
 	customLunch: string;
 }
 
-function pendingValues(id: string, config: BookingConfiguration) {
+function pendingValues(id: string, config: BookingConfiguration, legalSnapshot: NonNullable<HackathonRecord['legalSnapshot']>) {
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	return {
 		id,
@@ -56,6 +63,14 @@ function pendingValues(id: string, config: BookingConfiguration) {
 		customCodingTool: config.customCodingTool,
 		deviceProvision: config.deviceProvision!,
 		deviceCount: config.deviceCount,
+		eventPhotos: config.eventPhotos ?? true,
+		billing: config.billing!,
+		businessCustomerConfirmed: Boolean(config.businessCustomerConfirmed),
+		authorityConfirmed: Boolean(config.authorityConfirmed),
+		legalModules: legalSnapshot.modules,
+		legalVersion: legalSnapshot.version,
+		legalContentHash: legalSnapshot.contentHash,
+		legalSnapshot,
 		address: config.address,
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
@@ -67,9 +82,11 @@ function pendingValues(id: string, config: BookingConfiguration) {
 
 export async function createPendingHackathon(config: BookingConfiguration) {
 	const db = await getDb();
+	const legalSnapshot = createLegalSnapshot(config);
+	await registerLegalSnapshot(legalSnapshot);
 	for (let attempt = 0; attempt < 10; attempt += 1) {
 		const id = generatePublicId(HACKATHON_ID_PREFIX);
-		const inserted = await db.insert(hackathons).values(pendingValues(id, config)).onConflictDoNothing({ target: hackathons.id }).returning({ id: hackathons.id });
+		const inserted = await db.insert(hackathons).values(pendingValues(id, config, legalSnapshot)).onConflictDoNothing({ target: hackathons.id }).returning({ id: hackathons.id });
 		if (inserted[0]) return inserted[0].id;
 	}
 	throw new Error('Es konnte keine eindeutige Hackathon-ID erzeugt werden.');
@@ -105,7 +122,7 @@ export async function checkpointPendingHackathon(id: string, bookings: Partial<C
 
 export async function confirmHackathon(id: string, bookings: ConfirmedBookings) {
 	const db = await getDb();
-	const updated = await db.update(hackathons).set({ status: 'confirmed', ...bookingValues(bookings) })
+	const updated = await db.update(hackathons).set({ status: 'prep_scheduled', ...bookingValues(bookings) })
 		.where(and(eq(hackathons.id, id), eq(hackathons.status, 'pending'))).returning({ id: hackathons.id });
 	if (!updated[0]) throw new Error('Der Hackathon konnte nicht bestätigt werden.');
 }
@@ -117,14 +134,14 @@ export async function deletePendingHackathon(id: string) {
 
 export async function getConfirmedHackathonRecord(id: string) {
 	const db = await getDb();
-	const [record] = await db.select().from(hackathons).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).limit(1);
+	const [record] = await db.select().from(hackathons).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['prep_scheduled', 'exit_window', 'contracted', 'confirmed', 'completed']))).limit(1);
 	return record ?? null;
 }
 
 export async function getCustomerHackathonRecord(id: string) {
 	const db = await getDb();
 	const [record] = await db.select().from(hackathons)
-		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['confirmed', 'cancellation_pending', 'cancelled'])))
+		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['requested', 'prep_scheduled', 'exit_window', 'contracted', 'withdrawn', 'declined', 'confirmed', 'cancellation_pending', 'cancelled', 'completed'])))
 		.limit(1);
 	return record ?? null;
 }
@@ -137,7 +154,7 @@ export async function freezeInvoiceSnapshot(id: string, snapshot: InvoiceSnapsho
 		updatedAt: issuedAt
 	}).where(and(
 		eq(hackathons.id, id),
-		eq(hackathons.status, 'confirmed'),
+		inArray(hackathons.status, ['contracted', 'confirmed', 'completed']),
 		isNull(hackathons.invoiceSnapshot)
 	)).returning();
 	return record ?? null;
@@ -149,7 +166,7 @@ export async function markInvoiceEmailSent(id: string, messageId?: string, at = 
 		invoiceEmailSentAt: at,
 		invoiceEmailMessageId: messageId ?? null,
 		updatedAt: at
-	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed', 'completed']))).returning();
 	return record ?? null;
 }
 
@@ -161,7 +178,7 @@ export async function freezeDownPaymentInvoiceSnapshot(id: string, snapshot: Inv
 		updatedAt: issuedAt
 	}).where(and(
 		eq(hackathons.id, id),
-		eq(hackathons.status, 'confirmed'),
+		inArray(hackathons.status, ['contracted', 'confirmed', 'completed']),
 		eq(hackathons.billingModel, 'deposit_30'),
 		isNull(hackathons.downPaymentInvoiceSnapshot)
 	)).returning();
@@ -174,7 +191,7 @@ export async function markDownPaymentInvoiceEmailSent(id: string, messageId?: st
 		downPaymentInvoiceEmailSentAt: at,
 		downPaymentInvoiceEmailMessageId: messageId ?? null,
 		updatedAt: at
-	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'), eq(hackathons.billingModel, 'deposit_30'))).returning();
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed', 'completed']), eq(hackathons.billingModel, 'deposit_30'))).returning();
 	return record ?? null;
 }
 
@@ -183,7 +200,7 @@ export async function markDownPaymentPaid(id: string, at = new Date().toISOStrin
 	const [record] = await db.update(hackathons).set({ downPaymentPaidAt: at, updatedAt: at })
 		.where(and(
 			eq(hackathons.id, id),
-			eq(hackathons.status, 'confirmed'),
+			inArray(hackathons.status, ['contracted', 'confirmed', 'completed']),
 			eq(hackathons.billingModel, 'deposit_30'),
 			isNull(hackathons.downPaymentPaidAt)
 		)).returning();
@@ -214,6 +231,10 @@ export async function updateConfirmedHackathon(
 		customCodingTool: config.customCodingTool,
 		deviceProvision: config.deviceProvision!,
 		deviceCount: config.deviceCount,
+		eventPhotos: config.eventPhotos ?? true,
+		billing: config.billing ?? undefined,
+		businessCustomerConfirmed: Boolean(config.businessCustomerConfirmed),
+		authorityConfirmed: Boolean(config.authorityConfirmed),
 		address: config.address,
 		eventStart: new Date(config.eventStart).toISOString(),
 		eventEnd: new Date(config.eventEnd).toISOString(),
@@ -221,7 +242,7 @@ export async function updateConfirmedHackathon(
 		...(reprice ? price : {}),
 		...bookingValues(bookings),
 		updatedAt: new Date().toISOString()
-	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['prep_scheduled', 'exit_window', 'contracted', 'confirmed']))).returning();
 	if (!record) throw new Error('Der Hackathon konnte nicht aktualisiert werden.');
 	return record;
 }
@@ -238,6 +259,7 @@ export function recordToBookingConfiguration(record: HackathonRecord): BookingCo
 		customCodingTool: record.customCodingTool,
 		deviceProvision: record.deviceProvision,
 		deviceCount: record.deviceCount,
+		eventPhotos: record.eventPhotos,
 		companyName: record.companyName,
 		contactName: record.contactName,
 		email: record.contactEmail,
@@ -246,7 +268,13 @@ export function recordToBookingConfiguration(record: HackathonRecord): BookingCo
 		address: record.address,
 		eventStart: record.eventStart,
 		eventEnd: record.eventEnd,
-		consultationSlot: record.consultationSlot
+		consultationSlot: record.consultationSlot,
+		billing: record.billing ?? {
+			companyName: record.companyName, legalForm: '', contactName: record.contactName, email: record.contactEmail,
+			vatId: '', purchaseOrder: '', address: { ...record.address, country: 'Deutschland' }
+		},
+		businessCustomerConfirmed: record.businessCustomerConfirmed,
+		authorityConfirmed: record.authorityConfirmed
 	};
 }
 
@@ -277,6 +305,11 @@ export function toPublicHackathon(record: HackathonRecord): PublicHackathon {
 		status: record.status as PublicHackathon['status'],
 		cancelledAt: record.cancelledAt,
 		cancellationEmailSentAt: record.cancellationEmailSentAt,
+		legalVersion: record.legalVersion,
+		legalContentHash: record.legalContentHash,
+		legalModules: record.legalModules,
+		exitDeadline: record.exitDeadline,
+		contractedAt: record.contractedAt,
 		...recordToBookingConfiguration(record),
 		price: {
 			basePrice: record.basePrice,
@@ -301,11 +334,22 @@ const CANCELLATION_LEASE_MS = 120_000;
 export async function claimHackathonCancellation(id: string, now = new Date()) {
 	const db = await getDb();
 	const processingAt = now.toISOString();
+	const current = await getCustomerHackathonRecord(id);
+	const cancellationChargeSnapshot = current && ['contracted', 'confirmed'].includes(current.status)
+		? calculateCancellationCharge({
+			capacity: current.capacity as Capacity,
+			organizerDevices: current.deviceProvision === 'needed',
+			contractNetEuros: current.totalPrice,
+			eventStart: new Date(current.eventStart),
+			cancelledAt: now
+		})
+		: undefined;
 	const [started] = await db.update(hackathons).set({
 		status: 'cancellation_pending',
 		cancellationProcessingAt: processingAt,
+		cancellationChargeSnapshot,
 		updatedAt: processingAt
-	}).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).returning();
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed']))).returning();
 	if (started) return { claimed: true, record: started };
 
 	const leaseExpiredAt = new Date(now.getTime() - CANCELLATION_LEASE_MS).toISOString();
@@ -376,6 +420,6 @@ export async function getPublicHackathonTimer(id: string) {
 		eventEnd: hackathons.eventEnd,
 		lunch: hackathons.lunch,
 		customLunch: hackathons.customLunch
-	}).from(hackathons).where(and(eq(hackathons.id, id), eq(hackathons.status, 'confirmed'))).limit(1);
+	}).from(hackathons).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed', 'completed']))).limit(1);
 	return record ? toPublicHackathonTimer(record) : null;
 }

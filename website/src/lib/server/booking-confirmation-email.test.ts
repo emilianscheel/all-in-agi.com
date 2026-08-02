@@ -20,6 +20,7 @@ const config: BookingConfiguration = {
     customCodingTool: "",
 	deviceProvision: "existing",
 	deviceCount: 0,
+	eventPhotos: true,
     companyName: "Musterwerke GmbH",
     contactName: "Ada Beispiel",
     email: "ada@example.com",
@@ -68,20 +69,20 @@ describe("booking confirmation email", () => {
         expect(text.split("\n").slice(0, 3)).toEqual([
             "Hallo Ada Beispiel,",
             "",
-            "vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt.",
+			"vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.",
         ]);
         expect(text).toContain("- Coding Tools: Bereits vorhanden: Codex");
         expect(text).not.toContain("Inklusive");
         expect(text).toContain("- Gesamt: Gesamt — 4.000 € netto");
-        expect(text).toContain("Buchung verwalten: https://all-in-agi.com/HAA-AAA-AAA");
+		expect(text).toContain("Anfrage ansehen: https://all-in-agi.com/HAA-AAA-AAA");
         expect(text).toContain("Telefon: 0152 57257750 (tel:+4915257257750)");
         expect(text).toContain("E-Mail: go@all-in-agi.com (mailto:go@all-in-agi.com)");
         expect(text).toContain("Wir freuen uns auf Sie!");
         expect(text.endsWith("\n\n\n")).toBe(true);
 
         const organizer = buildBookingConfirmationText(input, "organizer");
-        expect(organizer).toStartWith("Hallo ALL IN AGI,\n\nEs wurde ein neuer Hackathon gebucht.");
-        expect(organizer).toContain("Buchung verwalten: https://all-in-agi.com/HAA-AAA-AAA");
+		expect(organizer).toStartWith("Hallo ALL IN AGI,\n\nEs wurde eine neue unverbindliche Hackathon-Anfrage gestellt.");
+		expect(organizer).toContain("Anfrage ansehen: https://all-in-agi.com/HAA-AAA-AAA");
         expect(organizer).not.toContain("Bei Fragen oder Änderungswünschen");
         expect(organizer).not.toContain("Wir freuen uns auf Sie!");
         expect(bookingDetailUrl(input.id)).toBe("https://all-in-agi.com/HAA-AAA-AAA");
@@ -102,7 +103,7 @@ describe("booking confirmation email", () => {
         expect(html).toContain("<strong>Lunch:</strong> Bowls &lt;vegan&gt; &amp; Salat");
         expect(html).not.toContain("Inklusive");
         expect(html).toContain(
-            '<a href="https://all-in-agi.com/HAA-AAA-AAA">Buchung verwalten</a>',
+			'<a href="https://all-in-agi.com/HAA-AAA-AAA">Anfrage ansehen</a>',
         );
         expect(html).toContain('<a href="tel:+4915257257750">0152 57257750</a>');
         expect(html).toContain('<a href="mailto:go@all-in-agi.com">go@all-in-agi.com</a>');
@@ -149,11 +150,11 @@ describe("booking confirmation email", () => {
             from: { address: "go@all-in-agi.com", name: "ALL IN AGI" },
             reply_to: { address: "go@all-in-agi.com", name: "ALL IN AGI" },
             to: { address: "ada@example.com", name: "Ada Beispiel" },
-            subject: "Buchungsbestätigung Hackathon HAA-AAA-AAA",
+			subject: "Eingang Ihrer Hackathon-Anfrage HAA-AAA-AAA",
             headers: { "X-Booking-ID": "HAA-AAA-AAA" },
         });
         expect(organizerBody.to).toEqual({ address: "go@all-in-agi.com", name: "ALL IN AGI" });
-        expect(organizerBody.subject).toBe("Neue Buchung Hackathon HAA-AAA-AAA");
+		expect(organizerBody.subject).toBe("Neue Hackathon-Anfrage HAA-AAA-AAA");
         expect(organizerBody.text).not.toBe(customerBody.text);
         expect(organizerBody.html).not.toBe(customerBody.html);
         expect(organizerBody.attachments).toEqual(customerBody.attachments);

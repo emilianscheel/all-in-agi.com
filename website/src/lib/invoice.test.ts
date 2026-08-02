@@ -3,6 +3,7 @@ import {
 	createDownPaymentInvoiceSnapshot,
 	createFinalInvoiceSnapshot,
 	createInvoiceSnapshot,
+	createZugferdXml,
 	formatInvoiceMoney,
 	type InvoiceLegalConfiguration,
 	type InvoiceSource
@@ -34,6 +35,14 @@ const source: InvoiceSource = {
 };
 
 describe('invoice snapshot', () => {
+	test('creates EN 16931 profile XML for the embedded ZUGFeRD attachment', () => {
+		const snapshot = createInvoiceSnapshot(source, legal, new Date('2099-06-21T10:00:00Z'));
+		const xml = createZugferdXml(snapshot);
+		expect(xml).toContain('urn:cen.eu:en16931:2017#compliant#urn:zugferd.de:2p3:EN16931');
+		expect(xml).toContain(`<ram:ID>${snapshot.invoiceNumber}</ram:ID>`);
+		expect(xml).toContain('<ram:GrandTotalAmount>');
+		expect(xml).not.toContain('& ');
+	});
 	test('creates a complete 19 percent VAT invoice with optional adjustments', () => {
 		const result = createInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));
 		expect(result.invoiceNumber).toBe('RE-HAA-AAA-AAA');

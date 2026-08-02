@@ -70,6 +70,10 @@
 	let invoiceMessage = $state('');
 	let cancellationBusy = $state(false);
 	let cancellationMessage = $state('');
+	let contractBusy = $state(false);
+	let contractMessage = $state('');
+	let agreementCustomerName = $state(initialHackathon.contactName);
+	let agreementOrganizerName = $state('Emilian Scheel');
 	let cancelDialogOpen = $state(false);
 	let prepCallMode = $state<'quick' | 'custom'>('quick');
 	let customPrepCallDate = $state('');
@@ -95,7 +99,9 @@
 		deviceCount: draft.deviceCount
 	});
 	let overviewRows = $derived(bookingOverviewRows(hackathon, hackathon.prepCallBooking));
-	let readOnly = $derived(hackathon.status !== 'confirmed');
+	let readOnly = $derived(!['prep_scheduled', 'confirmed'].includes(hackathon.status));
+	let invoiceEligible = $derived(['contracted', 'confirmed', 'completed'].includes(hackathon.status));
+	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
 	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
 	let finalInvoiceAvailable = $derived(!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd)));
 
@@ -111,6 +117,7 @@
 			customCodingTool: value.customCodingTool,
 			deviceProvision: value.deviceProvision,
 			deviceCount: value.deviceCount,
+			eventPhotos: value.eventPhotos,
 			companyName: value.companyName,
 			contactName: value.contactName,
 			email: value.email,
@@ -119,8 +126,60 @@
 			address: { ...value.address },
 			eventStart: value.eventStart,
 			eventEnd: value.eventEnd,
-			consultationSlot: value.consultationSlot
+			consultationSlot: value.consultationSlot,
+			billing: value.billing,
+			businessCustomerConfirmed: value.businessCustomerConfirmed,
+			authorityConfirmed: value.authorityConfirmed
 		};
+	}
+
+	async function recordAgreement() {
+		if (contractBusy) return;
+		contractBusy = true;
+		contractMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/contract-agreement`, {
+				method: 'POST', headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ customerName: agreementCustomerName, organizerName: agreementOrganizerName })
+			});
+			const result = await response.json();
+			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Zustimmung konnte nicht gespeichert werden.');
+			hackathon = { ...hackathon, status: result.status, exitDeadline: result.exitDeadline };
+			contractMessage = result.emailSent ? 'Zustimmung gespeichert und Vertragsbestätigung versandt.' : result.message;
+			await invalidateAll();
+		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Die Zustimmung konnte nicht gespeichert werden.'; }
+		finally { contractBusy = false; }
+	}
+
+	async function withdrawDuringExitWindow(by: 'customer' | 'organizer') {
+		if (contractBusy) return;
+		contractBusy = true;
+		contractMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/contract-withdraw`, {
+				method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ by })
+			});
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message ?? 'Der Rücktritt konnte nicht gespeichert werden.');
+			hackathon = { ...hackathon, status: result.status };
+			contractMessage = 'Der kostenfreie Rücktritt wurde revisionsfest gespeichert.';
+			await invalidateAll();
+		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Der Rücktritt konnte nicht gespeichert werden.'; }
+		finally { contractBusy = false; }
+	}
+
+	async function completeContract() {
+		if (contractBusy) return;
+		contractBusy = true;
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/contract-complete`, { method: 'POST' });
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message ?? 'Der Vertrag konnte nicht abgeschlossen werden.');
+			hackathon = { ...hackathon, status: result.status };
+			contractMessage = 'Durchführung als abgeschlossen markiert.';
+			await invalidateAll();
+		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Der Vertrag konnte nicht abgeschlossen werden.'; }
+		finally { contractBusy = false; }
 	}
 
 	function overviewRow(id: BookingOverviewRowId) {
@@ -386,6 +445,16 @@
 				<div class="booking-state-banner cancelled" role="status"><Ban size={18} aria-hidden="true" /><span><strong>Buchung storniert</strong>Die Kalendertermine wurden aufgehoben.</span></div>
 			{:else if hackathon.status === 'cancellation_pending'}
 				<div class="booking-state-banner pending" role="status"><RotateCcw size={18} aria-hidden="true" /><span><strong>Stornierung in Bearbeitung</strong>Mindestens ein Schritt muss noch abgeschlossen werden.</span></div>
+			{:else if hackathon.status === 'prep_scheduled'}
+				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Unverbindliche Anfrage</strong>Prep-Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.</span></div>
+			{:else if hackathon.status === 'exit_window'}
+				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Vertrag geschlossen · Lösungsfrist läuft</strong>Kostenfreier Rücktritt bis {hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.</span></div>
+			{:else if hackathon.status === 'contracted'}
+				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>Vertrag verbindlich</strong>Die kostenlose beiderseitige Lösungsfrist ist abgelaufen.</span></div>
+			{:else if hackathon.status === 'withdrawn'}
+				<div class="booking-state-banner cancelled" role="status"><Ban size={18} aria-hidden="true" /><span><strong>Kostenfrei zurückgetreten</strong>Der Vertrag wurde innerhalb der Lösungsfrist beendet.</span></div>
+			{:else if hackathon.status === 'completed'}
+				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>Durchgeführt</strong>Der Hackathon wurde abgeschlossen.</span></div>
 			{/if}
 
 			<MiniContactCards />
@@ -410,12 +479,24 @@
 
 			{#if data.admin.authorized}
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
-					{#if invoiceIssued || (!readOnly && finalInvoiceAvailable)}
+					{#if hackathon.status === 'prep_scheduled'}
+						<div class="contract-admin-form">
+							<div class="field"><label for="agreement-customer">Zustimmende Person Kunde</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
+							<div class="field"><label for="agreement-organizer">Zustimmende Person ALL IN AGI</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
+							<button class="button-primary action-button" type="button" onclick={recordAgreement} disabled={contractBusy}>Beiderseitige Zustimmung dokumentieren</button>
+						</div>
+					{:else if hackathon.status === 'exit_window'}
+						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
+						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>Rücktritt ALL IN AGI erfassen</button>
+					{:else if hackathon.status === 'contracted' && new Date() >= new Date(hackathon.eventEnd)}
+						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>Durchführung abschließen</button>
+					{/if}
+					{#if invoiceIssued || (invoiceEligible && finalInvoiceAvailable)}
 						<button class="button-secondary action-button" type="button" onclick={downloadInvoice} disabled={invoiceDownloadState === 'loading'}>
 							<Download size={18} aria-hidden="true" />{invoiceDownloadState === 'loading' ? 'Rechnung wird erstellt …' : invoiceDownloadState === 'error' ? 'Download erneut versuchen' : splitBilling ? 'Endrechnung herunterladen' : 'Rechnung herunterladen'}
 						</button>
 					{/if}
-					{#if !readOnly && finalInvoiceAvailable}
+					{#if invoiceEligible && finalInvoiceAvailable}
 						<button class="button-secondary action-button" type="button" onclick={sendInvoice} disabled={invoiceEmailState === 'loading'} aria-live="polite">
 							{#if invoiceEmailState === 'sent'}
 								<Check size={18} aria-hidden="true" />{splitBilling ? 'Endrechnung erneut senden' : 'Rechnung erneut senden'}
@@ -424,12 +505,12 @@
 							{/if}
 						</button>
 					{/if}
-					{#if splitBilling && (!readOnly || downPaymentIssued)}
+					{#if splitBilling && (invoiceEligible || downPaymentIssued)}
 						<button class="button-secondary action-button" type="button" onclick={downloadDownPaymentInvoice} disabled={downPaymentDownloadState === 'loading'}>
 							<Download size={18} aria-hidden="true" />{downPaymentDownloadState === 'loading' ? 'Anzahlungsrechnung wird erstellt …' : downPaymentDownloadState === 'error' ? 'Download erneut versuchen' : 'Anzahlungsrechnung herunterladen'}
 						</button>
 					{/if}
-					{#if splitBilling && !readOnly}
+					{#if splitBilling && invoiceEligible}
 						<button class="button-secondary action-button" type="button" onclick={sendDownPaymentInvoice} disabled={downPaymentEmailState === 'loading'} aria-live="polite">
 							<Mail size={18} aria-hidden="true" />{downPaymentEmailState === 'loading' ? 'Anzahlungsrechnung wird gesendet …' : downPaymentEmailState === 'error' ? 'Senden erneut versuchen' : downPaymentEmailSentAt ? 'Anzahlungsrechnung erneut senden' : 'Anzahlungsrechnung senden'}
 						</button>
@@ -440,7 +521,7 @@
 						{/if}
 						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">Endrechnung nach dem Hackathon verfügbar.</p>{/if}
 					{/if}
-					{#if !readOnly}
+					{#if cancellableContract}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
 							<ExternalLink size={18} aria-hidden="true" />Timer
 						</a>
@@ -465,6 +546,7 @@
 						</button>
 					{/if}
 					{#if invoiceMessage}<p class="admin-action-message" role="status">{invoiceMessage}</p>{/if}
+					{#if contractMessage}<p class="admin-action-message" role="status">{contractMessage}</p>{/if}
 					{#if cancellationMessage}<p class="admin-action-message" role="status">{cancellationMessage}</p>{/if}
 				</div>
 			{/if}

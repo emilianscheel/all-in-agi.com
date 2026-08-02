@@ -150,12 +150,12 @@ export function buildBookingConfirmationText(
         customer ? `Hallo ${input.config.contactName},` : "Hallo ALL IN AGI,",
         "",
         customer
-            ? "vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt."
-            : "Es wurde ein neuer Hackathon gebucht.",
+			? "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht."
+			: "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.",
         "",
         ...rows.map(rowText),
         "",
-        `Buchung verwalten: ${bookingDetailUrl(input.id)}`,
+		`Anfrage ansehen: ${bookingDetailUrl(input.id)}`,
     ];
 
     if (customer) {
@@ -193,9 +193,9 @@ export function buildBookingConfirmationHtml(
         : "";
 
     return `<p>${customer ? `Hallo ${escapeHtml(input.config.contactName)},` : "Hallo ALL IN AGI,"}</p>
-	<p>${customer ? "vielen Dank für Ihre Buchung. Ihr Agentic Engineering Hackathon ist bestätigt." : "Es wurde ein neuer Hackathon gebucht."}</p>
+	<p>${customer ? "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht." : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
 	<p>${options}</p>
-	<p><a href="${detailUrl}">Buchung verwalten</a></p>
+	<p><a href="${detailUrl}">Anfrage ansehen</a></p>
 	${contact}
 	<p><br><br></p>`;
 }
@@ -232,8 +232,8 @@ async function prepareBookingConfirmation(
         return {
             subject:
                 role === "customer"
-                    ? `Buchungsbestätigung Hackathon ${input.id}`
-                    : `Neue Buchung Hackathon ${input.id}`,
+					? `Eingang Ihrer Hackathon-Anfrage ${input.id}`
+					: `Neue Hackathon-Anfrage ${input.id}`,
             text: buildBookingConfirmationText(input, role),
             html: buildBookingConfirmationHtml(input, role),
             headers: { "X-Booking-ID": input.id },
@@ -356,7 +356,7 @@ export async function sendBookingConfirmationEmails(
         customerPrepared = await prepareBookingConfirmation(input, dependencies, "customer");
         organizerPrepared = {
             ...customerPrepared,
-            subject: `Neue Buchung Hackathon ${input.id}`,
+			subject: `Neue Hackathon-Anfrage ${input.id}`,
             text: buildBookingConfirmationText(input, "organizer"),
             html: buildBookingConfirmationHtml(input, "organizer"),
         };

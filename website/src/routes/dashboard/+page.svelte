@@ -29,7 +29,13 @@
 	}
 
 	function statusLabel(status: string) {
-		if (status === 'confirmed') return 'Bestätigt';
+		if (status === 'requested') return 'Angefragt';
+		if (status === 'prep_scheduled') return 'Prep Call geplant';
+		if (status === 'exit_window') return 'Lösungsfrist';
+		if (status === 'contracted' || status === 'confirmed') return 'Vertraglich';
+		if (status === 'completed') return 'Durchgeführt';
+		if (status === 'withdrawn') return 'Zurückgetreten';
+		if (status === 'declined') return 'Abgelehnt';
 		if (status === 'cancellation_pending') return 'Stornierung offen';
 		return 'Storniert';
 	}
@@ -193,7 +199,7 @@
 													<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => goto(`/${booking.id}`)}>
 														<Eye size={16} aria-hidden="true" />Details öffnen
 													</DropdownMenu.Item>
-													{#if booking.status === 'confirmed'}
+											{#if booking.status === 'contracted' || booking.status === 'confirmed'}
 														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => openTimer(booking.id)}>
 															<ExternalLink size={16} aria-hidden="true" />Timer öffnen
 														</DropdownMenu.Item>

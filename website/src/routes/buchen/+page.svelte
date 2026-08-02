@@ -9,6 +9,7 @@
         CakeSlice,
         CalendarDays,
         Camera,
+		Check,
         Clock3,
         Code2,
         Coffee,
@@ -41,13 +42,14 @@
         type CodingTool,
         type Equipment,
         type EventAddress,
+		type BillingDetails,
         type Lunch,
         type ToolProvision,
 		type DeviceProvision,
     } from "$lib/booking";
     import { bookingOverviewRows, type BookingOverviewRowId } from "$lib/booking-overview";
-    import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from "$lib/photon";
     import { eventDateBounds } from "$lib/event-date";
+	import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from '$lib/photon';
     import AnimatedValue from "$lib/AnimatedValue.svelte";
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
@@ -62,6 +64,7 @@
     import MessageField from "$lib/config/MessageField.svelte";
     import PrepCallEditor from "$lib/config/PrepCallEditor.svelte";
     import SeoHead from "$lib/SeoHead.svelte";
+	import { legalModulesForConfiguration } from '$lib/legal';
 
     let capacity = $state<Capacity>(15);
     let venueProvided = $state(true);
@@ -73,11 +76,23 @@
     let customCodingTool = $state("");
     let deviceProvision = $state<DeviceProvision | null>(null);
     let deviceCount = $state(0);
+	let eventPhotos = $state(true);
     let companyName = $state("");
     let contactName = $state("");
     let email = $state("");
     let phone = $state("");
     let message = $state("");
+	let billingCompanyName = $state("");
+	let billingLegalForm = $state("");
+	let billingContactName = $state("");
+	let billingEmail = $state("");
+	let billingVatId = $state("");
+	let billingPurchaseOrder = $state("");
+	let billingStreet = $state("");
+	let billingPostalCode = $state("");
+	let billingCity = $state("");
+	let businessCustomerConfirmed = $state(false);
+	let authorityConfirmed = $state(false);
     let eventStart = $state("");
     let eventEnd = $state("");
     let consultationSlot = $state("");
@@ -90,11 +105,11 @@
         city: "",
         country: "Deutschland",
     });
-    let addressQuery = $state("");
-    let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
-    let searchStatus = $state<"idle" | "loading" | "empty" | "error">("idle");
-    let addressAbort: AbortController | undefined;
-    let addressDebounce: ReturnType<typeof setTimeout> | undefined;
+	let addressQuery = $state('');
+	let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
+	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
+	let addressAbort: AbortController | undefined;
+	let addressDebounce: ReturnType<typeof setTimeout> | undefined;
     let planAbort: AbortController | undefined;
     let planDebounce: ReturnType<typeof setTimeout> | undefined;
     let planHydrated = $state(false);
@@ -167,6 +182,7 @@
 		deviceCount,
     });
     let overviewRows = $derived(bookingOverviewRows(buildConfiguration()));
+	let legalModulesUrl = $derived(`/agb?selection=custom&${legalModulesForConfiguration(buildConfiguration()).map((module) => `module=${encodeURIComponent(module)}`).join('&')}`);
 
     const { min: minEventDate, max: maxEventDate } = eventDateBounds();
 
@@ -194,54 +210,48 @@
 		if (patch.deviceCount !== undefined) deviceCount = patch.deviceCount;
     }
 
-    function updateSuggestions() {
-        if (addressDebounce) clearTimeout(addressDebounce);
-        addressAbort?.abort();
-        const query = addressQuery.trim();
-        if (query.length < 3) {
-            suggestions = [];
-            searchStatus = "idle";
-            return;
-        }
-        addressDebounce = setTimeout(() => searchAddress(query), 250);
-    }
+	function updateSuggestions() {
+		if (addressDebounce) clearTimeout(addressDebounce);
+		addressAbort?.abort();
+		const query = addressQuery.trim();
+		if (query.length < 3) { suggestions = []; searchStatus = 'idle'; return; }
+		addressDebounce = setTimeout(() => searchAddress(query), 250);
+	}
 
-    async function searchAddress(query: string) {
-        addressAbort?.abort();
-        addressAbort = new AbortController();
-        searchStatus = "loading";
-        try {
-            const params = new URLSearchParams({
-                q: query,
-                countrycode: "DE",
-                lang: "de",
-                limit: "5",
-            });
-            const response = await fetch(`https://photon.komoot.io/api?${params}`, {
-                signal: addressAbort.signal,
-            });
-            if (!response.ok) throw new Error("Adresssuche nicht verfügbar");
-            const result = (await response.json()) as { features?: PhotonFeature[] };
-            suggestions = (result.features ?? [])
-                .map((feature) => ({ label: photonFeatureLabel(feature), feature }))
-                .filter((suggestion) => suggestion.label);
-            searchStatus = suggestions.length ? "idle" : "empty";
-        } catch (error) {
-            if ((error as Error).name !== "AbortError") {
-                suggestions = [];
-                searchStatus = "error";
-            }
-        }
-    }
+	async function searchAddress(query: string) {
+		addressAbort?.abort();
+		addressAbort = new AbortController();
+		searchStatus = 'loading';
+		try {
+			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: 'de', limit: '5' });
+			const response = await fetch(`/api/geocode?${params}`, { signal: addressAbort.signal });
+			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
+			const result = await response.json() as { features?: PhotonFeature[] };
+			suggestions = (result.features ?? []).map((feature) => ({ label: photonFeatureLabel(feature), feature })).filter((suggestion) => suggestion.label);
+			searchStatus = suggestions.length ? 'idle' : 'empty';
+		} catch (error) {
+			if ((error as Error).name !== 'AbortError') { suggestions = []; searchStatus = 'error'; }
+		}
+	}
 
-    function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
-        addressQuery = suggestion.label;
-        suggestions = [];
-        searchStatus = "idle";
-        address = normalizePhotonAddress(suggestion.feature);
-    }
+	function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
+		addressQuery = suggestion.label;
+		suggestions = [];
+		searchStatus = 'idle';
+		address = normalizePhotonAddress(suggestion.feature);
+	}
+
 
     function buildConfiguration(): BookingConfiguration {
+		const billing: BillingDetails = {
+			companyName: billingCompanyName,
+			legalForm: billingLegalForm,
+			contactName: billingContactName,
+			email: billingEmail,
+			vatId: billingVatId,
+			purchaseOrder: billingPurchaseOrder,
+			address: { street: billingStreet, postalCode: billingPostalCode, city: billingCity, country: 'Deutschland' }
+		};
         return {
             capacity,
             venueProvided,
@@ -253,6 +263,7 @@
             customCodingTool: codingTools.includes("custom") ? customCodingTool : "",
 			deviceProvision,
 			deviceCount,
+			eventPhotos,
             companyName,
             contactName,
             email,
@@ -262,6 +273,9 @@
             eventStart,
             eventEnd,
             consultationSlot,
+			billing,
+			businessCustomerConfirmed,
+			authorityConfirmed,
         };
     }
 
@@ -270,7 +284,8 @@
     }
 
     function buildSharedPlan(): SharedPlanV5 {
-        return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
+		const { billing: _billing, businessCustomerConfirmed: _business, authorityConfirmed: _authority, ...shareable } = buildConfiguration();
+		return { v: 5, ...shareable, consultationMode, customConsultationDate };
     }
 
     function applySharedPlan(plan: SharedPlanV5) {
@@ -287,15 +302,14 @@
         customCodingTool = plan.toolProvision === "needed" ? "" : plan.customCodingTool;
 		deviceProvision = plan.deviceProvision;
 		deviceCount = plan.deviceCount;
+		eventPhotos = plan.eventPhotos ?? true;
         companyName = plan.companyName;
         contactName = plan.contactName;
         email = plan.email;
         phone = plan.phone;
         message = plan.message;
         address = plan.address;
-        addressQuery =
-            plan.address.label ||
-            [plan.address.street, plan.address.city].filter(Boolean).join(", ");
+		addressQuery = plan.address.label || [plan.address.street, plan.address.city].filter(Boolean).join(', ');
         eventStart = plan.eventStart;
         eventEnd = plan.eventEnd;
         consultationSlot = plan.consultationSlot;
@@ -673,6 +687,14 @@
                 />
             </section>
 
+			<section class="config-section" use:reveal>
+				<h2>Eventfotos</h2>
+				<div class="option-grid">
+					<label class:selected={eventPhotos} class="choice"><input type="radio" name="booking-event-photos" checked={eventPhotos} onchange={() => (eventPhotos = true)} /><b>Event dokumentieren</b><small>Aufnahme und geschützte Bereitstellung im vereinbarten Umfang. Marketing nur mit separater Einwilligung.</small><span class="choice-price">Inklusive</span></label>
+					<label class:selected={!eventPhotos} class="choice"><input type="radio" name="booking-event-photos" checked={!eventPhotos} onchange={() => (eventPhotos = false)} /><b>Keine Eventfotos</b><small>Der Hackathon findet ohne Foto-Service von ALL IN AGI statt.</small><span class="choice-price">Abgewählt</span></label>
+				</div>
+			</section>
+
             <section class="config-section" use:reveal>
 				<h2>{venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'}</h2>
                 <AddressEditor
@@ -714,6 +736,30 @@
                 />
             </section>
 
+			<section class="config-section" use:reveal>
+				<h2>Rechnungsdaten</h2>
+				<p class="section-note">Die Rechnungsanschrift wird getrennt von der Veranstaltungsadresse gespeichert.</p>
+				<div class="field-grid billing-fields">
+					<div class="field"><label for="billing-company">Firma</label><input id="billing-company" autocomplete="organization" bind:value={billingCompanyName} /></div>
+					<div class="field"><label for="billing-legal-form">Rechtsform <small>(optional)</small></label><input id="billing-legal-form" placeholder="z. B. GmbH" bind:value={billingLegalForm} /></div>
+					<div class="field"><label for="billing-contact">Rechnungskontakt</label><input id="billing-contact" autocomplete="name" bind:value={billingContactName} /></div>
+					<div class="field"><label for="billing-email">Rechnungs-E-Mail</label><input id="billing-email" type="email" autocomplete="email" bind:value={billingEmail} /></div>
+					<div class="field full"><label for="billing-street">Straße und Hausnummer</label><input id="billing-street" autocomplete="billing street-address" bind:value={billingStreet} /></div>
+					<div class="field"><label for="billing-postal">Postleitzahl</label><input id="billing-postal" autocomplete="billing postal-code" bind:value={billingPostalCode} /></div>
+					<div class="field"><label for="billing-city">Ort</label><input id="billing-city" autocomplete="billing address-level2" bind:value={billingCity} /></div>
+					<div class="field"><label for="billing-vat">USt-IdNr. <small>(optional)</small></label><input id="billing-vat" autocomplete="off" bind:value={billingVatId} /></div>
+					<div class="field"><label for="billing-po">Bestellnummer <small>(optional)</small></label><input id="billing-po" autocomplete="off" bind:value={billingPurchaseOrder} /></div>
+				</div>
+				<button class="copy-billing-button" type="button" onclick={() => {
+					billingCompanyName = companyName;
+					billingContactName = contactName;
+					billingEmail = email;
+					billingStreet = address.street;
+					billingPostalCode = address.postalCode;
+					billingCity = address.city;
+				}}>Kontakt und Veranstaltungsadresse übernehmen</button>
+			</section>
+
             <section class="config-section" use:reveal>
                 <h2>60 Min. Vorbereitungsgespräch</h2>
                 {#key availabilityKey}
@@ -738,6 +784,21 @@
                     id="booking-message"
                 />
             </section>
+
+			<section class="config-section legal-confirmations" use:reveal>
+				<h2>Unternehmensanfrage</h2>
+				<label class="coding-tool-option legal-confirmation-option">
+					<input type="checkbox" bind:checked={businessCustomerConfirmed} />
+					<span class="round-checkbox" aria-hidden="true">{#if businessCustomerConfirmed}<Check size={18} strokeWidth={2.4} />{/if}</span>
+					<span>Ich handle für ein Unternehmen beziehungsweise eine juristische Person und nicht als Verbraucher.</span>
+				</label>
+				<label class="coding-tool-option legal-confirmation-option">
+					<input type="checkbox" bind:checked={authorityConfirmed} />
+					<span class="round-checkbox" aria-hidden="true">{#if authorityConfirmed}<Check size={18} strokeWidth={2.4} />{/if}</span>
+					<span>Ich bin befugt, diese unverbindliche Anfrage für das angegebene Unternehmen zu stellen.</span>
+				</label>
+				<p class="section-note">Mit dem Absenden entsteht noch kein Vertrag. Die für Ihre Konfiguration geltenden <a href={legalModulesUrl} target="_blank" rel="noreferrer">B2B-AGB</a> werden vor dem Prep-Call bereitgestellt und bei einer späteren Zustimmung versioniert dokumentiert.</p>
+			</section>
 
             <section class="config-section" use:reveal>
                 <div class="summary-box overview-box" bind:this={overviewCard}>
@@ -835,7 +896,7 @@
                         class="button-primary"
                         type="submit"
                         disabled={submitting || slotsLoading || eventSlotsLoading}
-                        >{submitting ? "Wird gebucht …" : "Hackathon und Prep Call buchen"}</button
+                        >{submitting ? "Anfrage wird gesendet …" : "Unverbindlich anfragen & Prep Call reservieren"}</button
                     >
                     <SharePlanButton getUrl={getShareUrl} />
                 </div>

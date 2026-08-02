@@ -1,11 +1,25 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import type { CodingTool, DeviceProvision, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
+import type { BillingDetails, CodingTool, DeviceProvision, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 import type { InvoiceSnapshot } from '$lib/invoice';
+import type { LegalDocumentSnapshot, LegalModule } from '$lib/legal';
+import type { CancellationChargeSnapshot } from '$lib/cancellation';
 
 export type BillingModel = 'legacy_full' | 'deposit_30';
 
-export const hackathonStatus = pgEnum('hackathon_status', ['pending', 'confirmed', 'cancellation_pending', 'cancelled']);
+export const hackathonStatus = pgEnum('hackathon_status', [
+	'pending',
+	'requested',
+	'prep_scheduled',
+	'exit_window',
+	'contracted',
+	'withdrawn',
+	'declined',
+	'confirmed',
+	'cancellation_pending',
+	'cancelled',
+	'completed'
+]);
 
 export const hackathons = pgTable('hackathons', {
 	id: text('id').primaryKey(),
@@ -25,6 +39,23 @@ export const hackathons = pgTable('hackathons', {
 	customCodingTool: text('custom_coding_tool').notNull().default(''),
 	deviceProvision: text('device_provision').$type<DeviceProvision>().notNull().default('existing'),
 	deviceCount: integer('device_count').notNull().default(0),
+	eventPhotos: boolean('event_photos').notNull().default(true),
+	billing: jsonb('billing').$type<BillingDetails>(),
+	businessCustomerConfirmed: boolean('business_customer_confirmed').notNull().default(false),
+	authorityConfirmed: boolean('authority_confirmed').notNull().default(false),
+	legalModules: jsonb('legal_modules').$type<LegalModule[]>(),
+	legalVersion: text('legal_version'),
+	legalContentHash: text('legal_content_hash'),
+	legalSnapshot: jsonb('legal_snapshot').$type<LegalDocumentSnapshot>(),
+	legalAcknowledgedAt: timestamp('legal_acknowledged_at', { withTimezone: true, mode: 'string' }),
+	customerAgreementName: text('customer_agreement_name'),
+	organizerAgreementName: text('organizer_agreement_name'),
+	oralAgreementAt: timestamp('oral_agreement_at', { withTimezone: true, mode: 'string' }),
+	exitDeadline: timestamp('exit_deadline', { withTimezone: true, mode: 'string' }),
+	contractedAt: timestamp('contracted_at', { withTimezone: true, mode: 'string' }),
+	withdrawnAt: timestamp('withdrawn_at', { withTimezone: true, mode: 'string' }),
+	withdrawnBy: text('withdrawn_by').$type<'customer' | 'organizer'>(),
+	withdrawalReason: text('withdrawal_reason'),
 	address: jsonb('address').$type<EventAddress>().notNull(),
 	eventStart: timestamp('event_start', { withTimezone: true, mode: 'string' }).notNull(),
 	eventEnd: timestamp('event_end', { withTimezone: true, mode: 'string' }).notNull(),
@@ -53,6 +84,7 @@ export const hackathons = pgTable('hackathons', {
 	cancellationEmailSentAt: timestamp('cancellation_email_sent_at', { withTimezone: true, mode: 'string' }),
 	cancellationEmailMessageId: text('cancellation_email_message_id'),
 	cancellationProcessingAt: timestamp('cancellation_processing_at', { withTimezone: true, mode: 'string' }),
+	cancellationChargeSnapshot: jsonb('cancellation_charge_snapshot').$type<CancellationChargeSnapshot>(),
 	invoiceSnapshot: jsonb('invoice_snapshot').$type<InvoiceSnapshot>(),
 	invoiceIssuedAt: timestamp('invoice_issued_at', { withTimezone: true, mode: 'string' }),
 	invoiceEmailSentAt: timestamp('invoice_email_sent_at', { withTimezone: true, mode: 'string' }),
@@ -72,6 +104,30 @@ export const hackathons = pgTable('hackathons', {
 	check('hackathons_device_count_check', sql`(${table.deviceProvision} = 'existing' and ${table.deviceCount} = 0) or (${table.deviceProvision} = 'needed' and ${table.deviceCount} between 1 and ${table.capacity})`),
 	check('hackathons_devices_adjustment_check', sql`${table.devicesAdjustment} = case when ${table.deviceProvision} = 'needed' then ${table.deviceCount} * 150 else 0 end`)
 ]);
+
+export const legalDocumentVersions = pgTable('legal_document_versions', {
+	version: text('version').primaryKey(),
+	contentHash: text('content_hash').notNull().unique(),
+	status: text('status').$type<'review-required' | 'published' | 'superseded'>().notNull(),
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+	publishedAt: timestamp('published_at', { withTimezone: true, mode: 'string' })
+});
+
+export const contractEvents = pgTable('contract_events', {
+	id: text('id').primaryKey(),
+	hackathonId: text('hackathon_id').notNull().references(() => hackathons.id, { onDelete: 'cascade' }),
+	type: text('type').notNull(),
+	actor: text('actor').notNull(),
+	payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+	occurredAt: timestamp('occurred_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+}, (table) => [index('contract_events_hackathon_idx').on(table.hackathonId)]);
+
+export const invoiceSequences = pgTable('invoice_sequences', {
+	sequenceKey: text('sequence_key').primaryKey(),
+	nextValue: integer('next_value').notNull().default(1),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+});
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(),

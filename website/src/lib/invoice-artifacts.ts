@@ -8,7 +8,7 @@ import {
 	drawWrapped,
 	safeText
 } from './booking-artifacts';
-import { formatInvoiceDate, formatInvoiceMoney, type InvoiceSnapshot } from './invoice';
+import { createZugferdXml, formatInvoiceDate, formatInvoiceMoney, type InvoiceSnapshot } from './invoice';
 
 function addressLines(address: InvoiceSnapshot['customer']['address']) {
 	return [
@@ -22,6 +22,12 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	const context = await createBrandPdf();
 	const { pdf, page, regular, bold } = context;
 	const { orange, ink, muted, line, surface } = context.colors;
+	pdf.setTitle(`${snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : snapshot.version === 2 ? 'Endrechnung' : 'Rechnung'} ${snapshot.invoiceNumber}`);
+	pdf.setAuthor('Emilian Scheel, handelnd unter ALL IN AGI');
+	pdf.setSubject('ZUGFeRD 2.3 / EN 16931 Hybridrechnung');
+	pdf.setKeywords(['ZUGFeRD', 'EN 16931', 'Rechnung']);
+	pdf.setCreator('ALL IN AGI');
+	pdf.setProducer('ALL IN AGI');
 	const invoiceTitle = snapshot.version === 2
 		? snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : 'Endrechnung'
 		: 'Rechnung';
@@ -46,13 +52,16 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 		safeText(`${snapshot.seller.brandName} | ${snapshot.seller.address.street} | ${snapshot.seller.address.postalCode} ${snapshot.seller.address.city}`),
 		{ x: LEFT, y: 650, font: regular, size: 6.5, color: muted }
 	);
-	const companyLines = drawWrapped(page, snapshot.customer.companyName, LEFT, 628, 250, bold, 13, ink, 2, 15);
+	const customerCompany = `${snapshot.customer.companyName}${snapshot.customer.legalForm ? ` ${snapshot.customer.legalForm}` : ''}`;
+	const companyLines = drawWrapped(page, customerCompany, LEFT, 628, 250, bold, 13, ink, 2, 15);
 	const customerTop = 612 - (companyLines - 1) * 15;
 	page.drawText(safeText(snapshot.customer.contactName), { x: LEFT, y: customerTop, font: regular, size: 9.5, color: ink });
 	addressLines(snapshot.customer.address).forEach((value, index) => {
 		page.drawText(safeText(value), { x: LEFT, y: customerTop - 17 - index * 14, font: regular, size: 9.5, color: ink });
 	});
 	drawWrapped(page, snapshot.customer.email, LEFT, customerTop - 59, 250, regular, 9, muted, 2, 11);
+	if (snapshot.customer.vatId) page.drawText(safeText(`USt-IdNr.: ${snapshot.customer.vatId}`), { x: LEFT, y: customerTop - 72, font: regular, size: 7.5, color: muted });
+	if (snapshot.customer.purchaseOrder) page.drawText(safeText(`Bestellnummer: ${snapshot.customer.purchaseOrder}`), { x: LEFT, y: customerTop - 84, font: regular, size: 7.5, color: muted });
 
 	page.drawText('AUSSTELLER', { x: 360, y: 628, font: bold, size: 6.8, color: muted });
 	page.drawText(safeText(snapshot.seller.legalName), { x: 360, y: 612, font: bold, size: 9.5, color: ink });
@@ -124,6 +133,13 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	page.drawText(safeText(snapshot.payment.iban), { x: 230, y: 108, font: regular, size: 8.8, color: ink });
 	page.drawText('BIC', { x: 430, y: 122, font: bold, size: 7, color: muted });
 	page.drawText(safeText(snapshot.payment.bic), { x: 430, y: 108, font: regular, size: 8.8, color: ink });
+
+	await pdf.attach(new TextEncoder().encode(createZugferdXml(snapshot)), 'factur-x.xml', {
+		mimeType: 'application/xml',
+		description: 'ZUGFeRD 2.3 EN16931 invoice data',
+		creationDate: new Date(`${snapshot.issueDate}T00:00:00Z`),
+		modificationDate: new Date(`${snapshot.issueDate}T00:00:00Z`)
+	});
 
 	return pdf.save();
 }

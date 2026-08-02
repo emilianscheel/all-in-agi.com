@@ -4,7 +4,7 @@ export const SITE_ORIGIN = 'https://all-in-agi.com';
 export const SOCIAL_IMAGE_URL = `${SITE_ORIGIN}/images/all-in-agi-event.webp`;
 export const SOCIAL_IMAGE_ALT = 'Team arbeitet gemeinsam an einem Agentic Engineering Hackathon-Projekt';
 
-export const INDEXABLE_PATHS = ['/', '/impressum', '/datenschutz', '/buchen', ...gtmPaths];
+export const INDEXABLE_PATHS = ['/', '/impressum', '/agb', '/datenschutz', '/teilnehmer-datenschutz', '/buchen', ...gtmPaths];
 
 const indexablePathSet = new Set<string>(INDEXABLE_PATHS);
 

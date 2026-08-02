@@ -17,14 +17,18 @@ export interface InvoiceSeller {
 
 export interface InvoiceCustomer {
 	companyName: string;
+	legalForm?: string;
 	contactName: string;
 	email: string;
+	vatId?: string;
+	purchaseOrder?: string;
 	address: InvoiceAddress;
 }
 
 export interface InvoiceLineItem {
 	description: string;
 	netAmountCents: number;
+	vatRatePercent?: number;
 }
 
 export interface InvoicePayment {
@@ -84,6 +88,15 @@ export interface InvoiceSource {
 	deviceCount: number;
 	devicesAdjustment: number;
 	totalPrice: number;
+	billing?: {
+		companyName: string;
+		legalForm: string;
+		contactName: string;
+		email: string;
+		vatId: string;
+		purchaseOrder: string;
+		address: InvoiceAddress;
+	} | null;
 }
 
 function dateInBerlin(value: Date | string) {
@@ -112,7 +125,8 @@ function eurosToCents(value: number) {
 export function createInvoiceSnapshot(
 	source: InvoiceSource,
 	legal: InvoiceLegalConfiguration,
-	issuedAt = new Date()
+	issuedAt = new Date(),
+	invoiceNumber = `RE-${source.id}`
 ): InvoiceSnapshot {
 	const items: InvoiceLineItem[] = [
 		{
@@ -139,7 +153,7 @@ export function createInvoiceSnapshot(
 	return {
 		version: 1,
 		hackathonId: source.id,
-		invoiceNumber: `RE-${source.id}`,
+		invoiceNumber,
 		issueDate,
 		serviceDate: dateInBerlin(source.eventStart),
 		dueDate: addCalendarDays(issueDate, 14),
@@ -157,12 +171,7 @@ export function createInvoiceSnapshot(
 			taxIdLabel: legal.taxIdLabel,
 			taxIdValue: legal.taxIdValue
 		},
-		customer: {
-			companyName: source.companyName,
-			contactName: source.contactName,
-			email: source.contactEmail,
-			address: { ...source.address }
-		},
+		customer: invoiceCustomer(source),
 		items,
 		netTotalCents,
 		vatRatePercent: 19,
@@ -205,12 +214,7 @@ function splitInvoiceBase(
 			taxIdLabel: legal.taxIdLabel,
 			taxIdValue: legal.taxIdValue
 		},
-		customer: {
-			companyName: source.companyName,
-			contactName: source.contactName,
-			email: source.contactEmail,
-			address: { ...source.address }
-		},
+		customer: invoiceCustomer(source),
 		items,
 		netTotalCents,
 		vatRatePercent: 19,
@@ -228,14 +232,15 @@ function splitInvoiceBase(
 export function createDownPaymentInvoiceSnapshot(
 	source: InvoiceSource,
 	legal: InvoiceLegalConfiguration,
-	issuedAt = new Date()
+	issuedAt = new Date(),
+	invoiceNumber = `RE-${source.id}-AZ`
 ) {
 	const issueDate = dateInBerlin(issuedAt);
 	const netAmountCents = Math.round(eurosToCents(source.totalPrice) * 0.3);
 	return splitInvoiceBase(
 		source,
 		legal,
-		`RE-${source.id}-AZ`,
+		invoiceNumber,
 		issueDate,
 		addCalendarDays(issueDate, 7),
 		[{ description: `30 % Anzahlung – Agentic Engineering Hackathon für bis zu ${source.capacity} Personen`, netAmountCents }],
@@ -247,7 +252,8 @@ export function createFinalInvoiceSnapshot(
 	source: InvoiceSource,
 	legal: InvoiceLegalConfiguration,
 	downPayment: SplitInvoiceSnapshot,
-	issuedAt = new Date()
+	issuedAt = new Date(),
+	invoiceNumber = `RE-${source.id}-ER`
 ) {
 	if (downPayment.kind !== 'down-payment') throw new Error('A down-payment invoice is required.');
 	const items: InvoiceLineItem[] = [
@@ -269,7 +275,57 @@ export function createFinalInvoiceSnapshot(
 		netAmountCents: -downPayment.netTotalCents
 	});
 	const issueDate = dateInBerlin(issuedAt);
-	return splitInvoiceBase(source, legal, `RE-${source.id}-ER`, issueDate, addCalendarDays(issueDate, 14), items, 'final');
+	return splitInvoiceBase(source, legal, invoiceNumber, issueDate, addCalendarDays(issueDate, 14), items, 'final');
+}
+
+function invoiceCustomer(source: InvoiceSource): InvoiceCustomer {
+	if (source.billing) {
+		return {
+			companyName: source.billing.companyName,
+			legalForm: source.billing.legalForm,
+			contactName: source.billing.contactName,
+			email: source.billing.email,
+			vatId: source.billing.vatId,
+			purchaseOrder: source.billing.purchaseOrder,
+			address: { ...source.billing.address }
+		};
+	}
+	return { companyName: source.companyName, contactName: source.contactName, email: source.contactEmail, address: { ...source.address } };
+}
+
+function xmlEscape(value: string) {
+	return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+}
+
+function zugferdDate(value: string) {
+	return value.replaceAll('-', '');
+}
+
+export function createZugferdXml(snapshot: InvoiceSnapshot) {
+	const itemXml = snapshot.items.map((item, index) => `<ram:IncludedSupplyChainTradeLineItem>
+<ram:AssociatedDocumentLineDocument><ram:LineID>${index + 1}</ram:LineID></ram:AssociatedDocumentLineDocument>
+<ram:SpecifiedTradeProduct><ram:Name>${xmlEscape(item.description)}</ram:Name></ram:SpecifiedTradeProduct>
+<ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${(item.netAmountCents / 100).toFixed(2)}</ram:ChargeAmount><ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement>
+<ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery>
+<ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${item.vatRatePercent ?? snapshot.vatRatePercent}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${(item.netAmountCents / 100).toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement>
+</ram:IncludedSupplyChainTradeLineItem>`).join('');
+	const sellerName = `${snapshot.seller.legalName}, handelnd unter ${snapshot.seller.brandName}`;
+	const buyerReference = snapshot.customer.purchaseOrder ? `<ram:BuyerReference>${xmlEscape(snapshot.customer.purchaseOrder)}</ram:BuyerReference>` : '';
+	const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+<rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017#compliant#urn:zugferd.de:2p3:EN16931</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
+<rsm:ExchangedDocument><ram:ID>${xmlEscape(snapshot.invoiceNumber)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.issueDate)}</udt:DateTimeString></ram:IssueDateTime></rsm:ExchangedDocument>
+<rsm:SupplyChainTradeTransaction>${itemXml}
+<ram:ApplicableHeaderTradeAgreement>
+<ram:SellerTradeParty><ram:Name>${xmlEscape(sellerName)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.seller.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.seller.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.seller.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress><ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">${xmlEscape(snapshot.seller.taxIdValue)}</ram:ID></ram:SpecifiedTaxRegistration></ram:SellerTradeParty>
+<ram:BuyerTradeParty><ram:Name>${xmlEscape(`${snapshot.customer.companyName}${snapshot.customer.legalForm ? ` ${snapshot.customer.legalForm}` : ''}`)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.customer.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.customer.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.customer.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>${snapshot.customer.vatId ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${xmlEscape(snapshot.customer.vatId)}</ram:ID></ram:SpecifiedTaxRegistration>` : ''}</ram:BuyerTradeParty>
+</ram:ApplicableHeaderTradeAgreement>
+<ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.serviceDate)}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
+<ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${snapshot.customer.purchaseOrder ? `<ram:BuyerReference>${xmlEscape(snapshot.customer.purchaseOrder)}</ram:BuyerReference>` : ''}<ram:ApplicableTradeTax><ram:CalculatedAmount>${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${snapshot.vatRatePercent}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradePaymentTerms><ram:Description>Zahlbar bis ${snapshot.dueDate}</ram:Description><ram:DueDateDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms><ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation></ram:ApplicableHeaderTradeSettlement>
+</rsm:SupplyChainTradeTransaction></rsm:CrossIndustryInvoice>`;
+	return xml
+		.replace('<ram:ApplicableHeaderTradeAgreement>', `<ram:ApplicableHeaderTradeAgreement>${buyerReference}`)
+		.replace(`<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${buyerReference}`, '<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>');
 }
 
 export function formatInvoiceMoney(cents: number) {

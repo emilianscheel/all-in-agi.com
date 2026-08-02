@@ -26,7 +26,7 @@ export function _createDownPaymentEmailPost(dependencies: DownPaymentEmailEndpoi
 		if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
 		try {
 			const { record, snapshot } = await getOrCreateDownPaymentInvoice(id, dependencies);
-			if (record.status !== 'confirmed') return json({ message: 'Eine stornierte Buchung kann keine Rechnung erhalten.' }, { status: 409 });
+			if (!['contracted', 'confirmed', 'completed'].includes(record.status)) return json({ message: 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.' }, { status: 409 });
 			const delivery = await (dependencies.send ?? sendInvoiceEmail)(snapshot, { ...dependencies.email, fetch: dependencies.email?.fetch ?? fetch });
 			const sentAt = dependencies.nowIso?.() ?? new Date().toISOString();
 			const updated = await (dependencies.markSent ?? markDownPaymentInvoiceEmailSent)(id, delivery.messageId, sentAt);

@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-	<title>Hackathon gebucht — ALL IN AGI</title>
+	<title>Hackathon angefragt — ALL IN AGI</title>
 </svelte:head>
 
 <div class="success-page">
@@ -63,15 +63,16 @@
 		</div>
 		<section class="success-panel" aria-labelledby="success-title">
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
-			<h1 id="success-title">Hackathon gebucht</h1>
+			<h1 id="success-title">Anfrage eingegangen</h1>
 			{#if summary}
 				<p class="success-date">{formatEventTimeRange(summary.hackathonBooking.start || summary.eventStart, summary.hackathonBooking.end || summary.eventEnd)}</p>
-				<p>Prep Call: {formatDate(summary.prepCallBooking.start || summary.consultationSlot, true)} Uhr</p>
+				<p>Prep Call reserviert: {formatDate(summary.prepCallBooking.start || summary.consultationSlot, true)} Uhr</p>
+				<p>Dies ist noch keine Vertragsbestätigung. Im Prep-Call stimmen wir die eingefrorene Leistung gemeinsam ab.</p>
 				<MiniContactCards />
 				<div class="success-actions">
 					{#if summary.hackathonId}
 						<a class="button-primary action-button" href={summary.detailUrl || `/${summary.hackathonId}`}>
-							<ArrowRight size={18} aria-hidden="true" />Hackathon-Details öffnen
+							<ArrowRight size={18} aria-hidden="true" />Anfrage öffnen
 						</a>
 					{/if}
 					<SharePlanButton getUrl={async () => summary?.planUrl || location.href} />

@@ -50,6 +50,20 @@
       "when": 1785668493505,
       "tag": "0006_married_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1785671374267,
+      "tag": "0007_dapper_glorian",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785683226112,
+      "tag": "0008_gifted_gambit",
+      "breakpoints": true
     }
   ]
 }

@@ -12,6 +12,7 @@ const validConfiguration: BookingConfiguration = {
 	customCodingTool: '',
 	deviceProvision: 'existing',
 	deviceCount: 0,
+	eventPhotos: true,
 	companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel',
 	email: 'ada@example.com',
@@ -27,6 +28,12 @@ const validConfiguration: BookingConfiguration = {
 	eventStart: '2099-06-20T07:00:00.000Z',
 	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z'
+	,billing: {
+		companyName: 'Musterwerke GmbH', legalForm: 'GmbH', contactName: 'Ada Beispiel', email: 'rechnung@example.com', vatId: '', purchaseOrder: '',
+		address: { street: 'Rechnungsstraße 2', postalCode: '10115', city: 'Berlin', country: 'Deutschland' }
+	},
+	businessCustomerConfirmed: true,
+	authorityConfirmed: true
 };
 
 describe('price calculation', () => {

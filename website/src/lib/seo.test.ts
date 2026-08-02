@@ -8,10 +8,10 @@ describe('SEO indexing policy', () => {
 		expect(robotsDirective(pathname)).toBe('index, follow, max-image-preview:large');
 	});
 
-	test('contains the four core pages and all GTM pages', () => {
-		expect(INDEXABLE_PATHS).toHaveLength(24);
-		expect(INDEXABLE_PATHS.slice(0, 4)).toEqual(['/', '/impressum', '/datenschutz', '/buchen']);
-		expect(INDEXABLE_PATHS.slice(4)).toEqual(gtmPaths);
+	test('contains the six core pages and all GTM pages', () => {
+		expect(INDEXABLE_PATHS).toHaveLength(26);
+		expect(INDEXABLE_PATHS.slice(0, 6)).toEqual(['/', '/impressum', '/agb', '/datenschutz', '/teilnehmer-datenschutz', '/buchen']);
+		expect(INDEXABLE_PATHS.slice(6)).toEqual(gtmPaths);
 	});
 
 	test.each([

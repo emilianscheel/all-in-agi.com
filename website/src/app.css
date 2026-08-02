@@ -564,6 +564,14 @@ img { display: block; max-width: 100%; }
 .simple-card h1 { margin: 0; font-size: clamp(42px, 6vw, 68px); letter-spacing: -.055em; }
 .simple-card h2 { margin-top: 38px; font-size: 22px; }
 .simple-card p, .simple-card li { color: var(--muted); line-height: 1.6; }
+.billing-fields { margin-top: 22px; }
+.copy-billing-button { margin-top: 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+.legal-confirmations { padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: var(--card); }
+.legal-confirmation-option { align-items: flex-start; padding: 12px 0; }
+.legal-confirmation-option > span:last-child { line-height: 1.5; }
+.legal-confirmations a { color: var(--link); }
+.contract-admin-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+.contract-admin-form .action-button { grid-column: 1 / -1; justify-self: start; }
 .placeholder-alert { margin: 28px 0; padding: 16px; border-radius: 12px; background: var(--warning-bg); color: var(--warning-ink) !important; }
 .success-mark { display: grid; place-items: center; width: 62px; height: 62px; margin-bottom: 24px; border-radius: 50%; background: var(--orange); color: var(--on-accent); font-size: 30px; }
 .success-page { min-height: calc(100svh - 44px); padding: 30px; background: var(--surface); }

@@ -29,6 +29,21 @@ export interface EventAddress {
 	longitude?: number;
 }
 
+export interface BillingDetails {
+	companyName: string;
+	legalForm: string;
+	contactName: string;
+	email: string;
+	vatId: string;
+	purchaseOrder: string;
+	address: {
+		street: string;
+		postalCode: string;
+		city: string;
+		country: 'Deutschland';
+	};
+}
+
 export interface BookingConfiguration {
 	capacity: Capacity;
 	venueProvided: boolean;
@@ -40,6 +55,7 @@ export interface BookingConfiguration {
 	customCodingTool: string;
 	deviceProvision: DeviceProvision | null;
 	deviceCount: number;
+	eventPhotos?: boolean;
 	companyName: string;
 	contactName: string;
 	email: string;
@@ -49,6 +65,9 @@ export interface BookingConfiguration {
 	eventStart: string;
 	eventEnd: string;
 	consultationSlot: string;
+	billing?: BillingDetails;
+	businessCustomerConfirmed?: boolean;
+	authorityConfirmed?: boolean;
 }
 
 export const CAPACITY_PRICES: Record<Capacity, number> = {
@@ -110,6 +129,7 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 		customCodingTool: config.codingTools.includes('custom') ? config.customCodingTool : '',
 		deviceProvision: config.deviceProvision ?? '',
 		deviceCount: String(config.deviceCount),
+		eventPhotos: String(config.eventPhotos),
 		address: [config.address.street, config.address.postalCode, config.address.city].join(', '),
 		message: config.message.trim(),
 		totalPrice: String(price.totalPrice)
@@ -158,6 +178,14 @@ export function validateConfiguration(config: BookingConfiguration) {
 	if (typeof config.message !== 'string' || config.message.length > 500) errors.push('Ihre Nachricht darf maximal 500 Zeichen lang sein.');
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
 		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
+	}
+	if (typeof config.eventPhotos !== 'boolean') errors.push('Bitte wählen Sie aus, ob Eventfotos gewünscht sind.');
+	if (!config.businessCustomerConfirmed) errors.push('Bitte bestätigen Sie, dass Sie als Unternehmen und nicht als Verbraucher anfragen.');
+	if (!config.authorityConfirmed) errors.push('Bitte bestätigen Sie Ihre Vertretungsbefugnis.');
+	if (!config.billing?.companyName?.trim() || !config.billing.contactName?.trim()) errors.push('Bitte vervollständigen Sie die Rechnungsdaten.');
+	if (!/^\S+@\S+\.\S+$/.test(config.billing?.email ?? '')) errors.push('Bitte geben Sie eine gültige Rechnungs-E-Mail-Adresse an.');
+	if (!config.billing?.address?.street?.trim() || !config.billing.address.postalCode?.trim() || !config.billing.address.city?.trim()) {
+		errors.push('Bitte vervollständigen Sie die Rechnungsanschrift.');
 	}
 	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.');
 	const consultationDate = new Date(config.consultationSlot);

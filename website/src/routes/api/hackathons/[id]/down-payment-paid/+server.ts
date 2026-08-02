@@ -9,7 +9,7 @@ export async function POST({ params, locals }: { params: { id: string }; locals:
 	if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
 	const record = await getCustomerHackathonRecord(id);
 	if (!record) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
-	if (record.status !== 'confirmed' || record.billingModel !== 'deposit_30' || !record.downPaymentInvoiceSnapshot) {
+	if (!['contracted', 'confirmed', 'completed'].includes(record.status) || record.billingModel !== 'deposit_30' || !record.downPaymentInvoiceSnapshot) {
 		return json({ message: 'Die Anzahlung kann für diese Buchung nicht als bezahlt markiert werden.' }, { status: 409 });
 	}
 	if (record.downPaymentPaidAt) return json({ paidAt: record.downPaymentPaidAt });

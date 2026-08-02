@@ -47,7 +47,7 @@
 		searchStatus = 'loading';
 		try {
 			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: 'de', limit: '5' });
-			const response = await fetch(`https://photon.komoot.io/api?${params}`, { signal: abortController.signal });
+			const response = await fetch(`/api/geocode?${params}`, { signal: abortController.signal });
 			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
 			const result = await response.json() as { features?: PhotonFeature[] };
 			suggestions = (result.features ?? [])

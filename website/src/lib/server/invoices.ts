@@ -12,6 +12,8 @@ import {
 	getCustomerHackathonRecord,
 	type HackathonRecord
 } from './hackathons';
+import { finalizeDueContracts } from './legal-contracts';
+import { allocateInvoiceNumber } from './invoice-numbers';
 
 export class InvoiceNotFoundError extends Error {
 	constructor() {
@@ -33,6 +35,7 @@ export interface InvoicePersistenceDependencies {
 	freezeDownPayment?: (id: string, snapshot: InvoiceSnapshot, issuedAt: string) => Promise<HackathonRecord | null>;
 	getConfiguration?: () => InvoiceLegalConfiguration;
 	now?: () => Date;
+	allocateNumber?: typeof allocateInvoiceNumber;
 }
 
 export interface IssuedInvoice {
@@ -40,15 +43,27 @@ export interface IssuedInvoice {
 	snapshot: InvoiceSnapshot;
 }
 
+async function invoiceNumber(
+	kind: 'invoice' | 'down-payment' | 'final',
+	record: HackathonRecord,
+	now: Date,
+	dependencies: InvoicePersistenceDependencies
+) {
+	if (dependencies.allocateNumber) return dependencies.allocateNumber(kind, now);
+	if (!dependencies.getRecord) return allocateInvoiceNumber(kind, now);
+	return kind === 'down-payment' ? `RE-${record.id}-AZ` : kind === 'final' ? `RE-${record.id}-ER` : `RE-${record.id}`;
+}
+
 export async function getOrCreateInvoice(
 	id: string,
 	dependencies: InvoicePersistenceDependencies = {}
 ): Promise<IssuedInvoice> {
 	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
 	const current = await getRecord(id);
 	if (!current) throw new InvoiceNotFoundError();
 	if (current.invoiceSnapshot) return { record: current, snapshot: current.invoiceSnapshot };
-	if (current.status !== 'confirmed') throw new InvoiceNotIssuableError();
+	if (!['contracted', 'confirmed', 'completed'].includes(current.status)) throw new InvoiceNotIssuableError();
 
 	const now = dependencies.now?.() ?? new Date();
 	const legal = (dependencies.getConfiguration ?? getInvoiceLegalConfiguration)();
@@ -60,9 +75,9 @@ export async function getOrCreateInvoice(
 		if (current.downPaymentInvoiceSnapshot.version !== 2 || current.downPaymentInvoiceSnapshot.kind !== 'down-payment') {
 			throw new InvoiceNotIssuableError();
 		}
-		snapshot = createFinalInvoiceSnapshot(current, legal, current.downPaymentInvoiceSnapshot, now);
+		snapshot = createFinalInvoiceSnapshot(current, legal, current.downPaymentInvoiceSnapshot, now, await invoiceNumber('final', current, now, dependencies));
 	} else {
-		snapshot = createInvoiceSnapshot(current, legal, now);
+		snapshot = createInvoiceSnapshot(current, legal, now, await invoiceNumber('invoice', current, now, dependencies));
 	}
 	const frozen = await (dependencies.freeze ?? freezeInvoiceSnapshot)(id, snapshot, now.toISOString());
 	if (frozen?.invoiceSnapshot) return { record: frozen, snapshot: frozen.invoiceSnapshot };
@@ -78,17 +93,19 @@ export async function getOrCreateDownPaymentInvoice(
 	dependencies: InvoicePersistenceDependencies = {}
 ): Promise<IssuedInvoice> {
 	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
 	const current = await getRecord(id);
 	if (!current) throw new InvoiceNotFoundError();
 	if (current.downPaymentInvoiceSnapshot) return { record: current, snapshot: current.downPaymentInvoiceSnapshot };
-	if (current.status !== 'confirmed' || current.billingModel !== 'deposit_30' || current.invoiceSnapshot) {
+	if (!['contracted', 'confirmed', 'completed'].includes(current.status) || current.billingModel !== 'deposit_30' || current.invoiceSnapshot) {
 		throw new InvoiceNotIssuableError();
 	}
 	const now = dependencies.now?.() ?? new Date();
 	const snapshot = createDownPaymentInvoiceSnapshot(
 		current,
 		(dependencies.getConfiguration ?? getInvoiceLegalConfiguration)(),
-		now
+		now,
+		await invoiceNumber('down-payment', current, now, dependencies)
 	);
 	const frozen = await (dependencies.freezeDownPayment ?? freezeDownPaymentInvoiceSnapshot)(id, snapshot, now.toISOString());
 	if (frozen?.downPaymentInvoiceSnapshot) return { record: frozen, snapshot: frozen.downPaymentInvoiceSnapshot };

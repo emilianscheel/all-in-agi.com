@@ -118,8 +118,8 @@ export function bookingOverviewRows(
 		{
 			id: 'event-photos',
 			label: 'Event-Fotos',
-			value: 'Dokumentation des Tages',
-			status: 'Inklusive'
+			value: config.eventPhotos ? 'Dokumentation des Tages' : 'Nicht gewünscht',
+			status: config.eventPhotos ? 'Inklusive' : 'Abgewählt'
 		},
 		{
 			id: 'snacks',
