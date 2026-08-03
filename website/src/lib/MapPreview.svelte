@@ -42,7 +42,7 @@
 				maplibreLogo: false,
 				pitchWithRotate: false,
 				dragRotate: false,
-				scrollZoom: false
+				scrollZoom: true
 			});
 			map.on('styleimagemissing', provideMissingStyleImage);
 			map.once('styledata', reveal);
