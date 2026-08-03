@@ -62,6 +62,7 @@ quick presentation/ document that includes all these questions
     - 15 people -> 5 bowls -> 30 €
     - 30 people -> 10 bowls -> 60 €
     - 50 people -> 15 bowls -> 90 €
+- put cookies for refill in ikea box [Vorratsbehälter, ~ 8 €](https://www.ikea.com/de/de/p/ikea-365-vorratsbehaelter-mit-deckel-rechteckig-kunststoff-s79276760/)
 
 we don't show that the cookies are from rewe or the bowls is from ikea!
 
