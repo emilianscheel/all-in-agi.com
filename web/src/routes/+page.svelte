@@ -124,7 +124,7 @@
             Hackathon bei Ihnen vor Ort erleben.
         </p>
         <div class="hero-actions">
-            <a class="button-primary" href="/buchen">Hackathon planen</a>
+            <a class="button-primary" href="/buchen" data-analytics-event="booking_cta" data-analytics-placement="hero">Hackathon planen</a>
             <a class="button-secondary" href="#format">Agenda ansehen</a>
         </div>
     </div>
@@ -267,7 +267,7 @@
             </article>
         </div>
         <div class="section-action">
-            <a class="button-primary" href="/buchen">Hackathon planen</a><a
+            <a class="button-primary" href="/buchen" data-analytics-event="booking_cta" data-analytics-placement="pricing">Hackathon planen</a><a
                 class="button-secondary"
                 href="#kontakt">Kontakt aufnehmen</a
             >
@@ -383,7 +383,7 @@
                 <CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
                 <h3>Intro Call</h3>
                 <p>60 Minuten für für alle Fragen. Unverbindlich.</p>
-                <a href="/buchen">Termin auswählen <span aria-hidden="true">›</span></a>
+                <a href="/buchen" data-analytics-event="booking_cta" data-analytics-placement="contact">Termin auswählen <span aria-hidden="true">›</span></a>
             </article>
         </div>
     </div>

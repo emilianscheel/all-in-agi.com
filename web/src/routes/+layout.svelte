@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { afterNavigate, goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { installGlobalHaptics } from '$lib/haptics';
 	import { robotsDirective } from '$lib/seo';
 	import GtmFooter from '$lib/GtmFooter.svelte';
 	import { gtmPaths } from '$lib/gtm-pages';
+	import CookieConsent from '$lib/CookieConsent.svelte';
+	import { activateAnalyticsForPath, installBookingCtaTracking } from '$lib/analytics';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children, data } = $props();
@@ -14,7 +16,16 @@
 	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.url.pathname));
 	let currentGtmSlug = $derived(gtmArticleRoute ? page.url.pathname.slice(1) : undefined);
 
-	onMount(installGlobalHaptics);
+	onMount(() => {
+		const removeHaptics = installGlobalHaptics();
+		const removeCtaTracking = installBookingCtaTracking();
+		void activateAnalyticsForPath(page.url.pathname);
+		afterNavigate(({ to }) => void activateAnalyticsForPath(to?.url.pathname ?? location.pathname));
+		return () => {
+			removeHaptics?.();
+			removeCtaTracking();
+		};
+	});
 
 	async function logout() {
 		const { authClient } = await import('$lib/auth-client');
@@ -70,7 +81,7 @@
 				<a href="/#preis">Preis</a>
 				<a href="/#kontakt">Kontakt</a>
 			</div>
-			<a class="nav-cta" href="/buchen">Hackathon planen</a>
+			<a class="nav-cta" href="/buchen" data-analytics-event="booking_cta" data-analytics-placement="header">Hackathon planen</a>
 		</nav>
 	{/if}
 	</header>
@@ -91,3 +102,5 @@
 	</div>
 	</footer>
 {/if}
+
+{#if !presentationRoute && !adminNavigation}<CookieConsent />{/if}

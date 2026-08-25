@@ -7,6 +7,7 @@
 	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
 	import { formatDate, type BookingConfiguration } from '$lib/booking';
 	import { formatEventTimeRange } from '$lib/event-time';
+	import { trackAnalyticsEvent } from '$lib/analytics';
 
 	type SuccessSummary = BookingConfiguration & {
 		prepCallBooking: BookingResultSummary;
@@ -42,6 +43,7 @@
 			const response = await fetch('/api/plan-pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(summary) });
 			if (!response.ok) throw new Error('PDF error');
 			downloadBlob(await response.blob(), 'all-in-agi-hackathon-plan.pdf');
+			trackAnalyticsEvent('booking_plan_downloaded');
 			downloadState = 'idle';
 		} catch { downloadState = 'error'; }
 	}
@@ -49,6 +51,7 @@
 	function downloadCalendar() {
 		if (!summary) return;
 		downloadBlob(new Blob([createPrepCallIcs(summary, summary.prepCallBooking)], { type: 'text/calendar;charset=utf-8' }), 'all-in-agi-prep-call.ics');
+		trackAnalyticsEvent('booking_calendar_downloaded');
 	}
 </script>
 

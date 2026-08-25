@@ -43,6 +43,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `BETTER_AUTH_URL`: vollständiger Origin der Anwendung ohne abschließenden Slash; lokal standardmäßig `http://localhost:5173`
 - `SEED_ADMIN_EMAIL`: einzige E-Mail-Adresse, die das Admin-Konto einrichten darf
 - `SEED_ADMIN_PASSWORD`: Seed-Passwort mit mindestens 8 Zeichen; es wird nur bis zur erfolgreichen Passkey-Einrichtung akzeptiert
+- `PUBLIC_GA_MEASUREMENT_ID`: öffentliche GA4 Measurement ID, derzeit `G-WD6MW6STST`; Analytics wird erst nach einer Cookie-Einwilligung im Browser geladen
 
 In der lokalen Entwicklung wird ein festes Development-Secret verwendet. Im Live-Betrieb verweigert die App das Erstellen und Öffnen von Plan-Links ohne eigenes Secret. Plan-Links enthalten die vollständige Konfiguration inklusive Kontakt- und Adressdaten; jede Person mit dem Link kann diese Daten nach dem Öffnen sehen. Eine Rotation des Secrets macht bestehende Links ungültig.
 

@@ -47,6 +47,7 @@
     import MessageField from "$lib/config/MessageField.svelte";
     import PrepCallEditor from "$lib/config/PrepCallEditor.svelte";
     import SeoHead from "$lib/SeoHead.svelte";
+    import { trackAnalyticsEvent } from "$lib/analytics";
 
     let capacity = $state<Capacity>(15);
     const venueProvided = true;
@@ -92,6 +93,7 @@
     let eventAvailabilityKey = $state(0);
     let submitting = $state(false);
     let errors = $state<string[]>([]);
+	const analyticsMilestones = new Set<string>();
     let eventCard: HTMLElement;
     let overviewCard: HTMLDivElement;
     let previewOpacity = $state(1);
@@ -136,6 +138,13 @@
         if (patch.codingTools !== undefined) codingTools = patch.codingTools;
         if (patch.customCodingTool !== undefined) customCodingTool = patch.customCodingTool;
     }
+
+	function trackBookingMilestone(step: string) {
+		if (!analyticsMilestones.size) trackAnalyticsEvent("booking_started");
+		if (analyticsMilestones.has(step)) return;
+		analyticsMilestones.add(step);
+		trackAnalyticsEvent("booking_milestone", { step });
+	}
 
     function updateSuggestions() {
         if (addressDebounce) clearTimeout(addressDebounce);
@@ -298,6 +307,7 @@
         const config = buildConfiguration();
         errors = validateInquiryConfiguration(config);
         if (errors.length) return;
+		trackAnalyticsEvent("booking_submission_valid");
         submitting = true;
         try {
             const response = await fetch("/api/book", {
@@ -332,6 +342,7 @@
                         detailUrl: result.detailUrl,
                     }),
                 );
+			trackAnalyticsEvent("booking_completed");
             await goto("/buchen/erfolg");
         } catch (error) {
             errors = [
@@ -564,7 +575,7 @@
                 <ConfigOptionCards
                     kind="capacity"
                     values={optionValues}
-                    onchange={updateOptionValues}
+                    onchange={(value) => { updateOptionValues(value); trackBookingMilestone("team_size"); }}
                 />
             </section>
 
@@ -573,7 +584,7 @@
                 <ConfigOptionCards
                     kind="tools"
                     values={optionValues}
-                    onchange={updateOptionValues}
+                    onchange={(value) => { updateOptionValues(value); trackBookingMilestone("tools"); }}
                 />
             </section>
 
@@ -582,7 +593,7 @@
                 <ConfigOptionCards
                     kind="equipment"
                     values={optionValues}
-                    onchange={updateOptionValues}
+                    onchange={(value) => { updateOptionValues(value); trackBookingMilestone("demo_setup"); }}
                 />
             </section>
 
@@ -590,7 +601,7 @@
                 <h2>Veranstaltungsadresse</h2>
                 <AddressEditor
                     value={address}
-                    onchange={(value) => (address = value)}
+                    onchange={(value) => { address = value; trackBookingMilestone("event_location"); }}
                     idPrefix="booking-address"
                     searchArea={false}
                 />
@@ -605,7 +616,7 @@
                         minValue={minEventDate}
                         maxValue={maxEventDate}
                         onloadingchange={(value) => (eventSlotsLoading = value)}
-                        onchange={(value) => ({ eventStart, eventEnd } = value)}
+                        onchange={(value) => { ({ eventStart, eventEnd } = value); trackBookingMilestone("event_schedule"); }}
                     />
                 {/key}
             </section>
@@ -622,6 +633,7 @@
                         if (patch.contactName !== undefined) contactName = patch.contactName;
                         if (patch.email !== undefined) email = patch.email;
                         if (patch.phone !== undefined) phone = patch.phone;
+						trackBookingMilestone("contact");
                     }}
                     idPrefix="booking-contact"
                 />
@@ -634,7 +646,7 @@
                         value={consultationSlot}
                         mode={consultationMode}
                         customDate={customConsultationDate}
-                        onchange={(value) => (consultationSlot = value)}
+                        onchange={(value) => { consultationSlot = value; trackBookingMilestone("prep_call"); }}
                         onmodechange={(value) => (consultationMode = value)}
                         oncustomdatechange={(value) => (customConsultationDate = value)}
                         onloadingchange={(value) => (slotsLoading = value)}
@@ -647,7 +659,7 @@
                 <h2>Ihre Nachricht</h2>
                 <MessageField
                     value={message}
-                    onchange={(value) => (message = value)}
+                    onchange={(value) => { message = value; trackBookingMilestone("message"); }}
                     id="booking-message"
                 />
             </section>

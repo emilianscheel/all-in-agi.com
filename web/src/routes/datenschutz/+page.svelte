@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CONTACT_EMAIL } from '$lib/contact';
 	import SeoHead from '$lib/SeoHead.svelte';
+	import { openCookieSettings } from '$lib/analytics';
 </script>
 
 <SeoHead title="Datenschutz | ALL IN AGI" description="Datenschutzhinweise für Website, Hackathon-Anfragen, Verträge und Events bei ALL IN AGI." path="/datenschutz" />
@@ -38,13 +39,18 @@
 	<h2>9. Foto- und Videoaufnahmen</h2>
 	<p>Aufnahme, geschützte Bereitstellung und Veröffentlichung sind getrennte Verarbeitungszwecke. Marketingveröffentlichungen erfolgen nur aufgrund einer freiwilligen, nachweisbaren Einwilligung nach Art. 6 Abs. 1 lit. a und Art. 7 DSGVO sowie § 22 KUG. Die Einwilligung kann jederzeit mit Wirkung für die Zukunft widerrufen werden. Eine Teilnahme ohne Marketingeinwilligung bleibt möglich. Weitere Informationen enthält die <a href="/teilnehmer-datenschutz">Teilnehmerinformation und Fotoeinwilligung</a>.</p>
 
-	<h2>10. Empfänger und internationale Übermittlungen</h2>
+	<h2 id="google-analytics">10. Google Analytics</h2>
+	<p>Mit Ihrer Einwilligung verwenden wir Google Analytics 4 zur Reichweitenmessung und zur Verbesserung unserer Website und des Buchungsprozesses. Dabei werden insbesondere Nutzungs-, Geräte-, Browser-, ungefähre Standort-, Referrer- und Interaktionsdaten verarbeitet. Rechtsgrundlage sind Ihre Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO und § 25 Abs. 1 TDDDG.</p>
+	<p>Anbieter ist Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Eine Verarbeitung durch Google in den USA kann nicht ausgeschlossen werden und erfolgt nach den von Google vorgesehenen Transfermechanismen. Die in Analytics gespeicherten Ereignisdaten bewahren wir für 14 Monate auf. Google Signals, Google-Ads-Verknüpfungen, Remarketing, personalisierte Werbung und die Übermittlung nutzerbereitgestellter Daten sind deaktiviert. Wir übermitteln weder Kontakt-, Adress- oder Buchungsdaten noch Inhalte freier Texte an Google Analytics.</p>
+	<p>Die Analyse-Cookies werden erst nach Ihrer Zustimmung gesetzt. Sie können Ihre Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen: <button class="privacy-button" type="button" onclick={openCookieSettings}>Cookie-Einstellungen öffnen</button>.</p>
+
+	<h2>11. Empfänger und internationale Übermittlungen</h2>
 	<p>Empfänger sind nur solche Beschäftigten und Dienstleister, die die Daten für Durchführung, Hosting, Terminierung, E-Mail oder Abrechnung benötigen, sowie Behörden bei gesetzlicher Verpflichtung. Für Auftragsverarbeiter werden Vereinbarungen nach Art. 28 DSGVO eingesetzt. Übermittlungen in Drittländer erfolgen nur bei Angemessenheitsbeschluss oder geeigneten Garantien, insbesondere Standardvertragsklauseln, und dokumentierter Risikoprüfung.</p>
 
-	<h2>11. Ihre Rechte</h2>
+	<h2>12. Ihre Rechte</h2>
 	<p>Betroffene Personen haben nach Maßgabe der DSGVO Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und Widerspruch. Einwilligungen können jederzeit für die Zukunft widerrufen werden. Außerdem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde, insbesondere bei der Berliner Beauftragten für Datenschutz und Informationsfreiheit.</p>
 
-	<h2>12. Erforderlichkeit und automatisierte Entscheidungen</h2>
+	<h2>13. Erforderlichkeit und automatisierte Entscheidungen</h2>
 	<p>Pflichtangaben im Anfrage- und Rechnungsprozess sind für Bearbeitung beziehungsweise Vertrag erforderlich; ohne sie kann die Leistung gegebenenfalls nicht angeboten werden. Eine ausschließlich automatisierte Entscheidung mit rechtlicher oder ähnlich erheblicher Wirkung findet nicht statt.</p>
 </article></div>
 
@@ -52,4 +58,5 @@
 	.document-meta { color: var(--orange) !important; font-weight: 700; }
 	.privacy-card a { color: var(--link); }
 	.privacy-card h2 { scroll-margin-top: 90px; }
+	.privacy-button { padding: 0; border: 0; background: transparent; color: var(--link); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 </style>

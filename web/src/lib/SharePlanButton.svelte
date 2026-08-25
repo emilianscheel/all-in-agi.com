@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Check, Share } from 'lucide-svelte';
+	import { trackAnalyticsEvent } from '$lib/analytics';
 	let { getUrl, label = 'Plan teilen' }: { getUrl: () => Promise<string>; label?: string } = $props();
 	let state = $state<'idle' | 'copied' | 'error'>('idle');
 	let resetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -12,6 +13,7 @@
 				const textarea = document.createElement('textarea'); textarea.value = url; textarea.style.position = 'fixed'; textarea.style.opacity = '0'; document.body.append(textarea); textarea.select(); document.execCommand('copy'); textarea.remove();
 			}
 			state = 'copied';
+			trackAnalyticsEvent('booking_plan_shared');
 		} catch { state = 'error'; }
 		if (resetTimer) clearTimeout(resetTimer);
 		resetTimer = setTimeout(() => (state = 'idle'), 2500);
