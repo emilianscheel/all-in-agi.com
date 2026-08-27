@@ -9,4 +9,11 @@ describe('offer PDF', () => {
 		expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
 		expect(bytes.length).toBeGreaterThan(10_000);
 	});
+
+	test('renders the selected client-logo behavior', async () => {
+		const config = defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z'));
+		const withHitachi = await createOfferPdf(config);
+		const withoutClientLogo = await createOfferPdf({ ...config, clientLogo: 'none' });
+		expect(withHitachi.length).toBeGreaterThan(withoutClientLogo.length);
+	});
 });

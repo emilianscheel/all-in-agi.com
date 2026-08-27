@@ -22,6 +22,13 @@ export const OFFER_SERVICE_IDS = [
 
 export type OfferServiceId = typeof OFFER_SERVICE_IDS[number];
 
+export const OFFER_CLIENT_LOGOS = [
+	{ id: 'hitachi', label: 'Hitachi Rail' },
+	{ id: 'none', label: 'Kein Kundenlogo' }
+] as const;
+
+export type OfferClientLogoId = typeof OFFER_CLIENT_LOGOS[number]['id'];
+
 export interface OfferService {
 	id: OfferServiceId;
 	label: string;
@@ -62,6 +69,7 @@ export interface OfferConfiguration {
 	vatRate: number;
 	notes: string;
 	services: OfferServiceId[];
+	clientLogo: OfferClientLogoId;
 }
 
 function isoDate(date: Date) {
@@ -77,10 +85,11 @@ export function defaultOfferConfiguration(now = new Date()): OfferConfiguration 
 		offerTitle: 'Angebot: Internationaler Hackathon',
 		issueDate: isoDate(now),
 		validUntil: '',
-		netTotal: 15_000,
+		netTotal: 14_500,
 		vatRate: 19,
 		notes: '',
-		services: OFFER_SERVICE_IDS.slice()
+		services: OFFER_SERVICE_IDS.slice(),
+		clientLogo: 'hitachi'
 	};
 }
 
@@ -103,5 +112,18 @@ export function isOfferConfiguration(value: unknown): value is OfferConfiguratio
 		&& (config.netTotal === null || (typeof config.netTotal === 'number' && Number.isFinite(config.netTotal) && config.netTotal >= 0 && config.netTotal <= 10_000_000))
 		&& typeof config.vatRate === 'number' && Number.isFinite(config.vatRate) && config.vatRate >= 0 && config.vatRate <= 100
 		&& Array.isArray(config.services)
-		&& config.services.every((service) => OFFER_SERVICE_IDS.includes(service as OfferServiceId) || service === 'catering');
+		&& config.services.every((service) => OFFER_SERVICE_IDS.includes(service as OfferServiceId) || service === 'catering')
+		&& OFFER_CLIENT_LOGOS.some((logo) => logo.id === config.clientLogo);
+}
+
+export function normalizeOfferConfiguration(value: unknown): OfferConfiguration | null {
+	if (!value || typeof value !== 'object') return null;
+	const config = value as Record<string, unknown>;
+	if (config.clientLogo === undefined) return isLegacyOfferConfiguration(config) ? { ...config, clientLogo: 'hitachi' } as OfferConfiguration : null;
+	return isOfferConfiguration(config) ? config : null;
+}
+
+function isLegacyOfferConfiguration(config: Record<string, unknown>) {
+	const { clientLogo: _clientLogo, ...legacyConfig } = config;
+	return isOfferConfiguration({ ...legacyConfig, clientLogo: 'hitachi' });
 }

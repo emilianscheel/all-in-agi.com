@@ -38,6 +38,7 @@ import usersSvg from "lucide-static/icons/users.svg?raw";
 import videoSvg from "lucide-static/icons/video.svg?raw";
 import voteSvg from "lucide-static/icons/vote.svg?raw";
 import { type Color, type PDFDocument, type PDFFont, type PDFPage } from "pdf-lib";
+import hitachiRailLogoAsset from "../../static/brand/hitachi-rail-logo.png?inline";
 
 function formatMoney(value: number) {
     return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
@@ -79,6 +80,34 @@ const LUCIDE_SVGS = {
 } as const;
 
 type LucideIconName = keyof typeof LUCIDE_SVGS;
+let hitachiRailLogoBytes: Promise<Uint8Array> | undefined;
+
+function decodeInlinePng(asset: string) {
+	const comma = asset.indexOf(",");
+	if (comma === -1) throw new Error("Invalid bundled client logo.");
+	const encoded = asset.slice(comma + 1);
+    if (typeof Buffer !== "undefined") return new Uint8Array(Buffer.from(encoded, "base64"));
+    const binary = atob(encoded);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function loadHitachiRailLogo() {
+	if (hitachiRailLogoAsset.startsWith("data:")) return decodeInlinePng(hitachiRailLogoAsset);
+	if (typeof Bun !== "undefined") return new Uint8Array(await Bun.file(hitachiRailLogoAsset).arrayBuffer());
+	const response = await fetch(hitachiRailLogoAsset);
+	if (!response.ok) throw new Error("Client logo could not be loaded.");
+	return new Uint8Array(await response.arrayBuffer());
+}
+
+async function drawClientLogo(config: OfferConfiguration, pdf: PDFDocument, page: PDFPage) {
+    if (config.clientLogo !== "hitachi") return;
+	hitachiRailLogoBytes ??= loadHitachiRailLogo();
+	const logo = await pdf.embedPng(await hitachiRailLogoBytes);
+	const width = 84.24;
+    const height = width * (logo.height / logo.width);
+    page.drawImage(logo, { x: RIGHT - width, y: 792 - height / 2, width, height });
+}
+
 const CLIENT_REQUIREMENTS = [
     { label: "Termin und gewünschtes Format", icon: "calendar" },
     { label: "Teilnehmendenzahl und -liste", icon: "users" },
@@ -204,6 +233,7 @@ export async function createOfferPdf(config: OfferConfiguration) {
     const netTotal = config.netTotal;
     const hasPrice = netTotal !== null && netTotal > 0;
     drawBrandChrome(context, `Angebot vom ${formatDate(config.issueDate)}`);
+    await drawClientLogo(config, pdf, page);
 
     page.drawText(safeText(config.offerTitle || "Angebot"), {
         x: LEFT,
@@ -236,15 +266,15 @@ export async function createOfferPdf(config: OfferConfiguration) {
     if (hasPrice)
         drawRight(
             page,
-            `${formatMoney(amount)} brutto · ${config.vatRate}% USt.`,
+			`zzgl. ${formatMoney(amount - netTotal)} USt. (${config.vatRate}%) · ${formatMoney(amount)} brutto zahlbar`,
             RIGHT - 18,
             644,
             regular,
-            9.4,
+			8.6,
             muted,
         );
 
-    let top = 604;
+    let top = 592;
     if (config.notes.trim()) {
         drawWrapped(page, config.notes.trim(), LEFT, top, RIGHT - LEFT, regular, 9, muted, 2, 12);
         top -= 30;

@@ -1,4 +1,4 @@
-import { isOfferConfiguration, type OfferConfiguration } from '$lib/offer';
+import { normalizeOfferConfiguration, type OfferConfiguration } from '$lib/offer';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -25,8 +25,9 @@ async function encryptionKey(secretOverride?: string) {
 }
 
 export async function encryptOffer(config: OfferConfiguration, secretOverride?: string) {
-	if (!isOfferConfiguration(config)) throw new Error('Ungültige Angebotsdaten.');
-	const payload = encoder.encode(JSON.stringify(config));
+	const normalized = normalizeOfferConfiguration(config);
+	if (!normalized) throw new Error('Ungültige Angebotsdaten.');
+	const payload = encoder.encode(JSON.stringify(normalized));
 	if (payload.byteLength > MAX_PAYLOAD_BYTES) throw new Error('Das Angebot ist zu umfangreich.');
 	const iv = crypto.getRandomValues(new Uint8Array(12));
 	const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await encryptionKey(secretOverride), payload));
@@ -38,8 +39,8 @@ export async function decryptOffer(token: string, secretOverride?: string) {
 	if (!ivPart || !cipherPart || extra || token.length > 12_000) throw new Error('Ungültiger Angebots-Link.');
 	try {
 		const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64Url(ivPart) }, await encryptionKey(secretOverride), fromBase64Url(cipherPart));
-		const config = JSON.parse(decoder.decode(plaintext));
-		if (!isOfferConfiguration(config)) throw new Error('Ungültige Angebotsdaten.');
+		const config = normalizeOfferConfiguration(JSON.parse(decoder.decode(plaintext)));
+		if (!config) throw new Error('Ungültige Angebotsdaten.');
 		return config;
 	} catch {
 		throw new Error('Ungültiger Angebots-Link.');

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
-	import { Building2, Check, Download, FileText, Mail, ReceiptEuro } from 'lucide-svelte';
-	import { OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
+	import { Building2, Check, Download, FileText, ReceiptEuro } from 'lucide-svelte';
+	import { OFFER_CLIENT_LOGOS, OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
 	import { createOfferPdf } from '$lib/offer-artifacts';
 
 	let { initialConfig }: { initialConfig: OfferConfiguration } = $props();
@@ -109,8 +109,9 @@
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
 				<h2 id="recipient-heading"><Building2 size={16} />Empfänger</h2>
 				<label>Unternehmen<input bind:value={config.companyName} maxlength="200" /></label>
+				<label>Kundenlogo<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{logo.label}</option>{/each}</select></label>
 				<label>Ansprechperson<input bind:value={config.contactName} maxlength="200" /></label>
-				<label><Mail size={14} />E-Mail<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
+				<label>E-Mail<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
 			</section>
 
 			<section class="offer-form-section" aria-labelledby="offer-heading">
@@ -123,13 +124,13 @@
 			<section class="offer-form-section" aria-labelledby="price-heading">
 				<h2 id="price-heading"><ReceiptEuro size={16} />Preis</h2>
 				<div class="offer-price-grid"><label>Netto<input type="number" min="0" step="0.01" bind:value={config.netTotal} /></label><label>USt. %<input type="number" min="0" max="100" step="0.1" bind:value={config.vatRate} /></label></div>
-				<p class="gross-total">Brutto <strong>{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(gross)}</strong></p>
+				<p class="gross-total">Zahlbetrag (brutto) <strong>{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(gross)}</strong></p>
 			</section>
 
 			<section class="offer-form-section offer-services" aria-labelledby="services-heading">
 				<h2 id="services-heading"><Check size={16} />Leistungen</h2>
 				{#each OFFER_SERVICES as service}
-					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><b>{service.label}</b>{#if service.description}<small>{service.description}</small>{/if}</span></label>
+					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><span class="offer-service-label">{service.label}</span>{#if service.description}<small>{service.description}</small>{/if}</span></label>
 				{/each}
 			</section>
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
@@ -153,8 +154,8 @@
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
 	.offer-form-section h2 :global(svg) { color: #ff4f18; }
 	.offer-form-section > label, .offer-price-grid > label { display: grid; gap: 6px; margin-top: 11px; color: #4e4e53; font-size: 11px; font-weight: 650; }
-	.offer-form-section input, .offer-form-section textarea { width: 100%; border: 1px solid #d3d3d8; border-radius: 9px; padding: 9px 10px; background: #fff; color: #1d1d1f; font-size: 13px; font-weight: 400; outline: none; }
-	.offer-form-section input:focus, .offer-form-section textarea:focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
+	.offer-form-section input, .offer-form-section textarea, .offer-form-section select { width: 100%; border: 1px solid #d3d3d8; border-radius: 9px; padding: 9px 10px; background: #fff; color: #1d1d1f; font-size: 13px; font-weight: 400; outline: none; }
+	.offer-form-section input:focus, .offer-form-section textarea:focus, .offer-form-section select:focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
 	.offer-form-section textarea { resize: vertical; }
 	.offer-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 	.gross-total { display: flex; justify-content: space-between; margin: 13px 0 0; padding: 10px 11px; border-radius: 9px; background: #f5f5f7; color: #606066; font-size: 12px; }
@@ -165,7 +166,7 @@
 	.offer-service-check { width: 20px; height: 20px; display: grid; place-items: center; border: 2px solid #ff4f18; border-radius: 6px; color: transparent; transition: background-color .15s ease, color .15s ease; }
 	.offer-service.checked .offer-service-check { background: #ff4f18; color: #fff; }
 	.offer-service:has(input:focus-visible) .offer-service-check { outline: 3px solid rgba(255,79,24,.22); outline-offset: 2px; }
-	.offer-service b { display: block; color: #252529; font-size: 12px; line-height: 1.25; }
+	.offer-service-label { display: block; color: #252529; font-size: 12px; font-weight: 400; line-height: 1.25; }
 	.offer-service small { display: block; margin-top: 3px; color: #74747a; font-size: 10px; line-height: 1.35; }
 	.offer-url-error { margin: 16px 0 0; color: #9a2c0d; font-size: 12px; line-height: 1.4; }
 	.offer-download-wrap { position: absolute; right: 0; bottom: 0; left: 0; padding: 16px 24px 22px; border-top: 1px solid #dedee3; background: rgba(245,245,247,.94); backdrop-filter: blur(12px); }
