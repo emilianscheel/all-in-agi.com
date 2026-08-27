@@ -12,6 +12,7 @@
 	import '../app.css';
 	let { children, data } = $props();
 	let presentationRoute = $derived(page.route.id === '/timer' || page.route.id === '/clock' || page.route.id === '/[id]/timer');
+	let offerRoute = $derived(page.route.id === '/offer' || page.route.id === '/offer/[token]');
 	let adminNavigation = $derived(page.route.id === '/dashboard' || (page.route.id === '/[id]' && data.admin.authorized));
 	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.url.pathname));
 	let currentGtmSlug = $derived(gtmArticleRoute ? page.url.pathname.slice(1) : undefined);
@@ -42,7 +43,7 @@
 	<meta name="robots" content={robotsDirective(page.url.pathname)} />
 </svelte:head>
 
-{#if !presentationRoute}
+{#if !presentationRoute && !offerRoute}
 	<a class="skip-link" href="#main">Zum Inhalt springen</a>
 	<header class:admin-header={adminNavigation} class="site-header">
 	{#if adminNavigation}
@@ -87,9 +88,9 @@
 	</header>
 {/if}
 
-<main id="main" class:presentation-main={presentationRoute}>{@render children()}</main>
+<main id="main" class:presentation-main={presentationRoute} class:offer-main={offerRoute}>{@render children()}</main>
 
-{#if !presentationRoute}
+{#if !presentationRoute && !offerRoute}
 	{#if page.url.pathname === '/' || gtmArticleRoute}<GtmFooter currentSlug={currentGtmSlug} />{/if}
 	<footer class="site-footer">
 	<div class="footer-inner">
@@ -103,4 +104,4 @@
 	</footer>
 {/if}
 
-{#if !presentationRoute && !adminNavigation}<CookieConsent />{/if}
+{#if !presentationRoute && !offerRoute && !adminNavigation}<CookieConsent />{/if}

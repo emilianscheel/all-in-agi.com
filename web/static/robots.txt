@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /offer
 
 Sitemap: https://all-in-agi.com/sitemap.xml

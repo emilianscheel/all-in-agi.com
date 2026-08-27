@@ -19,6 +19,8 @@ describe('SEO indexing policy', () => {
 		'/ABC123XYZ/timer',
 		'/buchen/shared-plan-token',
 		'/buchen/erfolg',
+		'/offer',
+		'/offer/encrypted-token',
 		'/verwalten',
 		'/timer',
 		'/clock',
