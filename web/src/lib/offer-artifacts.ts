@@ -72,10 +72,14 @@ function orangeSvg(name: LucideIconName) {
 
 async function renderLucideVectorPdf(name: LucideIconName) {
 	// These browser-compatible libraries are loaded only when an offer PDF is rendered.
-	const [{ default: PDFKitDocument }, { default: SVGtoPDF }] = await Promise.all([
+	const [{ default: PDFKitDocument, registerStdFonts }, { default: SVGtoPDF }, { default: Helvetica }] = await Promise.all([
 		import('pdfkit'),
-		import('svg-to-pdfkit')
+		import('svg-to-pdfkit'),
+		import('pdfkit/standard-fonts/Helvetica')
 	]);
+	// PDFKit's browser build does not preload its standard fonts. svg-to-pdfkit
+	// selects Helvetica internally even for icon-only SVGs.
+	registerStdFonts?.(Helvetica);
 	return new Promise<Uint8Array>((resolve, reject) => {
 		const document = new PDFKitDocument({ size: [24, 24], margin: 0, autoFirstPage: true });
 		const chunks: Uint8Array[] = [];

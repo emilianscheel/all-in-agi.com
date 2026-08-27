@@ -40,6 +40,9 @@
 			previewUrl = url;
 			if (lastPreviewUrl) URL.revokeObjectURL(lastPreviewUrl);
 			lastPreviewUrl = url;
+			urlError = '';
+		} catch (error) {
+			urlError = error instanceof Error ? `PDF konnte nicht erstellt werden: ${error.message}` : 'PDF konnte nicht erstellt werden.';
 		} finally {
 			generating = false;
 		}

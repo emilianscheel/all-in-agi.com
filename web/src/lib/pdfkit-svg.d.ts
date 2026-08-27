@@ -10,6 +10,13 @@ declare module 'pdfkit' {
 		on(event: string, listener: (...args: any[]) => void): this;
 		end(): void;
 	}
+
+	export function registerStdFonts(...fonts: unknown[]): void;
+}
+
+declare module 'pdfkit/standard-fonts/Helvetica' {
+	const Helvetica: unknown;
+	export default Helvetica;
 }
 
 declare module 'svg-to-pdfkit' {
