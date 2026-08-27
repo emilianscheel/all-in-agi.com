@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { replaceState } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
-	import { Award, BadgeCheck, Building2, CalendarClock, CalendarDays, Check, Clock3, Code2, Download, FileText, Lightbulb, Mail, MapPin, MessageSquareMore, MonitorPlay, PanelsTopLeft, Presentation, ReceiptEuro, Sparkles, Trophy, Users, Video, Vote } from 'lucide-svelte';
+	import { Building2, Check, Download, FileText, Mail, ReceiptEuro } from 'lucide-svelte';
 	import { OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
 	import { createOfferPdf } from '$lib/offer-artifacts';
 
@@ -20,14 +20,6 @@
 	let lastPreviewUrl = '';
 	let serialisedConfig = $derived(JSON.stringify(config));
 	let gross = $derived(grossTotal(config));
-	const serviceIcons = {
-		facilitators: Users, 'challenge-design': Lightbulb, 'demo-follow-up': Presentation, 'on-site': MapPin,
-		'date-range': CalendarDays, duration: Clock3, 'project-work': Code2, 'pitch-preparation': MonitorPlay,
-		participants: Users, 'remote-teams': Video, availability: BadgeCheck, 'breakout-sessions': MessageSquareMore,
-		introduction: Presentation, matchmaking: Sparkles, whiteboard: PanelsTopLeft, timetable: CalendarClock,
-		'pitch-voting': Vote, 'winner-posters': Award, 'winner-trophies': Trophy
-	};
-
 	function pdfBlob(bytes: Uint8Array) {
 		const copy = new Uint8Array(bytes);
 		return new Blob([copy.buffer as ArrayBuffer], { type: 'application/pdf' });
@@ -57,7 +49,7 @@
 		tokenAbort?.abort();
 		tokenAbort = new AbortController();
 		try {
-			const response = await fetch('/api/offer-token', {
+			const response = await fetch('/offer/token', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: serialisedConfig,
@@ -134,8 +126,7 @@
 			<section class="offer-form-section offer-services" aria-labelledby="services-heading">
 				<h2 id="services-heading"><Check size={16} />Leistungen</h2>
 				{#each OFFER_SERVICES as service}
-					{@const FeatureIcon = serviceIcons[service.id]}
-					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-icon"><FeatureIcon size={15} strokeWidth={1.8} /></span><span><b>{service.label}</b>{#if service.description}<small>{service.description}</small>{/if}</span></label>
+					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><b>{service.label}</b>{#if service.description}<small>{service.description}</small>{/if}</span></label>
 				{/each}
 			</section>
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
@@ -168,8 +159,9 @@
 	.offer-services { padding-bottom: 7px; }
 	.offer-service { position: relative; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 7px; padding: 6px 0; cursor: pointer; }
 	.offer-service input { position: absolute; opacity: 0; pointer-events: none; }
-	.offer-service-icon { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #c9c9cf; border-radius: 7px; color: #75757b; }
-	.offer-service.checked .offer-service-icon { border-color: #ff4f18; background: #fff0eb; color: #e84210; }
+	.offer-service-check { width: 20px; height: 20px; display: grid; place-items: center; border: 2px solid #ff4f18; border-radius: 6px; color: transparent; transition: background-color .15s ease, color .15s ease; }
+	.offer-service.checked .offer-service-check { background: #ff4f18; color: #fff; }
+	.offer-service:has(input:focus-visible) .offer-service-check { outline: 3px solid rgba(255,79,24,.22); outline-offset: 2px; }
 	.offer-service b { display: block; color: #252529; font-size: 12px; line-height: 1.25; }
 	.offer-service small { display: block; margin-top: 3px; color: #74747a; font-size: 10px; line-height: 1.35; }
 	.offer-url-error { margin: 16px 0 0; color: #9a2c0d; font-size: 12px; line-height: 1.4; }
