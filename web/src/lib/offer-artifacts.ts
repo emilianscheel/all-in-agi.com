@@ -10,7 +10,24 @@ import {
 	drawWrapped,
 	safeText
 } from '$lib/booking-artifacts';
-import { concatTransformationMatrix, popGraphicsState, pushGraphicsState, type Color, type PDFFont, type PDFPage } from 'pdf-lib';
+import awardSvg from 'lucide-static/icons/award.svg?raw';
+import badgeCheckSvg from 'lucide-static/icons/badge-check.svg?raw';
+import calendarClockSvg from 'lucide-static/icons/calendar-clock.svg?raw';
+import calendarDaysSvg from 'lucide-static/icons/calendar-days.svg?raw';
+import clockSvg from 'lucide-static/icons/clock-3.svg?raw';
+import codeSvg from 'lucide-static/icons/code-2.svg?raw';
+import lightbulbSvg from 'lucide-static/icons/lightbulb.svg?raw';
+import mapPinSvg from 'lucide-static/icons/map-pin.svg?raw';
+import messageSvg from 'lucide-static/icons/message-square-more.svg?raw';
+import monitorSvg from 'lucide-static/icons/monitor-play.svg?raw';
+import panelsSvg from 'lucide-static/icons/panels-top-left.svg?raw';
+import presentationSvg from 'lucide-static/icons/presentation.svg?raw';
+import sparklesSvg from 'lucide-static/icons/sparkles.svg?raw';
+import trophySvg from 'lucide-static/icons/trophy.svg?raw';
+import usersSvg from 'lucide-static/icons/users.svg?raw';
+import videoSvg from 'lucide-static/icons/video.svg?raw';
+import voteSvg from 'lucide-static/icons/vote.svg?raw';
+import { type Color, type PDFDocument, type PDFFont, type PDFPage } from 'pdf-lib';
 
 const CLIENT_REQUIREMENTS = [
 	'Termin und gewünschtes Format',
@@ -38,46 +55,53 @@ function formatDate(value: string) {
 	return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'Europe/Berlin' }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-const LUCIDE_PATHS = {
-	users: ['M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2', 'M16 3.128a4 4 0 0 1 0 7.744', 'M22 21v-2a4 4 0 0 0-3-3.87'],
-	lightbulb: ['M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5', 'M9 18h6', 'M10 22h4'],
-	presentation: ['M2 3h20', 'M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3', 'm7 21 5-5 5 5'],
-	mapPin: ['M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0'],
-	calendar: ['M8 2v4', 'M16 2v4', 'M3 10h18', 'M8 14h.01', 'M12 14h.01', 'M16 14h.01', 'M8 18h.01', 'M12 18h.01', 'M16 18h.01'],
-	clock: ['M12 6v6h4'],
-	code: ['m16 18 6-6-6-6', 'm8 6-6 6 6 6'],
-	monitor: ['M15.033 9.44a.647.647 0 0 1 0 1.12l-4.065 2.352a.645.645 0 0 1-.968-.56V7.648a.645.645 0 0 1 .967-.56z', 'M12 17v4', 'M8 21h8'],
-	video: ['m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5'],
-	badge: ['M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z', 'm9 12 2 2 4-4'],
-	message: ['M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z', 'M12 11h.01', 'M16 11h.01', 'M8 11h.01'],
-	sparkles: ['M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z', 'M20 2v4', 'M22 4h-4'],
-	panels: ['M3 9h18', 'M9 21V9'],
-	calendarClock: ['M16 14v2.2l1.6 1', 'M16 2v4', 'M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5', 'M3 10h5', 'M8 2v4'],
-	vote: ['m9 12 2 2 4-4', 'M5 7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v12H5V7Z', 'M22 19H2'],
-	award: ['m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526'],
-	trophy: ['M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978', 'M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978', 'M18 9h1.5a1 1 0 0 0 0-5H18', 'M4 22h16', 'M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z', 'M6 9H4.5a1 1 0 0 1 0-5H6']
+const LUCIDE_SVGS = {
+	users: usersSvg, lightbulb: lightbulbSvg, presentation: presentationSvg, mapPin: mapPinSvg,
+	calendar: calendarDaysSvg, clock: clockSvg, code: codeSvg, monitor: monitorSvg, video: videoSvg,
+	badge: badgeCheckSvg, message: messageSvg, sparkles: sparklesSvg, panels: panelsSvg,
+	calendarClock: calendarClockSvg, vote: voteSvg, award: awardSvg, trophy: trophySvg
 } as const;
 
-function drawFeatureIcon(page: PDFPage, id: OfferServiceId | 'requirement' | 'next-step', x: number, y: number, color: Color) {
-	const iconName = ({ facilitators: 'users', participants: 'users', 'challenge-design': 'lightbulb', 'demo-follow-up': 'presentation', 'on-site': 'mapPin', 'date-range': 'calendar', duration: 'clock', 'project-work': 'code', 'pitch-preparation': 'monitor', 'remote-teams': 'video', availability: 'badge', 'breakout-sessions': 'message', introduction: 'presentation', matchmaking: 'sparkles', whiteboard: 'panels', timetable: 'calendarClock', 'pitch-voting': 'vote', 'winner-posters': 'award', 'winner-trophies': 'trophy', requirement: 'badge', 'next-step': 'message' } as const)[id];
-	const scale = .53;
-	page.pushOperators(pushGraphicsState(), concatTransformationMatrix(scale, 0, 0, -scale, x - 12 * scale, y + 12 * scale));
-	for (const path of LUCIDE_PATHS[iconName]) page.drawSvgPath(path, { x: 0, y: 0, borderColor: color, borderWidth: 1.85 });
-	// Some Lucide icons include SVG circle/rect nodes in addition to paths. Keep
-	// those primitives as vectors too, rather than substituting a generic mark.
-	if (iconName === 'users') page.drawCircle({ x: 9, y: 7, size: 4, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'mapPin') page.drawCircle({ x: 12, y: 10, size: 3, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'calendar') page.drawRectangle({ x: 3, y: 4, width: 18, height: 18, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'clock') page.drawCircle({ x: 12, y: 12, size: 10, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'monitor') page.drawRectangle({ x: 2, y: 3, width: 20, height: 14, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'video') page.drawRectangle({ x: 2, y: 6, width: 14, height: 12, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'panels') page.drawRectangle({ x: 3, y: 3, width: 18, height: 18, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'calendarClock') page.drawCircle({ x: 16, y: 16, size: 6, borderColor: color, borderWidth: 1.85 });
-	if (iconName === 'award') page.drawCircle({ x: 12, y: 8, size: 6, borderColor: color, borderWidth: 1.85 });
-	page.pushOperators(popGraphicsState());
+type LucideIconName = keyof typeof LUCIDE_SVGS;
+const lucideIconPdfs = new Map<LucideIconName, Promise<Uint8Array>>();
+const iconForService = ({ facilitators: 'users', participants: 'users', 'challenge-design': 'lightbulb', 'demo-follow-up': 'presentation', 'on-site': 'mapPin', 'date-range': 'calendar', duration: 'clock', 'project-work': 'code', 'pitch-preparation': 'monitor', 'remote-teams': 'video', availability: 'badge', 'breakout-sessions': 'message', introduction: 'presentation', matchmaking: 'sparkles', whiteboard: 'panels', timetable: 'calendarClock', 'pitch-voting': 'vote', 'winner-posters': 'award', 'winner-trophies': 'trophy', requirement: 'badge', 'next-step': 'message' } as const) satisfies Record<OfferServiceId | 'requirement' | 'next-step', LucideIconName>;
+
+function orangeSvg(name: LucideIconName) {
+	return LUCIDE_SVGS[name].replace('stroke="currentColor"', 'stroke="#ff4f18"');
 }
 
-function drawListItem(
+async function renderLucideVectorPdf(name: LucideIconName) {
+	// These browser-compatible libraries are loaded only when an offer PDF is rendered.
+	const [{ default: PDFKitDocument }, { default: SVGtoPDF }] = await Promise.all([
+		import('pdfkit'),
+		import('svg-to-pdfkit')
+	]);
+	return new Promise<Uint8Array>((resolve, reject) => {
+		const document = new PDFKitDocument({ size: [24, 24], margin: 0, autoFirstPage: true });
+		const chunks: Uint8Array[] = [];
+		document.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+		document.on('error', reject);
+		document.on('end', () => {
+			const length = chunks.reduce((total, chunk) => total + chunk.length, 0);
+			const bytes = new Uint8Array(length);
+			let offset = 0;
+			for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+			resolve(bytes);
+		});
+		SVGtoPDF(document, orangeSvg(name), 0, 0, { width: 24, height: 24, assumePt: true });
+		document.end();
+	});
+}
+
+async function drawFeatureIcon(pdf: PDFDocument, page: PDFPage, id: OfferServiceId | 'requirement' | 'next-step', x: number, y: number) {
+	const name = iconForService[id];
+	const bytes = lucideIconPdfs.get(name) ?? (lucideIconPdfs.set(name, renderLucideVectorPdf(name)), lucideIconPdfs.get(name)!);
+	const [icon] = await pdf.embedPdf(await bytes);
+	page.drawPage(icon, { x: x - 6, y: y - 6, width: 12, height: 12 });
+}
+
+async function drawListItem(
+	pdf: PDFDocument,
 	page: PDFPage,
 	label: string,
 	id: OfferServiceId | 'requirement' | 'next-step',
@@ -85,19 +109,18 @@ function drawListItem(
 	y: number,
 	width: number,
 	font: PDFFont,
-	color: Color,
-	accent: Color
+	color: Color
 ) {
 	// `drawText` uses a baseline; raise the icon to the visual centre of a
 	// single-line label instead of leaving its centre on that baseline.
-	drawFeatureIcon(page, id, x + 7, y + 7, accent);
+	await drawFeatureIcon(pdf, page, id, x + 7, y + 7);
 	drawWrapped(page, label, x + 20, y + 4, width - 22, font, 7.4, color, 2, 8.6);
 }
 
 export async function createOfferPdf(config: OfferConfiguration) {
 	const context = await createBrandPdf();
 	const { pdf, page, regular, bold, brandFont, colors } = context;
-	const { orange, ink, muted, line, surface, white } = colors;
+	const { ink, muted, line, surface } = colors;
 	const services = selectedOfferServices(config);
 	const amount = grossTotal(config);
 	const netTotal = config.netTotal;
@@ -128,16 +151,16 @@ export async function createOfferPdf(config: OfferConfiguration) {
 		const y = top - row * 23;
 		const leftService = conciseServices[row];
 		const rightService = conciseServices[row + rows];
-		if (leftService) drawListItem(page, leftService.label, leftService.id, LEFT, y, columnWidth, regular, ink, orange);
-		if (rightService) drawListItem(page, rightService.label, rightService.id, LEFT + columnWidth + 18, y, columnWidth, regular, ink, orange);
+		if (leftService) await drawListItem(pdf, page, leftService.label, leftService.id, LEFT, y, columnWidth, regular, ink);
+		if (rightService) await drawListItem(pdf, page, rightService.label, rightService.id, LEFT + columnWidth + 18, y, columnWidth, regular, ink);
 	}
 	top -= rows * 23 + 8;
 	for (let row = 0; row < Math.ceil(detailedServices.length / 2); row += 1) {
 		const y = top - row * 33;
 		const leftService = detailedServices[row];
 		const rightService = detailedServices[row + Math.ceil(detailedServices.length / 2)];
-		if (leftService) drawListItem(page, `${leftService.label}: ${leftService.description}`, leftService.id, LEFT, y, columnWidth, regular, ink, orange);
-		if (rightService) drawListItem(page, `${rightService.label}: ${rightService.description}`, rightService.id, LEFT + columnWidth + 18, y, columnWidth, regular, ink, orange);
+		if (leftService) await drawListItem(pdf, page, `${leftService.label}: ${leftService.description}`, leftService.id, LEFT, y, columnWidth, regular, ink);
+		if (rightService) await drawListItem(pdf, page, `${rightService.label}: ${rightService.description}`, rightService.id, LEFT + columnWidth + 18, y, columnWidth, regular, ink);
 	}
 	top -= Math.ceil(detailedServices.length / 2) * 33 + 8;
 
@@ -149,8 +172,8 @@ export async function createOfferPdf(config: OfferConfiguration) {
 		const y = top - row * 22;
 		const leftNeed = CLIENT_REQUIREMENTS[row];
 		const rightNeed = CLIENT_REQUIREMENTS[row + needRows];
-		if (leftNeed) drawListItem(page, leftNeed, 'requirement', LEFT, y, columnWidth, regular, ink, orange);
-		if (rightNeed) drawListItem(page, rightNeed, 'requirement', LEFT + columnWidth + 18, y, columnWidth, regular, ink, orange);
+		if (leftNeed) await drawListItem(pdf, page, leftNeed, 'requirement', LEFT, y, columnWidth, regular, ink);
+		if (rightNeed) await drawListItem(pdf, page, rightNeed, 'requirement', LEFT + columnWidth + 18, y, columnWidth, regular, ink);
 	}
 	top -= needRows * 22 + 12;
 	page.drawText('Wie es weiter geht', { x: LEFT, y: top, font: bold, size: 16, color: ink });
@@ -160,8 +183,8 @@ export async function createOfferPdf(config: OfferConfiguration) {
 		const y = top - row * 22;
 		const leftStep = NEXT_STEPS[row];
 		const rightStep = NEXT_STEPS[row + nextRows];
-		if (leftStep) drawListItem(page, leftStep, 'next-step', LEFT, y, columnWidth, regular, ink, orange);
-		if (rightStep) drawListItem(page, rightStep, 'next-step', LEFT + columnWidth + 18, y, columnWidth, regular, ink, orange);
+		if (leftStep) await drawListItem(pdf, page, leftStep, 'next-step', LEFT, y, columnWidth, regular, ink);
+		if (rightStep) await drawListItem(pdf, page, rightStep, 'next-step', LEFT + columnWidth + 18, y, columnWidth, regular, ink);
 	}
 
 	return pdf.save();

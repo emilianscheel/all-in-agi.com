@@ -38,11 +38,14 @@
 		"better-auth": "^1.6.25",
 		"bits-ui": "^2.18.1",
 		"drizzle-orm": "^0.45.2",
+		"lucide-static": "^1.34.0",
 		"lucide-svelte": "^1.0.1",
 		"maplibre-gl": "^5.24.0",
 		"motion": "^12.42.2",
 		"pdf-lib": "^1.17.1",
+		"pdfkit": "^0.20.1",
 		"postgres": "^3.4.9",
-		"qrcode": "^1.5.4"
+		"qrcode": "^1.5.4",
+		"svg-to-pdfkit": "^0.1.8"
 	}
 }
