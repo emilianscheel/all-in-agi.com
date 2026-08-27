@@ -4,12 +4,13 @@ import { defaultOfferConfiguration, grossTotal, isOfferConfiguration, selectedOf
 describe('offer configuration', () => {
 	test('prefills the Hitachi recipient and all requested services', () => {
 		const config = defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z'));
-		expect(config.companyName).toBe('Hitachi Rail – Public');
+		expect(config.companyName).toBe('Hitachi Rail');
 		expect(config.contactName).toBe('Lourdes Diaz Turó');
 		expect(config.contactEmail).toBe('lourdes.diazturo@hitachirail.com');
 		expect(config.issueDate).toBe('2026-08-27');
-		expect(config.validUntil).toBe('2026-09-26');
-		expect(selectedOfferServices(config)).toHaveLength(11);
+		expect(config.validUntil).toBe('');
+		expect(config.netTotal).toBe(15_000);
+		expect(selectedOfferServices(config)).toHaveLength(19);
 	});
 
 	test('calculates gross totals and accepts an initially blank net price', () => {

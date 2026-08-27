@@ -317,7 +317,8 @@ export function drawBrandChrome(context: BrandPdfContext, footerLeft: string) {
 	const { page, regular, brandFont, logo, colors } = context;
 	page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 10, width: PAGE_WIDTH, height: 10, color: colors.orange });
 	page.drawImage(logo, { x: LEFT, y: 778, width: 28, height: 28 });
-	page.drawText('ALL IN AGI', { x: LEFT + 38, y: 784, font: brandFont, size: 16.5, color: colors.ink });
+	// Align the wordmark's cap height with the logo centre and keep the lockup compact.
+	page.drawText('ALL IN AGI', { x: LEFT + 34, y: 786, font: brandFont, size: 16.5, color: colors.ink });
 	page.drawText(safeText(footerLeft), { x: LEFT, y: 38, font: regular, size: 8.5, color: colors.muted });
 	const footerContact = `${CONTACT_PHONE_DISPLAY}  |  ${CONTACT_EMAIL}  |  all-in-agi.com`;
 	drawRight(page, footerContact, RIGHT, 38, regular, 8.5, colors.muted);

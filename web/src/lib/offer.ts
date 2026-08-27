@@ -2,8 +2,16 @@ export const OFFER_SERVICE_IDS = [
 	'facilitators',
 	'challenge-design',
 	'demo-follow-up',
-	'catering',
 	'on-site',
+	'date-range',
+	'duration',
+	'project-work',
+	'pitch-preparation',
+	'participants',
+	'remote-teams',
+	'availability',
+	'breakout-sessions',
+	'introduction',
 	'matchmaking',
 	'whiteboard',
 	'timetable',
@@ -17,15 +25,23 @@ export type OfferServiceId = typeof OFFER_SERVICE_IDS[number];
 export interface OfferService {
 	id: OfferServiceId;
 	label: string;
-	description: string;
+	description?: string;
 }
 
 export const OFFER_SERVICES: readonly OfferService[] = [
-	{ id: 'facilitators', label: 'Zwei Facilitators', description: 'Moderation und Begleitung Ihres Hackathons.' },
-	{ id: 'challenge-design', label: 'Challenge Design', description: 'Gemeinsame Schärfung der relevanten Challenges.' },
-	{ id: 'demo-follow-up', label: 'Demo Session & Follow-up', description: 'Präsentation der Ergebnisse und nächster Schritte.' },
-	{ id: 'catering', label: 'Pizza & Cookies', description: 'Gemeinsames Catering für den Hackathontag.' },
-	{ id: 'on-site', label: 'Bei Ihnen vor Ort', description: 'Durchführung in Ihren Räumen.' },
+	{ id: 'facilitators', label: 'Zwei Facilitators' },
+	{ id: 'challenge-design', label: 'Challenge Design' },
+	{ id: 'demo-follow-up', label: 'Demo Session & Follow-up' },
+	{ id: 'on-site', label: 'Wir organisieren das Event von Berlin aus oder kommen zu Ihnen vor Ort' },
+	{ id: 'date-range', label: 'Januar oder Februar 2026' },
+	{ id: 'duration', label: '2,5 Tage' },
+	{ id: 'project-work', label: '2 Tage Projektarbeit' },
+	{ id: 'pitch-preparation', label: '0,5 Tage Vorbereitung, Pitch und Projektpitches' },
+	{ id: 'participants', label: 'Bis zu 100 teilnehmende Personen' },
+	{ id: 'remote-teams', label: 'Vollkommen online über Microsoft Teams' },
+	{ id: 'availability', label: 'Während der Wettbewerbszeit jederzeit erreichbar' },
+	{ id: 'breakout-sessions', label: 'Proaktive Unterstützung in direkten Breakout-Sessions' },
+	{ id: 'introduction', label: '30-minütige Einführungspräsentation am ersten Wettbewerbstag' },
 	{ id: 'matchmaking', label: 'Gebrandete Match-making Platform', description: 'Magischer Link, Profile und automatische, internationale Teamzusammenstellung.' },
 	{ id: 'whiteboard', label: 'Gebrandetes kollaboratives Whiteboard', description: 'Gemeinsamer Raum für Projektideen während des Hackathons.' },
 	{ id: 'timetable', label: 'Gebrandete Time Table View', description: 'Klarer Ablauf und Orientierung für alle Teilnehmenden.' },
@@ -53,17 +69,15 @@ function isoDate(date: Date) {
 }
 
 export function defaultOfferConfiguration(now = new Date()): OfferConfiguration {
-	const validUntil = new Date(now);
-	validUntil.setDate(validUntil.getDate() + 30);
 	return {
 		v: 1,
-		companyName: 'Hitachi Rail – Public',
+		companyName: 'Hitachi Rail',
 		contactName: 'Lourdes Diaz Turó',
 		contactEmail: 'lourdes.diazturo@hitachirail.com',
 		offerTitle: 'Angebot: Internationaler Hackathon',
 		issueDate: isoDate(now),
-		validUntil: isoDate(validUntil),
-		netTotal: null,
+		validUntil: '',
+		netTotal: 15_000,
 		vatRate: 19,
 		notes: '',
 		services: OFFER_SERVICE_IDS.slice()
@@ -89,5 +103,5 @@ export function isOfferConfiguration(value: unknown): value is OfferConfiguratio
 		&& (config.netTotal === null || (typeof config.netTotal === 'number' && Number.isFinite(config.netTotal) && config.netTotal >= 0 && config.netTotal <= 10_000_000))
 		&& typeof config.vatRate === 'number' && Number.isFinite(config.vatRate) && config.vatRate >= 0 && config.vatRate <= 100
 		&& Array.isArray(config.services)
-		&& config.services.every((service) => OFFER_SERVICE_IDS.includes(service as OfferServiceId));
+		&& config.services.every((service) => OFFER_SERVICE_IDS.includes(service as OfferServiceId) || service === 'catering');
 }
