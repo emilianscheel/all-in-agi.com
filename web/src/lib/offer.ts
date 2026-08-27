@@ -31,8 +31,8 @@ export interface OfferService {
 export const OFFER_SERVICES: readonly OfferService[] = [
 	{ id: 'facilitators', label: 'Zwei Facilitators' },
 	{ id: 'challenge-design', label: 'Challenge Design' },
-	{ id: 'demo-follow-up', label: 'Demo Session & Follow-up' },
-	{ id: 'on-site', label: 'Wir organisieren das Event von Berlin aus oder kommen zu Ihnen vor Ort' },
+	{ id: 'demo-follow-up', label: 'Demo Session' },
+	{ id: 'on-site', label: 'Wir begleiten das Event von Berlin aus oder bei Ihnen vor Ort' },
 	{ id: 'date-range', label: 'Januar oder Februar 2026' },
 	{ id: 'duration', label: '2,5 Tage' },
 	{ id: 'project-work', label: '2 Tage Projektarbeit' },
