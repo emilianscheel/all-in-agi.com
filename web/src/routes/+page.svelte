@@ -24,20 +24,44 @@
 
     const faqs = [
         {
-            question: "Müssen alle coden können?",
-            answer: "Nein. Engineering, Product und Fachbereiche arbeiten gemeinsam. Wir schneiden die Challenges auf verschiedene Skill Levels zu.",
+            question: "Was ist ein Agentic Engineering Hackathon?",
+            answer: "Ein moderiertes, praktisches Format vor Ort: Teams aus Engineering, Product und Fachbereichen entwickeln an einem Tag einen funktionierenden Prototyp mit aktuellen AI Coding Agents und Developer Tools.",
         },
         {
-            question: "Welche Tools nutzt ihr?",
-            answer: "Aktuelle AI Coding Agents und Dev Tools, abgestimmt auf Ihre IT- und Security-Vorgaben. Den konkreten Tool Stack legen wir im Prep Call fest.",
+            question: "Müssen alle Teilnehmenden coden können?",
+            answer: "Nein. Die Challenges werden auf unterschiedliche Skill Levels zugeschnitten; so können Engineering, Product und Fachbereiche gemeinsam bauen und lernen.",
         },
         {
-            question: "Wie bleiben Daten geschützt?",
-            answer: "Tools, Zugänge und Datenklassen werden vorab mit IT und Security geklärt. Gebaut wird nur in der vereinbarten Umgebung.",
+            question: "Für welche Teamgrößen ist der Hackathon ausgelegt?",
+            answer: "Buchbar sind Formate für bis zu 15, 30 oder 50 Personen. Bei größeren Gruppen arbeiten mehrere Build-Teams parallel und präsentieren ihre Ergebnisse gemeinsam.",
         },
         {
-            question: "Was braucht es vor Ort?",
-            answer: "Einen großen Raum, stabiles WLAN und motivierte Builder. Fehlende Präsentationstechnik bringen wir mit.",
+            question: "Wie läuft der Tag ab?",
+            answer: "Der Standard-Hackathon findet vor Ort an einem Tag statt: Kickoff mit Demo und Challenge-Setup, zwei Build Sprints, gemeinsamer Lunch und eine abschließende Demo Session.",
+        },
+        {
+            question: "Welche Tools kommen zum Einsatz?",
+            answer: "Wir arbeiten mit Ihrem vorhandenen Tool Stack oder stellen – nach Absprache – passende Coding Tools für den Tag bereit. Den konkreten Einsatz stimmen wir im Vorbereitungsgespräch ab.",
+        },
+        {
+            question: "Wie berücksichtigt ihr IT, Security und Datenschutz?",
+            answer: "Tools, Zugänge, zulässige Datenklassen und die Arbeitsumgebung werden vorab mit Ihren zuständigen Teams geklärt. Gebaut wird ausschließlich in der vereinbarten Umgebung.",
+        },
+        {
+            question: "Was muss bei uns vor Ort vorhanden sein?",
+            answer: "Ein geeigneter Raum, stabiles WLAN, Arbeitsgeräte und motivierte Builder. Einen großen Screen nutzen wir gern; falls keiner vorhanden ist, bringen wir Präsentationstechnik mit.",
+        },
+        {
+            question: "Was ist im Preis enthalten?",
+            answer: "Enthalten sind zwei Facilitators, Challenge Design, Demo Session, Follow-up, Pizza und Cookies, ein Winner Poster, Event-Fotos sowie die Anreise innerhalb Deutschlands. Die Nettopreise starten bei 4.000 € für bis zu 15 Personen.",
+        },
+        {
+            question: "Wie bereiten wir den Hackathon vor und buchen ihn?",
+            answer: "Zu jeder Buchung gehört ein 60-minütiges Vorbereitungsgespräch. Dort schärfen wir Anwendungsfälle, Team, Tool Stack und Rahmenbedingungen; anschließend wird der Termin über den Konfigurator angefragt.",
+        },
+        {
+            question: "Wir haben eine eigene Idee oder besondere Anforderungen – passt das trotzdem?",
+            answer: "Unbedingt. Der Hackathon ist unser erprobtes Standardformat, zugleich sind wir offen für Ihre Ideen, konkreten Use Cases und Anforderungen. Schreiben Sie uns oder besprechen Sie Ihr Vorhaben unverbindlich mit uns.",
         },
     ];
 
@@ -391,7 +415,7 @@
 
 <section>
     <div class="section-wrap faq-wrap">
-        <div use:reveal><h2 class="section-title">FAQ</h2></div>
+        <div use:reveal><h2 class="section-title">Häufige Fragen</h2></div>
         <Accordion.Root class="faq-list" type="multiple">
             {#each faqs as faq, index}
                 <Accordion.Item class="faq-item" value={`faq-${index}`}>
