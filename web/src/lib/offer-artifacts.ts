@@ -80,6 +80,10 @@ const LUCIDE_SVGS = {
     shield: shieldSvg,
 } as const;
 
+// These are baseline distances. The extra leading makes the visible whitespace
+// above and below a bold section heading feel even despite the glyph ascenders.
+const SECTION_TITLE_TO_CONTENT_GAP = 38;
+
 type LucideIconName = keyof typeof LUCIDE_SVGS;
 let hitachiRailLogoBytes: Promise<Uint8Array> | undefined;
 
@@ -246,12 +250,12 @@ export async function createOfferPdf(config: OfferConfiguration) {
         size: 26,
         color: ink,
     });
-    drawWrapped(page, config.companyName || "Ihr Unternehmen", LEFT, 712, 300, bold, 11.5, ink, 1);
+    drawWrapped(page, config.companyName || "Ihr Unternehmen", LEFT, 705, 300, bold, 11.5, ink, 1);
     drawWrapped(
         page,
         [config.contactName, config.contactEmail].filter(Boolean).join(" · "),
         LEFT,
-        696,
+        689,
         380,
         regular,
         8.8,
@@ -285,7 +289,7 @@ export async function createOfferPdf(config: OfferConfiguration) {
     }
 
     page.drawText("Was wir anbieten", { x: LEFT, y: top, font: bold, size: 16, color: ink });
-    top -= 26;
+    top -= SECTION_TITLE_TO_CONTENT_GAP;
     const columnWidth = (RIGHT - LEFT - 18) / 2;
     const conciseServices = services.filter((service) => !service.description);
     const detailedServices = services.filter((service) => service.description);
@@ -358,7 +362,7 @@ export async function createOfferPdf(config: OfferConfiguration) {
         size: 16,
         color: ink,
     });
-    top -= 43;
+    top -= 17 + SECTION_TITLE_TO_CONTENT_GAP;
     const needRows = Math.ceil(CLIENT_REQUIREMENTS.length / 2);
     for (let row = 0; row < needRows; row += 1) {
         const y = top - row * 22;
@@ -391,7 +395,7 @@ export async function createOfferPdf(config: OfferConfiguration) {
     }
     top -= needRows * 22 + 8;
     page.drawText("Wie es weiter geht", { x: LEFT, y: top, font: bold, size: 16, color: ink });
-    top -= 26;
+    top -= SECTION_TITLE_TO_CONTENT_GAP;
     const nextRows = Math.ceil(NEXT_STEPS.length / 2);
     for (let row = 0; row < nextRows; row += 1) {
         const y = top - row * 22;
