@@ -4,7 +4,6 @@ import QRCode from 'qrcode';
 import {
 	LineCapStyle,
 	PDFDocument,
-	StandardFonts,
 	rgb,
 	type Color,
 	type PDFFont,
@@ -12,6 +11,8 @@ import {
 	type PDFPage
 } from 'pdf-lib';
 import logoAsset from '../../static/brand/all-in-agi-logo.png?inline';
+import googleSansBoldAsset from '../../static/fonts/google-sans-bold.ttf?inline';
+import googleSansRegularAsset from '../../static/fonts/google-sans-regular.ttf?inline';
 import { formatPrice, getPrice, type BookingConfiguration } from './booking';
 import { bookingOverviewRows, type BookingOverviewRowId } from './booking-overview';
 import type { BookingResultSummary } from './booking-ics';
@@ -237,7 +238,12 @@ function longDateLabel(value: string, withTime = false) {
 	}).format(date);
 }
 
-let brandAssets: Promise<{ logo: Uint8Array; instrumentSerif: Uint8Array }> | undefined;
+let brandAssets: Promise<{
+	googleSansBold: Uint8Array;
+	googleSansRegular: Uint8Array;
+	instrumentSerif: Uint8Array;
+	logo: Uint8Array;
+}> | undefined;
 
 function decodeDataUrl(asset: string) {
 	const comma = asset.indexOf(',');
@@ -263,10 +269,22 @@ async function readBundledAsset(asset: string) {
 
 function loadBrandAssets() {
 	brandAssets ??= Promise.all([
+		readBundledAsset(googleSansRegularAsset),
+		readBundledAsset(googleSansBoldAsset),
 		readBundledAsset(logoAsset),
 		readBundledAsset(instrumentSerifAsset)
-	]).then(([logo, instrumentSerif]) => ({ logo, instrumentSerif }));
+	]).then(([googleSansRegular, googleSansBold, logo, instrumentSerif]) => ({
+		googleSansRegular,
+		googleSansBold,
+		logo,
+		instrumentSerif
+	}));
 	return brandAssets;
+}
+
+// The offer's SVG icon renderer also needs the same bundled font, without loading a PDF standard font.
+export async function loadGoogleSansRegular() {
+	return (await loadBrandAssets()).googleSansRegular;
 }
 
 export interface BrandPdfContext {
@@ -290,9 +308,11 @@ export async function createBrandPdf(): Promise<BrandPdfContext> {
 	const pdf = await PDFDocument.create();
 	pdf.registerFontkit(fontkit);
 	const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-	const regular = await pdf.embedFont(StandardFonts.Helvetica);
-	const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
 	const assets = await loadBrandAssets();
+	// Google Sans's static TrueType files render reliably when embedded whole; fontkit subsetting
+	// corrupts their character map in several PDF viewers.
+	const regular = await pdf.embedFont(assets.googleSansRegular);
+	const bold = await pdf.embedFont(assets.googleSansBold);
 	const brandFont = await pdf.embedFont(assets.instrumentSerif, { subset: true });
 	const logo = await pdf.embedPng(assets.logo);
 	return {

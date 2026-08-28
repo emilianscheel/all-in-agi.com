@@ -3,6 +3,7 @@ declare module 'pdfkit' {
 		size?: [number, number];
 		margin?: number;
 		autoFirstPage?: boolean;
+		font?: Uint8Array | ArrayBuffer;
 	}
 
 	export default class PDFKitDocument {
@@ -11,12 +12,6 @@ declare module 'pdfkit' {
 		end(): void;
 	}
 
-	export function registerStdFonts(...fonts: unknown[]): void;
-}
-
-declare module 'pdfkit/standard-fonts/Helvetica' {
-	const Helvetica: unknown;
-	export default Helvetica;
 }
 
 declare module 'svg-to-pdfkit' {

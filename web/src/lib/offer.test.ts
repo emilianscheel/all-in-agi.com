@@ -12,7 +12,11 @@ describe('offer configuration', () => {
 		expect(config.clientLogo).toBe('hitachi');
 		expect(config.validUntil).toBe('');
 		expect(config.netTotal).toBe(14_500);
-		expect(selectedOfferServices(config)).toHaveLength(19);
+		expect(selectedOfferServices(config)).toHaveLength(20);
+		expect(selectedOfferServices(config)).toContainEqual({
+			id: 'preparation',
+			label: '4 Tage Konzeption, Tool-/IT-Setup und Abstimmung – im Preis enthalten'
+		});
 	});
 
 	test('calculates gross totals and accepts an initially blank net price', () => {

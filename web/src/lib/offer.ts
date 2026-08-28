@@ -1,5 +1,6 @@
 export const OFFER_SERVICE_IDS = [
 	'facilitators',
+	'preparation',
 	'challenge-design',
 	'demo-follow-up',
 	'on-site',
@@ -37,6 +38,7 @@ export interface OfferService {
 
 export const OFFER_SERVICES: readonly OfferService[] = [
 	{ id: 'facilitators', label: 'Zwei Facilitators' },
+	{ id: 'preparation', label: '4 Tage Konzeption, Tool-/IT-Setup und Abstimmung – im Preis enthalten' },
 	{ id: 'challenge-design', label: 'Challenge Design' },
 	{ id: 'demo-follow-up', label: 'Demo Session' },
 	{ id: 'on-site', label: 'Wir begleiten das Event von Berlin aus oder bei Ihnen vor Ort' },

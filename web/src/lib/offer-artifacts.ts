@@ -13,6 +13,7 @@ import {
     drawRight,
     drawRoundedCard,
     drawWrapped,
+	loadGoogleSansRegular,
     safeText,
 } from "$lib/booking-artifacts";
 import awardSvg from "lucide-static/icons/award.svg?raw";
@@ -124,6 +125,7 @@ const NEXT_STEPS = [
 const lucideIconPdfs = new Map<LucideIconName, Promise<Uint8Array>>();
 const iconForService = {
     facilitators: "users",
+	preparation: "listChecks",
     participants: "users",
     "challenge-design": "lightbulb",
     "demo-follow-up": "presentation",
@@ -151,19 +153,21 @@ function graySvg(name: LucideIconName) {
 async function renderLucideVectorPdf(name: LucideIconName) {
     // These browser-compatible libraries are loaded only when an offer PDF is rendered.
     const [
-        { default: PDFKitDocument, registerStdFonts },
+        { default: PDFKitDocument },
         { default: SVGtoPDF },
-        { default: Helvetica },
+        googleSansRegular,
     ] = await Promise.all([
         import("pdfkit"),
         import("svg-to-pdfkit"),
-        import("pdfkit/standard-fonts/Helvetica"),
+        loadGoogleSansRegular(),
     ]);
-    // PDFKit's browser build does not preload its standard fonts. svg-to-pdfkit
-    // selects Helvetica internally even for icon-only SVGs.
-    registerStdFonts?.(Helvetica);
     return new Promise<Uint8Array>((resolve, reject) => {
-        const document = new PDFKitDocument({ size: [24, 24], margin: 0, autoFirstPage: true });
+        const document = new PDFKitDocument({
+            size: [24, 24],
+            margin: 0,
+            autoFirstPage: true,
+            font: googleSansRegular,
+        });
         const chunks: Uint8Array[] = [];
         document.on("data", (chunk: Uint8Array) => chunks.push(chunk));
         document.on("error", reject);
