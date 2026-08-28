@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { PDFDict, PDFDocument, PDFName } from 'pdf-lib';
-import { createPlanPdf } from './booking-artifacts';
+import { createBrandPdf, createPlanPdf } from './booking-artifacts';
 import type { BookingConfiguration } from './booking';
 import { createInvoicePdf } from './invoice-artifacts';
 import { createInvoiceSnapshot, type InvoiceLegalConfiguration, type InvoiceSource } from './invoice';
@@ -75,6 +75,18 @@ const invoiceSource = {
 } satisfies InvoiceSource;
 
 describe('PDF font embedding', () => {
+	test('keeps consecutive t glyphs unligated in Google Sans', async () => {
+		const { regular } = await createBrandPdf();
+		const size = 20;
+		for (const text of ['netto', 'Wettbewerb']) {
+			const individualGlyphWidths = [...text].reduce(
+				(width, character) => width + regular.widthOfTextAtSize(character, size),
+				0
+			);
+			expect(regular.widthOfTextAtSize(text, size)).toBeCloseTo(individualGlyphWidths, 6);
+		}
+	});
+
 	test('embeds Google Sans and no Helvetica in every PDF template', async () => {
 		await expectGoogleSans(await createOfferPdf(defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z'))));
 		await expectGoogleSans(await createPlanPdf(booking));

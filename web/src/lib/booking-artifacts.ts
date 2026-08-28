@@ -24,6 +24,9 @@ export const PAGE_HEIGHT = 841.89;
 export const LEFT = 48;
 export const RIGHT = PAGE_WIDTH - LEFT;
 const SITE_ORIGIN = 'https://all-in-agi.com';
+// fontkit's shaping of Google Sans can introduce an incorrect gap after consecutive
+// `t` glyphs in embedded PDFs. Keep the PDF text to its unligated, unkerned glyphs.
+const GOOGLE_SANS_PDF_FEATURES = { liga: false, clig: false, dlig: false, kern: false };
 
 export function hackathonDetailUrl(id: string) {
 	return `${SITE_ORIGIN}/${encodeURIComponent(id)}`;
@@ -311,8 +314,8 @@ export async function createBrandPdf(): Promise<BrandPdfContext> {
 	const assets = await loadBrandAssets();
 	// Google Sans's static TrueType files render reliably when embedded whole; fontkit subsetting
 	// corrupts their character map in several PDF viewers.
-	const regular = await pdf.embedFont(assets.googleSansRegular);
-	const bold = await pdf.embedFont(assets.googleSansBold);
+	const regular = await pdf.embedFont(assets.googleSansRegular, { features: GOOGLE_SANS_PDF_FEATURES });
+	const bold = await pdf.embedFont(assets.googleSansBold, { features: GOOGLE_SANS_PDF_FEATURES });
 	const brandFont = await pdf.embedFont(assets.instrumentSerif, { subset: true });
 	const logo = await pdf.embedPng(assets.logo);
 	return {
