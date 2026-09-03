@@ -676,6 +676,7 @@ img { display: block; max-width: 100%; }
 	}
 
 	.brand-mark img { filter: invert(1); }
+	.choice::before { background: linear-gradient(180deg, rgba(255,255,255,.14), transparent); opacity: .58; }
 
 	.price-card .tag,
 	.calendar-grid [data-calendar-day][data-today],
