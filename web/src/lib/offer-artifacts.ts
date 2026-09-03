@@ -6,6 +6,7 @@ import {
 } from "$lib/offer";
 import {
     LEFT,
+	PAGE_WIDTH,
     PAGE_HEIGHT,
     RIGHT,
     createBrandPdf,
@@ -41,18 +42,19 @@ import voteSvg from "lucide-static/icons/vote.svg?raw";
 import { type Color, type PDFDocument, type PDFFont, type PDFPage } from "pdf-lib";
 import hitachiRailLogoAsset from "../../static/brand/hitachi-rail-logo.png?inline";
 
-function formatMoney(value: number) {
-    return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
+function formatMoney(value: number, locale: "de-DE" | "en-US") {
+	return new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(value);
 }
 
-function formatDate(value: string) {
-    if (!value) return "Offen";
-    const [year, month, day] = value.split("-").map(Number);
-    if (!year || !month || !day) return "Offen";
-    return new Intl.DateTimeFormat("de-DE", {
-        dateStyle: "medium",
-        timeZone: "Europe/Berlin",
-    }).format(new Date(Date.UTC(year, month - 1, day)));
+function formatDate(value: string, locale: "de-DE" | "en-US") {
+	const openLabel = locale === "de-DE" ? "Offen" : "Open";
+	if (!value) return openLabel;
+	const [year, month, day] = value.split("-").map(Number);
+	if (!year || !month || !day) return openLabel;
+	return new Intl.DateTimeFormat(locale, {
+		dateStyle: "medium",
+		timeZone: "Europe/Berlin",
+	}).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
 const LUCIDE_SVGS = {
@@ -126,6 +128,63 @@ const NEXT_STEPS = [
     { label: "Zugang zu Microsoft Teams", icon: "video" },
     { label: "Gemeinsame Abstimmung von Scope, Ablauf und Voraussetzungen", icon: "listChecks" },
 ] as const satisfies readonly { label: string; icon: LucideIconName }[];
+
+const CLIENT_REQUIREMENTS_EN = [
+	{ label: "Date and preferred format", icon: "calendar" },
+	{ label: "Number of participants and participant list", icon: "users" },
+	{ label: "Challenges and relevant context", icon: "lightbulb" },
+	{ label: "IT, security, and data protection requirements", icon: "shield" },
+	{ label: "All responsible contact persons", icon: "contact" },
+] as const satisfies readonly { label: string; icon: LucideIconName }[];
+
+const NEXT_STEPS_EN = [
+	{ label: "Further requirements and ideas for the hackathon", icon: "messagePlus" },
+	{ label: "Access to all AI tools you already have", icon: "key" },
+	{ label: "Access to Microsoft Teams", icon: "video" },
+	{ label: "Joint alignment on scope, agenda, and prerequisites", icon: "listChecks" },
+] as const satisfies readonly { label: string; icon: LucideIconName }[];
+
+const OFFER_SERVICES_EN = {
+	facilitators: { label: "Two facilitators" },
+	preparation: { label: "4 days of preparation (concepting)" },
+	"challenge-design": { label: "Challenge Design" },
+	"demo-follow-up": { label: "Demo session" },
+	"on-site": { label: "We accompany the event from Berlin or on-site at your location" },
+	"date-range": { label: "January or February 2026" },
+	duration: { label: "2.5 days total, 1 day at 10 h" },
+	"project-work": { label: "2 days of project work" },
+	"pitch-preparation": { label: "0.5 day for pitch and project pitches" },
+	participants: { label: "Up to 100 participants" },
+	"remote-teams": { label: "Fully online via Microsoft Teams" },
+	availability: { label: "Reachable at all times during the competition period" },
+	"breakout-sessions": { label: "Proactive support in live breakout sessions" },
+	introduction: { label: "30-minute introductory presentation on the first competition day" },
+	matchmaking: {
+		label: "Branded matchmaking platform",
+		description: "Magic link, profiles, and automatic international team formation.",
+	},
+	whiteboard: {
+		label: "Branded collaborative whiteboard",
+		description: "Shared space for project ideas during the hackathon.",
+	},
+	timetable: {
+		label: "Branded timetable view",
+		description: "Clear agenda and orientation for all participants.",
+	},
+	"pitch-voting": {
+		label: "Branded pitch & voting system",
+		description: "Screen-recording upload, pitch preparation, and voting.",
+	},
+	"winner-posters": {
+		label: "Winning posters",
+		description: "Posters to recognize the winning teams.",
+	},
+	"winner-trophies": {
+		label: "Winning trophies",
+		description: "Trophies for the winning teams.",
+	},
+} satisfies Record<OfferServiceId, { label: string; description?: string }>;
+
 const lucideIconPdfs = new Map<LucideIconName, Promise<Uint8Array>>();
 const iconForService = {
     facilitators: "users",
@@ -232,200 +291,309 @@ async function drawListItem(
     await drawFeatureIcon(pdf, page, icon, x + 7, y + 7 - ((lineCount - 1) * lineHeight) / 2);
 }
 
+async function drawOfferPageContent({
+	pdf,
+	page,
+	config,
+	services,
+	clientRequirements,
+	nextSteps,
+	brandFont,
+	regular,
+	bold,
+	ink,
+	muted,
+	surface,
+	offerTitleFallback,
+	hasPrice,
+	priceNetText,
+	priceVatText,
+	sectionOfferHeading,
+	sectionNeedsHeading,
+	sectionNextHeading,
+}: {
+	pdf: PDFDocument;
+	page: PDFPage;
+	config: OfferConfiguration;
+	services: readonly { id: OfferServiceId; label: string; description?: string }[];
+	clientRequirements: readonly { label: string; icon: LucideIconName }[];
+	nextSteps: readonly { label: string; icon: LucideIconName }[];
+	brandFont: PDFFont;
+	regular: PDFFont;
+	bold: PDFFont;
+	ink: Color;
+	muted: Color;
+	surface: Color;
+	offerTitleFallback: string;
+	hasPrice: boolean;
+	priceNetText: string;
+	priceVatText: string;
+	sectionOfferHeading: string;
+	sectionNeedsHeading: string;
+	sectionNextHeading: string;
+}) {
+	await drawClientLogo(config, pdf, page);
+
+	page.drawText(safeText(config.offerTitle || offerTitleFallback), {
+		x: LEFT,
+		y: 737,
+		font: brandFont,
+		size: 26,
+		color: ink,
+	});
+	drawWrapped(page, config.companyName || "Ihr Unternehmen", LEFT, 705, 300, bold, 11.5, ink, 1);
+	drawWrapped(
+		page,
+		[config.contactName, config.contactEmail].filter(Boolean).join(" · "),
+		LEFT,
+		689,
+		380,
+		regular,
+		8.8,
+		muted,
+		1,
+	);
+
+	drawRoundedCard(page, LEFT, 630, RIGHT - LEFT, 38, 14, surface);
+	page.drawText(priceNetText, {
+		x: LEFT + 18,
+		y: 644,
+		font: bold,
+		size: 12.5,
+		color: ink,
+	});
+	if (hasPrice)
+		drawRight(
+			page,
+			priceVatText,
+			RIGHT - 18,
+			644,
+			regular,
+			8.6,
+			muted,
+		);
+
+	let top = 592;
+	if (config.notes.trim()) {
+		drawWrapped(page, config.notes.trim(), LEFT, top, RIGHT - LEFT, regular, 9, muted, 2, 12);
+		top -= 30;
+	}
+
+	page.drawText(sectionOfferHeading, { x: LEFT, y: top, font: bold, size: 16, color: ink });
+	top -= SECTION_TITLE_TO_CONTENT_GAP;
+	const columnWidth = (RIGHT - LEFT - 18) / 2;
+	const conciseServices = services.filter((service) => !service.description);
+	const detailedServices = services.filter(
+		(service): service is { id: OfferServiceId; label: string; description: string } => Boolean(service.description),
+	);
+	const rows = Math.max(1, Math.ceil(conciseServices.length / 2));
+	for (let row = 0; row < rows; row += 1) {
+		const y = top - row * 23;
+		const leftService = conciseServices[row];
+		const rightService = conciseServices[row + rows];
+		if (leftService)
+			await drawListItem(
+				pdf,
+				page,
+				leftService.label,
+				iconForService[leftService.id],
+				LEFT,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+		if (rightService)
+			await drawListItem(
+				pdf,
+				page,
+				rightService.label,
+				iconForService[rightService.id],
+				LEFT + columnWidth + 18,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+	}
+	top -= rows * 23 + 8;
+	for (let row = 0; row < Math.ceil(detailedServices.length / 2); row += 1) {
+		const y = top - row * 33;
+		const leftService = detailedServices[row];
+		const rightService = detailedServices[row + Math.ceil(detailedServices.length / 2)];
+		if (leftService)
+			await drawListItem(
+				pdf,
+				page,
+				`${leftService.label}: ${leftService.description}`,
+				iconForService[leftService.id],
+				LEFT,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+		if (rightService)
+			await drawListItem(
+				pdf,
+				page,
+				`${rightService.label}: ${rightService.description}`,
+				iconForService[rightService.id],
+				LEFT + columnWidth + 18,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+	}
+	top -= Math.ceil(detailedServices.length / 2) * 33 + 4;
+
+	page.drawText(sectionNeedsHeading, {
+		x: LEFT,
+		y: top - 17,
+		font: bold,
+		size: 16,
+		color: ink,
+	});
+	top -= 17 + SECTION_TITLE_TO_CONTENT_GAP;
+	const needRows = Math.ceil(clientRequirements.length / 2);
+	for (let row = 0; row < needRows; row += 1) {
+		const y = top - row * 22;
+		const leftNeed = clientRequirements[row];
+		const rightNeed = clientRequirements[row + needRows];
+		if (leftNeed)
+			await drawListItem(
+				pdf,
+				page,
+				leftNeed.label,
+				leftNeed.icon,
+				LEFT,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+		if (rightNeed)
+			await drawListItem(
+				pdf,
+				page,
+				rightNeed.label,
+				rightNeed.icon,
+				LEFT + columnWidth + 18,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+	}
+	top -= needRows * 22 + 8;
+
+	page.drawText(sectionNextHeading, { x: LEFT, y: top, font: bold, size: 16, color: ink });
+	top -= SECTION_TITLE_TO_CONTENT_GAP;
+	const nextRows = Math.ceil(nextSteps.length / 2);
+	for (let row = 0; row < nextRows; row += 1) {
+		const y = top - row * 22;
+		const leftStep = nextSteps[row];
+		const rightStep = nextSteps[row + nextRows];
+		if (leftStep)
+			await drawListItem(
+				pdf,
+				page,
+				leftStep.label,
+				leftStep.icon,
+				LEFT,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+		if (rightStep)
+			await drawListItem(
+				pdf,
+				page,
+				rightStep.label,
+				rightStep.icon,
+				LEFT + columnWidth + 18,
+				y,
+				columnWidth,
+				regular,
+				ink,
+			);
+	}
+}
+
 export async function createOfferPdf(config: OfferConfiguration) {
     const context = await createBrandPdf();
-    const { pdf, page, regular, bold, brandFont, colors } = context;
+	const { pdf, page: germanPage, regular, bold, brandFont, colors } = context;
     const { ink, muted, surface } = colors;
-    const services = selectedOfferServices(config);
-    const amount = grossTotal(config);
-    const netTotal = config.netTotal;
-    const hasPrice = netTotal !== null && netTotal > 0;
-    drawBrandChrome(context, `Angebot vom ${formatDate(config.issueDate)}`);
-    await drawClientLogo(config, pdf, page);
+	const englishPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-    page.drawText(safeText(config.offerTitle || "Angebot"), {
-        x: LEFT,
-        y: 737,
-        font: brandFont,
-        size: 26,
-        color: ink,
-    });
-    drawWrapped(page, config.companyName || "Ihr Unternehmen", LEFT, 705, 300, bold, 11.5, ink, 1);
-    drawWrapped(
-        page,
-        [config.contactName, config.contactEmail].filter(Boolean).join(" · "),
-        LEFT,
-        689,
-        380,
-        regular,
-        8.8,
-        muted,
-        1,
-    );
+	const servicesDe = selectedOfferServices(config);
+	const servicesEn = servicesDe.map((service) => ({ id: service.id, ...OFFER_SERVICES_EN[service.id] }));
 
-    drawRoundedCard(page, LEFT, 630, RIGHT - LEFT, 38, 14, surface);
-    page.drawText(hasPrice ? `${formatMoney(netTotal)} netto` : "Preis nach Vereinbarung", {
-        x: LEFT + 18,
-        y: 644,
-        font: bold,
-        size: 12.5,
-        color: ink,
-    });
-    if (hasPrice)
-        drawRight(
-            page,
-			`zzgl. ${formatMoney(amount - netTotal)} USt. (${config.vatRate}%) · ${formatMoney(amount)} brutto zahlbar`,
-            RIGHT - 18,
-            644,
-            regular,
-			8.6,
-            muted,
-        );
+	const amount = grossTotal(config);
+	const netTotal = config.netTotal;
+	const hasPrice = netTotal !== null && netTotal > 0;
+	const netTotalValue = netTotal ?? 0;
 
-    let top = 592;
-    if (config.notes.trim()) {
-        drawWrapped(page, config.notes.trim(), LEFT, top, RIGHT - LEFT, regular, 9, muted, 2, 12);
-        top -= 30;
-    }
+	// German page
+	drawBrandChrome(context, `Angebot vom ${formatDate(config.issueDate, "de-DE")}`);
+	await drawOfferPageContent({
+		pdf,
+		page: germanPage,
+		config,
+		services: servicesDe,
+		clientRequirements: CLIENT_REQUIREMENTS,
+		nextSteps: NEXT_STEPS,
+		brandFont,
+		regular,
+		bold,
+		ink,
+		muted,
+		surface,
+		offerTitleFallback: "Angebot",
+		hasPrice,
+		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "de-DE")} netto` : "Preis nach Vereinbarung",
+		priceVatText: hasPrice
+			? `zzgl. ${formatMoney(amount - netTotalValue, "de-DE")} USt. (${config.vatRate}%) · ${formatMoney(
+					amount,
+					"de-DE",
+				)} brutto zahlbar`
+			: "",
+		sectionOfferHeading: "Was wir anbieten",
+		sectionNeedsHeading: "Was wir noch von Ihnen brauchen",
+		sectionNextHeading: "Wie es weiter geht",
+	});
 
-    page.drawText("Was wir anbieten", { x: LEFT, y: top, font: bold, size: 16, color: ink });
-    top -= SECTION_TITLE_TO_CONTENT_GAP;
-    const columnWidth = (RIGHT - LEFT - 18) / 2;
-    const conciseServices = services.filter((service) => !service.description);
-    const detailedServices = services.filter((service) => service.description);
-    const rows = Math.max(1, Math.ceil(conciseServices.length / 2));
-    for (let row = 0; row < rows; row += 1) {
-        const y = top - row * 23;
-        const leftService = conciseServices[row];
-        const rightService = conciseServices[row + rows];
-        if (leftService)
-            await drawListItem(
-                pdf,
-                page,
-                leftService.label,
-                iconForService[leftService.id],
-                LEFT,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-        if (rightService)
-            await drawListItem(
-                pdf,
-                page,
-                rightService.label,
-                iconForService[rightService.id],
-                LEFT + columnWidth + 18,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-    }
-    top -= rows * 23 + 8;
-    for (let row = 0; row < Math.ceil(detailedServices.length / 2); row += 1) {
-        const y = top - row * 33;
-        const leftService = detailedServices[row];
-        const rightService = detailedServices[row + Math.ceil(detailedServices.length / 2)];
-        if (leftService)
-            await drawListItem(
-                pdf,
-                page,
-                `${leftService.label}: ${leftService.description}`,
-                iconForService[leftService.id],
-                LEFT,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-        if (rightService)
-            await drawListItem(
-                pdf,
-                page,
-                `${rightService.label}: ${rightService.description}`,
-                iconForService[rightService.id],
-                LEFT + columnWidth + 18,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-    }
-    top -= Math.ceil(detailedServices.length / 2) * 33 + 4;
+	// English page
+	const englishContext = { ...context, page: englishPage };
+	drawBrandChrome(englishContext, `Offer dated ${formatDate(config.issueDate, "en-US")}`);
+	await drawOfferPageContent({
+		pdf,
+		page: englishPage,
+		config,
+		services: servicesEn,
+		clientRequirements: CLIENT_REQUIREMENTS_EN,
+		nextSteps: NEXT_STEPS_EN,
+		brandFont,
+		regular,
+		bold,
+		ink,
+		muted,
+		surface,
+		offerTitleFallback: "Offer",
+		hasPrice,
+		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "en-US")} net` : "Price upon agreement",
+		priceVatText: hasPrice
+			? `+ VAT ${formatMoney(amount - netTotalValue, "en-US")} (${config.vatRate}%) · ${formatMoney(
+					amount,
+					"en-US",
+				)} gross payable`
+			: "",
+		sectionOfferHeading: "What we offer",
+		sectionNeedsHeading: "What we still need from you",
+		sectionNextHeading: "Next steps",
+	});
 
-    page.drawText("Was wir noch von Ihnen brauchen", {
-        x: LEFT,
-        y: top - 17,
-        font: bold,
-        size: 16,
-        color: ink,
-    });
-    top -= 17 + SECTION_TITLE_TO_CONTENT_GAP;
-    const needRows = Math.ceil(CLIENT_REQUIREMENTS.length / 2);
-    for (let row = 0; row < needRows; row += 1) {
-        const y = top - row * 22;
-        const leftNeed = CLIENT_REQUIREMENTS[row];
-        const rightNeed = CLIENT_REQUIREMENTS[row + needRows];
-        if (leftNeed)
-            await drawListItem(
-                pdf,
-                page,
-                leftNeed.label,
-                leftNeed.icon,
-                LEFT,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-        if (rightNeed)
-            await drawListItem(
-                pdf,
-                page,
-                rightNeed.label,
-                rightNeed.icon,
-                LEFT + columnWidth + 18,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-    }
-    top -= needRows * 22 + 8;
-    page.drawText("Wie es weiter geht", { x: LEFT, y: top, font: bold, size: 16, color: ink });
-    top -= SECTION_TITLE_TO_CONTENT_GAP;
-    const nextRows = Math.ceil(NEXT_STEPS.length / 2);
-    for (let row = 0; row < nextRows; row += 1) {
-        const y = top - row * 22;
-        const leftStep = NEXT_STEPS[row];
-        const rightStep = NEXT_STEPS[row + nextRows];
-        if (leftStep)
-            await drawListItem(
-                pdf,
-                page,
-                leftStep.label,
-                leftStep.icon,
-                LEFT,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-        if (rightStep)
-            await drawListItem(
-                pdf,
-                page,
-                rightStep.label,
-                rightStep.icon,
-                LEFT + columnWidth + 18,
-                y,
-                columnWidth,
-                regular,
-                ink,
-            );
-    }
-
-    return pdf.save();
+	return pdf.save();
 }
