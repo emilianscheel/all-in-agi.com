@@ -335,7 +335,10 @@
                         {#each carouselRepeats as repetition}
                             <div class:duplicate-set={repetition > 0} class="tool-carousel-set">
                                 {#each carouselTools as tool}
-                                    <img src={tool.icon} alt="" width="96" height="96" />
+                                    <div class="tool-carousel-item">
+                                        <img src={tool.icon} alt="" width="96" height="96" />
+                                        <span>{tool.label}</span>
+                                    </div>
                                 {/each}
                             </div>
                         {/each}
