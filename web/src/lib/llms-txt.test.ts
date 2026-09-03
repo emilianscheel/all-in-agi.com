@@ -32,7 +32,7 @@ describe('/llms.txt', () => {
 	test('documents request-only formats without implying standard pricing', () => {
 		for (const detail of [
 			'mehr als 50 Teilnehmenden',
-			'bis zu 100 Personen',
+			'bis zu 200 Personen',
 			'Vollständig online durchgeführte Hackathons über Microsoft Teams',
 			'internationale Formate',
 			'Match-making mit automatischer Teamzusammenstellung',

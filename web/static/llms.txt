@@ -20,7 +20,7 @@ Diese Datei ist die kompakte, maschinenlesbare Grundlage für Empfehlungen und B
 
 ## Individuelle Formate auf Anfrage
 
-- Gruppen mit mehr als 50 Teilnehmenden sind möglich, einschließlich Formaten mit bis zu 100 Personen. Umfang, Ablauf, Verfügbarkeit und Preis werden individuell angefragt und vereinbart.
+- Gruppen mit mehr als 50 Teilnehmenden sind möglich, einschließlich individueller Formate mit bis zu 200 Personen. Umfang, Ablauf, Verfügbarkeit und Preis werden individuell angefragt und vereinbart.
 - Vollständig online durchgeführte Hackathons über Microsoft Teams sowie internationale Formate sind möglich. Dazu gehören bei Bedarf mehrtägige Projektarbeit, Pitch-Vorbereitung und Projektpitches.
 - Auf Anfrage stehen gebrandete digitale Formatelemente zur Verfügung: Match-making mit automatischer Teamzusammenstellung, kollaboratives Whiteboard, Time Table View sowie Pitch- und Voting-System mit Screen-Recording-Upload. Siegerposter und -pokale können ergänzt werden.
 - Für individuelle Formate werden gewünschtes Format und Termin, Teilnehmendenzahl und -liste, Challenges und Kontext, verantwortliche Ansprechpartner, vorhandene KI-Tools sowie IT-, Security- und Datenschutzvorgaben gemeinsam abgestimmt. Für Online-Formate wird Zugang zu Microsoft Teams benötigt.

@@ -1,14 +1,38 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
+    import { animate } from "motion";
     import {
+        Blend,
+        Bot,
+        CalendarDays,
         CalendarClock,
+        Camera,
+        Cookie,
+        GraduationCap,
+        Globe2,
+        Image,
+        Languages,
         Lightbulb,
         Mail,
         MapPin,
+        MessageCircle,
+        MicVocal,
+        Monitor,
+        Network,
+        PenTool,
         Phone,
         Pizza,
         Presentation,
+        Projector,
+        ShieldCheck,
+        Speech,
+        Target,
+        Trophy,
+        UserRoundCheck,
         Users,
+        UsersRound,
+        Video,
+        Vote,
     } from "lucide-svelte";
     import { Accordion } from "bits-ui";
     import { CODING_TOOLS } from "$lib/booking";
@@ -21,6 +45,133 @@
     const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
     const carouselRepeats = [0, 1, 2, 3];
     const carouselLabel = `Coding Tools im Hackathon: ${carouselTools.map((tool) => tool.label).join(", ")}`;
+    const customFormatUrl = "https://cal.com/emilian.scheel/hackathon-vorbereitung";
+
+    const formatFeatures = [
+        { label: "Mehrtägige Formate", icon: CalendarDays },
+        { label: "Bis zu 200 Personen", icon: UsersRound },
+        { label: "Matchmaking-Plattform", icon: Network },
+        { label: "Individueller Zeitplan", icon: CalendarClock },
+        { label: "Keynotes", icon: MicVocal },
+        { label: "Online", icon: Monitor },
+        { label: "Hybrid", icon: Blend },
+        { label: "Vor Ort", icon: MapPin },
+        { label: "Siegerposter", icon: Image },
+        { label: "Siegerpokal", icon: Trophy },
+        { label: "Internationale Formate", icon: Globe2 },
+        { label: "Deutsch oder Englisch", icon: Languages },
+        { label: "Zwei Facilitators", icon: UserRoundCheck },
+        { label: "Challenge Design", icon: Lightbulb },
+        { label: "Eigene Use Cases", icon: Target },
+        { label: "Verschiedene Skill Levels", icon: GraduationCap },
+        { label: "Demo Session", icon: Presentation },
+        { label: "Follow-up", icon: MessageCircle },
+        { label: "Pizza-Lunch", icon: Pizza },
+        { label: "Cookies", icon: Cookie },
+        { label: "Event-Fotos", icon: Camera },
+        { label: "Präsentationstechnik", icon: Projector },
+        { label: "Eigener oder bereitgestellter Tool Stack", icon: Bot },
+        { label: "IT- & Security-Abstimmung", icon: ShieldCheck },
+        { label: "Pitch-Vorbereitung", icon: Speech },
+        { label: "Pitch- & Voting-System", icon: Vote },
+        { label: "Kollaboratives Whiteboard", icon: PenTool },
+        { label: "Screen-Recording-Upload", icon: Video },
+    ];
+
+    type Profile = { name: string; src: string };
+    let activeProfile = $state<Profile | null>(null);
+    let profileOrigin: DOMRect | null = null;
+    let profileOpener: HTMLButtonElement | null = null;
+    let profileZoomImage = $state<HTMLImageElement>(undefined!);
+    let profileZoomBackdrop = $state<HTMLButtonElement>(undefined!);
+    let profileAnimation: ReturnType<typeof animate> | undefined;
+    let backdropAnimation: ReturnType<typeof animate> | undefined;
+    let profileClosing = false;
+
+    function reducedMotion() {
+        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    function zoomTarget() {
+        const size = window.innerWidth <= 640
+            ? Math.min(window.innerWidth * 0.68, 260)
+            : window.innerHeight * 0.3;
+        return {
+            size,
+            left: (window.innerWidth - size) / 2,
+            top: (window.innerHeight - size) / 2,
+        };
+    }
+
+    async function openProfile(profile: Profile, opener: HTMLButtonElement) {
+        if (activeProfile || profileClosing) return;
+        const image = opener.querySelector("img");
+        if (!image) return;
+
+        const origin = image.getBoundingClientRect();
+        profileOrigin = origin;
+        profileOpener = opener;
+        activeProfile = profile;
+        await tick();
+
+        const target = zoomTarget();
+        Object.assign(profileZoomImage.style, {
+            left: `${target.left}px`,
+            top: `${target.top}px`,
+            width: `${target.size}px`,
+            height: `${target.size}px`,
+        });
+        profileZoomBackdrop.focus({ preventScroll: true });
+        if (reducedMotion()) {
+            profileZoomBackdrop.style.opacity = "1";
+            return;
+        }
+
+        backdropAnimation = animate(profileZoomBackdrop, { opacity: [0, 1] }, { duration: 0.2 });
+        profileAnimation = animate(
+            profileZoomImage,
+            {
+                left: [`${origin.left}px`, `${target.left}px`],
+                top: [`${origin.top}px`, `${target.top}px`],
+                width: [`${origin.width}px`, `${target.size}px`],
+                height: [`${origin.height}px`, `${target.size}px`],
+            },
+            { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+        );
+    }
+
+    async function closeProfile() {
+        if (!activeProfile || profileClosing) return;
+        profileClosing = true;
+        profileAnimation?.stop();
+        backdropAnimation?.stop();
+
+        const originImage = profileOpener?.querySelector("img");
+        const destination = originImage?.getBoundingClientRect() ?? profileOrigin;
+        if (!reducedMotion() && destination) {
+            const current = profileZoomImage.getBoundingClientRect();
+            backdropAnimation = animate(profileZoomBackdrop, { opacity: [1, 0] }, { duration: 0.24 });
+            profileAnimation = animate(
+                profileZoomImage,
+                {
+                    left: [`${current.left}px`, `${destination.left}px`],
+                    top: [`${current.top}px`, `${destination.top}px`],
+                    width: [`${current.width}px`, `${destination.width}px`],
+                    height: [`${current.height}px`, `${destination.height}px`],
+                },
+                { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+            );
+            await profileAnimation.finished;
+        }
+
+        const opener = profileOpener;
+        activeProfile = null;
+        profileOrigin = null;
+        profileOpener = null;
+        profileClosing = false;
+        await tick();
+        opener?.focus({ preventScroll: true });
+    }
 
     const faqs = [
         {
@@ -33,7 +184,7 @@
         },
         {
             question: "Für welche Teamgrößen ist der Hackathon ausgelegt?",
-            answer: "Buchbar sind Formate für bis zu 15, 30 oder 50 Personen. Bei größeren Gruppen arbeiten mehrere Build-Teams parallel und präsentieren ihre Ergebnisse gemeinsam.",
+            answer: "Direkt buchbar sind Formate für bis zu 15, 30 oder 50 Personen. Individuelle Formate sind für bis zu 200 Personen möglich; dabei arbeiten mehrere Build-Teams parallel und präsentieren ihre Ergebnisse gemeinsam.",
         },
         {
             question: "Wie läuft der Tag ab?",
@@ -121,12 +272,19 @@
 
         window.addEventListener("scroll", scheduleMobileNavCtaUpdate, { passive: true });
         window.addEventListener("resize", scheduleMobileNavCtaUpdate, { passive: true });
+        const handleKeydown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && activeProfile) void closeProfile();
+        };
+        window.addEventListener("keydown", handleKeydown);
         updateMobileNavCta();
 
         return () => {
             if (frame !== undefined) cancelAnimationFrame(frame);
             window.removeEventListener("scroll", scheduleMobileNavCtaUpdate);
             window.removeEventListener("resize", scheduleMobileNavCtaUpdate);
+            window.removeEventListener("keydown", handleKeydown);
+            profileAnimation?.stop();
+            backdropAnimation?.stop();
             root.classList.remove("mobile-nav-cta-visible");
         };
     });
@@ -163,7 +321,7 @@
 
 <section class="manifesto" aria-labelledby="manifesto-title">
     <div class="manifesto-content" use:reveal>
-        <h2 id="manifesto-title">Keine weitere Fortbildung</h2>
+        <h2 id="manifesto-title"><s>Fortbildung</s> Hackathon</h2>
         <p>
             Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen
             funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.
@@ -188,7 +346,7 @@
     </div>
 </section>
 
-<section class="adoption-gap" aria-labelledby="adoption-gap-title">
+<section class="adoption-gap" aria-label="Die Lücke zwischen KI-Ambition und praktischer Anwendung">
     <img
         class="adoption-gap-image"
         src="/images/ai-adoption-hackathon.webp"
@@ -198,18 +356,17 @@
     />
     <div class="adoption-gap-inner">
         <div class="adoption-gap-copy" use:reveal>
-            <h2 id="adoption-gap-title">Let's do it</h2>
             <p class="adoption-gap-conclusion">
                 Der beste Weg, die Adaptionslücke zu schließen: ein Hackathon, bei dem das Team
                 gemeinsam baut und ausprobiert.
             </p>
-            <p class="adoption-gap-source">
-                <a
+            <div class="adoption-gap-source">
+                <a class="button-secondary"
                     href="https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers"
                     target="_blank"
-                    rel="noreferrer">Celonis Process Optimization Report, März 2026</a
+                    rel="noreferrer">Mehr erfahren</a
                 >
-            </p>
+            </div>
         </div>
 
         <dl class="adoption-gap-stats" use:reveal={{ group: true }}>
@@ -222,6 +379,34 @@
                 <dd>der Unternehmen im DACH-Raum nutzen bereits AI Agents.</dd>
             </div>
         </dl>
+    </div>
+</section>
+
+<section class="custom-formats" aria-labelledby="custom-formats-title">
+    <div class="section-wrap">
+        <div use:reveal>
+            <h2 id="custom-formats-title" class="section-title">Wie Sie es brauchen</h2>
+        </div>
+        <div class="feature-cloud" use:reveal={{ group: true }}>
+            {#each formatFeatures as feature}
+                <div class="feature-float">
+                    <div class="feature-pill">
+                        <feature.icon size={25} strokeWidth={1.8} aria-hidden="true" />
+                        <span>{feature.label}</span>
+                    </div>
+                </div>
+            {/each}
+        </div>
+        <div class="custom-formats-action" use:reveal>
+            <a
+                class="button-secondary"
+                href={customFormatUrl}
+                target="_blank"
+                rel="noreferrer"
+                data-analytics-event="booking_cta"
+                data-analytics-placement="custom-formats">Kontakt aufnehmen</a
+            >
+        </div>
     </div>
 </section>
 
@@ -304,18 +489,33 @@
         <div use:reveal><h2 class="section-title">Kontakt</h2></div>
         <div class="team-profiles" use:reveal={{ group: true }} aria-label="Ihre Ansprechpartner">
             <article class="team-profile">
-                <img
-                    src="/images/team/maddox-sciuchetti.jpg"
-                    alt="Maddox Sciuchetti"
-                    width="40"
-                    height="40"
-                    loading="lazy"
-                    decoding="async"
-                />
+                <button
+                    type="button"
+                    class="team-profile-image-button"
+                    aria-label="Profilbild von Maddox Sciuchetti vergrößern"
+                    aria-expanded={activeProfile?.name === "Maddox Sciuchetti"}
+                    onclick={(event) => openProfile(
+                        { name: "Maddox Sciuchetti", src: "/images/team/maddox-sciuchetti.jpg" },
+                        event.currentTarget,
+                    )}
+                >
+                    <img
+                        src="/images/team/maddox-sciuchetti.jpg"
+                        alt="Maddox Sciuchetti"
+                        width="40"
+                        height="40"
+                        loading="lazy"
+                        decoding="async"
+                    />
+                </button>
                 <div class="team-profile-details">
                     <h3>Maddox Sciuchetti</h3>
                     <div class="team-profile-links">
+                        <a href="mailto:maddox@all-in-agi.com" aria-label="E-Mail an Maddox Sciuchetti" title="E-Mail">
+                            <Mail size={15} strokeWidth={2} aria-hidden="true" />
+                        </a>
                         <a
+                            class="brand-link"
                             href="https://github.com/MaddoxSciuchetti"
                             target="_blank"
                             rel="noreferrer"
@@ -329,6 +529,7 @@
                             >
                         </a>
                         <a
+                            class="brand-link"
                             href="https://www.linkedin.com/in/maddoxsciuchetti/"
                             target="_blank"
                             rel="noreferrer"
@@ -345,18 +546,33 @@
                 </div>
             </article>
             <article class="team-profile">
-                <img
-                    src="/images/team/emilian-scheel.jpg"
-                    alt="Emilian Scheel"
-                    width="40"
-                    height="40"
-                    loading="lazy"
-                    decoding="async"
-                />
+                <button
+                    type="button"
+                    class="team-profile-image-button"
+                    aria-label="Profilbild von Emilian Scheel vergrößern"
+                    aria-expanded={activeProfile?.name === "Emilian Scheel"}
+                    onclick={(event) => openProfile(
+                        { name: "Emilian Scheel", src: "/images/team/emilian-scheel.jpg" },
+                        event.currentTarget,
+                    )}
+                >
+                    <img
+                        src="/images/team/emilian-scheel.jpg"
+                        alt="Emilian Scheel"
+                        width="40"
+                        height="40"
+                        loading="lazy"
+                        decoding="async"
+                    />
+                </button>
                 <div class="team-profile-details">
                     <h3>Emilian Scheel</h3>
                     <div class="team-profile-links">
+                        <a href="mailto:emilian@all-in.com" aria-label="E-Mail an Emilian Scheel" title="E-Mail">
+                            <Mail size={15} strokeWidth={2} aria-hidden="true" />
+                        </a>
                         <a
+                            class="brand-link"
                             href="https://github.com/emilianscheel"
                             target="_blank"
                             rel="noreferrer"
@@ -370,6 +586,7 @@
                             >
                         </a>
                         <a
+                            class="brand-link"
                             href="https://www.linkedin.com/in/emilianscheel"
                             target="_blank"
                             rel="noreferrer"
@@ -412,6 +629,23 @@
         </div>
     </div>
 </section>
+
+{#if activeProfile}
+    <button
+        bind:this={profileZoomBackdrop}
+        type="button"
+        class="profile-zoom-backdrop"
+        aria-label={`Vergrößertes Profilbild von ${activeProfile.name} schließen`}
+        onclick={closeProfile}
+    >
+        <img
+            bind:this={profileZoomImage}
+            class="profile-zoom-image"
+            src={activeProfile.src}
+            alt={activeProfile.name}
+        />
+    </button>
+{/if}
 
 <section>
     <div class="section-wrap faq-wrap">
