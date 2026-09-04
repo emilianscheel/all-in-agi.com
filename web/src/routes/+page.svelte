@@ -453,7 +453,7 @@
     </div>
 </section>
 
-<section id="preis" class="pricing">
+<section id="pricing" class="pricing">
     <div class="section-wrap">
         <div class="pricing-grid" use:reveal={{ group: true }}>
             <article class="price-card">
@@ -494,13 +494,13 @@
         <div class="section-action">
 			<a class="button-primary" href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="pricing">{locale === 'en' ? 'Plan a hackathon' : 'Hackathon planen'}</a><a
                 class="button-secondary"
-				href="#kontakt">{locale === 'en' ? 'Contact us' : 'Kontakt aufnehmen'}</a
+				href="#contact">{locale === 'en' ? 'Contact us' : 'Kontakt aufnehmen'}</a
             >
         </div>
     </div>
 </section>
 
-<section id="kontakt" class="contact-section">
+<section id="contact" class="contact-section">
     <div class="section-wrap">
 		<div use:reveal><h2 class="section-title">{locale === 'en' ? 'Contact' : 'Kontakt'}</h2></div>
         <div class="team-profiles" use:reveal={{ group: true }} aria-label={locale === 'en' ? 'Your contacts' : 'Ihre Ansprechpartner'}>

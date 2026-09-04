@@ -82,8 +82,8 @@
 			</a>
 			<div class="nav-links">
 				<a href={`${localizedPath(locale, '/')}#format`}>{copy.agenda}</a>
-				<a href={`${localizedPath(locale, '/')}#preis`}>{copy.price}</a>
-				<a href={`${localizedPath(locale, '/')}#kontakt`}>{copy.contact}</a>
+				<a href={`${localizedPath(locale, '/')}#pricing`}>{copy.price}</a>
+				<a href={`${localizedPath(locale, '/')}#contact`}>{copy.contact}</a>
 			</div>
 			<a class="nav-cta" href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="header">{copy.plan}</a>
 		</nav>
