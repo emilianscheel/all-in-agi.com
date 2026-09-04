@@ -9,6 +9,7 @@ import {
 	type BookingConfirmationRecipientRole
 } from '$lib/server/booking-confirmation-email';
 import { json } from '@sveltejs/kit';
+import { localizedPath } from '$lib/i18n';
 
 function logConfirmationAttempt(hackathonId: string, attempt: BookingConfirmationAttempt) {
 	if (attempt.sent) {
@@ -93,7 +94,7 @@ export async function POST({ request, fetch }) {
 			hackathonBooking,
 			prepCallBooking,
 			hackathonId: id,
-			detailUrl: `/${id}`,
+			detailUrl: localizedPath(config.locale ?? 'de', `/${id}`),
 			confirmationEmailSent: customerAttempt.sent,
 			organizerConfirmationEmailSent: organizerAttempt.sent
 		}, { status: 201 });

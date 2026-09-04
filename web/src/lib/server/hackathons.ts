@@ -48,6 +48,7 @@ function pendingValues(id: string, config: BookingConfiguration, legalSnapshot: 
 	return {
 		id,
 		status: 'pending' as const,
+		customerLocale: config.locale ?? 'de',
 		companyName: config.companyName,
 		contactName: config.contactName,
 		contactEmail: config.email,
@@ -249,6 +250,7 @@ export async function updateConfirmedHackathon(
 
 export function recordToBookingConfiguration(record: HackathonRecord): BookingConfiguration {
 	return {
+		locale: record.customerLocale,
 		capacity: record.capacity as Capacity,
 		venueProvided: record.venueProvided,
 		equipment: record.equipment,

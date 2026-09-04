@@ -3,7 +3,7 @@ import { and, eq, inArray, lte } from 'drizzle-orm';
 import type { BookingConfiguration } from '$lib/booking';
 import {
 	LEGAL_DOCUMENT_STATUS,
-	LEGAL_DOCUMENT_VERSION,
+	legalVersion,
 	legalDocumentPlainText,
 	legalModulesForConfiguration,
 	type LegalDocumentSnapshot
@@ -78,9 +78,10 @@ export function addBerlinBusinessDays(value: Date, days: number) {
 
 export function createLegalSnapshot(config: BookingConfiguration, capturedAt = new Date()): LegalDocumentSnapshot {
 	const modules = legalModulesForConfiguration(config);
-	const content = legalDocumentPlainText(modules);
+	const locale = config.locale ?? 'de';
+	const content = legalDocumentPlainText(modules, locale);
 	const contentHash = createHash('sha256').update(content, 'utf8').digest('hex');
-	return { version: LEGAL_DOCUMENT_VERSION, contentHash, modules, content, capturedAt: capturedAt.toISOString() };
+	return { locale, version: legalVersion(locale), contentHash, modules, content, capturedAt: capturedAt.toISOString() };
 }
 
 export async function registerLegalSnapshot(snapshot: LegalDocumentSnapshot) {

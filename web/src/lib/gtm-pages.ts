@@ -1,5 +1,6 @@
 import type { GtmHeroKey } from '$lib/gtm-images';
 import { editorialPageContent } from '$lib/gtm-content';
+import type { Locale } from '$lib/i18n';
 
 export const GTM_GROUPS = [
 	'Standorte',
@@ -1030,12 +1031,106 @@ export const gtmPaths = gtmPages.map((page) => `/${page.slug}` as const);
 
 const gtmPageBySlug = new Map(gtmPages.map((page) => [page.slug, page]));
 
-export function getGtmPage(slug: string) {
-	const page = gtmPageBySlug.get(slug);
-	if (!page) throw new Error(`Unknown GTM page: ${slug}`);
-	return page;
+const ENGLISH_TITLES: Record<string, string> = {
+	'hackathon-unternehmen-berlin': 'Company Hackathon in Berlin',
+	'hackathon-unternehmen-hamburg': 'Company Hackathon in Hamburg',
+	'hackathon-unternehmen-muenchen': 'Company Hackathon in Munich',
+	'hackathon-unternehmen-stuttgart': 'Company Hackathon in Stuttgart',
+	'hackathon-unternehmen-frankfurt': 'Company Hackathon in Frankfurt',
+	'ki-hackathon-industrie': 'AI Hackathon for Industrial Companies',
+	'hackathon-softwareunternehmen': 'Agentic Engineering Hackathon for Software Companies',
+	'ki-hackathon-logistik-handel': 'AI Hackathon for Logistics and Retail',
+	'ki-hackathon-banken-versicherungen': 'AI Hackathon for Banking and Insurance',
+	'hackathon-maschinenbau-automatisierung': 'Hackathon for Mechanical Engineering and Automation',
+	'ki-adoption-engineering': 'Accelerating AI Adoption in Engineering',
+	'coding-agent-rollout-hackathon': 'Rolling Out Coding Agents with a Hackathon',
+	'developer-experience-ai-tools': 'Developer Experience with AI Coding Tools',
+	'ki-strategie-working-prototype': 'From AI Strategy to a Working Prototype',
+	'interne-ai-champions': 'Building Internal AI Champions',
+	'interner-ki-hackathon': 'Internal AI Hackathon for Companies',
+	'hack-week-coding-agents': 'Hack Week with Coding Agents',
+	'ai-innovation-day': 'AI Innovation Day for Companies',
+	'legacy-modernisierung-coding-agents': 'Legacy Modernization with Coding Agents',
+	'security-konformer-ki-hackathon': 'A Security-Compliant AI Hackathon',
+	'codex-best-practices': 'Stop Prompting. Start Engineering.',
+	'claude-code-best-practices': 'CLAUDE.md Is Not a Novel.',
+	'coding-agents-vergleich-unternehmen': 'There Is No Single Best Coding Tool.',
+	'coding-agent-tests-verifikation': 'The Best Prompt Is a Green Test.',
+	'vibe-coding-im-unternehmen': 'Vibe Coding Does Not Scale.',
+	'wird-ki-uns-ersetzen': 'AI Will Not Replace Us.',
+	'san-francisco-lebt-in-der-zukunft': 'San Francisco Is Already Living in 2028.',
+	'deutschland-hat-ein-umsetzungsproblem': 'Germany Has an Implementation Problem.',
+	'ki-produktivitaet-ohne-stellenabbau': 'Productivity Is Not the Same as Layoffs.',
+	'europas-chance-mit-ki': 'Europe Does Not Need to Build the Largest Model.',
+	'ki-hackathon-sensorik-automatisierung': 'The Machine Knows the Failure.',
+	'ki-hackathon-intralogistik': 'The Exception Is the Use Case.',
+	'ki-hackathon-robotik': 'Robots Need Better Coworkers.',
+	'ki-hackathon-steuersoftware': 'Tax Software Is a Knowledge System.',
+	'ki-hackathon-digital-commerce': 'The Shopping Cart Is Not the Product.',
+	'ki-fuer-den-mittelstand': 'From German Mittelstand to Global AI Leader.',
+	'ki-hackathon-ostdeutschland': 'High-Tech Eastern Germany.',
+	'ki-hackathon-ostwestfalen-lippe': 'East Westphalia Is Building the Factory of the Future.',
+	'ki-hackathon-nuernberg-franken': 'Nuremberg Thinks in Systems.',
+	'ki-hackathon-ruhrgebiet': 'The Ruhr Region Is Ready for Its Next Shift.'
+};
+
+function englishPage(page: GtmPage): GtmPage {
+	const title = ENGLISH_TITLES[page.slug] ?? page.title;
+	const description = `${title}: a practical ALL IN AGI perspective on turning real company workflows into secure, testable prototypes with modern coding agents.`;
+	if (page.kind === 'offer') {
+		return {
+			...page, title, footerLabel: title, description,
+			lead: [
+				`${title} brings engineering, product, and domain experts together around work that matters to the business. Instead of discussing AI in the abstract, small cross-functional teams use approved tools and realistic test data to build demonstrable workflows in a focused day.`,
+				`The format is prepared with the sponsor and challenge owners. Each challenge has a clear user, a narrow boundary, and a visible success test, so the day produces evidence rather than a collection of disconnected ideas.`
+			],
+			relevanceTitle: 'A focused build day for real company workflows',
+			relevance: [
+				`Coding agents become useful when teams apply them to their own systems, constraints, and quality standards. The hackathon creates a shared reference point across roles and makes both opportunities and limitations visible.`,
+				`Preparation covers accounts, repositories, data classes, security rules, and the expected demo. Participants can spend the event building because the most important operating decisions have already been made.`
+			],
+			challenges: [
+				'Build an internal knowledge navigator that answers with links to approved sources.',
+				'Turn a recurring operational exception into a reviewable assistant workflow.',
+				'Create a coding-agent workflow that explains a bounded code area and proposes tested changes.',
+				'Prototype a product or service flow with transparent human approval points.',
+				'Convert an unclear manual handoff into a traceable, demonstrable process.'
+			],
+			audienceTitle: 'Who should participate',
+			audienceIntro: 'The strongest group combines people who understand the workflow with people who can build and sponsor what happens next.',
+			audience: [
+				'Engineering and platform leaders introducing coding agents.',
+				'Product and domain owners responsible for concrete workflows.',
+				'Developer experience, enablement, and internal academy teams.',
+				'Innovation and digital teams with access to real challenge owners.'
+			],
+			security: [
+				'Approved models, accounts, repositories, and data classes are agreed before the event. When production information cannot be used, teams work with synthetic or de-identified examples.',
+				'The result is a prototype, not an autonomous production deployment. Assumptions, human controls, and known limitations remain visible in every final demonstration.'
+			],
+			outcome: [
+				'The day ends with working demonstrations and a concise record of value hypotheses, technical friction, missing access, and accountable next owners.',
+				'Teams leave with practical experience and leaders gain concrete evidence for deciding which ideas deserve another sprint, which need groundwork, and which should stop.'
+			]
+		};
+	}
+	const sections: EditorialSection[] = [
+		{ title: 'The practical thesis', paragraphs: [{ text: `${title} is not primarily a story about model capability. It is about whether organizations can connect capable tools to real work, clear ownership, and observable quality. Teams learn faster when they replace broad predictions with a bounded workflow and a result that colleagues can inspect.` }, { text: 'Coding agents can reduce the cost of exploring software, documentation, and operational processes. They do not remove the need for domain judgment, security boundaries, or engineering review. Those constraints are part of the design, not obstacles to be hidden.' }] },
+		{ title: 'Why implementation is the bottleneck', paragraphs: [{ text: 'Most established companies already have ideas and tool licenses. Progress slows at the interfaces between access, data, architecture, product ownership, and risk. A focused build format makes those dependencies concrete while the relevant people are in the room.' }, { text: 'A useful prototype has a named user, known inputs, an explicit boundary, and a visible success test. This discipline prevents a polished demo from being mistaken for production readiness and gives decision-makers evidence they can compare.' }] },
+		{ title: 'How to run the experiment', paragraphs: [{ text: 'Select a small number of workflows before the event. Confirm approved accounts and realistic data, then form mixed teams of engineers, product leaders, and domain experts. Spend most of the day building, with short checkpoints for scope, evidence, and security.' }, { text: 'Every team should demonstrate the workflow live and explain what remains manual, uncertain, or unverified. A failed assumption is still valuable when it is documented early and prevents a much larger investment.' }] },
+		{ title: 'What responsible adoption looks like', paragraphs: [{ text: 'Responsible adoption keeps humans accountable for decisions and makes sources, tests, permissions, and failure modes visible. It starts inside the company’s approved environment and avoids sensitive production data unless its use has been explicitly cleared.' }, { text: 'The goal is not to deploy autonomous agents in one day. It is to understand where the tools create leverage, what controls are required, and whether the organization can support a reliable next iteration.' }] },
+		{ title: 'From demonstration to decision', paragraphs: [{ text: 'After the demo, record the functional state, value hypothesis, known limits, tool friction, and next owner for each prototype. Continue only the ideas with a credible user and a concrete path to better evidence.' }, { text: 'This turns an AI event into capability building and product discovery. Participants gain direct experience, sponsors see actual behavior instead of slides, and the company gets a grounded basis for its next investment decision.' }] }
+	];
+	return { ...page, title, footerLabel: title, description, seoTitle: title, dek: description, sections };
 }
 
-export function gtmPagesForGroup(group: GtmGroup) {
-	return gtmPages.filter((page) => page.group === group);
+export function getGtmPage(slug: string, locale: Locale = 'de') {
+	const page = gtmPageBySlug.get(slug);
+	if (!page) throw new Error(`Unknown GTM page: ${slug}`);
+	return locale === 'en' ? englishPage(page) : page;
+}
+
+export function gtmPagesForGroup(group: GtmGroup, locale: Locale = 'de') {
+	const pages = gtmPages.filter((page) => page.group === group);
+	return locale === 'en' ? pages.map(englishPage) : pages;
 }

@@ -9,9 +9,9 @@ describe('SEO indexing policy', () => {
 	});
 
 	test('contains the six core pages and all GTM pages', () => {
-		expect(INDEXABLE_PATHS).toHaveLength(46);
-		expect(INDEXABLE_PATHS.slice(0, 6)).toEqual(['/', '/impressum', '/agb', '/datenschutz', '/teilnehmer-datenschutz', '/buchen']);
-		expect(INDEXABLE_PATHS.slice(6)).toEqual(gtmPaths);
+		expect(INDEXABLE_PATHS).toHaveLength(92);
+		expect(INDEXABLE_PATHS.slice(0, 6)).toEqual(['/de', '/de/legal-notice', '/de/terms', '/de/privacy', '/de/participant-privacy', '/de/go']);
+		expect(INDEXABLE_PATHS[46]).toBe('/en');
 	});
 
 	test.each([

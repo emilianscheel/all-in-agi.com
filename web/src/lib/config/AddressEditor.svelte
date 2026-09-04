@@ -1,18 +1,21 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import type { EventAddress } from '$lib/booking';
+	import type { Locale } from '$lib/i18n';
 	import { normalizePhotonAddress, photonFeatureLabel, type PhotonFeature } from '$lib/photon';
 
 	let {
 		value,
 		onchange,
 		idPrefix = 'address',
-		searchArea = false
+		searchArea = false,
+		locale = 'de'
 	}: {
 		value: EventAddress;
 		onchange: (value: EventAddress) => void;
 		idPrefix?: string;
 		searchArea?: boolean;
+		locale?: Locale;
 	} = $props();
 
 	let addressQuery = $state('');
@@ -46,7 +49,7 @@
 		abortController = new AbortController();
 		searchStatus = 'loading';
 		try {
-			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: 'de', limit: '5' });
+			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: locale, limit: '5' });
 			const response = await fetch(`/api/geocode?${params}`, { signal: abortController.signal });
 			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
 			const result = await response.json() as { features?: PhotonFeature[] };
@@ -77,14 +80,14 @@
 
 <div class="field-grid">
 	<div class="field full address-search-wrap">
-		<label for={`${idPrefix}-search`}>{searchArea ? 'Gewünschtes Suchgebiet' : 'Adresse suchen'}</label>
+		<label for={`${idPrefix}-search`}>{locale === 'en' ? (searchArea ? 'Preferred search area' : 'Search address') : (searchArea ? 'Gewünschtes Suchgebiet' : 'Adresse suchen')}</label>
 		<input
 			id={`${idPrefix}-search`}
 			autocomplete="off"
 			aria-describedby={searchStatus === 'idle' ? undefined : `${idPrefix}-search-status`}
 			aria-autocomplete="list"
 			aria-controls={`${idPrefix}-suggestions`}
-			placeholder="Straße, Ort oder Unternehmen"
+			placeholder={locale === 'en' ? 'Street, city, or company' : 'Straße, Ort oder Unternehmen'}
 			bind:value={addressQuery}
 			oninput={updateSuggestions}
 		/>
@@ -94,10 +97,10 @@
 			</ul>
 		{/if}
 		{#if searchStatus !== 'idle'}
-			<p id={`${idPrefix}-search-status`} class="helper" aria-live="polite">{searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.'}</p>
+			<p id={`${idPrefix}-search-status`} class="helper" aria-live="polite">{locale === 'en' ? (searchStatus === 'loading' ? 'Searching addresses …' : searchStatus === 'empty' ? 'No matching address found. Please enter it manually below.' : 'Address search is unavailable. Please enter it manually below.') : (searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.')}</p>
 		{/if}
 	</div>
-	<div class="field full"><label for={`${idPrefix}-street`}>Straße und Hausnummer</label><input id={`${idPrefix}-street`} autocomplete="street-address" value={value.street} oninput={(event) => patch({ street: event.currentTarget.value, label: '' })} /></div>
-	<div class="field"><label for={`${idPrefix}-postal`}>Postleitzahl</label><input id={`${idPrefix}-postal`} inputmode="numeric" autocomplete="postal-code" value={value.postalCode} oninput={(event) => patch({ postalCode: event.currentTarget.value, label: '' })} /></div>
-	<div class="field"><label for={`${idPrefix}-city`}>Ort</label><input id={`${idPrefix}-city`} autocomplete="address-level2" value={value.city} oninput={(event) => patch({ city: event.currentTarget.value, label: '' })} /></div>
+	<div class="field full"><label for={`${idPrefix}-street`}>{locale === 'en' ? 'Street and number' : 'Straße und Hausnummer'}</label><input id={`${idPrefix}-street`} autocomplete="street-address" value={value.street} oninput={(event) => patch({ street: event.currentTarget.value, label: '' })} /></div>
+	<div class="field"><label for={`${idPrefix}-postal`}>{locale === 'en' ? 'Postal code' : 'Postleitzahl'}</label><input id={`${idPrefix}-postal`} inputmode="numeric" autocomplete="postal-code" value={value.postalCode} oninput={(event) => patch({ postalCode: event.currentTarget.value, label: '' })} /></div>
+	<div class="field"><label for={`${idPrefix}-city`}>{locale === 'en' ? 'City' : 'Ort'}</label><input id={`${idPrefix}-city`} autocomplete="address-level2" value={value.city} oninput={(event) => patch({ city: event.currentTarget.value, label: '' })} /></div>
 </div>

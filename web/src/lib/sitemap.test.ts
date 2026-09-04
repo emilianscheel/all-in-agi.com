@@ -3,17 +3,20 @@ import { gtmPages } from './gtm-pages';
 import { INDEXABLE_PATHS, SITE_ORIGIN } from './seo';
 import { sitemapXml } from './sitemap';
 
-describe('XML sitemap', () => {
-	test('contains exactly the 46 canonical public URLs', () => {
+	describe('XML sitemap', () => {
+	test('contains exactly the 92 localized canonical public URLs', () => {
 		const xml = sitemapXml();
 		const locations = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 		const expected = INDEXABLE_PATHS.map((path) => `${SITE_ORIGIN}${path}`);
 
-		expect(INDEXABLE_PATHS).toHaveLength(46);
+		expect(INDEXABLE_PATHS).toHaveLength(92);
 		expect(gtmPages).toHaveLength(40);
 		expect(locations).toEqual(expected);
-		expect(new Set(locations).size).toBe(46);
+		expect(new Set(locations).size).toBe(92);
+		expect(xml).toContain('hreflang="de-DE"');
+		expect(xml).toContain('hreflang="en-US"');
 		expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+		expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
 		expect(xml).not.toContain('<priority>');
 		expect(xml).not.toContain('<changefreq>');
 		expect(xml).not.toContain('<lastmod>');

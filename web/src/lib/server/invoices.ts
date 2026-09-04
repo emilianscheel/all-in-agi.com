@@ -77,9 +77,9 @@ export async function getOrCreateInvoice(
 		if (current.downPaymentInvoiceSnapshot.version !== 2 || current.downPaymentInvoiceSnapshot.kind !== 'down-payment') {
 			throw new InvoiceNotIssuableError();
 		}
-		snapshot = createFinalInvoiceSnapshot(current, legal, current.downPaymentInvoiceSnapshot, now, await invoiceNumber('final', current, now, dependencies));
+		snapshot = createFinalInvoiceSnapshot({ ...current, locale: current.customerLocale }, legal, current.downPaymentInvoiceSnapshot, now, await invoiceNumber('final', current, now, dependencies));
 	} else {
-		snapshot = createInvoiceSnapshot(current, legal, now, await invoiceNumber('invoice', current, now, dependencies));
+		snapshot = createInvoiceSnapshot({ ...current, locale: current.customerLocale }, legal, now, await invoiceNumber('invoice', current, now, dependencies));
 	}
 	const frozen = await (dependencies.freeze ?? freezeInvoiceSnapshot)(id, snapshot, now.toISOString());
 	if (frozen?.invoiceSnapshot) return { record: frozen, snapshot: frozen.invoiceSnapshot };
@@ -105,7 +105,7 @@ export async function getOrCreateDownPaymentInvoice(
 	if (validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
 	const now = dependencies.now?.() ?? new Date();
 	const snapshot = createDownPaymentInvoiceSnapshot(
-		current,
+		{ ...current, locale: current.customerLocale },
 		(dependencies.getConfiguration ?? getInvoiceLegalConfiguration)(),
 		now,
 		await invoiceNumber('down-payment', current, now, dependencies)

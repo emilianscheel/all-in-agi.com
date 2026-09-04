@@ -65,15 +65,15 @@ export function isValidEventTimeRange(eventStart: string, eventEnd: string, now 
 		&& duration > 0;
 }
 
-export function formatEventTimeRange(eventStart: string, eventEnd: string) {
+export function formatEventTimeRange(eventStart: string, eventEnd: string, locale: 'de' | 'en' = 'de') {
 	const start = new Date(eventStart);
 	const end = new Date(eventEnd);
-	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Noch offen';
-	const date = new Intl.DateTimeFormat('de-DE', {
+	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return locale === 'en' ? 'Not set' : 'Noch offen';
+	const date = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE', {
 		weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', timeZone: BERLIN_TIME_ZONE
 	}).format(start);
-	const time = (value: Date) => new Intl.DateTimeFormat('de-DE', {
+	const time = (value: Date) => new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE', {
 		hour: '2-digit', minute: '2-digit', timeZone: BERLIN_TIME_ZONE
 	}).format(value);
-	return `${date}, ${time(start)}–${time(end)} Uhr`;
+	return `${date}, ${time(start)}–${time(end)}${locale === 'en' ? '' : ' Uhr'}`;
 }

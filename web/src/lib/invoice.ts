@@ -1,3 +1,5 @@
+import type { Locale } from './i18n';
+
 export interface InvoiceAddress {
 	street: string;
 	postalCode: string;
@@ -39,6 +41,7 @@ export interface InvoicePayment {
 }
 
 interface InvoiceSnapshotBase {
+	locale?: 'de' | 'en';
 	hackathonId: string;
 	invoiceNumber: string;
 	issueDate: string;
@@ -74,6 +77,7 @@ export interface InvoiceLegalConfiguration {
 }
 
 export interface InvoiceSource {
+	locale?: 'de' | 'en';
 	id: string;
 	companyName: string;
 	contactName: string;
@@ -128,17 +132,18 @@ export function createInvoiceSnapshot(
 	issuedAt = new Date(),
 	invoiceNumber = `RE-${source.id}`
 ): InvoiceSnapshot {
+	const en = source.locale === 'en';
 	const items: InvoiceLineItem[] = [
 		{
-			description: `Agentic Engineering Hackathon - bis ${source.capacity} Personen`,
+			description: en ? `Agentic Engineering Hackathon - up to ${source.capacity} people` : `Agentic Engineering Hackathon - bis ${source.capacity} Personen`,
 			netAmountCents: eurosToCents(source.basePrice)
 		}
 	];
 	for (const [description, amount] of [
-		['Raumorganisation', source.venueSurcharge],
-		[source.lunchAdjustment < 0 ? 'Catering-Abzug' : 'Catering', source.lunchAdjustment],
-		['Coding-Tool-Bereitstellung', source.toolsAdjustment],
-		[`${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
+		[en ? 'Venue organization' : 'Raumorganisation', source.venueSurcharge],
+		[source.lunchAdjustment < 0 ? (en ? 'Catering deduction' : 'Catering-Abzug') : 'Catering', source.lunchAdjustment],
+		[en ? 'Coding tool provision' : 'Coding-Tool-Bereitstellung', source.toolsAdjustment],
+		[en ? `${source.deviceCount} rental devices × €150` : `${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
 	] as const) {
 		if (amount !== 0) items.push({ description, netAmountCents: eurosToCents(amount) });
 	}
@@ -152,6 +157,7 @@ export function createInvoiceSnapshot(
 
 	return {
 		version: 1,
+		locale: source.locale ?? 'de',
 		hackathonId: source.id,
 		invoiceNumber,
 		issueDate,
@@ -199,6 +205,7 @@ function splitInvoiceBase(
 	const vatAmountCents = Math.round(netTotalCents * 0.19);
 	return {
 		version: 2,
+		locale: source.locale ?? 'de',
 		kind,
 		hackathonId: source.id,
 		invoiceNumber,
@@ -243,7 +250,7 @@ export function createDownPaymentInvoiceSnapshot(
 		invoiceNumber,
 		issueDate,
 		addCalendarDays(issueDate, 7),
-		[{ description: `30 % Anzahlung – Agentic Engineering Hackathon für bis zu ${source.capacity} Personen`, netAmountCents }],
+		[{ description: source.locale === 'en' ? `30% deposit – Agentic Engineering Hackathon for up to ${source.capacity} people` : `30 % Anzahlung – Agentic Engineering Hackathon für bis zu ${source.capacity} Personen`, netAmountCents }],
 		'down-payment'
 	);
 }
@@ -257,13 +264,13 @@ export function createFinalInvoiceSnapshot(
 ) {
 	if (downPayment.kind !== 'down-payment') throw new Error('A down-payment invoice is required.');
 	const items: InvoiceLineItem[] = [
-		{ description: `Agentic Engineering Hackathon - bis ${source.capacity} Personen`, netAmountCents: eurosToCents(source.basePrice) }
+		{ description: source.locale === 'en' ? `Agentic Engineering Hackathon - up to ${source.capacity} people` : `Agentic Engineering Hackathon - bis ${source.capacity} Personen`, netAmountCents: eurosToCents(source.basePrice) }
 	];
 	for (const [description, amount] of [
-		['Raumorganisation', source.venueSurcharge],
-		[source.lunchAdjustment < 0 ? 'Catering-Abzug' : 'Catering', source.lunchAdjustment],
-		['Coding-Tool-Bereitstellung', source.toolsAdjustment],
-		[`${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
+		[source.locale === 'en' ? 'Venue organization' : 'Raumorganisation', source.venueSurcharge],
+		[source.lunchAdjustment < 0 ? (source.locale === 'en' ? 'Catering deduction' : 'Catering-Abzug') : 'Catering', source.lunchAdjustment],
+		[source.locale === 'en' ? 'Coding tool provision' : 'Coding-Tool-Bereitstellung', source.toolsAdjustment],
+		[source.locale === 'en' ? `${source.deviceCount} rental devices × €150` : `${source.deviceCount} Leihgeräte × 150 €`, source.devicesAdjustment]
 	] as const) {
 		if (amount !== 0) items.push({ description, netAmountCents: eurosToCents(amount) });
 	}
@@ -271,7 +278,7 @@ export function createFinalInvoiceSnapshot(
 		throw new Error('Invoice line items do not match the stored total.');
 	}
 	items.push({
-		description: `Erhaltene Anzahlung ${downPayment.invoiceNumber} (enthaltene USt. ${formatInvoiceMoney(downPayment.vatAmountCents)})`,
+		description: source.locale === 'en' ? `Deposit received ${downPayment.invoiceNumber} (VAT included ${formatInvoiceMoney(downPayment.vatAmountCents)})` : `Erhaltene Anzahlung ${downPayment.invoiceNumber} (enthaltene USt. ${formatInvoiceMoney(downPayment.vatAmountCents)})`,
 		netAmountCents: -downPayment.netTotalCents
 	});
 	const issueDate = dateInBerlin(issuedAt);
@@ -321,19 +328,19 @@ export function createZugferdXml(snapshot: InvoiceSnapshot) {
 <ram:BuyerTradeParty><ram:Name>${xmlEscape(`${snapshot.customer.companyName}${snapshot.customer.legalForm ? ` ${snapshot.customer.legalForm}` : ''}`)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.customer.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.customer.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.customer.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>${snapshot.customer.vatId ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${xmlEscape(snapshot.customer.vatId)}</ram:ID></ram:SpecifiedTaxRegistration>` : ''}</ram:BuyerTradeParty>
 </ram:ApplicableHeaderTradeAgreement>
 <ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.serviceDate)}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
-<ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${snapshot.customer.purchaseOrder ? `<ram:BuyerReference>${xmlEscape(snapshot.customer.purchaseOrder)}</ram:BuyerReference>` : ''}<ram:ApplicableTradeTax><ram:CalculatedAmount>${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${snapshot.vatRatePercent}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradePaymentTerms><ram:Description>Zahlbar bis ${snapshot.dueDate}</ram:Description><ram:DueDateDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms><ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation></ram:ApplicableHeaderTradeSettlement>
+<ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${snapshot.customer.purchaseOrder ? `<ram:BuyerReference>${xmlEscape(snapshot.customer.purchaseOrder)}</ram:BuyerReference>` : ''}<ram:ApplicableTradeTax><ram:CalculatedAmount>${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode><ram:BasisAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:BasisAmount><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${snapshot.vatRatePercent}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradePaymentTerms><ram:Description>${snapshot.locale === 'en' ? 'Due by' : 'Zahlbar bis'} ${snapshot.dueDate}</ram:Description><ram:DueDateDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.dueDate)}</udt:DateTimeString></ram:DueDateDateTime></ram:SpecifiedTradePaymentTerms><ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${(snapshot.netTotalCents / 100).toFixed(2)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${(snapshot.vatAmountCents / 100).toFixed(2)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:GrandTotalAmount><ram:DuePayableAmount>${(snapshot.grossTotalCents / 100).toFixed(2)}</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation></ram:ApplicableHeaderTradeSettlement>
 </rsm:SupplyChainTradeTransaction></rsm:CrossIndustryInvoice>`;
 	return xml
 		.replace('<ram:ApplicableHeaderTradeAgreement>', `<ram:ApplicableHeaderTradeAgreement>${buyerReference}`)
 		.replace(`<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${buyerReference}`, '<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>');
 }
 
-export function formatInvoiceMoney(cents: number) {
-	return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+export function formatInvoiceMoney(cents: number, locale: Locale = 'de') {
+	return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
-export function formatInvoiceDate(value: string) {
+export function formatInvoiceDate(value: string, locale: Locale = 'de') {
 	const [year, month, day] = value.split('-').map(Number);
-	return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+	return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 		.format(new Date(Date.UTC(year, month - 1, day)));
 }

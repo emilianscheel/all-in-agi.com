@@ -64,6 +64,13 @@
       "when": 1785683226112,
       "tag": "0008_gifted_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788541200000,
+      "tag": "0009_customer_locale",
+      "breakpoints": true
     }
   ]
 }

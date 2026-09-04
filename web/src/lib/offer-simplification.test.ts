@@ -7,8 +7,8 @@ const layout = await Bun.file(new URL('../routes/+layout.svelte', import.meta.ur
 
 describe('simplified public offer', () => {
 	test('uses the full AGB title and a plain module list', () => {
-		expect(layout).toContain('>Allgemeine Geschäftsbedingungen</a>');
-		expect(agbPage).toContain('<h1>Allgemeine Geschäftsbedingungen</h1>');
+		expect(layout).toContain('{copy.terms}</a>');
+		expect(agbPage).toContain("'Terms and Conditions' : 'Allgemeine Geschäftsbedingungen'");
 		expect(agbPage).not.toContain('Transparenzhinweis');
 		expect(agbPage).not.toContain('Version {');
 		expect(agbPage).not.toContain('Leistungsmodule anzeigen');

@@ -9,23 +9,26 @@
 	import { GTM_HERO_IMAGES } from '$lib/gtm-images';
 	import { getGtmPage } from '$lib/gtm-pages';
 	import { SITE_ORIGIN } from '$lib/seo';
+	import { page as pageState } from '$app/state';
+	import { localizedPath, type Locale } from '$lib/i18n';
 
 	let { slug }: { slug: string } = $props();
-	let page = $derived(getGtmPage(slug));
+	let locale = $derived((pageState.data.locale ?? 'de') as Locale);
+	let page = $derived(getGtmPage(slug, locale));
 	let path = $derived(`/${page.slug}`);
-	let canonicalUrl = $derived(`${SITE_ORIGIN}${path}`);
+	let canonicalUrl = $derived(`${SITE_ORIGIN}${localizedPath(locale, path)}`);
 	let hero = $derived(GTM_HERO_IMAGES[page.heroImage]);
 	let seoTitle = $derived(page.kind === 'editorial' ? page.seoTitle : page.title);
-	let categoryLabel = $derived(page.kind === 'editorial' && page.blueprint ? 'Branchen-Blueprint' : page.group);
+	let categoryLabel = $derived(locale === 'en' ? (page.kind === 'editorial' && page.blueprint ? 'Industry blueprint' : 'Insights') : (page.kind === 'editorial' && page.blueprint ? 'Branchen-Blueprint' : page.group));
 	let modifiedAt = $derived(page.kind === 'editorial' ? page.dateModified : undefined);
 	let sourceById = $derived(
 		page.kind === 'editorial' ? new Map(page.sources.map((source) => [source.id, source])) : new Map()
 	);
 	let relatedPages = $derived(
-		page.kind === 'editorial' ? page.relatedSlugs.map((relatedSlug) => getGtmPage(relatedSlug)) : []
+		page.kind === 'editorial' ? page.relatedSlugs.map((relatedSlug) => getGtmPage(relatedSlug, locale)) : []
 	);
 	let publishedLabel = $derived(
-		new Intl.DateTimeFormat('de-DE', {
+		new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE', {
 			day: 'numeric',
 			month: 'long',
 			year: 'numeric',
@@ -135,7 +138,11 @@
 
 	let schema = $derived(gtmArticleSchema(page));
 
-	const phases = [
+	let phases = $derived(locale === 'en' ? [
+		{ title: 'Before the hackathon', paragraphs: ['A sponsor call and challenge-design session select three to eight tasks. Each one gets a named user, current workflow, available information, risk boundary, and visible success test.', 'A separate setup check confirms that accounts, tools, and access work before the event.'] },
+		{ title: 'During the build day', paragraphs: ['After a short live demo, mixed teams spend at least 70 percent of the day building. Facilitators help with scope, coding agents, and blockers.', 'Product and domain experts keep the user in view, engineers own the technical path, and every team prepares a live, reproducible demonstration.'] },
+		{ title: 'After demo day', paragraphs: ['Each prototype is recorded with its functional state, value hypothesis, known limitations, tool friction, and next owner.', 'Within ten business days, a follow-up separates results worth continuing from prerequisites and experiments that should deliberately end.'] }
+	] : [
 		{
 			title: 'Vor dem Hackathon',
 			paragraphs: [
@@ -157,7 +164,7 @@
 				'Innerhalb von zehn Arbeitstagen folgt ein kurzer Termin, um weiterführbare Ergebnisse, notwendige Vorarbeiten und bewusst abgeschlossene Experimente voneinander zu trennen.'
 			]
 		}
-	];
+	]);
 </script>
 
 <SeoHead
@@ -166,12 +173,13 @@
 	description={page.description}
 	{path}
 	imageUrl={`${SITE_ORIGIN}${hero.src}`}
-	imageAlt={hero.alt}
+	imageAlt={locale === 'en' ? `Illustration for ${page.title}` : hero.alt}
 	imageWidth={hero.width}
 	imageHeight={hero.height}
 	ogType="article"
 	publishedAt={page.publishedAt}
 	{modifiedAt}
+	{locale}
 />
 
 <JsonLd data={schema} />
@@ -264,11 +272,11 @@
 			class="article-hero-image"
 			src={hero.src}
 			placeholderSrc={hero.placeholderSrc}
-			alt={hero.alt}
+			alt={locale === 'en' ? `Illustration for ${page.title}` : hero.alt}
 			width={hero.width}
 			height={hero.height}
 		/>
-		<figcaption>{hero.caption}</figcaption>
+		<figcaption>{locale === 'en' ? `${page.title} — ALL IN AGI` : hero.caption}</figcaption>
 	</figure>
 
 	<div class="article-body">
@@ -283,13 +291,13 @@
 			</section>
 
 			<section aria-labelledby="prototype-title">
-				<h2 id="prototype-title">Was Ihr Team prototypisch bauen kann</h2>
-				<p>Die konkrete Auswahl richtet sich nach Ihrem Bereich und dem freigegebenen Setup. Geeignete Challenges sind unter anderem:</p>
+				<h2 id="prototype-title">{locale === 'en' ? 'What your team can prototype' : 'Was Ihr Team prototypisch bauen kann'}</h2>
+				<p>{locale === 'en' ? 'The final selection depends on your area and approved setup. Suitable challenges include:' : 'Die konkrete Auswahl richtet sich nach Ihrem Bereich und dem freigegebenen Setup. Geeignete Challenges sind unter anderem:'}</p>
 				<ul>{#each page.challenges as challenge}<li>{challenge}</li>{/each}</ul>
 			</section>
 
 			<section aria-labelledby="activation-title">
-				<h2 id="activation-title">So wird aus einem Tag ein Activation Pilot</h2>
+				<h2 id="activation-title">{locale === 'en' ? 'Turning one day into an activation pilot' : 'So wird aus einem Tag ein Activation Pilot'}</h2>
 				{#each phases as phase}
 					<div class="article-subsection">
 						<h3>{phase.title}</h3>
@@ -305,17 +313,15 @@
 			</section>
 
 			<section aria-labelledby="security-title">
-				<h2 id="security-title">Tools, Daten und Security</h2>
+				<h2 id="security-title">{locale === 'en' ? 'Tools, data, and security' : 'Tools, Daten und Security'}</h2>
 				{#each page.security as paragraph}<p>{paragraph}</p>{/each}
 			</section>
 
 			<section aria-labelledby="outcome-title">
-				<h2 id="outcome-title">Was nach dem Tag bleibt</h2>
+				<h2 id="outcome-title">{locale === 'en' ? 'What remains after the day' : 'Was nach dem Tag bleibt'}</h2>
 				{#each page.outcome as paragraph}<p>{paragraph}</p>{/each}
 				<p class="article-summary">
-					ALL IN AGI moderiert den Hackathon vor Ort für 15 bis 50 Personen. Im Preis enthalten sind
-					zwei Facilitator, Challenge Design, Demo Day, Follow-up und Lunch. Der passende Umfang wird
-					im Vorbereitungsgespräch anhand von Team, Tool-Stack und Challenges festgelegt.
+					{locale === 'en' ? 'ALL IN AGI facilitates the on-site hackathon for 15 to 50 people. The price includes two facilitators, challenge design, demo day, follow-up, and lunch. We determine the right scope in the preparation call based on the team, tool stack, and challenges.' : 'ALL IN AGI moderiert den Hackathon vor Ort für 15 bis 50 Personen. Im Preis enthalten sind zwei Facilitator, Challenge Design, Demo Day, Follow-up und Lunch. Der passende Umfang wird im Vorbereitungsgespräch anhand von Team, Tool-Stack und Challenges festgelegt.'}
 				</p>
 			</section>
 		{:else}
@@ -349,14 +355,14 @@
 			{/each}
 
 			<section aria-labelledby="related-title">
-				<h2 id="related-title">Weiterlesen</h2>
+				<h2 id="related-title">{locale === 'en' ? 'Keep reading' : 'Weiterlesen'}</h2>
 				<ul class="related-links">
-					{#each relatedPages as related}<li><a href={`/${related.slug}`}>{related.footerLabel}</a></li>{/each}
+					{#each relatedPages as related}<li><a href={localizedPath(locale, `/${related.slug}`)}>{related.footerLabel}</a></li>{/each}
 				</ul>
 			</section>
 
 			<section class="article-sources" aria-labelledby="sources-title">
-				<h2 id="sources-title">Quellen</h2>
+				<h2 id="sources-title">{locale === 'en' ? 'Sources' : 'Quellen'}</h2>
 				<ol>
 					{#each page.sources as source}
 						<li id={`source-${source.id}`}>
@@ -369,7 +375,7 @@
 	</div>
 </article>
 
-<ClosingCta />
+<ClosingCta {locale} />
 
 <button
 	class="scroll-top-button"

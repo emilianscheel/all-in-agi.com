@@ -4,6 +4,7 @@ import type { BillingDetails, CodingTool, DeviceProvision, Equipment, EventAddre
 import type { InvoiceSnapshot } from '$lib/invoice';
 import type { LegalDocumentSnapshot, LegalModule } from '$lib/legal';
 import type { CancellationChargeSnapshot } from '$lib/cancellation';
+import type { Locale } from '$lib/i18n';
 
 export type BillingModel = 'legacy_full' | 'deposit_30';
 
@@ -24,6 +25,7 @@ export const hackathonStatus = pgEnum('hackathon_status', [
 export const hackathons = pgTable('hackathons', {
 	id: text('id').primaryKey(),
 	status: hackathonStatus('status').notNull().default('pending'),
+	customerLocale: text('customer_locale').$type<Locale>().notNull().default('de'),
 	companyName: text('company_name').notNull(),
 	contactName: text('contact_name').notNull(),
 	contactEmail: text('contact_email').notNull(),
@@ -99,6 +101,7 @@ export const hackathons = pgTable('hackathons', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
 }, (table) => [
 	check('hackathons_id_format_check', sql`${table.id} ~ '^H[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`),
+	check('hackathons_customer_locale_check', sql`${table.customerLocale} in ('de', 'en')`),
 	check('hackathons_capacity_check', sql`${table.capacity} in (15, 30, 50)`),
 	check('hackathons_device_provision_check', sql`${table.deviceProvision} in ('existing', 'needed')`),
 	check('hackathons_device_count_check', sql`(${table.deviceProvision} = 'existing' and ${table.deviceCount} = 0) or (${table.deviceProvision} = 'needed' and ${table.deviceCount} between 1 and ${table.capacity})`),

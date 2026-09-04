@@ -2,18 +2,21 @@
 	import { PinInput } from 'bits-ui';
 	import { untrack } from 'svelte';
 	import type { ActionData } from './$types';
+	import { page } from '$app/state';
+	import type { Locale } from '$lib/i18n';
 
 	let { form }: { form: ActionData } = $props();
 	let otpValue = $state(untrack(() => (form?.id ?? '').replace(/[^a-z0-9]/gi, '').slice(0, 9)));
+	let locale = $derived((page.data.locale ?? 'de') as Locale);
 </script>
 
 <svelte:head>
-	<title>Buchung verwalten — ALL IN AGI</title>
+	<title>{locale === 'en' ? 'Manage booking' : 'Buchung verwalten'} — ALL IN AGI</title>
 </svelte:head>
 
 <div class="manage-page">
 	<form class="manage-form" method="POST" aria-labelledby="manage-title">
-		<h1 id="manage-title">Buchung verwalten</h1>
+		<h1 id="manage-title">{locale === 'en' ? 'Manage booking' : 'Buchung verwalten'}</h1>
 		<PinInput.Root
 			class="manage-otp"
 			bind:value={otpValue}
@@ -42,7 +45,7 @@
 				</div>
 			{/snippet}
 		</PinInput.Root>
-		<button class="button-primary manage-submit" type="submit">Buchung öffnen</button>
+		<button class="button-primary manage-submit" type="submit">{locale === 'en' ? 'Open booking' : 'Buchung öffnen'}</button>
 		{#if form?.message}<p class="manage-error" role="alert">{form.message}</p>{/if}
 	</form>
 </div>

@@ -18,6 +18,7 @@ import { bookingOverviewRows, type BookingOverviewRowId } from './booking-overvi
 import type { BookingResultSummary } from './booking-ics';
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from './contact';
 import { formatEventTimeRange } from './event-time';
+import { localizedPath } from './i18n';
 
 export const PAGE_WIDTH = 595.28;
 export const PAGE_HEIGHT = 841.89;
@@ -28,8 +29,8 @@ const SITE_ORIGIN = 'https://all-in-agi.com';
 // `t` glyphs in embedded PDFs. Keep the PDF text to its unligated, unkerned glyphs.
 const GOOGLE_SANS_PDF_FEATURES = { liga: false, clig: false, dlig: false, kern: false };
 
-export function hackathonDetailUrl(id: string) {
-	return `${SITE_ORIGIN}/${encodeURIComponent(id)}`;
+export function hackathonDetailUrl(id: string, locale: 'de' | 'en' = 'de') {
+	return `${SITE_ORIGIN}${localizedPath(locale, `/${encodeURIComponent(id)}`)}`;
 }
 
 export function safeText(value: unknown) {
@@ -360,10 +361,11 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 	const { orange, ink, muted, line, surface, white } = context.colors;
 	const price = getPrice(config.capacity, config.venueProvided, config.lunch, config.toolProvision, config.deviceProvision, config.deviceCount);
 	const rows = bookingOverviewRows(config, options.booking);
-	const generatedLabel = `Planungsstand ${new Intl.DateTimeFormat('de-DE').format(generatedAt)}`;
+	const locale = config.locale ?? 'de';
+	const generatedLabel = `${locale === 'en' ? 'Plan generated' : 'Planungsstand'} ${new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE').format(generatedAt)}`;
 	drawBrandChrome(context, generatedLabel);
 	if (options.hackathonId) {
-		const detailUrl = hackathonDetailUrl(options.hackathonId);
+		const detailUrl = hackathonDetailUrl(options.hackathonId, locale);
 		drawQrCode(page, detailUrl, RIGHT - 68, 754, 68);
 		drawRight(page, `all-in-agi.com/${options.hackathonId}`, RIGHT, 742, regular, 6.6, muted);
 	}
@@ -410,9 +412,9 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 		ink,
 		1
 	);
-	page.drawText('60 Minuten - Europe/Berlin', { x: 319, y: 633, font: regular, size: 9, color: muted });
+	page.drawText(locale === 'en' ? '60 minutes - Europe/Berlin' : '60 Minuten - Europe/Berlin', { x: 319, y: 633, font: regular, size: 9, color: muted });
 
-	page.drawText('Ihre Übersicht', { x: LEFT, y: 580, font: bold, size: 16, color: ink });
+	page.drawText(locale === 'en' ? 'Your overview' : 'Ihre Übersicht', { x: LEFT, y: 580, font: bold, size: 16, color: ink });
 	const cardTop = 558;
 	const normalRowHeight = 35;
 	const totalRowHeight = 43;
@@ -427,7 +429,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 		const iconColor = row.total ? orange : muted;
 		drawOverviewIcon(page, row.id, 65, rowBottom + (row.total ? 12 : 9), iconColor, surface);
 		if (row.total) {
-			page.drawText('Gesamt', { x: 91, y: rowBottom + 15, font: bold, size: 14, color: ink });
+			page.drawText(locale === 'en' ? 'Total' : 'Gesamt', { x: 91, y: rowBottom + 15, font: bold, size: 14, color: ink });
 			drawRight(page, row.status, RIGHT - 18, rowBottom + 15, bold, 14, orange);
 		} else {
 			page.drawText(safeText(row.label).toUpperCase(), {
@@ -451,7 +453,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 
 	const supportY = 66;
 	drawRoundedCard(page, LEFT, supportY, RIGHT - LEFT, 39, 12, white);
-	page.drawText('KONTAKT', { x: 62, y: supportY + 25, font: bold, size: 6.3, color: muted });
+	page.drawText(locale === 'en' ? 'CONTACT' : 'KONTAKT', { x: 62, y: supportY + 25, font: bold, size: 6.3, color: muted });
 	drawWrapped(page, config.contactName, 62, supportY + 11, 144, bold, 8.7, ink, 1);
 	drawWrapped(page, config.email, 210, supportY + 11, 190, regular, 8.5, muted, 1);
 	drawRight(page, config.phone, RIGHT - 14, supportY + 11, regular, 8.5, muted);

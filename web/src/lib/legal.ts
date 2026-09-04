@@ -1,4 +1,5 @@
 import type { BookingConfiguration } from './booking';
+import type { Locale } from './i18n';
 
 export const LEGAL_DOCUMENT_VERSION = '2026-08-02.2';
 export const LEGAL_DOCUMENT_STATUS = 'review-required' as const;
@@ -14,6 +15,7 @@ export interface LegalSection {
 }
 
 export interface LegalDocumentSnapshot {
+	locale?: Locale;
 	version: string;
 	contentHash: string;
 	modules: LegalModule[];
@@ -152,6 +154,36 @@ export const MODULE_LEGAL_SECTIONS: LegalSection[] = [
 	}
 ];
 
+export const EN_BASE_LEGAL_SECTIONS: LegalSection[] = [
+	{ id: 'scope', title: '1. Provider, scope, and business-customer status', paragraphs: ['These Terms and Conditions govern B2B hackathons and related services supplied by Emilian Scheel, trading as ALL IN AGI, Moosdorfstraße 10, 12435 Berlin, Germany (“ALL IN AGI”).', 'The offer is exclusively for entrepreneurs within Section 14 of the German Civil Code, legal entities under public law, and special funds under public law. The person submitting the request confirms that they are authorized to act for the named company.', 'The standard hackathon is a closed company event for adult participants invited by the customer. Public events, minors, and alcohol require a separate written agreement.'] },
+	{ id: 'formation', title: '2. Request, preparation call, and contract formation', paragraphs: ['The online configuration and date reservation are a non-binding request, not an acceptance or booking confirmation. The displayed price is the basis for the preparation call.', 'A contract is formed when the customer and ALL IN AGI orally agree to the summarized services during the preparation call. ALL IN AGI records the approving parties, time, configuration, price, included modules, and Terms version, and promptly sends confirmation in text form.', 'Either party may withdraw without charge by informal email until two Berlin business days after the recorded agreement. This contractual exit right is not a statutory consumer right of withdrawal.'] },
+	{ id: 'services', title: '3. Services and customer responsibilities', paragraphs: ['The frozen service confirmation and its selected modules define the scope. General website or presentation content is included only when the confirmation references it.', 'The customer provides an authorized contact, agreed access and information, suitable rooms, stable Wi-Fi, a large display, and customer devices with the required permissions.', 'Changes to date, attendance, address, demo setup, or tools require documented confirmation.'] },
+	{ id: 'payment', title: '4. Fees, VAT, and payment', paragraphs: ['Prices are net plus legally applicable VAT. The service confirmation states net fee, VAT, and gross total.', 'After contract formation, 30 percent of the net fee plus VAT is invoiced with seven calendar days for payment. The final invoice is issued after the event, credits the deposit received, and is due within 14 calendar days.', 'German statutory rules apply to late payment, set-off, and retention.'] },
+	{ id: 'cancellation', title: '5. Cancellation by the customer', paragraphs: ['After the free two-day exit period, the customer may cancel in text form.', 'For cancellation received at least 14 calendar days before the event, liquidated damages are €1,000 net for 15 participants, €1,500 net for 30 participants, or €2,000 net for 50 participants.', 'For later cancellation, 100 percent of the agreed net fee is payable less saved expenses and replacement revenue. The customer may prove lower damage; ALL IN AGI may prove higher actual damage. Deposits are credited and excess amounts refunded.'] },
+	{ id: 'reschedule', title: '6. Rescheduling, impediments, and force majeure', paragraphs: ['Rescheduling is subject to availability and nonrecoverable third-party costs. There is no entitlement to a particular replacement date.', 'ALL IN AGI may replace named facilitators with suitably qualified people. If a material service becomes permanently impossible, the customer may withdraw from that portion and receives a refund for services not supplied.', 'For events beyond either party’s reasonable control, the parties first seek a replacement date; otherwise completed work and expressly approved nonrecoverable costs are settled.'] },
+	{ id: 'conduct', title: '7. Safety, conduct, and exclusion', paragraphs: ['The customer ensures participants follow safety, premises, confidentiality, and usage rules. ALL IN AGI may exclude anyone creating a concrete danger, serious disruption, unlawful conduct, or repeated breach of safety instructions.', 'Emergencies and damage must be reported immediately. Mandatory occupational health and safety duties remain unaffected.'] },
+	{ id: 'confidentiality', title: '8. Confidentiality, work product, and third-party rights', paragraphs: ['Both parties keep confidential information secret and use it only to perform the contract, subject to customary exceptions for public, previously known, or independently developed information.', 'Rights in concepts, source code, data, and other work remain with their respective creator or owner. ALL IN AGI receives only the non-exclusive rights required to deliver the event.', 'The customer is responsible for the legality of supplied content, data, and access. Third-party and open-source terms also apply; AI-generated results are not guaranteed to be exclusive, protectable, or error-free.'] },
+	{ id: 'privacy', title: '9. Privacy and photo consent', paragraphs: ['Personal data is processed under the Privacy Notice. If ALL IN AGI processes personal data on the customer’s behalf, the parties enter into a separate agreement under Article 28 GDPR before processing begins.', 'Marketing publication of photos or videos requires separate, voluntary, documented consent that may be withdrawn prospectively. Participation must remain possible without marketing consent.'] },
+	{ id: 'liability', title: '10. Liability', paragraphs: ['ALL IN AGI has unlimited liability for intent, gross negligence, injury to life, body or health, product liability, and guarantees.', 'For a slightly negligent breach of an essential contractual duty, liability is limited to foreseeable loss typical for this contract. Liability for other slight negligence is excluded to the extent permitted by law.', 'These limitations also benefit employees, agents, and legal representatives. Mandatory liability remains unaffected.'] },
+	{ id: 'closing', title: '11. Final provisions', paragraphs: ['German law applies, excluding the UN Convention on Contracts for the International Sale of Goods. Berlin is the exclusive venue where legally permitted under Section 38 of the German Code of Civil Procedure.', 'Individual agreements prevail. Amendments should be recorded in text form for evidence. If a provision is invalid, the remaining provisions continue and statutory law replaces the invalid provision.'] }
+];
+
+export const EN_MODULE_LEGAL_SECTIONS: LegalSection[] = [
+	{ id: 'module-catering', module: 'catering', title: 'Pizza catering', paragraphs: ['ALL IN AGI orders pizza from suitable commercial providers in quantities appropriate for the confirmed attendance. Delivery times and minor reasonable substitutions may depend on the provider.', 'Allergen information is made available. Participants with allergies or intolerances must review it and refrain from eating when uncertain; this does not exclude liability for culpably caused injury.'] },
+	{ id: 'module-tools', module: 'tool_accounts', title: 'AI tool accounts', paragraphs: ['ALL IN AGI supplies only accounts whose terms permit the intended use. Individual assignment is used where required; passwords are not impermissibly shared.', 'No personal data, production data, secrets, or confidential source code may be processed through supplied accounts without a separate approved security and data-processing arrangement.'] },
+	{ id: 'module-photos', module: 'event_photos', title: 'Event photography', paragraphs: ['Photos and protected delivery are limited to the agreed scope and require a valid legal basis. The customer supports a clear no-photo process.', 'Website, social, advertising, or sales use requires separate consent for the named channels and purposes. Prospective withdrawal is implemented promptly on controlled channels.'] }
+];
+
+export function legalVersion(locale: Locale = 'de') {
+	return locale === 'en' ? `${LEGAL_DOCUMENT_VERSION}-en` : LEGAL_DOCUMENT_VERSION;
+}
+
+export function legalSections(locale: Locale = 'de') {
+	return locale === 'en'
+		? { base: EN_BASE_LEGAL_SECTIONS, modules: EN_MODULE_LEGAL_SECTIONS }
+		: { base: BASE_LEGAL_SECTIONS, modules: MODULE_LEGAL_SECTIONS };
+}
+
 export function legalModulesForConfiguration(config: Pick<BookingConfiguration, 'venueProvided' | 'lunch' | 'deviceProvision' | 'toolProvision' | 'eventPhotos'>): LegalModule[] {
 	return [
 		'catering',
@@ -160,12 +192,13 @@ export function legalModulesForConfiguration(config: Pick<BookingConfiguration, 
 	];
 }
 
-export function legalDocumentPlainText(modules: readonly LegalModule[] = LEGAL_MODULES.map(({ id }) => id)) {
+export function legalDocumentPlainText(modules: readonly LegalModule[] = LEGAL_MODULES.map(({ id }) => id), locale: Locale = 'de') {
 	const selected = new Set(modules);
-	const sections = [...BASE_LEGAL_SECTIONS, ...MODULE_LEGAL_SECTIONS.filter((section) => section.module && selected.has(section.module))];
+	const localized = legalSections(locale);
+	const sections = [...localized.base, ...localized.modules.filter((section) => section.module && selected.has(section.module))];
 	return [
-		'ALLGEMEINE GESCHÄFTSBEDINGUNGEN FÜR AGENTIC ENGINEERING HACKATHONS',
-		`Version ${LEGAL_DOCUMENT_VERSION}`,
+		locale === 'en' ? 'TERMS AND CONDITIONS FOR AGENTIC ENGINEERING HACKATHONS' : 'ALLGEMEINE GESCHÄFTSBEDINGUNGEN FÜR AGENTIC ENGINEERING HACKATHONS',
+		`Version ${legalVersion(locale)}`,
 		'',
 		...sections.flatMap((section) => [section.title, ...section.paragraphs, ...(section.items ?? []).map((item) => `- ${item}`), ''])
 	].join('\n').trim();

@@ -3,7 +3,7 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type { Map as MapLibreMap, MapStyleImageMissingEvent, Marker as MapLibreMarker } from 'maplibre-gl';
 
-	let { latitude, longitude, children }: { latitude?: number; longitude?: number; children?: Snippet } = $props();
+	let { latitude, longitude, children, locale = 'de' }: { latitude?: number; longitude?: number; children?: Snippet; locale?: 'de' | 'en' } = $props();
 	let container: HTMLDivElement;
 	let map: MapLibreMap | undefined;
 	let marker: MapLibreMarker | undefined;
@@ -65,10 +65,10 @@
 	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); marker?.remove(); map?.remove(); });
 </script>
 
-<div class="map-shell" aria-label="Vorschau des Veranstaltungsorts">
+<div class="map-shell" aria-label={locale === 'en' ? 'Event location preview' : 'Vorschau des Veranstaltungsorts'}>
 	<div class="map-canvas" bind:this={container}></div>
 	{#if status !== 'ready'}
-		<div class="map-status"><span class="map-status-icon">⌖</span>{status === 'loading' ? 'Kartenvorschau wird geladen …' : 'Kartenvorschau ist gerade nicht verfügbar'}</div>
+		<div class="map-status"><span class="map-status-icon">⌖</span>{status === 'loading' ? (locale === 'en' ? 'Loading map preview…' : 'Kartenvorschau wird geladen …') : (locale === 'en' ? 'The map preview is currently unavailable' : 'Kartenvorschau ist gerade nicht verfügbar')}</div>
 	{/if}
 	{@render children?.()}
 </div>

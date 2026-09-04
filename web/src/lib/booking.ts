@@ -1,4 +1,5 @@
 import { isValidEventTimeRange } from './event-time';
+import type { Locale } from './i18n';
 
 export type Capacity = 15 | 30 | 50;
 export type Equipment = 'projector' | 'tv' | 'none';
@@ -45,6 +46,7 @@ export interface BillingDetails {
 }
 
 export interface BookingConfiguration {
+	locale?: Locale;
 	capacity: Capacity;
 	venueProvided: boolean;
 	equipment: Equipment;
@@ -151,19 +153,19 @@ export function hackathonCalendarLocation(config: BookingConfiguration) {
 		: undefined;
 }
 
-export function formatPrice(value: number) {
-	return new Intl.NumberFormat('de-DE', {
+export function formatPrice(value: number, locale: Locale = 'de') {
+	return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'de-DE', {
 		style: 'currency',
 		currency: 'EUR',
 		maximumFractionDigits: 0
 	}).format(value);
 }
 
-export function formatDate(value: string, withTime = false) {
-	if (!value) return 'Noch offen';
+export function formatDate(value: string, withTime = false, locale: Locale = 'de') {
+	if (!value) return locale === 'en' ? 'Not set' : 'Noch offen';
 	const date = new Date(value);
-	if (Number.isNaN(date.getTime())) return 'Noch offen';
-	return new Intl.DateTimeFormat('de-DE', {
+	if (Number.isNaN(date.getTime())) return locale === 'en' ? 'Not set' : 'Noch offen';
+	return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'de-DE', {
 		weekday: 'short',
 		day: '2-digit',
 		month: 'short',
@@ -176,63 +178,68 @@ export function formatDate(value: string, withTime = false) {
 
 export function validateConfiguration(config: BookingConfiguration) {
 	const errors: string[] = [];
-	if (![15, 30, 50].includes(config.capacity)) errors.push('Bitte wählen Sie eine gültige Teamgröße.');
-	if (typeof config.venueProvided !== 'boolean') errors.push('Bitte wählen Sie einen Veranstaltungsort.');
-	if (!['projector', 'tv', 'none'].includes(config.equipment)) errors.push('Bitte wählen Sie ein gültiges Demo Setup.');
-	if (!['pizza', 'custom', 'none', 'self-organized'].includes(config.lunch)) errors.push('Bitte wählen Sie eine gültige Lunch-Option.');
-	if (!config.companyName.trim()) errors.push('Bitte geben Sie den Unternehmensnamen an.');
-	if (!config.contactName.trim()) errors.push('Bitte geben Sie eine Ansprechperson an.');
-	if (!/^\S+@\S+\.\S+$/.test(config.email)) errors.push('Bitte geben Sie eine gültige E-Mail-Adresse an.');
-	if (config.phone.replace(/\D/g, '').length < 6) errors.push('Bitte geben Sie eine gültige Telefonnummer an.');
-	if (typeof config.message !== 'string' || config.message.length > 500) errors.push('Ihre Nachricht darf maximal 500 Zeichen lang sein.');
+	const en = config.locale === 'en';
+	const message = (de: string, english: string) => en ? english : de;
+	if (config.locale !== undefined && config.locale !== 'de' && config.locale !== 'en') errors.push(message('Die Spracheinstellung ist ungültig.', 'The language setting is invalid.'));
+	if (![15, 30, 50].includes(config.capacity)) errors.push(message('Bitte wählen Sie eine gültige Teamgröße.', 'Please select a valid team size.'));
+	if (typeof config.venueProvided !== 'boolean') errors.push(message('Bitte wählen Sie einen Veranstaltungsort.', 'Please select an event location.'));
+	if (!['projector', 'tv', 'none'].includes(config.equipment)) errors.push(message('Bitte wählen Sie ein gültiges Demo Setup.', 'Please select a valid demo setup.'));
+	if (!['pizza', 'custom', 'none', 'self-organized'].includes(config.lunch)) errors.push(message('Bitte wählen Sie eine gültige Lunch-Option.', 'Please select a valid lunch option.'));
+	if (!config.companyName.trim()) errors.push(message('Bitte geben Sie den Unternehmensnamen an.', 'Please enter the company name.'));
+	if (!config.contactName.trim()) errors.push(message('Bitte geben Sie eine Ansprechperson an.', 'Please enter a contact person.'));
+	if (!/^\S+@\S+\.\S+$/.test(config.email)) errors.push(message('Bitte geben Sie eine gültige E-Mail-Adresse an.', 'Please enter a valid email address.'));
+	if (config.phone.replace(/\D/g, '').length < 6) errors.push(message('Bitte geben Sie eine gültige Telefonnummer an.', 'Please enter a valid phone number.'));
+	if (typeof config.message !== 'string' || config.message.length > 500) errors.push(message('Ihre Nachricht darf maximal 500 Zeichen lang sein.', 'Your message may contain no more than 500 characters.'));
 	if (!config.address.street.trim() || !config.address.postalCode.trim() || !config.address.city.trim()) {
-		errors.push('Bitte vervollständigen Sie die Veranstaltungsadresse.');
+		errors.push(message('Bitte vervollständigen Sie die Veranstaltungsadresse.', 'Please complete the event address.'));
 	}
-	if (typeof config.eventPhotos !== 'boolean') errors.push('Die Fotoeinstellung ist ungültig.');
-	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.');
+	if (typeof config.eventPhotos !== 'boolean') errors.push(message('Die Fotoeinstellung ist ungültig.', 'The event photography setting is invalid.'));
+	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push(message('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.', 'Please select an available future hackathon date.'));
 	const consultationDate = new Date(config.consultationSlot);
-	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.');
-	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push('Bitte beschreiben Sie Ihren Catering-Wunsch.');
+	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push(message('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.', 'Please select a future preparation call time.'));
+	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push(message('Bitte beschreiben Sie Ihren Catering-Wunsch.', 'Please describe your catering preference.'));
 	if (!config.toolProvision || !['existing', 'needed'].includes(config.toolProvision)) {
-		errors.push('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.');
+		errors.push(message('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.', 'Please specify whether coding tools are available.'));
 	}
 	const codingTools = Array.isArray(config.codingTools) ? config.codingTools : [];
 	const validCodingTools = new Set(CODING_TOOLS.map(({ id }) => id));
-	if (!codingTools.length) errors.push('Bitte wählen Sie mindestens ein Coding Tool.');
-	else if (codingTools.some((tool) => !validCodingTools.has(tool))) errors.push('Die Auswahl der Coding Tools ist ungültig.');
-	else if (config.toolProvision === 'needed' && codingTools.some((tool) => !PROVIDED_CODING_TOOLS.includes(tool))) errors.push('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.');
-	if (codingTools.includes('custom') && !config.customCodingTool?.trim()) errors.push('Bitte geben Sie das individuelle Coding Tool an.');
+	if (!codingTools.length) errors.push(message('Bitte wählen Sie mindestens ein Coding Tool.', 'Please select at least one coding tool.'));
+	else if (codingTools.some((tool) => !validCodingTools.has(tool))) errors.push(message('Die Auswahl der Coding Tools ist ungültig.', 'The coding tool selection is invalid.'));
+	else if (config.toolProvision === 'needed' && codingTools.some((tool) => !PROVIDED_CODING_TOOLS.includes(tool))) errors.push(message('Für den Tag können nur Codex, Cursor oder Claude Code bereitgestellt werden.', 'Only Codex, Cursor, or Claude Code can be provided for the event day.'));
+	if (codingTools.includes('custom') && !config.customCodingTool?.trim()) errors.push(message('Bitte geben Sie das individuelle Coding Tool an.', 'Please enter the custom coding tool.'));
 	if (!config.deviceProvision || !['existing', 'needed'].includes(config.deviceProvision)) {
-		errors.push('Bitte wählen Sie aus, ob Geräte vorhanden sind.');
+		errors.push(message('Bitte wählen Sie aus, ob Geräte vorhanden sind.', 'Please specify whether devices are available.'));
 	} else if (!Number.isInteger(config.deviceCount)) {
-		errors.push('Bitte geben Sie eine gültige ganze Geräteanzahl an.');
+		errors.push(message('Bitte geben Sie eine gültige ganze Geräteanzahl an.', 'Please enter a valid whole number of devices.'));
 	} else if (config.deviceProvision === 'existing' && config.deviceCount !== 0) {
-		errors.push('Bei eigenen Geräten muss die Geräteanzahl 0 sein.');
+		errors.push(message('Bei eigenen Geräten muss die Geräteanzahl 0 sein.', 'The device count must be zero when using your own devices.'));
 	} else if (config.deviceProvision === 'needed' && (config.deviceCount < 1 || config.deviceCount > config.capacity)) {
-		errors.push(`Bitte wählen Sie zwischen 1 und ${config.capacity} Geräten.`);
+		errors.push(message(`Bitte wählen Sie zwischen 1 und ${config.capacity} Geräten.`, `Please select between 1 and ${config.capacity} devices.`));
 	}
 	return errors;
 }
 
-export function validateBillingDetails(billing: BillingDetails | null | undefined) {
+export function validateBillingDetails(billing: BillingDetails | null | undefined, locale: Locale = 'de') {
 	const errors: string[] = [];
-	if (!billing?.companyName?.trim() || !billing.contactName?.trim()) errors.push('Bitte vervollständigen Sie die Rechnungsdaten.');
-	if (!/^\S+@\S+\.\S+$/.test(billing?.email ?? '')) errors.push('Bitte geben Sie eine gültige Rechnungs-E-Mail-Adresse an.');
+	const en = locale === 'en';
+	if (!billing?.companyName?.trim() || !billing.contactName?.trim()) errors.push(en ? 'Please complete the billing details.' : 'Bitte vervollständigen Sie die Rechnungsdaten.');
+	if (!/^\S+@\S+\.\S+$/.test(billing?.email ?? '')) errors.push(en ? 'Please enter a valid billing email address.' : 'Bitte geben Sie eine gültige Rechnungs-E-Mail-Adresse an.');
 	if (!billing?.address?.street?.trim() || !billing.address.postalCode?.trim() || !billing.address.city?.trim()) {
-		errors.push('Bitte vervollständigen Sie die Rechnungsanschrift.');
+		errors.push(en ? 'Please complete the billing address.' : 'Bitte vervollständigen Sie die Rechnungsanschrift.');
 	}
 	return errors;
 }
 
 export function validateInquiryConfiguration(config: BookingConfiguration) {
 	const errors = validateConfiguration(config);
-	if (config.venueProvided !== STANDARD_HACKATHON_OPTIONS.venueProvided) errors.push('Hackathons finden ausschließlich in den Räumen des Kunden statt.');
-	if (config.lunch !== STANDARD_HACKATHON_OPTIONS.lunch || config.customLunch !== '') errors.push('Im Standardangebot ist ausschließlich Pizza-Catering vorgesehen.');
-	if (config.deviceProvision !== STANDARD_HACKATHON_OPTIONS.deviceProvision || config.deviceCount !== 0) errors.push('Für den Hackathon werden ausschließlich Kundengeräte verwendet.');
-	if (config.eventPhotos !== STANDARD_HACKATHON_OPTIONS.eventPhotos) errors.push('Der Eventfoto-Service ist Bestandteil des Standardangebots.');
+	const en = config.locale === 'en';
+	if (config.venueProvided !== STANDARD_HACKATHON_OPTIONS.venueProvided) errors.push(en ? 'Hackathons take place exclusively at the customer’s premises.' : 'Hackathons finden ausschließlich in den Räumen des Kunden statt.');
+	if (config.lunch !== STANDARD_HACKATHON_OPTIONS.lunch || config.customLunch !== '') errors.push(en ? 'The standard offer includes pizza catering only.' : 'Im Standardangebot ist ausschließlich Pizza-Catering vorgesehen.');
+	if (config.deviceProvision !== STANDARD_HACKATHON_OPTIONS.deviceProvision || config.deviceCount !== 0) errors.push(en ? 'The hackathon uses customer-provided devices only.' : 'Für den Hackathon werden ausschließlich Kundengeräte verwendet.');
+	if (config.eventPhotos !== STANDARD_HACKATHON_OPTIONS.eventPhotos) errors.push(en ? 'Event photography is part of the standard offer.' : 'Der Eventfoto-Service ist Bestandteil des Standardangebots.');
 	return errors;
 }
 
 export function validateContractReadiness(config: BookingConfiguration) {
-	return [...validateConfiguration(config), ...validateBillingDetails(config.billing)];
+	return [...validateConfiguration(config), ...validateBillingDetails(config.billing, config.locale)];
 }

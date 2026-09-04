@@ -2,11 +2,13 @@
 // for information about these interfaces
 import type { AuthSession } from '$lib/server/auth';
 import type { AdminAccessState } from '$lib/server/admin-auth';
+import type { Locale } from '$lib/i18n';
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
+			locale: Locale;
 			session: AuthSession['session'] | null;
 			user: AuthSession['user'] | null;
 			admin: AdminAccessState;

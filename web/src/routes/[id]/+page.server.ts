@@ -2,11 +2,12 @@ import { isHackathonId } from '$lib/public-id';
 import { getCustomerHackathonRecord, toPublicHackathon } from '$lib/server/hackathons';
 import { error, redirect } from '@sveltejs/kit';
 import { finalizeDueContracts } from '$lib/server/legal-contracts';
+import { localizedPath } from '$lib/i18n';
 
 export async function load({ params, locals }) {
 	const canonicalId = params.id.toUpperCase();
 	if (!isHackathonId(canonicalId)) error(404, 'Hackathon nicht gefunden');
-	if (params.id !== canonicalId) redirect(308, `/${canonicalId}`);
+	if (params.id !== canonicalId) redirect(308, localizedPath(locals.locale, `/${canonicalId}`));
 	await finalizeDueContracts();
 	const record = await getCustomerHackathonRecord(canonicalId);
 	if (!record) error(404, 'Hackathon nicht gefunden');

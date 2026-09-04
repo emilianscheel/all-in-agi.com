@@ -123,12 +123,12 @@ function normalizeConfirmationError(error: unknown) {
           );
 }
 
-export function bookingDetailUrl(id: string) {
-    return hackathonDetailUrl(id);
+export function bookingDetailUrl(id: string, locale: 'de' | 'en' = 'de') {
+    return hackathonDetailUrl(id, locale);
 }
 
 function rowText(row: ReturnType<typeof bookingOverviewRows>[number]) {
-    return `- ${row.label}: ${row.value}${row.status === "Inklusive" ? "" : ` — ${row.status}`}`;
+	return `- ${row.label}: ${row.value}${row.status === "Inklusive" || row.status === 'Included' ? "" : ` — ${row.status}`}`;
 }
 
 function escapeHtml(value: string) {
@@ -144,28 +144,29 @@ export function buildBookingConfirmationText(
     input: BookingConfirmationInput,
     role: BookingConfirmationRecipientRole = "customer",
 ) {
-    const rows = bookingOverviewRows(input.config, input.booking);
     const customer = role === "customer";
+	const english = customer && input.config.locale === 'en';
+	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
     const content = [
-        customer ? `Hallo ${input.config.contactName},` : "Hallo ALL IN AGI,",
+		customer ? (english ? `Hello ${input.config.contactName},` : `Hallo ${input.config.contactName},`) : "Hallo ALL IN AGI,",
         "",
         customer
-			? "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht."
+			? (english ? 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
 			: "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.",
         "",
         ...rows.map(rowText),
         "",
-		`Anfrage ansehen: ${bookingDetailUrl(input.id)}`,
+		`${english ? 'View inquiry' : 'Anfrage ansehen'}: ${bookingDetailUrl(input.id, english ? 'en' : 'de')}`,
     ];
 
     if (customer) {
         content.push(
             "",
-            "Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.",
-            `Telefon: ${CONTACT_PHONE_DISPLAY} (tel:${CONTACT_PHONE_HREF})`,
-            `E-Mail: ${CONTACT_EMAIL} (mailto:${CONTACT_EMAIL})`,
+			english ? 'Please contact us at any time if you have questions or would like to make changes.' : "Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.",
+			`${english ? 'Phone' : 'Telefon'}: ${CONTACT_PHONE_DISPLAY} (tel:${CONTACT_PHONE_HREF})`,
+			`${english ? 'Email' : 'E-Mail'}: ${CONTACT_EMAIL} (mailto:${CONTACT_EMAIL})`,
             "",
-            "Wir freuen uns auf Sie!",
+			english ? 'We look forward to working with you!' : "Wir freuen uns auf Sie!",
         );
     }
 
@@ -177,25 +178,27 @@ export function buildBookingConfirmationHtml(
     input: BookingConfirmationInput,
     role: BookingConfirmationRecipientRole = "customer",
 ) {
-    const customer = role === "customer";
-    const rows = bookingOverviewRows(input.config, input.booking);
-    const detailUrl = escapeHtml(bookingDetailUrl(input.id));
+	const customer = role === "customer";
+	const english = customer && input.config.locale === 'en';
+	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
+	const detailUrl = escapeHtml(bookingDetailUrl(input.id, english ? 'en' : 'de'));
     const options = rows
         .map((row) => {
-            const status = row.status === "Inklusive" ? "" : ` — ${escapeHtml(row.status)}`;
+			const status = row.status === "Inklusive" || row.status === 'Included' ? "" : ` — ${escapeHtml(row.status)}`;
             return `<strong>${escapeHtml(row.label)}:</strong> ${escapeHtml(row.value)}${status}`;
         })
         .join("<br>");
     const contact = customer
-        ? `<p>Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
+		? (english ? `<p>Please contact us at any time if you have questions or would like to make changes.</p>
+			<p><strong>Phone:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>Email:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p><p>We look forward to working with you!</p>` : `<p>Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
 			<p><strong>Telefon:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>E-Mail:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p>
-			<p>Wir freuen uns auf Sie!</p>`
+			<p>Wir freuen uns auf Sie!</p>`)
         : "";
 
-    return `<p>${customer ? `Hallo ${escapeHtml(input.config.contactName)},` : "Hallo ALL IN AGI,"}</p>
-	<p>${customer ? "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht." : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
+	return `<p>${customer ? (english ? `Hello ${escapeHtml(input.config.contactName)},` : `Hallo ${escapeHtml(input.config.contactName)},`) : "Hallo ALL IN AGI,"}</p>
+	<p>${customer ? (english ? 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.") : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
 	<p>${options}</p>
-	<p><a href="${detailUrl}">Anfrage ansehen</a></p>
+	<p><a href="${detailUrl}">${english ? 'View inquiry' : 'Anfrage ansehen'}</a></p>
 	${contact}
 	<p><br><br></p>`;
 }
@@ -215,7 +218,7 @@ async function prepareBookingConfirmation(
         calendar = (dependencies.createCalendar ?? createPrepCallIcs)(
             input.config,
             input.booking,
-            bookingDetailUrl(input.id),
+			bookingDetailUrl(input.id, input.config.locale ?? 'de'),
         );
     } catch (cause) {
         throw new BookingConfirmationEmailError(
@@ -231,8 +234,8 @@ async function prepareBookingConfirmation(
     try {
         return {
             subject:
-                role === "customer"
-					? `Eingang Ihrer Hackathon-Anfrage ${input.id}`
+				role === "customer"
+					? (input.config.locale === 'en' ? `Your hackathon inquiry ${input.id}` : `Eingang Ihrer Hackathon-Anfrage ${input.id}`)
 					: `Neue Hackathon-Anfrage ${input.id}`,
             text: buildBookingConfirmationText(input, role),
             html: buildBookingConfirmationHtml(input, role),
@@ -240,7 +243,7 @@ async function prepareBookingConfirmation(
             attachments: [
                 {
                     content: bytesToBase64(new TextEncoder().encode(calendar)),
-                    filename: "Vorbereitungsgespräch.ics",
+					filename: input.config.locale === 'en' ? 'Preparation-call.ics' : "Vorbereitungsgespräch.ics",
                     type: "text/calendar; charset=utf-8",
                     disposition: "attachment",
                 },

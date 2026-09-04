@@ -10,6 +10,7 @@
 		type HackathonAvailabilityResponse
 	} from '$lib/hackathon-availability';
 	import { berlinInputsFromIso } from '$lib/event-time';
+	import type { Locale } from '$lib/i18n';
 
 	let {
 		eventStart = '',
@@ -17,6 +18,7 @@
 		minValue,
 		maxValue,
 		hackathonId,
+		locale = 'de',
 		onloadingchange = () => {},
 		onchange
 	}: {
@@ -25,6 +27,7 @@
 		minValue: string;
 		maxValue: string;
 		hackathonId?: string;
+		locale?: Locale;
 		onloadingchange?: (loading: boolean) => void;
 		onchange: (value: { eventStart: string; eventEnd: string }) => void;
 	} = $props();
@@ -127,18 +130,18 @@
 		{minValue}
 		{maxValue}
 		{availableDates}
-		calendarLabel="Datum für den Hackathon"
-		emptyText="Bitte wählen Sie den Hackathontag."
+		calendarLabel={locale === 'en' ? 'Hackathon date' : 'Datum für den Hackathon'}
+		emptyText={locale === 'en' ? 'Please select the hackathon date.' : 'Bitte wählen Sie den Hackathontag.'}
 		onmonthchange={loadAvailability}
 		onchange={selectDate}
 	/>
 	{#if loading}
-		<p class="slot-status" aria-live="polite">Freie Hackathon-Termine werden geladen …</p>
+		<p class="slot-status" aria-live="polite">{locale === 'en' ? 'Loading available hackathon dates …' : 'Freie Hackathon-Termine werden geladen …'}</p>
 	{:else if loadError}
 		<p class="slot-status" role="alert">{loadError}</p>
-		<button class="button-secondary" type="button" onclick={() => loadAvailability(currentMonth, true)}>Neu laden</button>
+		<button class="button-secondary" type="button" onclick={() => loadAvailability(currentMonth, true)}>{locale === 'en' ? 'Reload' : 'Neu laden'}</button>
 	{:else if availableDates.length === 0}
-		<p class="slot-status">In diesem Zeitraum sind keine Hackathon-Termine verfügbar.</p>
+		<p class="slot-status">{locale === 'en' ? 'No hackathon dates are available in this period.' : 'In diesem Zeitraum sind keine Hackathon-Termine verfügbar.'}</p>
 	{:else if selectedDate}
 		<div class="hackathon-slot-combinations">
 			<div class="slots">

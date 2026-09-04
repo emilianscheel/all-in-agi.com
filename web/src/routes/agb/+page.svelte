@@ -4,11 +4,13 @@
 	import { Check, Download, Printer } from 'lucide-svelte';
 	import SeoHead from '$lib/SeoHead.svelte';
 	import {
-		BASE_LEGAL_SECTIONS,
 		LEGAL_MODULES,
-		MODULE_LEGAL_SECTIONS,
+		legalSections,
 		type LegalModule
 	} from '$lib/legal';
+	import { localizedPath, type Locale } from '$lib/i18n';
+	let locale = $derived((page.data.locale ?? 'de') as Locale);
+	let sections = $derived(legalSections(locale));
 
 	const parameterName = 'module';
 	let initializedFromUrl = false;
@@ -39,16 +41,17 @@
 </script>
 
 <SeoHead
-	title="Allgemeine Geschäftsbedingungen | ALL IN AGI"
-	description="Allgemeine Geschäftsbedingungen und Leistungsbedingungen für Hackathons von ALL IN AGI."
+	title={locale === 'en' ? 'Terms and Conditions | ALL IN AGI' : 'Allgemeine Geschäftsbedingungen | ALL IN AGI'}
+	description={locale === 'en' ? 'Terms and service conditions for ALL IN AGI hackathons.' : 'Allgemeine Geschäftsbedingungen und Leistungsbedingungen für Hackathons von ALL IN AGI.'}
 	path="/agb"
+	{locale}
 />
 
 <div class="simple-page legal-page">
 	<article class="simple-card legal-card">
 		<header class="legal-heading">
-			<h1>Allgemeine Geschäftsbedingungen</h1>
-			<p>Allgemeine Geschäftsbedingungen für Agentic Engineering Hackathons von Emilian Scheel, handelnd unter ALL IN AGI.</p>
+			<h1>{locale === 'en' ? 'Terms and Conditions' : 'Allgemeine Geschäftsbedingungen'}</h1>
+			<p>{locale === 'en' ? 'Terms and Conditions for Agentic Engineering Hackathons supplied by Emilian Scheel, trading as ALL IN AGI.' : 'Allgemeine Geschäftsbedingungen für Agentic Engineering Hackathons von Emilian Scheel, handelnd unter ALL IN AGI.'}</p>
 		</header>
 
 		<section class="legal-filter" aria-label="Angezeigte Leistungsbedingungen">
@@ -57,22 +60,22 @@
 					<label class="coding-tool-option">
 						<input type="checkbox" checked={selected.includes(module.id)} onchange={() => toggle(module.id)} />
 						<span class="round-checkbox" aria-hidden="true">{#if selected.includes(module.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
-						<span class="coding-tool-label">{module.label}</span>
+						<span class="coding-tool-label">{locale === 'en' ? ({ venue: 'Venue', catering: 'Pizza catering', organizer_devices: 'Organizer devices', tool_accounts: 'AI tool accounts', event_photos: 'Event photography' } as const)[module.id] : module.label}</span>
 					</label>
 				{/each}
 			</div>
 		</section>
 
 		<div class="legal-actions" aria-label="Dokumentaktionen">
-			<button type="button" onclick={() => window.print()}><Printer size={17} />Drucken / als PDF sichern</button>
-			<a href="/agb.txt" download><Download size={17} />Volltext herunterladen</a>
+			<button type="button" onclick={() => window.print()}><Printer size={17} />{locale === 'en' ? 'Print / save as PDF' : 'Drucken / als PDF sichern'}</button>
+			<a href={localizedPath(locale, '/agb.txt')} download><Download size={17} />{locale === 'en' ? 'Download full text' : 'Volltext herunterladen'}</a>
 		</div>
 
 		<section class="legal-content" aria-label="Allgemeine Geschäftsbedingungen">
-			{#each BASE_LEGAL_SECTIONS as section}
+			{#each sections.base as section}
 				<section id={section.id} class="legal-section"><h2>{section.title}</h2>{#each section.paragraphs as paragraph}<p>{paragraph}</p>{/each}</section>
 			{/each}
-			{#each MODULE_LEGAL_SECTIONS.filter((section) => section.module && selected.includes(section.module)) as section}
+			{#each sections.modules.filter((section) => section.module && selected.includes(section.module)) as section}
 				<section id={section.id} class="legal-section legal-module-section"><h2>{section.title}</h2>{#each section.paragraphs as paragraph}<p>{paragraph}</p>{/each}</section>
 			{/each}
 		</section>

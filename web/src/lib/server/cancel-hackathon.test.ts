@@ -4,7 +4,7 @@ import type { HackathonRecord } from './hackathons';
 
 function cancellationRecord(): HackathonRecord {
 	return {
-		id: 'HAA-AAA-AAA', status: 'confirmed', companyName: 'Musterwerke', contactName: 'Ada', contactEmail: 'ada@example.com', contactPhone: '', message: '',
+		id: 'HAA-AAA-AAA', status: 'confirmed', customerLocale: 'de', companyName: 'Musterwerke', contactName: 'Ada', contactEmail: 'ada@example.com', contactPhone: '', message: '',
 		capacity: 15, venueProvided: true, equipment: 'projector', lunch: 'pizza', customLunch: '', toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '', deviceProvision: 'existing', deviceCount: 0,
 		eventPhotos: true, billing: null, businessCustomerConfirmed: false, authorityConfirmed: false,
 		legalModules: null, legalVersion: null, legalContentHash: null, legalSnapshot: null, legalAcknowledgedAt: null,

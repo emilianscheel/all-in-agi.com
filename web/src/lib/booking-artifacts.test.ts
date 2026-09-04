@@ -17,7 +17,7 @@ describe('booking artifacts', () => {
 	});
 
 	test('uses the canonical hackathon detail URL', () => {
-		expect(hackathonDetailUrl('HAA-AAA-AAA')).toBe('https://all-in-agi.com/HAA-AAA-AAA');
+		expect(hackathonDetailUrl('HAA-AAA-AAA')).toBe('https://all-in-agi.com/de/HAA-AAA-AAA');
 	});
 
 	test('creates a 60 minute ICS event', () => {

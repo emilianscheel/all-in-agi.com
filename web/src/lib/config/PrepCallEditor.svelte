@@ -4,6 +4,7 @@
 	import EventDateCalendar from '$lib/EventDateCalendar.svelte';
 	import PrepCallTimePicker from '$lib/PrepCallTimePicker.svelte';
 	import { formatDate } from '$lib/booking';
+	import type { Locale } from '$lib/i18n';
 	import {
 		availablePrepCallDates,
 		normalizeAvailabilitySlots,
@@ -20,6 +21,7 @@
 		oncustomdatechange,
 		onloadingchange = () => {},
 		clearUnavailableValue = false
+		,locale = 'de'
 	}: {
 		value: string;
 		mode: 'quick' | 'custom';
@@ -29,6 +31,7 @@
 		oncustomdatechange: (value: string) => void;
 		onloadingchange?: (loading: boolean) => void;
 		clearUnavailableValue?: boolean;
+		locale?: Locale;
 	} = $props();
 
 	let slots = $state<string[]>([]);
@@ -82,14 +85,14 @@
 </script>
 
 {#if loading}
-	<p class="slot-status">Freie Termine werden geladen …</p>
+	<p class="slot-status">{locale === 'en' ? 'Loading available times …' : 'Freie Termine werden geladen …'}</p>
 {:else if slots.length === 0}
-	<p class="slot-status">{loadError || 'Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.'}</p>
-	<button class="button-secondary" type="button" onclick={loadAvailability}>Neu laden</button>
+	<p class="slot-status">{loadError || (locale === 'en' ? 'No times are currently available. Please try again later.' : 'Aktuell sind keine Termine verfügbar. Bitte versuchen Sie es später erneut.')}</p>
+	<button class="button-secondary" type="button" onclick={loadAvailability}>{locale === 'en' ? 'Reload' : 'Neu laden'}</button>
 {:else}
 	<div class="slots">
 		{#each slots.slice(0, 15) as slot}
-			<button type="button" class:selected={mode === 'quick' && value === slot} class="slot" aria-pressed={mode === 'quick' && value === slot} onclick={() => selectQuickSlot(slot)}>{formatDate(slot, true)} Uhr</button>
+			<button type="button" class:selected={mode === 'quick' && value === slot} class="slot" aria-pressed={mode === 'quick' && value === slot} onclick={() => selectQuickSlot(slot)}>{formatDate(slot, true, locale)}{locale === 'de' ? ' Uhr' : ''}</button>
 		{/each}
 		<button type="button" class:selected={mode === 'custom'} class="slot custom-slot" aria-pressed={mode === 'custom'} onclick={selectCustomMode}>Custom</button>
 	</div>
@@ -100,8 +103,8 @@
 				minValue={min}
 				maxValue={max}
 				availableDates={prepCallDates}
-				calendarLabel="Datum für den Prep Call"
-				emptyText="Bitte wählen Sie einen verfügbaren Tag."
+				calendarLabel={locale === 'en' ? 'Preparation call date' : 'Datum für den Prep Call'}
+				emptyText={locale === 'en' ? 'Please select an available day.' : 'Bitte wählen Sie einen verfügbaren Tag.'}
 				onchange={selectCustomDate}
 			/>
 			{#if customDate}<div transition:slide={{ duration: 280 }}><PrepCallTimePicker date={customDate} slots={customSlots} {value} onchange={(slot) => onchange(slot)} /></div>{/if}

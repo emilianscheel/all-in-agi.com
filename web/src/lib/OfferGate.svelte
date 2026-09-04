@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { switchLocalePath, type Locale } from '$lib/i18n';
+	let { locale = 'de' }: { locale?: Locale } = $props();
 	let password = $state('');
 	let errorMessage = $state('');
 	let submitting = $state(false);
@@ -23,9 +26,10 @@
 	<div class="offer-locked-preview" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
 	<div class="offer-lock-overlay">
 		<form class="offer-lock-card" onsubmit={(event) => { event.preventDefault(); void unlock(); }}>
-			<label>Passwort<input type="password" bind:value={password} autocomplete="current-password" /></label>
+			<div class="offer-language"><a class:active={locale === 'de'} href={switchLocalePath(page.url, 'de')}>DE</a><a class:active={locale === 'en'} href={switchLocalePath(page.url, 'en')}>EN</a></div>
+			<label>{locale === 'en' ? 'Password' : 'Passwort'}<input type="password" bind:value={password} autocomplete="current-password" /></label>
 			{#if errorMessage}<span class="offer-lock-error">{errorMessage}</span>{/if}
-			<button type="submit" disabled={submitting}>{submitting ? 'Wird geprüft …' : 'Angebot öffnen'}</button>
+			<button type="submit" disabled={submitting}>{locale === 'en' ? (submitting ? 'Checking …' : 'Open offer') : (submitting ? 'Wird geprüft …' : 'Angebot öffnen')}</button>
 		</form>
 	</div>
 </div>
@@ -43,4 +47,6 @@
 	.offer-lock-card button { width: 100%; margin-top: 17px; padding: 12px; border: 0; border-radius: 10px; background: #ff4f18; color: #fff; font: inherit; font-size: 13px; font-weight: 700; }
 	.offer-lock-card button:disabled { opacity: .6; }
 	.offer-lock-error { display: block; margin-top: 11px; color: #a2290d; font-size: 12px; }
+	.offer-language { display: flex; justify-content: flex-end; gap: 9px; margin-bottom: 14px; font-size: 11px; }
+	.offer-language a { color: #55555b; opacity: .45; } .offer-language a.active { opacity: 1; font-weight: 700; }
 </style>

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Check, Share } from 'lucide-svelte';
 	import { trackAnalyticsEvent } from '$lib/analytics';
-	let { getUrl, label = 'Plan teilen' }: { getUrl: () => Promise<string>; label?: string } = $props();
+	let { getUrl, label, locale = 'de' }: { getUrl: () => Promise<string>; label?: string; locale?: 'de' | 'en' } = $props();
+	let visibleLabel = $derived(label ?? (locale === 'en' ? 'Share plan' : 'Plan teilen'));
 	let state = $state<'idle' | 'copied' | 'error'>('idle');
 	let resetTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -21,5 +22,5 @@
 </script>
 
 <button class="button-secondary action-button" type="button" onclick={copyPlan} aria-live="polite">
-	{#if state === 'copied'}<Check size={18} aria-hidden="true" />Plan-Link kopiert{:else}<Share size={18} aria-hidden="true" />{state === 'error' ? 'Kopieren fehlgeschlagen' : label}{/if}
+	{#if state === 'copied'}<Check size={18} aria-hidden="true" />{locale === 'en' ? 'Plan link copied' : 'Plan-Link kopiert'}{:else}<Share size={18} aria-hidden="true" />{state === 'error' ? (locale === 'en' ? 'Copy failed' : 'Kopieren fehlgeschlagen') : visibleLabel}{/if}
 </button>

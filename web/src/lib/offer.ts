@@ -81,6 +81,7 @@ export const OFFER_SERVICES: readonly OfferService[] = [
 ];
 
 export interface OfferConfiguration {
+	locale?: 'de' | 'en';
     v: 1;
     companyName: string;
     contactName: string;
@@ -101,7 +102,8 @@ function isoDate(date: Date) {
 
 export function defaultOfferConfiguration(now = new Date()): OfferConfiguration {
     return {
-        v: 1,
+		v: 1,
+		locale: 'de',
         companyName: "Hitachi Rail",
         contactName: "Lourdes Diaz Turó",
         contactEmail: "lourdes.diazturo@hitachirail.com",
@@ -140,8 +142,9 @@ export function isOfferConfiguration(value: unknown): value is OfferConfiguratio
         "issueDate",
         "validUntil",
     ];
-    return (
-        config.v === 1 &&
+	return (
+		config.v === 1 &&
+		(config.locale === undefined || config.locale === 'de' || config.locale === 'en') &&
         shortText.every(
             (key) => typeof config[key] === "string" && String(config[key]).length <= 200,
         ) &&

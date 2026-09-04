@@ -2,6 +2,8 @@
 	import { slide } from 'svelte/transition';
 	import { Pencil, X } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
+	import { page } from '$app/state';
+	import type { Locale } from '$lib/i18n';
 
 	let {
 		icon: Icon,
@@ -32,6 +34,7 @@
 	} = $props();
 
 	let editable = $derived(Boolean(editor && onedit));
+	let locale = $derived((page.data.locale ?? 'de') as Locale);
 </script>
 
 <div class:editable-summary-item={editable} class:active class:summary-total={total}>
@@ -43,7 +46,7 @@
 			<button
 				class="summary-edit-button"
 				type="button"
-				aria-label={active ? `${label} schließen` : `${label} bearbeiten`}
+				aria-label={active ? `${label} ${locale === 'en' ? 'close' : 'schließen'}` : `${label} ${locale === 'en' ? 'edit' : 'bearbeiten'}`}
 				aria-expanded={active}
 				onclick={onedit}
 			>
@@ -57,8 +60,8 @@
 			{@render editor()}
 			{#if error}<p class="inline-edit-error" role="alert">{error}</p>{/if}
 			<div class="summary-edit-actions">
-				<button class="button-secondary" type="button" onclick={oncancel} disabled={saving}>Abbrechen</button>
-				<button class="button-primary" type="button" onclick={onsave} disabled={saving}>{saving ? 'Wird gespeichert …' : 'Speichern'}</button>
+				<button class="button-secondary" type="button" onclick={oncancel} disabled={saving}>{locale === 'en' ? 'Cancel' : 'Abbrechen'}</button>
+				<button class="button-primary" type="button" onclick={onsave} disabled={saving}>{locale === 'en' ? (saving ? 'Saving …' : 'Save') : (saving ? 'Wird gespeichert …' : 'Speichern')}</button>
 			</div>
 		</div>
 	{/if}

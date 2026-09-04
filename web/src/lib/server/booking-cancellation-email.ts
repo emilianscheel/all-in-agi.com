@@ -8,6 +8,15 @@ function escapeHtml(value: string) {
 }
 
 export function buildCancellationEmailText(record: HackathonRecord) {
+	if (record.customerLocale === 'en') return [
+		`Hello ${record.contactName},`, '',
+		'Your booking for the ALL IN AGI Agentic Engineering Hackathon has been canceled.', '',
+		`Booking ID: ${record.id}`, `Company: ${record.companyName}`,
+		`Date: ${formatEventTimeRange(record.eventStart, record.eventEnd, 'en')}`, '',
+		'The related calendar events have also been canceled.', '',
+		'Please contact us at any time if you have questions.',
+		`Phone: ${CONTACT_PHONE_DISPLAY} (tel:${CONTACT_PHONE_HREF})`, `Email: ${CONTACT_EMAIL} (mailto:${CONTACT_EMAIL})`, '', '', ''
+	].join('\n');
 	return [
 		`Hallo ${record.contactName},`,
 		'',
@@ -27,6 +36,11 @@ export function buildCancellationEmailText(record: HackathonRecord) {
 }
 
 export function buildCancellationEmailHtml(record: HackathonRecord) {
+	if (record.customerLocale === 'en') return `<p>Hello ${escapeHtml(record.contactName)},</p>
+	<p>Your booking for the ALL IN AGI Agentic Engineering Hackathon has been canceled.</p>
+	<p><strong>Booking ID:</strong> ${escapeHtml(record.id)}<br><strong>Company:</strong> ${escapeHtml(record.companyName)}<br><strong>Date:</strong> ${escapeHtml(formatEventTimeRange(record.eventStart, record.eventEnd, 'en'))}</p>
+	<p>The related calendar events have also been canceled.</p><p>Please contact us at any time if you have questions.</p>
+	<p><strong>Phone:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>Email:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p><p><br><br></p>`;
 	return `<p>Hallo ${escapeHtml(record.contactName)},</p>
 	<p>Ihre Buchung für den ALL IN AGI Agentic Engineering Hackathon wurde storniert.</p>
 	<p><strong>Buchungs-ID:</strong> ${escapeHtml(record.id)}<br><strong>Unternehmen:</strong> ${escapeHtml(record.companyName)}<br><strong>Termin:</strong> ${escapeHtml(formatEventTimeRange(record.eventStart, record.eventEnd))}</p>
@@ -39,7 +53,7 @@ export function buildCancellationEmailHtml(record: HackathonRecord) {
 export function sendBookingCancellationEmail(record: HackathonRecord, dependencies: EmailTransportDependencies = {}) {
 	return sendEmailMessage({
 		to: { address: record.contactEmail, name: record.contactName },
-		subject: `Stornierung Hackathon ${record.id}`,
+		subject: record.customerLocale === 'en' ? `Hackathon cancellation ${record.id}` : `Stornierung Hackathon ${record.id}`,
 		text: buildCancellationEmailText(record),
 		html: buildCancellationEmailHtml(record),
 		headers: { 'X-Booking-ID': record.id }

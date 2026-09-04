@@ -48,6 +48,10 @@
     import PrepCallEditor from "$lib/config/PrepCallEditor.svelte";
     import SeoHead from "$lib/SeoHead.svelte";
     import { trackAnalyticsEvent } from "$lib/analytics";
+    import { page } from "$app/state";
+    import { localizedPath, stripLocale, type Locale } from "$lib/i18n";
+
+    let locale = $derived((page.data.locale ?? 'de') as Locale);
 
     let capacity = $state<Capacity>(15);
     const venueProvided = true;
@@ -108,10 +112,10 @@
             .filter(Boolean)
             .join(", "),
     );
-    let equipmentLabel = $derived(equipment === "none" ? "Provided by us" : "Projector / Display");
+    let equipmentLabel = $derived(equipment === "none" ? (locale === 'en' ? "Provided by us" : "Wird von uns gestellt") : "Projector / Display");
     let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
     let toolsPreviewLabel = $derived(
-        toolProvision ? codingToolLabels.join(", ") || "Noch keine ausgewählt" : "Noch offen",
+        toolProvision ? codingToolLabels.join(", ") || (locale === 'en' ? "None selected yet" : "Noch keine ausgewählt") : (locale === 'en' ? "Not set" : "Noch offen"),
     );
     const lunchPreviewLabel = "Pizza";
     const LunchIcon = Pizza;
@@ -193,6 +197,7 @@
 
     function buildConfiguration(): BookingConfiguration {
         return {
+			locale,
             capacity,
             venueProvided,
             equipment,
@@ -263,7 +268,7 @@
         if (!response.ok)
             throw new Error(result.message ?? "Plan-Link konnte nicht erstellt werden.");
         planToken = result.token;
-        const path = `/buchen/${planToken}`;
+		const path = localizedPath(locale, `/buchen/${planToken}`);
         if (updateUrl) replaceState(path, {});
         return `${location.origin}${path}`;
     }
@@ -282,7 +287,8 @@
     }
 
     async function hydratePlanFromUrl() {
-        const token = location.pathname.match(/^\/buchen\/([^/]+)$/)?.[1];
+		const token = stripLocale(location.pathname).pathname.match(/^\/go\/([^/]+)$/)?.[1]
+			?? stripLocale(location.pathname).pathname.match(/^\/buchen\/([^/]+)$/)?.[1];
         if (!token) return;
         const response = await fetch(`/api/plan-token/${encodeURIComponent(token)}`);
         const result = await response.json();
@@ -343,7 +349,7 @@
                     }),
                 );
 			trackAnalyticsEvent("booking_completed");
-            await goto("/buchen/erfolg");
+			await goto(localizedPath(locale, "/buchen/erfolg"));
         } catch (error) {
             errors = [
                 error instanceof Error
@@ -421,18 +427,19 @@
 </script>
 
 <SeoHead
-    title="Agentic Engineering Hackathon planen | ALL IN AGI"
-    description="Konfigurieren Sie Teamgröße, Location, Ausstattung und Wunschtermin für Ihren moderierten Agentic Engineering Hackathon."
+	title={locale === 'en' ? 'Plan an Agentic Engineering Hackathon | ALL IN AGI' : 'Agentic Engineering Hackathon planen | ALL IN AGI'}
+	description={locale === 'en' ? 'Configure your team size, location, equipment, and preferred date for a facilitated Agentic Engineering Hackathon.' : 'Konfigurieren Sie Teamgröße, Location, Ausstattung und Wunschtermin für Ihren moderierten Agentic Engineering Hackathon.'}
     path="/buchen"
+	{locale}
 />
 
 <div class="config-page">
     <header class="config-intro">
-        <div use:reveal><h1>Hackathon bei Ihnen planen</h1></div>
-        <div class="price-pill">Ab 3.500 € netto · Anreise inklusive</div>
+		<div use:reveal><h1>{locale === 'en' ? 'Plan a hackathon at your company' : 'Hackathon bei Ihnen planen'}</h1></div>
+		<div class="price-pill">{locale === 'en' ? 'From €3,500 net · Travel included' : 'Ab 3.500 € netto · Anreise inklusive'}</div>
     </header>
     {#if planError}<div class="plan-error" role="alert">
-            {planError} <a href="/buchen">Neuen Plan starten</a>
+			{planError} <a href={localizedPath(locale, '/buchen')}>{locale === 'en' ? 'Start a new plan' : 'Neuen Plan starten'}</a>
         </div>{/if}
 
     <div class="config-layout">
@@ -442,11 +449,11 @@
                 ? undefined
                 : `--map-height:${mapHeight}px;--map-expanded-height:${mapExpandedHeight}px`}
         >
-            <MapPreview latitude={address.latitude} longitude={address.longitude}>
+			<MapPreview latitude={address.latitude} longitude={address.longitude} {locale}>
                 <div class="map-address-search">
                     <div class="field address-search-wrap">
                         <label class="visually-hidden" for="map-address-search"
-                            >Adresse suchen</label
+							>{locale === 'en' ? 'Search address' : 'Adresse suchen'}</label
                         >
                         <input
                             id="map-address-search"
@@ -456,7 +463,7 @@
                                 : "map-address-search-status"}
                             aria-autocomplete="list"
                             aria-controls="map-address-suggestions"
-                            placeholder="Straße, Ort oder Unternehmen"
+							placeholder={locale === 'en' ? 'Street, city, or company' : 'Straße, Ort oder Unternehmen'}
                             bind:value={addressQuery}
                             oninput={updateSuggestions}
                         />
@@ -473,11 +480,9 @@
                         {/if}
                         {#if searchStatus !== "idle"}
                             <p id="map-address-search-status" class="helper" aria-live="polite">
-                                {searchStatus === "loading"
-                                    ? "Adressen werden gesucht …"
-                                    : searchStatus === "empty"
-                                      ? "Keine passende Adresse gefunden. Bitte unten manuell eingeben."
-                                      : "Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben."}
+                                {locale === 'en'
+                                    ? (searchStatus === "loading" ? "Searching addresses …" : searchStatus === "empty" ? "No matching address found. Please enter it manually below." : "Address search is unavailable. Please enter it manually below.")
+                                    : (searchStatus === "loading" ? "Adressen werden gesucht …" : searchStatus === "empty" ? "Keine passende Adresse gefunden. Bitte unten manuell eingeben." : "Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.")}
                             </p>
                         {/if}
                     </div>
@@ -486,13 +491,13 @@
                     class="event-card"
                     bind:this={eventCard}
                     style:opacity={previewOpacity}
-                    aria-label="Konfigurationsvorschau"
+                    aria-label={locale === 'en' ? 'Configuration preview' : 'Konfigurationsvorschau'}
                     aria-hidden={previewOpacity <= 0.01}
                 >
                     <div class="event-card-top">
-                        <h2>{companyName.trim() || "Ihr Hackathon"}</h2>
+						<h2>{companyName.trim() || (locale === 'en' ? 'Your hackathon' : "Ihr Hackathon")}</h2>
                         <div class="event-card-price">
-                            <AnimatedValue value={formatPrice(price.totalPrice)} />
+							<AnimatedValue value={formatPrice(price.totalPrice, locale)} />
                         </div>
                     </div>
                     {#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
@@ -504,20 +509,20 @@
                         >
                             <small>Event Date</small><b
                                 ><AnimatedValue
-                                    value={formatEventTimeRange(eventStart, eventEnd)}
+									value={formatEventTimeRange(eventStart, eventEnd, locale)}
                                     active={Boolean(eventStart)}
                                 /></b
                             >
                         </div>
                         <div class="event-detail">
                             <small>Team</small><b
-                                ><AnimatedValue value={`Bis ${capacity} Personen`} /></b
+								><AnimatedValue value={locale === 'en' ? `Up to ${capacity} people` : `Bis ${capacity} Personen`} /></b
                             >
                         </div>
                         <div class="event-detail">
                             <small>Location</small><b
                                 ><AnimatedValue
-                                    value={venueProvided ? "Eigener Raum" : "Von uns organisiert"}
+									value={venueProvided ? (locale === 'en' ? 'Your venue' : "Eigener Raum") : (locale === 'en' ? 'Organized by us' : "Von uns organisiert")}
                                 /></b
                             >
                         </div>
@@ -535,7 +540,7 @@
                             >
                         </div>
                         <div class="event-detail">
-                            <small>Devices</small><b>Eigene Geräte</b>
+							<small>Devices</small><b>{locale === 'en' ? 'Your devices' : 'Eigene Geräte'}</b>
                         </div>
                         <div class="event-detail">
                             <small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b>
@@ -551,8 +556,8 @@
                             <small>Prep Call</small><b
                                 ><AnimatedValue
                                     value={consultationSlot
-                                        ? `${formatDate(consultationSlot, true)} Uhr`
-                                        : "Noch offen"}
+										? `${formatDate(consultationSlot, true, locale)}${locale === 'en' ? '' : ' Uhr'}`
+										: (locale === 'en' ? 'Not set' : "Noch offen")}
                                     active={Boolean(consultationSlot)}
                                 /></b
                             >
@@ -571,9 +576,10 @@
             novalidate
         >
             <section class="config-section" use:reveal>
-                <h2>Teamgröße</h2>
+				<h2>{locale === 'en' ? 'Team size' : 'Teamgröße'}</h2>
                 <ConfigOptionCards
                     kind="capacity"
+					{locale}
                     values={optionValues}
                     onchange={(value) => { updateOptionValues(value); trackBookingMilestone("team_size"); }}
                 />
@@ -583,6 +589,7 @@
                 <h2>Tools</h2>
                 <ConfigOptionCards
                     kind="tools"
+					{locale}
                     values={optionValues}
                     onchange={(value) => { updateOptionValues(value); trackBookingMilestone("tools"); }}
                 />
@@ -592,29 +599,32 @@
                 <h2>Demo setup</h2>
                 <ConfigOptionCards
                     kind="equipment"
+					{locale}
                     values={optionValues}
                     onchange={(value) => { updateOptionValues(value); trackBookingMilestone("demo_setup"); }}
                 />
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>Veranstaltungsadresse</h2>
+				<h2>{locale === 'en' ? 'Event address' : 'Veranstaltungsadresse'}</h2>
                 <AddressEditor
                     value={address}
                     onchange={(value) => { address = value; trackBookingMilestone("event_location"); }}
                     idPrefix="booking-address"
                     searchArea={false}
+					{locale}
                 />
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>Veranstaltungsdatum und Uhrzeit</h2>
+				<h2>{locale === 'en' ? 'Event date and time' : 'Veranstaltungsdatum und Uhrzeit'}</h2>
                 {#key eventAvailabilityKey}
                     <EventDateTimeEditor
                         {eventStart}
                         {eventEnd}
                         minValue={minEventDate}
                         maxValue={maxEventDate}
+						{locale}
                         onloadingchange={(value) => (eventSlotsLoading = value)}
                         onchange={(value) => { ({ eventStart, eventEnd } = value); trackBookingMilestone("event_schedule"); }}
                     />
@@ -622,7 +632,7 @@
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>Kontakt</h2>
+                <h2>{locale === 'en' ? 'Contact' : 'Kontakt'}</h2>
                 <ContactFields
                     {companyName}
                     {contactName}
@@ -636,11 +646,12 @@
 						trackBookingMilestone("contact");
                     }}
                     idPrefix="booking-contact"
+					{locale}
                 />
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>60 Min. Vorbereitungsgespräch</h2>
+				<h2>{locale === 'en' ? '60-minute preparation call' : '60 Min. Vorbereitungsgespräch'}</h2>
                 {#key availabilityKey}
                     <PrepCallEditor
                         value={consultationSlot}
@@ -651,16 +662,18 @@
                         oncustomdatechange={(value) => (customConsultationDate = value)}
                         onloadingchange={(value) => (slotsLoading = value)}
                         clearUnavailableValue
+						{locale}
                     />
                 {/key}
             </section>
 
             <section class="config-section" use:reveal>
-                <h2>Ihre Nachricht</h2>
+				<h2>{locale === 'en' ? 'Your message' : 'Ihre Nachricht'}</h2>
                 <MessageField
                     value={message}
                     onchange={(value) => { message = value; trackBookingMilestone("message"); }}
                     id="booking-message"
+					{locale}
                 />
             </section>
 
@@ -750,9 +763,9 @@
                         class="button-primary"
                         type="submit"
                         disabled={submitting || slotsLoading || eventSlotsLoading}
-                        >{submitting ? "Anfrage wird gesendet …" : "Gespräch reservieren"}</button
+						>{submitting ? (locale === 'en' ? 'Sending inquiry…' : "Anfrage wird gesendet …") : (locale === 'en' ? 'Reserve preparation call' : "Gespräch reservieren")}</button
                     >
-                    <SharePlanButton getUrl={getShareUrl} />
+					<SharePlanButton getUrl={getShareUrl} {locale} />
                 </div>
             </section>
         </form>

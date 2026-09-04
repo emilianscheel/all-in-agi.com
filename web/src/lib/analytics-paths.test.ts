@@ -7,12 +7,15 @@ describe('analytics route privacy', () => {
 		expect(isAnalyticsPath('/HAA-ABC-123')).toBe(false);
 		expect(isAnalyticsPath('/dashboard')).toBe(false);
 		expect(isAnalyticsPath('/verwalten')).toBe(false);
+		expect(isAnalyticsPath('/en/go/secret-plan-token')).toBe(false);
+		expect(isAnalyticsPath('/de/HAA-ABC-123')).toBe(false);
 	});
 
 	test('retains safe public paths and masks dynamic ones', () => {
 		expect(isAnalyticsPath('/buchen/erfolg')).toBe(true);
-		expect(sanitizeAnalyticsPath('/buchen/secret-plan-token')).toBe('/buchen/:plan');
+		expect(sanitizeAnalyticsPath('/buchen/secret-plan-token')).toBe('/go/:plan');
 		expect(sanitizeAnalyticsPath('/HAA-ABC-123')).toBe('/:booking');
 		expect(sanitizeAnalyticsPath('/ki-hackathon-ruhrgebiet')).toBe('/ki-hackathon-ruhrgebiet');
+		expect(sanitizeAnalyticsPath('/en/go/secret-plan-token')).toBe('/en/go/:plan');
 	});
 });

@@ -42,6 +42,7 @@
 		Workflow
 	} from 'lucide-svelte';
 	import { GTM_GROUPS, gtmPagesForGroup } from '$lib/gtm-pages';
+	import { localizedPath, type Locale } from '$lib/i18n';
 
 	const icons = {
 		MapPin,
@@ -86,7 +87,7 @@
 		Pickaxe
 	};
 
-	let { currentSlug }: { currentSlug?: string } = $props();
+	let { currentSlug, locale }: { currentSlug?: string; locale: Locale } = $props();
 </script>
 
 <footer class="gtm-footer">
@@ -94,11 +95,11 @@
 		{#each GTM_GROUPS as group}
 			<section class="gtm-footer-column" aria-label={group}>
 				<ul>
-					{#each gtmPagesForGroup(group) as item}
+					{#each gtmPagesForGroup(group, locale) as item}
 						{@const Icon = icons[item.icon]}
 						<li>
 							<a
-								href={`/${item.slug}`}
+								href={localizedPath(locale, `/${item.slug}`)}
 								class:active={currentSlug === item.slug}
 								aria-current={currentSlug === item.slug ? 'page' : undefined}
 							>

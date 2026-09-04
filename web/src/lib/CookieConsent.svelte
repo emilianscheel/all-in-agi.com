@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { activateAnalyticsForPath, getAnalyticsConsent, setAnalyticsConsent } from '$lib/analytics';
+	import { localizedPath, ui, type Locale } from '$lib/i18n';
+	let { locale = 'de' }: { locale?: Locale } = $props();
 
 	let mounted = $state(false);
 	let consent = $state<'granted' | 'denied' | null>(null);
@@ -22,11 +24,11 @@
 </script>
 
 {#if mounted && consent === null}
-	<aside class="cookie-banner" aria-label="Cookie-Einstellungen" role="region">
-		<p>Wir verwenden optionale Analyse-Cookies, um unsere Website und den Buchungsprozess zu verbessern. <a href="/datenschutz#google-analytics">Datenschutz</a></p>
+	<aside class="cookie-banner" aria-label={ui[locale].cookieLabel} role="region">
+		<p>{ui[locale].cookieText} <a href={`${localizedPath(locale, '/datenschutz')}#google-analytics`}>{ui[locale].privacy}</a></p>
 		<div class="cookie-actions">
-			<button class="cookie-reject" type="button" onclick={() => choose('denied')}>Alle ablehnen</button>
-			<button class="cookie-accept" type="button" onclick={() => choose('granted')}>Alle Cookies erlauben</button>
+			<button class="cookie-reject" type="button" onclick={() => choose('denied')}>{ui[locale].rejectCookies}</button>
+			<button class="cookie-accept" type="button" onclick={() => choose('granted')}>{ui[locale].acceptCookies}</button>
 		</div>
 	</aside>
 {/if}

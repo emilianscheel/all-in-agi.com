@@ -1,7 +1,7 @@
 import { defaultOfferConfiguration } from '$lib/offer';
 import { OFFER_ACCESS_COOKIE, hasOfferAccess } from '$lib/server/offer-access';
 
-export async function load({ cookies }) {
+export async function load({ cookies, locals }) {
 	const authorized = await hasOfferAccess(cookies.get(OFFER_ACCESS_COOKIE));
-	return authorized ? { authorized: true, config: defaultOfferConfiguration() } : { authorized: false };
+	return authorized ? { authorized: true, config: { ...defaultOfferConfiguration(), locale: locals.locale } } : { authorized: false };
 }

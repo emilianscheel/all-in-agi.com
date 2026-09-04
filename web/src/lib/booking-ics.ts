@@ -25,11 +25,11 @@ export function createPrepCallIcs(
 	const start = new Date(booking.start || config.consultationSlot);
 	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 60 * 60_000);
 	const description = [
-		`Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`,
-		...(bookingUrl ? [`Buchung verwalten: ${bookingUrl}`] : [])
+		(config.locale === 'en' ? `Preparation call for ${config.companyName}'s Agentic Engineering Hackathon` : `Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`),
+		...(bookingUrl ? [`${config.locale === 'en' ? 'Manage booking' : 'Buchung verwalten'}: ${bookingUrl}`] : [])
 	].join('\n\n');
 	return [
-		'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ALL IN AGI//Prep Call//DE', 'CALSCALE:GREGORIAN',
+		'BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//ALL IN AGI//Prep Call//${config.locale === 'en' ? 'EN' : 'DE'}`, 'CALSCALE:GREGORIAN',
 		'BEGIN:VEVENT',
 		`UID:${escape(booking.icsUid || booking.uid || `${start.getTime()}@all-in-agi.com`)}`,
 		`DTSTAMP:${utcDate(new Date().toISOString())}`,

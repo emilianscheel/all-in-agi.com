@@ -8,14 +8,17 @@
 	import { gtmPaths } from '$lib/gtm-pages';
 	import CookieConsent from '$lib/CookieConsent.svelte';
 	import { activateAnalyticsForPath, installBookingCtaTracking } from '$lib/analytics';
+	import { localizedPath, switchLocalePath, ui, type Locale } from '$lib/i18n';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children, data } = $props();
+	let locale = $derived(data.locale as Locale);
+	let copy = $derived(ui[locale]);
 	let presentationRoute = $derived(page.route.id === '/timer' || page.route.id === '/clock' || page.route.id === '/[id]/timer');
 	let offerRoute = $derived(page.route.id === '/offer' || page.route.id === '/offer/[token]');
 	let adminNavigation = $derived(page.route.id === '/dashboard' || (page.route.id === '/[id]' && data.admin.authorized));
-	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.url.pathname));
-	let currentGtmSlug = $derived(gtmArticleRoute ? page.url.pathname.slice(1) : undefined);
+	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.route.id));
+	let currentGtmSlug = $derived(gtmArticleRoute ? page.route.id?.slice(1) : undefined);
 
 	onMount(() => {
 		const removeHaptics = installGlobalHaptics();
@@ -44,7 +47,7 @@
 </svelte:head>
 
 {#if !presentationRoute && !offerRoute}
-	<a class="skip-link" href="#main">Zum Inhalt springen</a>
+	<a class="skip-link" href="#main">{copy.skip}</a>
 	<header class:admin-header={adminNavigation} class="site-header">
 	{#if adminNavigation}
 		<nav class="nav-inner admin-nav-inner" aria-label="Admin-Navigation">
@@ -66,8 +69,8 @@
 			</div>
 		</nav>
 	{:else}
-		<nav class="nav-inner" aria-label="Hauptnavigation">
-			<a class="brand-mark" href="/" aria-label="ALL IN AGI Startseite">
+		<nav class="nav-inner" aria-label={copy.navLabel}>
+			<a class="brand-mark" href={localizedPath(locale, '/')} aria-label={copy.homeLabel}>
 				<span class="brand-icon" aria-hidden="true">
 					<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
 				</span>
@@ -78,11 +81,11 @@
 				</span>
 			</a>
 			<div class="nav-links">
-				<a href="/#format">Agenda</a>
-				<a href="/#preis">Preis</a>
-				<a href="/#kontakt">Kontakt</a>
+				<a href={`${localizedPath(locale, '/')}#format`}>{copy.agenda}</a>
+				<a href={`${localizedPath(locale, '/')}#preis`}>{copy.price}</a>
+				<a href={`${localizedPath(locale, '/')}#kontakt`}>{copy.contact}</a>
 			</div>
-			<a class="nav-cta" href="/buchen" data-analytics-event="booking_cta" data-analytics-placement="header">Hackathon planen</a>
+			<a class="nav-cta" href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="header">{copy.plan}</a>
 		</nav>
 	{/if}
 	</header>
@@ -91,17 +94,18 @@
 <main id="main" class:presentation-main={presentationRoute} class:offer-main={offerRoute}>{@render children()}</main>
 
 {#if !presentationRoute && !offerRoute}
-	{#if page.url.pathname === '/' || gtmArticleRoute}<GtmFooter currentSlug={currentGtmSlug} />{/if}
+	{#if page.route.id === '/' || gtmArticleRoute}<GtmFooter currentSlug={currentGtmSlug} {locale} />{/if}
 	<footer class="site-footer">
 	<div class="footer-inner">
 		<div class="footer-links">
-			<a href="/impressum">Impressum</a>
-			<a href="/agb">Allgemeine Geschäftsbedingungen</a>
-			<a href="/datenschutz">Datenschutz</a>
-			<a href="/verwalten">Buchung verwalten</a>
+			<a href={localizedPath(locale, '/impressum')}>{copy.legalNotice}</a>
+			<a href={localizedPath(locale, '/agb')}>{copy.terms}</a>
+			<a href={localizedPath(locale, '/datenschutz')}>{copy.privacy}</a>
+			<a href={localizedPath(locale, '/verwalten')}>{copy.manage}</a>
+			<a href={switchLocalePath(page.url, locale === 'de' ? 'en' : 'de')} hreflang={locale === 'de' ? 'en' : 'de'}>{locale === 'de' ? 'English' : 'German'}</a>
 		</div>
 	</div>
 	</footer>
 {/if}
 
-{#if !presentationRoute && !offerRoute && !adminNavigation}<CookieConsent />{/if}
+{#if !presentationRoute && !offerRoute && !adminNavigation}<CookieConsent {locale} />{/if}

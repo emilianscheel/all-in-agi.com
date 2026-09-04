@@ -65,6 +65,7 @@ export function isSharedPlan(value: unknown): value is SharedPlan {
 		&& stringsWithinLimit;
 	if (!validCommon) return false;
 	if (version === 1) return ['pizza', 'custom', 'none'].includes(String(plan.lunch ?? ''));
+	if (version === 5 && plan.locale !== undefined && !['de', 'en'].includes(String(plan.locale))) return false;
 	const validToolIds = new Set(CODING_TOOLS.map(({ id }) => id));
 	const validTools = ['pizza', 'custom', 'none', 'self-organized'].includes(String(plan.lunch ?? ''))
 		&& (plan.toolProvision === null || ['existing', 'needed'].includes(String(plan.toolProvision ?? '')))

@@ -4,8 +4,10 @@
 	import { Building2, Check, Download, FileText, ReceiptEuro } from 'lucide-svelte';
 	import { OFFER_CLIENT_LOGOS, OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
 	import { createOfferPdf } from '$lib/offer-artifacts';
+	import { page } from '$app/state';
+	import { localizedPath, switchLocalePath, type Locale } from '$lib/i18n';
 
-	let { initialConfig }: { initialConfig: OfferConfiguration } = $props();
+	let { initialConfig, locale = 'de' }: { initialConfig: OfferConfiguration; locale?: Locale } = $props();
 	// The parent only supplies the initial draft; the editor intentionally owns later changes.
 	// svelte-ignore state_referenced_locally
 	let config = $state<OfferConfiguration>(structuredClone(initialConfig));
@@ -60,7 +62,7 @@
 			});
 			const result = await response.json() as { token?: string; message?: string };
 			if (!response.ok || !result.token) throw new Error(result.message ?? 'Angebots-Link konnte nicht erstellt werden.');
-			replaceState(`/offer/${result.token}`, {});
+			replaceState(localizedPath(locale, `/offer/${result.token}`), {});
 			urlError = '';
 		} catch (error) {
 			if ((error as Error).name !== 'AbortError') urlError = error instanceof Error ? error.message : 'Angebots-Link konnte nicht erstellt werden.';
@@ -104,31 +106,31 @@
 <div class="offer-builder">
 	<aside class="offer-sidebar" aria-label="Angebot konfigurieren">
 		<div class="offer-sidebar-scroll">
-			<div class="offer-brand"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /><span>ALL IN AGI</span></div>
+			<div class="offer-top"><div class="offer-brand"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /><span>ALL IN AGI</span></div><div class="offer-language"><a class:active={locale === 'de'} href={switchLocalePath(page.url, 'de')}>DE</a><a class:active={locale === 'en'} href={switchLocalePath(page.url, 'en')}>EN</a></div></div>
 
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
-				<h2 id="recipient-heading"><Building2 size={16} />Empfänger</h2>
-				<label>Unternehmen<input bind:value={config.companyName} maxlength="200" /></label>
-				<label>Kundenlogo<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{logo.label}</option>{/each}</select></label>
-				<label>Ansprechperson<input bind:value={config.contactName} maxlength="200" /></label>
+				<h2 id="recipient-heading"><Building2 size={16} />{locale === 'en' ? 'Recipient' : 'Empfänger'}</h2>
+				<label>{locale === 'en' ? 'Company' : 'Unternehmen'}<input bind:value={config.companyName} maxlength="200" /></label>
+				<label>{locale === 'en' ? 'Client logo' : 'Kundenlogo'}<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{logo.label}</option>{/each}</select></label>
+				<label>{locale === 'en' ? 'Contact person' : 'Ansprechperson'}<input bind:value={config.contactName} maxlength="200" /></label>
 				<label>E-Mail<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
 			</section>
 
 			<section class="offer-form-section" aria-labelledby="offer-heading">
-				<h2 id="offer-heading"><FileText size={16} />Angebot</h2>
-				<label>Titel<input bind:value={config.offerTitle} maxlength="200" /></label>
-				<label>Ausgestellt am<input type="date" bind:value={config.issueDate} /></label>
-				<label>Hinweise<textarea bind:value={config.notes} maxlength="1000" rows="3" placeholder="Optionale Hinweise für das Angebot"></textarea></label>
+				<h2 id="offer-heading"><FileText size={16} />{locale === 'en' ? 'Offer' : 'Angebot'}</h2>
+				<label>{locale === 'en' ? 'Title' : 'Titel'}<input bind:value={config.offerTitle} maxlength="200" /></label>
+				<label>{locale === 'en' ? 'Issue date' : 'Ausgestellt am'}<input type="date" bind:value={config.issueDate} /></label>
+				<label>{locale === 'en' ? 'Notes' : 'Hinweise'}<textarea bind:value={config.notes} maxlength="1000" rows="3" placeholder={locale === 'en' ? 'Optional notes for the offer' : 'Optionale Hinweise für das Angebot'}></textarea></label>
 			</section>
 
 			<section class="offer-form-section" aria-labelledby="price-heading">
-				<h2 id="price-heading"><ReceiptEuro size={16} />Preis</h2>
-				<div class="offer-price-grid"><label>Netto<input type="number" min="0" step="0.01" bind:value={config.netTotal} /></label><label>USt. %<input type="number" min="0" max="100" step="0.1" bind:value={config.vatRate} /></label></div>
-				<p class="gross-total">Zahlbetrag (brutto) <strong>{new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(gross)}</strong></p>
+				<h2 id="price-heading"><ReceiptEuro size={16} />{locale === 'en' ? 'Price' : 'Preis'}</h2>
+				<div class="offer-price-grid"><label>{locale === 'en' ? 'Net' : 'Netto'}<input type="number" min="0" step="0.01" bind:value={config.netTotal} /></label><label>{locale === 'en' ? 'VAT %' : 'USt. %'}<input type="number" min="0" max="100" step="0.1" bind:value={config.vatRate} /></label></div>
+				<p class="gross-total">{locale === 'en' ? 'Total (gross)' : 'Zahlbetrag (brutto)'} <strong>{new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'de-DE', { style: 'currency', currency: 'EUR' }).format(gross)}</strong></p>
 			</section>
 
 			<section class="offer-form-section offer-services" aria-labelledby="services-heading">
-				<h2 id="services-heading"><Check size={16} />Leistungen</h2>
+				<h2 id="services-heading"><Check size={16} />{locale === 'en' ? 'Services' : 'Leistungen'}</h2>
 				{#each OFFER_SERVICES as service}
 					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><span class="offer-service-label">{service.label}</span>{#if service.description}<small>{service.description}</small>{/if}</span></label>
 				{/each}
@@ -136,11 +138,11 @@
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
 		</div>
 
-		<div class="offer-download-wrap"><button type="button" class="offer-download" onclick={downloadPdf} disabled={!generatedBytes}><Download size={17} />{generating ? 'PDF wird aktualisiert …' : 'PDF herunterladen'}</button></div>
+		<div class="offer-download-wrap"><button type="button" class="offer-download" onclick={downloadPdf} disabled={!generatedBytes}><Download size={17} />{locale === 'en' ? (generating ? 'Updating PDF …' : 'Download PDF') : (generating ? 'PDF wird aktualisiert …' : 'PDF herunterladen')}</button></div>
 	</aside>
 
-	<section class="offer-preview" aria-label="PDF-Vorschau">
-		{#if previewUrl}<iframe title="Vorschau des Angebots als PDF" src={previewUrl}></iframe>{:else}<div class="offer-preview-loading">PDF wird erstellt …</div>{/if}
+	<section class="offer-preview" aria-label={locale === 'en' ? 'PDF preview' : 'PDF-Vorschau'}>
+		{#if previewUrl}<iframe title={locale === 'en' ? 'Offer PDF preview' : 'Vorschau des Angebots als PDF'} src={previewUrl}></iframe>{:else}<div class="offer-preview-loading">{locale === 'en' ? 'Creating PDF …' : 'PDF wird erstellt …'}</div>{/if}
 	</section>
 </div>
 
@@ -150,6 +152,8 @@
 	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 118px; }
 	.offer-brand { display: inline-flex; align-items: center; gap: 7px; color: #2c2c30; font-family: 'Instrument Serif', Georgia, serif; font-size: 16px; letter-spacing: .06em; }
 	.offer-brand img { width: 28px; height: 28px; object-fit: contain; }
+	.offer-top { display: flex; align-items: center; justify-content: space-between; }
+	.offer-language { display: flex; gap: 9px; font-size: 11px; } .offer-language a { color: #4e4e53; opacity: .45; } .offer-language a.active { opacity: 1; font-weight: 700; }
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
 	.offer-form-section h2 :global(svg) { color: #ff4f18; }

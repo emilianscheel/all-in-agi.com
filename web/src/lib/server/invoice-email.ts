@@ -21,39 +21,43 @@ function bytesToBase64(bytes: Uint8Array) {
 }
 
 export function buildInvoiceEmailText(snapshot: InvoiceSnapshot) {
+	const en = snapshot.locale === 'en';
 	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
 		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
+	const englishLabel = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'deposit invoice'
+		: snapshot.version === 2 && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
 	return [
-		`Hallo ${snapshot.customer.contactName},`,
+		en ? `Hello ${snapshot.customer.contactName},` : `Hallo ${snapshot.customer.contactName},`,
 		'',
-		`anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.`,
+		en ? `Please find attached the ${englishLabel} for your ALL IN AGI Agentic Engineering Hackathon.` : `anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.`,
 		'',
-		`Rechnungsnummer: ${snapshot.invoiceNumber}`,
-		`Gesamtbetrag: ${formatInvoiceMoney(snapshot.grossTotalCents)}`,
-		`Zahlbar bis: ${formatInvoiceDate(snapshot.dueDate)}`,
+		`${en ? 'Invoice number' : 'Rechnungsnummer'}: ${snapshot.invoiceNumber}`,
+		`${en ? 'Total amount' : 'Gesamtbetrag'}: ${formatInvoiceMoney(snapshot.grossTotalCents)}`,
+		`${en ? 'Due date' : 'Zahlbar bis'}: ${formatInvoiceDate(snapshot.dueDate)}`,
 		'',
-		'Viele Grüße',
+		en ? 'Best regards' : 'Viele Grüße',
 		'ALL IN AGI',
 		'', '', ''
 	].join('\n');
 }
 
 export function buildInvoiceEmailHtml(snapshot: InvoiceSnapshot) {
+	const en = snapshot.locale === 'en';
 	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
 		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
-	return `<p>Hallo ${escapeHtml(snapshot.customer.contactName)},</p>
-	<p>anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.</p>
-	<p><strong>Rechnungsnummer:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Gesamtbetrag:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Zahlbar bis:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p>
-	<p>Viele Grüße<br>ALL IN AGI</p>`;
+	const englishLabel = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'deposit invoice' : snapshot.version === 2 && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
+	if (en) return `<p>Hello ${escapeHtml(snapshot.customer.contactName)},</p><p>Please find attached the ${englishLabel} for your ALL IN AGI Agentic Engineering Hackathon.</p><p><strong>Invoice number:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Total amount:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Due date:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p><p>Best regards<br>ALL IN AGI</p>`;
+	return `<p>Hallo ${escapeHtml(snapshot.customer.contactName)},</p><p>anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.</p><p><strong>Rechnungsnummer:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Gesamtbetrag:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Zahlbar bis:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p><p>Viele Grüße<br>ALL IN AGI</p>`;
 }
 
 export async function sendInvoiceEmail(snapshot: InvoiceSnapshot, dependencies: InvoiceEmailDependencies = {}) {
+	const en = snapshot.locale === 'en';
 	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
 		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
 	const pdf = await (dependencies.createPdf ?? createInvoicePdf)(snapshot);
 	return sendEmailMessage({
 		to: { address: snapshot.customer.email, name: snapshot.customer.contactName },
-		subject: `Ihre ${label} für den ALL IN AGI Hackathon – ${snapshot.invoiceNumber}`,
+		subject: en ? `Your ALL IN AGI hackathon invoice – ${snapshot.invoiceNumber}` : `Ihre ${label} für den ALL IN AGI Hackathon – ${snapshot.invoiceNumber}`,
 		text: buildInvoiceEmailText(snapshot),
 		html: buildInvoiceEmailHtml(snapshot),
 		headers: {
@@ -62,7 +66,7 @@ export async function sendInvoiceEmail(snapshot: InvoiceSnapshot, dependencies: 
 		},
 		attachments: [{
 			content: bytesToBase64(pdf),
-			filename: `all-in-agi-${snapshot.version === 2 ? snapshot.kind : 'rechnung'}-${snapshot.hackathonId}.pdf`,
+			filename: `all-in-agi-${snapshot.version === 2 ? snapshot.kind : (en ? 'invoice' : 'rechnung')}-${snapshot.hackathonId}.pdf`,
 			type: 'application/pdf',
 			disposition: 'attachment'
 		}]
