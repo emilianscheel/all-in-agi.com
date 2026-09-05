@@ -436,8 +436,8 @@ img { display: block; max-width: 100%; }
 .map-address-search .field { gap: 0; }
 .map-search-control { position: relative; }
 .map-address-search .field input { padding-right: 58px; border-color: transparent; background: var(--glass-card); backdrop-filter: blur(24px) saturate(170%); box-shadow: var(--floating-shadow); }
-.map-location-button { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 9px; background: color-mix(in srgb, var(--control) 82%, transparent); color: var(--orange); cursor: pointer; transition: background .15s ease, transform .15s ease, opacity .15s ease; }
-.map-location-button:hover:not(:disabled) { background: var(--control); }
+.map-location-button { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--orange); cursor: pointer; transition: color .15s ease, transform .15s ease, opacity .15s ease; }
+.map-location-button:hover:not(:disabled) { background: transparent; color: var(--orange-dark); }
 .map-location-button:active:not(:disabled) { transform: scale(.94); }
 .map-location-button:focus-visible { outline: 2px solid color-mix(in srgb, var(--orange) 45%, transparent); outline-offset: 2px; }
 .map-location-button:disabled { cursor: wait; opacity: .55; }
@@ -536,6 +536,9 @@ img { display: block; max-width: 100%; }
 .suggestions { position: absolute; z-index: 8; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--soft-line); border-radius: 14px; background: var(--card); box-shadow: var(--floating-shadow); }
 .suggestions button { width: 100%; padding: 12px; border: 0; border-radius: 9px; background: transparent; text-align: left; cursor: pointer; }
 .suggestions button:hover { background: var(--surface); }
+.search-loading-card { height: 138px; display: grid; place-items: center; pointer-events: none; }
+.search-loading-icon { color: var(--muted); animation: search-spinner .9s linear infinite; }
+@keyframes search-spinner { to { transform: rotate(360deg); } }
 .helper { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .slot-status { color: var(--muted); font-size: 14px; }
 .hackathon-slot-combinations { margin-top: 18px; }

@@ -16,6 +16,7 @@
 		locale?: 'de' | 'en';
 		onlocationselect?: (coordinates: { latitude: number; longitude: number }) => void;
 	} = $props();
+	let shell: HTMLDivElement;
 	let container: HTMLDivElement;
 	let map: MapLibreMap | undefined;
 	let marker: MapLibreMarker | undefined;
@@ -42,6 +43,31 @@
 		onlocationselect({ latitude: event.lngLat.lat, longitude: event.lngLat.lng });
 	}
 
+	function cameraPadding() {
+		if (!shell || !container) return { top: 0, right: 0, bottom: 0, left: 0 };
+		const shellRect = shell.getBoundingClientRect();
+		const searchRect = shell.querySelector<HTMLElement>('.map-search-control')?.getBoundingClientRect();
+		const cardRect = shell.querySelector<HTMLElement>('.event-card')?.getBoundingClientRect();
+		const gap = 16;
+		const top = searchRect ? Math.max(0, searchRect.bottom - shellRect.top + gap) : 0;
+		const visibleBottom = cardRect
+			? Math.min(shell.clientHeight, Math.max(0, cardRect.top - shellRect.top - gap))
+			: shell.clientHeight;
+		const bottom = Math.max(0, container.clientHeight - visibleBottom);
+
+		return { top, right: 0, bottom, left: 0 };
+	}
+
+	function centerPosition(duration = 0) {
+		if (!map || status !== 'ready' || latitude === undefined || longitude === undefined) return;
+		map.flyTo({
+			center: [longitude, latitude],
+			zoom: 14,
+			padding: cameraPadding(),
+			duration
+		});
+	}
+
 	async function initialize() {
 		try {
 			const maplibregl = await import('maplibre-gl');
@@ -66,8 +92,16 @@
 			map.on('styleimagemissing', provideMissingStyleImage);
 			map.on('click', selectMapLocation);
 			map.once('styledata', reveal);
-			resizeObserver = new ResizeObserver(() => map?.resize());
+			resizeObserver = new ResizeObserver(() => {
+				map?.resize();
+				centerPosition();
+			});
 			resizeObserver.observe(container);
+			resizeObserver.observe(shell);
+			const searchControl = shell.querySelector<HTMLElement>('.map-search-control');
+			const eventCard = shell.querySelector<HTMLElement>('.event-card');
+			if (searchControl) resizeObserver.observe(searchControl);
+			if (eventCard) resizeObserver.observe(eventCard);
 			readyTimeout = setTimeout(() => { if (status === 'loading') status = 'error'; }, 10_000);
 		} catch { status = 'error'; }
 	}
@@ -77,7 +111,7 @@
 		const maplibregl = await import('maplibre-gl');
 		marker?.remove();
 		marker = new maplibregl.Marker({ color: '#ff4f18' }).setLngLat([longitude, latitude]).addTo(map);
-		map.flyTo({ center: [longitude, latitude], zoom: 14, duration: 850 });
+		centerPosition(850);
 	}
 
 	$effect(() => { latitude; longitude; updatePosition(); });
@@ -85,7 +119,7 @@
 	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); map?.off('click', selectMapLocation); marker?.remove(); map?.remove(); });
 </script>
 
-<div class="map-shell" aria-label={locale === 'en' ? 'Event location preview' : 'Vorschau des Veranstaltungsorts'}>
+<div bind:this={shell} class="map-shell" aria-label={locale === 'en' ? 'Event location preview' : 'Vorschau des Veranstaltungsorts'}>
 	<div class="map-canvas" bind:this={container}></div>
 	{#if status !== 'ready'}
 		<div class="map-status"><span class="map-status-icon">⌖</span>{status === 'loading' ? (locale === 'en' ? 'Loading map preview…' : 'Kartenvorschau wird geladen …') : (locale === 'en' ? 'The map preview is currently unavailable' : 'Kartenvorschau ist gerade nicht verfügbar')}</div>
