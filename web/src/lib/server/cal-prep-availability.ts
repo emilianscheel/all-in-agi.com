@@ -1,4 +1,4 @@
-import { normalizeAvailabilitySlots } from '$lib/prep-call';
+import { normalizeAvailabilitySlots, PREP_CALL_DURATION_MINUTES } from '$lib/prep-call';
 
 const SLOTS_API_VERSION = '2024-09-04';
 
@@ -16,7 +16,7 @@ export async function getCalPrepCallSlots(
 		start: options.start,
 		end: options.end,
 		timeZone: options.timeZone ?? 'Europe/Berlin',
-		duration: '60'
+		duration: String(PREP_CALL_DURATION_MINUTES)
 	})) url.searchParams.set(key, value);
 
 	const response = await requestFetch(url, {

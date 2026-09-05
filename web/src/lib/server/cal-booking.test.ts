@@ -151,7 +151,7 @@ describe('Cal.com booking contracts', () => {
 				title: 'ALL IN AGI Prep Call', field: 'prep-call', includeLengthInMinutes: false
 			}, 'cal_test');
 			await expect(promise).rejects.toEqual(expect.objectContaining({
-				message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 60-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.',
+				message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 30-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.',
 				status: 503,
 				field: 'prep-call'
 			}));
@@ -185,7 +185,7 @@ describe('prep-call rescheduling', () => {
 			demo: true,
 			uid: 'demo-1',
 			start: '2099-05-11T10:00:00.000Z',
-			end: '2099-05-11T11:00:00.000Z'
+			end: '2099-05-11T10:30:00.000Z'
 		});
 	});
 

@@ -212,7 +212,7 @@
         },
         {
             question: "Wie bereiten wir den Hackathon vor und buchen ihn?",
-            answer: "Zu jeder Buchung gehört ein 60-minütiges Vorbereitungsgespräch. Dort schärfen wir Anwendungsfälle, Team, Tool Stack und Rahmenbedingungen; anschließend wird der Termin über den Konfigurator angefragt.",
+            answer: "Zu jeder Buchung gehört ein 30-minütiges Vorbereitungsgespräch. Dort schärfen wir Anwendungsfälle, Team, Tool Stack und Rahmenbedingungen; anschließend wird der Termin über den Konfigurator angefragt.",
         },
         {
             question: "Wir haben eine eigene Idee oder besondere Anforderungen – passt das trotzdem?",
@@ -228,7 +228,7 @@
 		{ question: 'How do you handle IT, security, and privacy?', answer: 'We agree on tools, accounts, data classes, and the working environment before the event. Teams build only inside the approved setup.' },
 		{ question: 'What do we need on site?', answer: 'A suitable room, stable Wi-Fi, work devices, and motivated builders. We can provide presentation equipment if a large display is unavailable.' },
 		{ question: 'What is included in the price?', answer: 'The price includes two facilitators, challenge design, demo session, follow-up, pizza and cookies, a winner poster, event photos, and travel within Germany. Net prices start at €4,000 for up to 15 people.' },
-		{ question: 'How do preparation and booking work?', answer: 'Every request includes a 60-minute preparation call. We refine use cases, team composition, tool stack, and constraints before confirming the event.' },
+		{ question: 'How do preparation and booking work?', answer: 'Every request includes a 30-minute preparation call. We refine use cases, team composition, tool stack, and constraints before confirming the event.' },
 		{ question: 'Can we bring our own idea or special requirements?', answer: 'Absolutely. The hackathon is a proven standard format, but we adapt its challenges and setup to your use cases and requirements.' }
 	];
 	let faqs = $derived(locale === 'en' ? englishFaqs : germanFaqs);
@@ -639,7 +639,7 @@
             <article class="contact-card">
                 <CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
                 <h3>Intro Call</h3>
-				<p>{locale === 'en' ? '60 minutes for all your questions, with no obligation.' : '60 Minuten für für alle Fragen. Unverbindlich.'}</p>
+				<p>{locale === 'en' ? '30 minutes for all your questions, with no obligation.' : '30 Minuten für alle Fragen. Unverbindlich.'}</p>
 				<a href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="contact">{locale === 'en' ? 'Choose a time' : 'Termin auswählen'} <span aria-hidden="true">›</span></a>
             </article>
         </div>

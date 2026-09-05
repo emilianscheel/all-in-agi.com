@@ -1,4 +1,5 @@
 const BERLIN_TIME_ZONE = 'Europe/Berlin';
+export const PREP_CALL_DURATION_MINUTES = 30;
 
 function localDateString(date: Date) {
 	const year = date.getFullYear();
@@ -37,6 +38,19 @@ export function availablePrepCallDates(slots: string[]) {
 
 export function prepCallSlotsForDate(slots: string[], date: string) {
 	return slots.filter((slot) => berlinDateKey(slot) === date);
+}
+
+export function prepCallQuickSlots(slots: string[], limit = 15, perDate = 2) {
+	const counts = new Map<string, number>();
+	const quickSlots: string[] = [];
+	for (const slot of normalizeAvailabilitySlots(slots)) {
+		const date = berlinDateKey(slot);
+		if (!date || (counts.get(date) ?? 0) >= perDate) continue;
+		counts.set(date, (counts.get(date) ?? 0) + 1);
+		quickSlots.push(slot);
+		if (quickSlots.length >= limit) break;
+	}
+	return quickSlots;
 }
 
 export function formatPrepCallTime(value: string) {

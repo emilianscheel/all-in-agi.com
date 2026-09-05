@@ -31,7 +31,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 `.env.example` nach `.env` kopieren und ergänzen:
 
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
-- `CAL_EVENT_TYPE_ID`: ID des 60-minütigen Cal.com Event Types
+- `CAL_EVENT_TYPE_ID`: ID des 30-minütigen Cal.com Event Types
 - `CAL_HACKATHON_EVENT_TYPE_ID`: ID des Cal.com Event Types für den Hackathontag; konfigurierte Dauern und freie Slots werden dynamisch aus Cal.com geladen
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account-ID für den E-Mail-Versand
 - `CLOUDFLARE_EMAIL_API_TOKEN`: serverseitiger Token mit `Email Sending: Edit`

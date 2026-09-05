@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { hackathonCalendarLocation, type BookingConfiguration } from '$lib/booking';
 import { berlinInputsFromIso } from '$lib/event-time';
+import { PREP_CALL_DURATION_MINUTES } from '$lib/prep-call';
 import type { ConfirmedBooking } from './hackathons';
 import { cancelCalBookingWithToken, createCalBookingWithToken } from './cal-api';
 import { CalAvailabilityError, isCalHackathonSlotAvailable } from './cal-hackathon-availability';
@@ -56,7 +57,7 @@ export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof 
 	return createCalBookingWithToken(config, requestFetch, development, {
 		eventTypeId: env.CAL_EVENT_TYPE_ID,
 		start: start.toISOString(),
-		end: new Date(start.getTime() + 60 * 60_000).toISOString(),
+		end: new Date(start.getTime() + PREP_CALL_DURATION_MINUTES * 60_000).toISOString(),
 		title: 'ALL IN AGI Prep Call',
 		field: 'prep-call',
 		includeLengthInMinutes: false

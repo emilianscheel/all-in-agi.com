@@ -8,6 +8,7 @@
         Clock3,
         Code2,
         Cookie,
+		LocateFixed,
         MapPin,
         Monitor,
         Pizza,
@@ -34,6 +35,7 @@
     import { bookingOverviewRows, type BookingOverviewRowId } from "$lib/booking-overview";
     import { eventDateBounds } from "$lib/event-date";
     import { photonFeatureLabel, normalizePhotonAddress, type PhotonFeature } from "$lib/photon";
+	import { addressAtCoordinates, fetchAddressSuggestions, reverseGeocode, type LocationCoordinates } from "$lib/geocoding";
     import AnimatedValue from "$lib/AnimatedValue.svelte";
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
@@ -85,7 +87,11 @@
     let suggestions = $state<Array<{ label: string; feature: PhotonFeature }>>([]);
     let searchStatus = $state<"idle" | "loading" | "empty" | "error">("idle");
     let addressAbort: AbortController | undefined;
+	let locationAbort: AbortController | undefined;
     let addressDebounce: ReturnType<typeof setTimeout> | undefined;
+	let locationLoading = $state(false);
+	let locationMessage = $state("");
+	let geolocationRequest = 0;
     let planAbort: AbortController | undefined;
     let planDebounce: ReturnType<typeof setTimeout> | undefined;
     let planHydrated = $state(false);
@@ -107,11 +113,6 @@
     let reducedMotion: MediaQueryList | undefined;
 
     let price = $derived(getPrice(capacity, true, "pizza", toolProvision, "existing", 0));
-    let eventAddressLabel = $derived(
-        [address.street, [address.postalCode, address.city].filter(Boolean).join(" ")]
-            .filter(Boolean)
-            .join(", "),
-    );
     let equipmentLabel = $derived(equipment === "none" ? (locale === 'en' ? "Provided by us" : "Wird von uns gestellt") : "Projector / Display");
     let codingToolLabels = $derived(selectedCodingToolLabels({ codingTools, customCodingTool }));
     let toolsPreviewLabel = $derived(
@@ -167,16 +168,8 @@
         addressAbort = new AbortController();
         searchStatus = "loading";
         try {
-            const params = new URLSearchParams({
-                q: query,
-                countrycode: "DE",
-                lang: "de",
-                limit: "5",
-            });
-            const response = await fetch(`/api/geocode?${params}`, { signal: addressAbort.signal });
-            if (!response.ok) throw new Error("Adresssuche nicht verfügbar");
-            const result = (await response.json()) as { features?: PhotonFeature[] };
-            suggestions = (result.features ?? [])
+			const features = await fetchAddressSuggestions(fetch, query, locale, addressAbort.signal);
+            suggestions = features
                 .map((feature) => ({ label: photonFeatureLabel(feature), feature }))
                 .filter((suggestion) => suggestion.label);
             searchStatus = suggestions.length ? "idle" : "empty";
@@ -189,11 +182,79 @@
     }
 
     function selectSuggestion(suggestion: { label: string; feature: PhotonFeature }) {
+		cancelLocationLookup();
         addressQuery = suggestion.label;
         suggestions = [];
         searchStatus = "idle";
         address = normalizePhotonAddress(suggestion.feature);
     }
+
+	function addressLabel(value: EventAddress) {
+		return value.label || [value.street, [value.postalCode, value.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+	}
+
+	function updateAddress(value: EventAddress) {
+		cancelLocationLookup();
+		address = value;
+		addressQuery = addressLabel(value);
+	}
+
+	function cancelLocationLookup() {
+		geolocationRequest += 1;
+		locationAbort?.abort();
+		locationLoading = false;
+		locationMessage = '';
+	}
+
+	async function selectCoordinates(coordinates: LocationCoordinates) {
+		geolocationRequest += 1;
+		locationAbort?.abort();
+		const controller = new AbortController();
+		locationAbort = controller;
+		locationLoading = true;
+		locationMessage = locale === 'en' ? 'Determining address …' : 'Adresse wird ermittelt …';
+		suggestions = [];
+		searchStatus = 'idle';
+		address = addressAtCoordinates(coordinates);
+		addressQuery = '';
+		try {
+			const resolved = await reverseGeocode(fetch, coordinates, locale, controller.signal);
+			if (!resolved) throw new Error(locale === 'en' ? 'No German address was found for this location.' : 'Für diesen Standort wurde keine deutsche Adresse gefunden.');
+			address = { ...resolved, ...coordinates };
+			addressQuery = addressLabel(address);
+			locationMessage = '';
+			trackBookingMilestone("event_location");
+		} catch (error) {
+			if ((error as Error).name === 'AbortError') return;
+			locationMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The address could not be determined. Please enter it below.' : 'Die Adresse konnte nicht ermittelt werden. Bitte geben Sie sie unten ein.');
+		} finally {
+			if (!controller.signal.aborted) locationLoading = false;
+		}
+	}
+
+	function useCurrentLocation() {
+		if (!navigator.geolocation) {
+			locationMessage = locale === 'en' ? 'Your browser does not support location access.' : 'Ihr Browser unterstützt keine Standortabfrage.';
+			return;
+		}
+		locationLoading = true;
+		locationMessage = locale === 'en' ? 'Requesting your location …' : 'Standort wird abgefragt …';
+		const request = ++geolocationRequest;
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				if (request !== geolocationRequest) return;
+				selectCoordinates({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+			},
+			(error) => {
+				if (request !== geolocationRequest) return;
+				locationLoading = false;
+				locationMessage = error.code === error.PERMISSION_DENIED
+					? (locale === 'en' ? 'Location access was denied. You can search or choose a point on the map.' : 'Der Standortzugriff wurde abgelehnt. Sie können suchen oder einen Punkt auf der Karte wählen.')
+					: (locale === 'en' ? 'Your location could not be determined. Please try again.' : 'Ihr Standort konnte nicht ermittelt werden. Bitte versuchen Sie es erneut.');
+			},
+			{ enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
+		);
+	}
 
     function buildConfiguration(): BookingConfiguration {
         return {
@@ -422,6 +483,7 @@
         window.removeEventListener("resize", schedulePreviewFade);
         reducedMotion?.removeEventListener("change", schedulePreviewFade);
         addressAbort?.abort();
+		locationAbort?.abort();
         planAbort?.abort();
     });
 </script>
@@ -449,24 +511,33 @@
                 ? undefined
                 : `--map-height:${mapHeight}px;--map-expanded-height:${mapExpandedHeight}px`}
         >
-			<MapPreview latitude={address.latitude} longitude={address.longitude} {locale}>
+			<MapPreview latitude={address.latitude} longitude={address.longitude} onlocationselect={selectCoordinates} {locale}>
                 <div class="map-address-search">
                     <div class="field address-search-wrap">
                         <label class="visually-hidden" for="map-address-search"
 							>{locale === 'en' ? 'Search address' : 'Adresse suchen'}</label
                         >
-                        <input
-                            id="map-address-search"
-                            autocomplete="off"
-                            aria-describedby={searchStatus === "idle"
-                                ? undefined
-                                : "map-address-search-status"}
-                            aria-autocomplete="list"
-                            aria-controls="map-address-suggestions"
-							placeholder={locale === 'en' ? 'Street, city, or company' : 'Straße, Ort oder Unternehmen'}
-                            bind:value={addressQuery}
-                            oninput={updateSuggestions}
-                        />
+						<div class="map-search-control">
+							<input
+								id="map-address-search"
+								autocomplete="off"
+								aria-describedby={searchStatus === "idle" && !locationMessage ? undefined : "map-address-search-status"}
+								aria-autocomplete="list"
+								aria-controls="map-address-suggestions"
+								placeholder={locale === 'en' ? 'Street, city, or company' : 'Straße, Ort oder Unternehmen'}
+								bind:value={addressQuery}
+								oninput={() => { cancelLocationLookup(); updateSuggestions(); }}
+							/>
+							<button
+								type="button"
+								class="map-location-button"
+								disabled={locationLoading}
+								aria-label={locale === 'en' ? 'Use my current location' : 'Meinen aktuellen Standort verwenden'}
+								title={locale === 'en' ? 'Use my current location' : 'Meinen aktuellen Standort verwenden'}
+								onclick={useCurrentLocation}
+							><LocateFixed size={20} strokeWidth={2} aria-hidden="true" /></button
+							>
+						</div>
                         {#if suggestions.length}
                             <ul id="map-address-suggestions" class="suggestions">
                                 {#each suggestions as suggestion}<li>
@@ -478,11 +549,11 @@
                                     </li>{/each}
                             </ul>
                         {/if}
-                        {#if searchStatus !== "idle"}
+						{#if locationMessage || searchStatus !== "idle"}
                             <p id="map-address-search-status" class="helper" aria-live="polite">
-                                {locale === 'en'
+								{locationMessage || (locale === 'en'
                                     ? (searchStatus === "loading" ? "Searching addresses …" : searchStatus === "empty" ? "No matching address found. Please enter it manually below." : "Address search is unavailable. Please enter it manually below.")
-                                    : (searchStatus === "loading" ? "Adressen werden gesucht …" : searchStatus === "empty" ? "Keine passende Adresse gefunden. Bitte unten manuell eingeben." : "Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.")}
+                                    : (searchStatus === "loading" ? "Adressen werden gesucht …" : searchStatus === "empty" ? "Keine passende Adresse gefunden. Bitte unten manuell eingeben." : "Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben."))}
                             </p>
                         {/if}
                     </div>
@@ -495,12 +566,11 @@
                     aria-hidden={previewOpacity <= 0.01}
                 >
                     <div class="event-card-top">
-						<h2>{companyName.trim() || (locale === 'en' ? 'Your hackathon' : "Ihr Hackathon")}</h2>
+						{#if companyName.trim()}<h2>{companyName.trim()}</h2>{/if}
                         <div class="event-card-price">
 							<AnimatedValue value={formatPrice(price.totalPrice, locale)} />
                         </div>
                     </div>
-                    {#if eventAddressLabel}<p class="event-address">{eventAddressLabel}</p>{/if}
                     <div class="event-details">
                         <div
                             class:event-detail-unselected={!eventStart}
@@ -609,7 +679,7 @@
 				<h2>{locale === 'en' ? 'Event address' : 'Veranstaltungsadresse'}</h2>
                 <AddressEditor
                     value={address}
-                    onchange={(value) => { address = value; trackBookingMilestone("event_location"); }}
+					onchange={(value) => { updateAddress(value); trackBookingMilestone("event_location"); }}
                     idPrefix="booking-address"
                     searchArea={false}
 					{locale}
@@ -651,7 +721,7 @@
             </section>
 
             <section class="config-section" use:reveal>
-				<h2>{locale === 'en' ? '60-minute preparation call' : '60 Min. Vorbereitungsgespräch'}</h2>
+				<h2>{locale === 'en' ? '30-minute preparation call' : '30 Min. Vorbereitungsgespräch'}</h2>
                 {#key availabilityKey}
                     <PrepCallEditor
                         value={consultationSlot}

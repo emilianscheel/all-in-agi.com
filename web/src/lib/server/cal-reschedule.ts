@@ -1,4 +1,5 @@
 import type { ConfirmedBooking } from './hackathons';
+import { PREP_CALL_DURATION_MINUTES } from '$lib/prep-call';
 
 export class BookingProviderError extends Error {
 	constructor(message: string, readonly status: number, readonly field?: 'hackathon' | 'prep-call') {
@@ -16,7 +17,7 @@ export async function reschedulePrepCallWithToken(
 ): Promise<ConfirmedBooking> {
 	const start = new Date(startValue);
 	if (Number.isNaN(start.getTime())) throw new BookingProviderError('Der neue Termin ist ungültig.', 400, options.field);
-	const end = options.end ? new Date(options.end) : new Date(start.getTime() + 60 * 60_000);
+	const end = options.end ? new Date(options.end) : new Date(start.getTime() + PREP_CALL_DURATION_MINUTES * 60_000);
 	if (demo) {
 		const uid = bookingUid ?? `demo-${Date.now()}`;
 		return {

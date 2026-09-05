@@ -29,7 +29,7 @@
 
 - [ ] Cal.com DPA/SCC und Transferprüfung
 - [ ] Cloudflare DPA/SCC und Transferprüfung
-- [ ] `GEOCODING_API_URL` verweist ausschließlich auf einen selbst betriebenen oder vertraglich/DPA-abgesicherten HTTPS-Dienst. Ohne Konfiguration bleibt nur die manuelle Eingabe aktiv.
+- [ ] Nutzung des öffentlichen Photon-Dienstes einschließlich Übermittlung von Suchtexten und Standortkoordinaten rechtlich geprüft; optionales `GEOCODING_API_URL` zeigt auf einen freigegebenen Photon-kompatiblen HTTPS-Dienst.
 - [ ] OpenFreeMap/MapLibre-Verarbeitung und technisch erforderliche Verbindungsdaten in der Datenschutzerklärung aktuell beschrieben
 
 ## Aufbewahrung und Löschung

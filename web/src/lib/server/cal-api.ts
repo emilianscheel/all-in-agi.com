@@ -2,6 +2,7 @@ import { bookingMetadata, type BookingConfiguration } from '$lib/booking';
 import { eventDurationMinutes } from '$lib/event-time';
 import type { ConfirmedBooking } from './hackathons';
 import { BookingProviderError } from './cal-reschedule';
+import { PREP_CALL_DURATION_MINUTES } from '$lib/prep-call';
 
 const CAL_API_VERSION = '2026-02-25';
 
@@ -32,7 +33,7 @@ function bookingRejection(result: unknown, status: number, field: 'hackathon' | 
 	}
 	if (/length|duration|dauer/.test(details)) {
 		return field === 'prep-call'
-			? { message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 60-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.', status: 503 }
+			? { message: `Der Vorbereitungstermin ist im Kalender nicht korrekt als ${PREP_CALL_DURATION_MINUTES}-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.`, status: 503 }
 			: { message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.', status: 400 };
 	}
 	if (/booking.?window|out.?of.?bounds|minimum.?booking.?notice|too.?soon/.test(details)) {

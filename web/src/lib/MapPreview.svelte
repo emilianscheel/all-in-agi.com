@@ -3,12 +3,25 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type { Map as MapLibreMap, MapStyleImageMissingEvent, Marker as MapLibreMarker } from 'maplibre-gl';
 
-	let { latitude, longitude, children, locale = 'de' }: { latitude?: number; longitude?: number; children?: Snippet; locale?: 'de' | 'en' } = $props();
+	let {
+		latitude,
+		longitude,
+		children,
+		locale = 'de',
+		onlocationselect
+	}: {
+		latitude?: number;
+		longitude?: number;
+		children?: Snippet;
+		locale?: 'de' | 'en';
+		onlocationselect?: (coordinates: { latitude: number; longitude: number }) => void;
+	} = $props();
 	let container: HTMLDivElement;
 	let map: MapLibreMap | undefined;
 	let marker: MapLibreMarker | undefined;
 	let readyTimeout: ReturnType<typeof setTimeout> | undefined;
 	let colorScheme: MediaQueryList | undefined;
+	let desktopPointer: MediaQueryList | undefined;
 	let resizeObserver: ResizeObserver | undefined;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	const mapStyle = (dark: boolean) => `https://tiles.openfreemap.org/styles/${dark ? 'dark' : 'positron'}`;
@@ -24,6 +37,11 @@
 		map.addImage(event.id, { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
 	}
 
+	function selectMapLocation(event: { lngLat: { lat: number; lng: number } }) {
+		if (!desktopPointer?.matches || !onlocationselect) return;
+		onlocationselect({ latitude: event.lngLat.lat, longitude: event.lngLat.lng });
+	}
+
 	async function initialize() {
 		try {
 			const maplibregl = await import('maplibre-gl');
@@ -32,6 +50,7 @@
 				requestAnimationFrame(() => { map?.resize(); status = 'ready'; updatePosition(); });
 			};
 			colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+			desktopPointer = window.matchMedia('(min-width: 901px) and (pointer: fine)');
 			colorScheme.addEventListener('change', updateMapTheme);
 			map = new maplibregl.Map({
 				container,
@@ -45,6 +64,7 @@
 				scrollZoom: true
 			});
 			map.on('styleimagemissing', provideMissingStyleImage);
+			map.on('click', selectMapLocation);
 			map.once('styledata', reveal);
 			resizeObserver = new ResizeObserver(() => map?.resize());
 			resizeObserver.observe(container);
@@ -62,7 +82,7 @@
 
 	$effect(() => { latitude; longitude; updatePosition(); });
 	onMount(initialize);
-	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); marker?.remove(); map?.remove(); });
+	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); map?.off('click', selectMapLocation); marker?.remove(); map?.remove(); });
 </script>
 
 <div class="map-shell" aria-label={locale === 'en' ? 'Event location preview' : 'Vorschau des Veranstaltungsorts'}>

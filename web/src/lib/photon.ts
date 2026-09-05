@@ -13,6 +13,7 @@ export interface PhotonFeature {
 		village?: string;
 		district?: string;
 		country?: string;
+		countrycode?: string;
 	};
 }
 

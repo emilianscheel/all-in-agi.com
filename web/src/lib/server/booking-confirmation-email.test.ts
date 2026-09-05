@@ -43,7 +43,7 @@ const input = {
     config,
     booking: {
         start: "2099-05-10T10:00:00.000Z",
-        end: "2099-05-10T11:00:00.000Z",
+        end: "2099-05-10T10:30:00.000Z",
         uid: "booking-1",
         icsUid: "booking-1@all-in-agi.com",
         title: "ALL IN AGI Prep Call",

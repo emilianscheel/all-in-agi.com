@@ -30,7 +30,7 @@ const configuration: BookingConfiguration = {
 };
 
 const hackathonBooking = { status: 'success' as const, demo: true, uid: 'event-1', start: configuration.eventStart, end: configuration.eventEnd };
-const prepCallBooking = { status: 'success' as const, demo: true, uid: 'prep-1', start: configuration.consultationSlot, end: '2099-05-10T11:00:00.000Z' };
+const prepCallBooking = { status: 'success' as const, demo: true, uid: 'prep-1', start: configuration.consultationSlot, end: '2099-05-10T10:30:00.000Z' };
 
 function store(log: string[]): BookingPersistence {
 	return {

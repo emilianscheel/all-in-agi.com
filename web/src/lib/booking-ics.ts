@@ -1,4 +1,5 @@
 import type { BookingConfiguration } from './booking';
+import { PREP_CALL_DURATION_MINUTES } from './prep-call';
 
 export interface BookingResultSummary {
 	uid?: string;
@@ -23,7 +24,7 @@ export function createPrepCallIcs(
 	bookingUrl?: string
 ) {
 	const start = new Date(booking.start || config.consultationSlot);
-	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + 60 * 60_000);
+	const end = booking.end ? new Date(booking.end) : new Date(start.getTime() + PREP_CALL_DURATION_MINUTES * 60_000);
 	const description = [
 		(config.locale === 'en' ? `Preparation call for ${config.companyName}'s Agentic Engineering Hackathon` : `Prep Call für den Agentic Engineering Hackathon von ${config.companyName}`),
 		...(bookingUrl ? [`${config.locale === 'en' ? 'Manage booking' : 'Buchung verwalten'}: ${bookingUrl}`] : [])

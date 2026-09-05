@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import type { EventAddress } from '$lib/booking';
 	import type { Locale } from '$lib/i18n';
+	import { fetchAddressSuggestions } from '$lib/geocoding';
 	import { normalizePhotonAddress, photonFeatureLabel, type PhotonFeature } from '$lib/photon';
 
 	let {
@@ -49,11 +50,8 @@
 		abortController = new AbortController();
 		searchStatus = 'loading';
 		try {
-			const params = new URLSearchParams({ q: query, countrycode: 'DE', lang: locale, limit: '5' });
-			const response = await fetch(`/api/geocode?${params}`, { signal: abortController.signal });
-			if (!response.ok) throw new Error('Adresssuche nicht verfügbar');
-			const result = await response.json() as { features?: PhotonFeature[] };
-			suggestions = (result.features ?? [])
+			const features = await fetchAddressSuggestions(fetch, query, locale, abortController.signal);
+			suggestions = features
 				.map((feature) => ({ label: photonFeatureLabel(feature), feature }))
 				.filter((suggestion) => suggestion.label);
 			searchStatus = suggestions.length ? 'idle' : 'empty';

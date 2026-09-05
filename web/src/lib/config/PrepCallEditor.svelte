@@ -9,6 +9,7 @@
 		availablePrepCallDates,
 		normalizeAvailabilitySlots,
 		prepCallDateBounds,
+		prepCallQuickSlots,
 		prepCallSlotsForDate
 	} from '$lib/prep-call';
 
@@ -39,6 +40,7 @@
 	let loadError = $state('');
 	let prepCallDates = $derived(availablePrepCallDates(slots));
 	let customSlots = $derived(prepCallSlotsForDate(slots, customDate));
+	let quickSlots = $derived(prepCallQuickSlots(slots));
 	const { min, max } = prepCallDateBounds();
 
 	async function loadAvailability() {
@@ -91,7 +93,7 @@
 	<button class="button-secondary" type="button" onclick={loadAvailability}>{locale === 'en' ? 'Reload' : 'Neu laden'}</button>
 {:else}
 	<div class="slots">
-		{#each slots.slice(0, 15) as slot}
+		{#each quickSlots as slot}
 			<button type="button" class:selected={mode === 'quick' && value === slot} class="slot" aria-pressed={mode === 'quick' && value === slot} onclick={() => selectQuickSlot(slot)}>{formatDate(slot, true, locale)}{locale === 'de' ? ' Uhr' : ''}</button>
 		{/each}
 		<button type="button" class:selected={mode === 'custom'} class="slot custom-slot" aria-pressed={mode === 'custom'} onclick={selectCustomMode}>Custom</button>

@@ -20,10 +20,10 @@ describe('booking artifacts', () => {
 		expect(hackathonDetailUrl('HAA-AAA-AAA')).toBe('https://all-in-agi.com/de/HAA-AAA-AAA');
 	});
 
-	test('creates a 60 minute ICS event', () => {
+	test('creates a 30 minute ICS event', () => {
 		const ics = createPrepCallIcs(config, { start: config.consultationSlot, uid: 'booking-1' });
 		expect(ics).toContain('DTSTART:20990510T100000Z');
-		expect(ics).toContain('DTEND:20990510T110000Z');
+		expect(ics).toContain('DTEND:20990510T103000Z');
 		expect(ics).toContain('UID:booking-1');
 		expect(ics).toContain('PRODID:-//ALL IN AGI//Prep Call//DE');
 		expect(ics).toContain('SUMMARY:ALL IN AGI Prep Call');

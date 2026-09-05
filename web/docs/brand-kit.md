@@ -101,7 +101,7 @@ Nach einer kurzen Live Demo wird gebaut: in kleinen Teams, mit aktuellen AI Codi
 
 **Was könnte Ihr Team an einem Tag bauen?**
 
-In 60 Minuten klären wir Tool Stack, Challenges und Setup für Ihren Hackathon.
+In 30 Minuten klären wir Tool Stack, Challenges und Setup für Ihren Hackathon.
 
 **CTA:** Erstgespräch buchen
 

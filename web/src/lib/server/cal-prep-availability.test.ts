@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { getCalPrepCallSlots } from './cal-prep-availability';
 
 describe('Cal.com prep-call availability', () => {
-	test('requests fixed 60-minute slots and normalizes the response', async () => {
+	test('requests fixed 30-minute slots and normalizes the response', async () => {
 		let requestedUrl = '';
 		const mockFetch = (async (url: URL | RequestInfo) => {
 			requestedUrl = String(url);
@@ -14,7 +14,7 @@ describe('Cal.com prep-call availability', () => {
 			token: 'cal_test', eventTypeId: '123', start: '2099-08-03', end: '2099-08-03'
 		});
 		const url = new URL(requestedUrl);
-		expect(url.searchParams.get('duration')).toBe('60');
+		expect(url.searchParams.get('duration')).toBe('30');
 		expect(url.searchParams.get('timeZone')).toBe('Europe/Berlin');
 		expect(slots).toEqual(['2099-08-03T08:00:00.000Z', '2099-08-03T09:00:00.000Z']);
 	});

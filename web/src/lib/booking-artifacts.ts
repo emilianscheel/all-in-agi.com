@@ -19,6 +19,7 @@ import type { BookingResultSummary } from './booking-ics';
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY } from './contact';
 import { formatEventTimeRange } from './event-time';
 import { localizedPath } from './i18n';
+import { PREP_CALL_DURATION_MINUTES } from './prep-call';
 
 export const PAGE_WIDTH = 595.28;
 export const PAGE_HEIGHT = 841.89;
@@ -412,7 +413,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 		ink,
 		1
 	);
-	page.drawText(locale === 'en' ? '60 minutes - Europe/Berlin' : '60 Minuten - Europe/Berlin', { x: 319, y: 633, font: regular, size: 9, color: muted });
+	page.drawText(locale === 'en' ? `${PREP_CALL_DURATION_MINUTES} minutes - Europe/Berlin` : `${PREP_CALL_DURATION_MINUTES} Minuten - Europe/Berlin`, { x: 319, y: 633, font: regular, size: 9, color: muted });
 
 	page.drawText(locale === 'en' ? 'Your overview' : 'Ihre Übersicht', { x: LEFT, y: 580, font: bold, size: 16, color: ink });
 	const cardTop = 558;

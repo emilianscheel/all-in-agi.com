@@ -33,7 +33,7 @@ const record = {
 	prepCallBookingIcsUid: 'prep-1@example.com',
 	prepCallBookingTitle: 'ALL IN AGI Prep Call',
 	prepCallBookingStart: '2099-05-10T10:00:00.000Z',
-	prepCallBookingEnd: '2099-05-10T11:00:00.000Z',
+	prepCallBookingEnd: '2099-05-10T10:30:00.000Z',
 	prepCallMeetingUrl: '',
 	hackathonBookingUid: 'hackathon-1',
 	hackathonBookingIcsUid: 'hackathon-1@example.com',

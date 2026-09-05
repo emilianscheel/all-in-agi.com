@@ -10,7 +10,7 @@
 		['2. Website and technical delivery', 'When you visit this website, technically necessary connection and security data is processed, including IP address, time, requested resource, status code, and browser information. The legal basis is Article 6(1)(f) GDPR: our legitimate interest in operating the website securely and reliably. The site is hosted by Vercel Inc.; contractual and booking data is stored in a Neon PostgreSQL database in Frankfurt. Applicable data-processing terms, standard contractual clauses, and transfer assessments are used.'],
 		['3. Hackathon requests and contracts', 'We process company and contact data, event address, dates, configuration, communications, authority confirmations, and contract evidence to handle requests and perform contracts under Article 6(1)(b) GDPR and for traceable B2B communication and legal defense under Article 6(1)(f). Unsuccessful inquiries are normally deleted six months after the last contact; contract records remain for applicable limitation and retention periods.'],
 		['4. Scheduling with Cal.com', 'We use Cal.com to show availability and reserve preparation calls and hackathon dates. Necessary contact, schedule, and event data is transferred. Cal.com may process data in the United States under the applicable contractual safeguards.'],
-		['5. Maps and address search', 'Maps use MapLibre GL and tiles from OpenFreeMap. Providers receive technically necessary connection data. Optional address search is used in production only through a self-hosted or contractually approved geocoding service; addresses can always be entered manually.'],
+		['5. Maps, location access, and address search', 'Maps use MapLibre GL and tiles from OpenFreeMap. Address search and coordinates selected through browser location access or the map are sent through our server to the public Photon service operated by komoot and based on OpenStreetMap data. The providers receive technically necessary connection data. Location access is optional, requires browser permission, and can be denied; addresses can always be entered manually.'],
 		['6. Email delivery', 'Transactional email is sent through Cloudflare Email Service. Recipient, name, booking or contract details, attachments, time, delivery status, and technical message identifiers are processed under Article 6(1)(b) and (f) GDPR.'],
 		['7. Invoices and payment records', 'We process billing address, contacts, email, optional VAT ID and purchase order, services, and payment data for invoicing and accounting under Article 6(1)(b) and (c) GDPR. Tax-relevant invoices and structured originals are generally retained for eight years.'],
 		['8. Participants, devices, and security data', 'Participant lists are collected only where required for access, safety, or an agreed service. Dietary requirements should be provided as anonymous totals. Personal data, production data, trade secrets, and confidential source code may not be used on supplied devices or accounts without a separate agreement.'],
@@ -26,14 +26,14 @@
 
 {#if locale === 'en'}
 <div class="simple-page"><article class="simple-card privacy-card">
-	<h1>Privacy Notice</h1><p class="document-meta">Last updated: August 2, 2026</p>
+	<h1>Privacy Notice</h1><p class="document-meta">Last updated: September 5, 2026</p>
 	{#each englishSections as section, index}<h2 id={index === 9 ? 'google-analytics' : undefined}>{section[0]}</h2><p>{section[1]}</p>{/each}
 	<p>You can withdraw analytics consent at any time: <button class="privacy-button" type="button" onclick={openCookieSettings}>open cookie settings</button>.</p>
 </article></div>
 {:else}
 <div class="simple-page"><article class="simple-card privacy-card">
 	<h1>Datenschutz</h1>
-	<p class="document-meta">Stand: 2. August 2026</p>
+	<p class="document-meta">Stand: 5. September 2026</p>
 
 	<h2>1. Verantwortlicher</h2>
 	<p>Emilian Scheel, handelnd unter ALL IN AGI<br />Moosdorfstraße 10, 12435 Berlin<br /><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
@@ -49,8 +49,8 @@
 	<h2>4. Terminbuchung mit Cal.com</h2>
 	<p>Zur Anzeige verfügbarer Termine und zur Reservierung des Prep-Calls und Hackathontags nutzen wir Cal.com. Dabei werden die für die Terminbuchung erforderlichen Kontakt-, Termin- und Veranstaltungsdaten übermittelt. Cal.com kann Daten in den USA verarbeiten. Die produktive Nutzung erfolgt nur auf Grundlage der einschlägigen Datenschutzvereinbarungen und Transfermechanismen.</p>
 
-	<h2>5. Karten und Adresssuche</h2>
-	<p>Für die Kartendarstellung werden MapLibre GL und Kartenkacheln von OpenFreeMap verwendet. Bei Abruf der Kartenkacheln erhält der Anbieter technisch erforderliche Verbindungsdaten. Eine optionale Adresssuche darf produktiv nur über einen selbst betriebenen oder vertraglich und datenschutzrechtlich abgesicherten Geocoding-Dienst erfolgen. Eine Adresse kann alternativ manuell eingegeben werden.</p>
+	<h2>5. Karten, Standortabfrage und Adresssuche</h2>
+	<p>Für die Kartendarstellung werden MapLibre GL und Kartenkacheln von OpenFreeMap verwendet. Adresssuchen sowie Koordinaten aus der optionalen Browser-Standortabfrage oder einer Auswahl auf der Karte werden über unseren Server an den öffentlichen Photon-Dienst von komoot übermittelt, der auf OpenStreetMap-Daten basiert. Die Anbieter erhalten dabei technisch erforderliche Verbindungsdaten. Die Standortabfrage erfordert Ihre Browserfreigabe und kann abgelehnt werden; eine Adresse kann jederzeit manuell eingegeben werden.</p>
 
 	<h2>6. E-Mail-Versand</h2>
 	<p>Transaktions-E-Mails werden über Cloudflare Email Service versandt. Verarbeitet werden Empfängeradresse, Name, Buchungs-/Vertragsdaten, Anhänge, Versandzeitpunkt, Zustellstatus und technische Nachrichtenkennungen. Rechtsgrundlagen sind Art. 6 Abs. 1 lit. b und lit. f DSGVO.</p>
