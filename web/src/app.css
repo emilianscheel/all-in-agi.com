@@ -473,9 +473,9 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .option-grid { display: grid; gap: 12px; }
 .option-grid.three { grid-template-columns: repeat(3, 1fr); }
 .demo-setup-grid, .lunch-grid, .tools-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.choice { position: relative; isolation: isolate; overflow: hidden; min-height: 112px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; border: 1.5px solid var(--control-border); border-radius: 15px; background: linear-gradient(180deg, color-mix(in srgb, var(--control) 90%, var(--line)) 0%, var(--control) 34%, var(--control) 100%); cursor: pointer; text-align: left; transition: border-color .18s ease; }
+.choice { position: relative; isolation: isolate; overflow: hidden; min-height: 112px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid var(--control-border); border-radius: 15px; background: linear-gradient(180deg, color-mix(in srgb, var(--control) 90%, var(--line)) 0%, var(--control) 34%, var(--control) 100%); cursor: pointer; text-align: left; transition: border-color .18s ease; }
 .choice::before { height: 42%; background: linear-gradient(180deg, rgba(255,255,255,.58), transparent); opacity: .72; }
-.choice:hover { border-color: var(--ink); }
+.choice:hover { border-color: var(--control-border); }
 .choice.selected, .choice:focus-within { border-color: var(--orange); outline: 2px solid color-mix(in srgb, var(--orange) 25%, transparent); outline-offset: 2px; }
 .choice input { position: absolute; opacity: 0; pointer-events: none; }
 .choice b, .choice small, .choice .choice-price { position: relative; z-index: 1; }
