@@ -52,7 +52,7 @@ describe('public hackathon mapping', () => {
 		expect(result.price).toMatchObject({ devicesAdjustment: 450, totalPrice: 4450 });
 		expect(result).toMatchObject({ deviceProvision: 'needed', deviceCount: 3 });
 		expect(result.prepCallBooking.uid).toBe('prep-1');
-		expect(result.hackathonBooking.uid).toBe('hackathon-1');
+		expect(result.hackathonBooking?.uid).toBe('hackathon-1');
 		expect(result.contactName).toBe('Ada Beispiel');
 		expect(result.email).toBe('ada@example.com');
 		expect(result.phone).toBe('+49 30 123456');

@@ -11,6 +11,7 @@ import { BookingProviderError, reschedulePrepCallWithToken } from './cal-resched
 export { BookingProviderError } from './cal-reschedule';
 
 export function bookHackathonDay(config: BookingConfiguration, requestFetch: typeof fetch, development: boolean) {
+	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon');
 	const location = hackathonCalendarLocation(config);
 	return createCalBookingWithToken(config, requestFetch, development, {
 		eventTypeId: env.CAL_HACKATHON_EVENT_TYPE_ID,
@@ -28,6 +29,7 @@ export async function assertHackathonDayAvailable(
 	development: boolean,
 	bookingUidToReschedule?: string
 ) {
+	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon');
 	const token = env.CAL_API_KEY;
 	const eventTypeId = env.CAL_HACKATHON_EVENT_TYPE_ID;
 	if (!token || !eventTypeId) {

@@ -11,7 +11,7 @@ import { getDb } from './db';
 import * as schema from './db/schema';
 
 const DEVELOPMENT_AUTH_SECRET = 'all-in-agi-local-development-auth-secret-2026';
-const DEVELOPMENT_AUTH_URL = 'http://localhost:5173';
+const DEVELOPMENT_AUTH_URL = 'http://localhost:3000';
 
 function configuredSecret() {
 	if (env.BETTER_AUTH_SECRET) return env.BETTER_AUTH_SECRET;
@@ -102,4 +102,3 @@ export const auth = betterAuth({
 });
 
 export type AuthSession = typeof auth.$Infer.Session;
-

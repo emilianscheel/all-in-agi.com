@@ -3,14 +3,14 @@ import type { BookingConfiguration } from '$lib/booking';
 import { cancelCalBookingWithToken, createCalBookingWithToken } from './cal-api';
 import { reschedulePrepCallWithToken } from './cal-reschedule';
 
-const configuration: BookingConfiguration = {
+const configuration = {
 	capacity: 15, venueProvided: true, equipment: 'projector', lunch: 'pizza', customLunch: '',
 	toolProvision: 'existing', codingTools: ['codex'], customCodingTool: '', deviceProvision: 'existing', deviceCount: 0, companyName: 'Musterwerke GmbH',
 	contactName: 'Ada Beispiel', email: 'ada@example.com', phone: '+49 30 123456', message: '',
 	address: { label: '', street: 'Musterstraße 1', postalCode: '10115', city: 'Berlin', country: 'Deutschland' },
 	eventStart: '2099-06-20T07:00:00.000Z', eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z'
-};
+} satisfies BookingConfiguration;
 
 describe('Cal.com booking contracts', () => {
 	test('creates the hackathon invite with duration, attendee, address and metadata', async () => {

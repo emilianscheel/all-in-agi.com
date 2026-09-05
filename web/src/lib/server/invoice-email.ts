@@ -22,10 +22,11 @@ function bytesToBase64(bytes: Uint8Array) {
 
 export function buildInvoiceEmailText(snapshot: InvoiceSnapshot) {
 	const en = snapshot.locale === 'en';
-	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
-		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
-	const englishLabel = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'deposit invoice'
-		: snapshot.version === 2 && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
+	const split = snapshot.version === 2 || snapshot.version === 3;
+	const label = split && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
+		: split && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
+	const englishLabel = split && snapshot.kind === 'down-payment' ? 'deposit invoice'
+		: split && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
 	return [
 		en ? `Hello ${snapshot.customer.contactName},` : `Hallo ${snapshot.customer.contactName},`,
 		'',
@@ -43,17 +44,19 @@ export function buildInvoiceEmailText(snapshot: InvoiceSnapshot) {
 
 export function buildInvoiceEmailHtml(snapshot: InvoiceSnapshot) {
 	const en = snapshot.locale === 'en';
-	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
-		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
-	const englishLabel = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'deposit invoice' : snapshot.version === 2 && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
+	const split = snapshot.version === 2 || snapshot.version === 3;
+	const label = split && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
+		: split && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
+	const englishLabel = split && snapshot.kind === 'down-payment' ? 'deposit invoice' : split && snapshot.kind === 'final' ? 'final invoice' : 'invoice';
 	if (en) return `<p>Hello ${escapeHtml(snapshot.customer.contactName)},</p><p>Please find attached the ${englishLabel} for your ALL IN AGI Agentic Engineering Hackathon.</p><p><strong>Invoice number:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Total amount:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Due date:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p><p>Best regards<br>ALL IN AGI</p>`;
 	return `<p>Hallo ${escapeHtml(snapshot.customer.contactName)},</p><p>anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.</p><p><strong>Rechnungsnummer:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Gesamtbetrag:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Zahlbar bis:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p><p>Viele Grüße<br>ALL IN AGI</p>`;
 }
 
 export async function sendInvoiceEmail(snapshot: InvoiceSnapshot, dependencies: InvoiceEmailDependencies = {}) {
 	const en = snapshot.locale === 'en';
-	const label = snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
-		: snapshot.version === 2 && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
+	const split = snapshot.version === 2 || snapshot.version === 3;
+	const label = split && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
+		: split && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
 	const pdf = await (dependencies.createPdf ?? createInvoicePdf)(snapshot);
 	return sendEmailMessage({
 		to: { address: snapshot.customer.email, name: snapshot.customer.contactName },
@@ -66,7 +69,7 @@ export async function sendInvoiceEmail(snapshot: InvoiceSnapshot, dependencies: 
 		},
 		attachments: [{
 			content: bytesToBase64(pdf),
-			filename: `all-in-agi-${snapshot.version === 2 ? snapshot.kind : (en ? 'invoice' : 'rechnung')}-${snapshot.hackathonId}.pdf`,
+			filename: `all-in-agi-${split ? snapshot.kind : (en ? 'invoice' : 'rechnung')}-${snapshot.hackathonId}.pdf`,
 			type: 'application/pdf',
 			disposition: 'attachment'
 		}]

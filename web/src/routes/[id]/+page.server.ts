@@ -17,8 +17,8 @@ export async function load({ params, locals }) {
 			billingModel: record.billingModel,
 			issued: Boolean(record.invoiceSnapshot),
 			emailSentAt: record.invoiceEmailSentAt,
-			finalAvailable: record.billingModel === 'legacy_full'
-				|| (Boolean(record.downPaymentPaidAt) && new Date() >= new Date(record.eventEnd)),
+			finalAvailable: Boolean(record.eventEnd) && (record.billingModel === 'legacy_full'
+				|| (Boolean(record.downPaymentPaidAt) && new Date() >= new Date(record.eventEnd!))),
 			downPayment: {
 				issued: Boolean(record.downPaymentInvoiceSnapshot),
 				emailSentAt: record.downPaymentInvoiceEmailSentAt,

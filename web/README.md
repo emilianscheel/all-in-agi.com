@@ -40,7 +40,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `PLAN_URL_SECRET`: mindestens 32 Zeichen langes, serverseitiges Secret für verschlüsselte Plan-Links
 - `DATABASE_URL`: einzige PostgreSQL-Konfiguration für Anwendung, Drizzle und lokale Entwicklung; der lokale Container übernimmt daraus Benutzername, Passwort, Datenbankname und Port
 - `BETTER_AUTH_SECRET`: mindestens 32 Zeichen langes Secret für Better-Auth-Sessions
-- `BETTER_AUTH_URL`: vollständiger Origin der Anwendung ohne abschließenden Slash; lokal standardmäßig `http://localhost:5173`
+- `BETTER_AUTH_URL`: vollständiger Origin der Anwendung ohne abschließenden Slash; lokal standardmäßig `http://localhost:3000`
 - `SEED_ADMIN_EMAIL`: einzige E-Mail-Adresse, die das Admin-Konto einrichten darf
 - `SEED_ADMIN_PASSWORD`: Seed-Passwort mit mindestens 8 Zeichen; es wird nur bis zur erfolgreichen Passkey-Einrichtung akzeptiert
 - `PUBLIC_GA_MEASUREMENT_ID`: öffentliche GA4 Measurement ID, derzeit `G-WD6MW6STST`; Analytics wird erst nach einer Cookie-Einwilligung im Browser geladen

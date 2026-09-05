@@ -22,17 +22,17 @@
 		onloadingchange = () => {},
 		onchange
 	}: {
-		eventStart?: string;
-		eventEnd?: string;
+		eventStart?: string | null;
+		eventEnd?: string | null;
 		minValue: string;
 		maxValue: string;
 		hackathonId?: string;
 		locale?: Locale;
 		onloadingchange?: (loading: boolean) => void;
-		onchange: (value: { eventStart: string; eventEnd: string }) => void;
+		onchange: (value: { eventStart: string | null; eventEnd: string | null }) => void;
 	} = $props();
 
-	let startParts = $derived(berlinInputsFromIso(eventStart));
+	let startParts = $derived(berlinInputsFromIso(eventStart ?? ''));
 	let selectedDate = $state('');
 	let slots = $state<ReturnType<typeof normalizeHackathonSlots>>([]);
 	let availableDates = $derived(hackathonAvailableDates(slots));
@@ -65,7 +65,7 @@
 			if (eventStart || eventEnd) onchange({ eventStart: '', eventEnd: '' });
 			return;
 		}
-		const preferred = preferredHackathonSlot(slots, selectedDate, eventStart, eventEnd);
+		const preferred = preferredHackathonSlot(slots, selectedDate, eventStart ?? '', eventEnd ?? '');
 		if (preferred && (preferred.start !== eventStart || preferred.end !== eventEnd)) {
 			onchange({ eventStart: preferred.start, eventEnd: preferred.end });
 		}
@@ -111,7 +111,7 @@
 	function selectDate(date: string) {
 		selectedDate = date;
 		if (!date) return onchange({ eventStart: '', eventEnd: '' });
-		const preferred = preferredHackathonSlot(slots, date, eventStart, eventEnd);
+		const preferred = preferredHackathonSlot(slots, date, eventStart ?? '', eventEnd ?? '');
 		onchange(preferred
 			? { eventStart: preferred.start, eventEnd: preferred.end }
 			: { eventStart: '', eventEnd: '' });
@@ -119,6 +119,11 @@
 
 	function selectCombination(slot: (typeof combinationOptions)[number]) {
 		onchange({ eventStart: slot.start, eventEnd: slot.end });
+	}
+
+	function chooseLater() {
+		selectedDate = '';
+		onchange({ eventStart: null, eventEnd: null });
 	}
 
 	onDestroy(() => abortController?.abort());
@@ -135,6 +140,15 @@
 		onmonthchange={loadAvailability}
 		onchange={selectDate}
 	/>
+	<button
+		type="button"
+		class="choice choose-later-option"
+		class:selected={eventStart === null && eventEnd === null}
+		aria-pressed={eventStart === null && eventEnd === null}
+		onclick={chooseLater}
+	>
+		<span>{locale === 'en' ? 'Choose later' : 'Später auswählen'}</span>
+	</button>
 	{#if loading}
 		<p class="slot-status" aria-live="polite">{locale === 'en' ? 'Loading available hackathon dates …' : 'Freie Hackathon-Termine werden geladen …'}</p>
 	{:else if loadError}

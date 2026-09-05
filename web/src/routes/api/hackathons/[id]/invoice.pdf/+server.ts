@@ -22,7 +22,7 @@ export function _createInvoicePdfPost(dependencies: InvoicePdfEndpointDependenci
 		try {
 			const { snapshot } = await getOrCreateInvoice(id, dependencies);
 			const bytes = await (dependencies.createPdf ?? createInvoicePdf)(snapshot);
-			const kind = snapshot.version === 2 ? snapshot.kind : 'rechnung';
+			const kind = snapshot.version === 2 || snapshot.version === 3 ? snapshot.kind : 'rechnung';
 			return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), {
 				headers: {
 					'content-type': 'application/pdf',

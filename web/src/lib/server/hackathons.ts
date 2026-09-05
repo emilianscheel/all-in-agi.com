@@ -16,7 +16,7 @@ export interface ConfirmedBooking extends BookingResultSummary {
 }
 
 export interface ConfirmedBookings {
-	hackathonBooking: ConfirmedBooking;
+	hackathonBooking?: ConfirmedBooking;
 	prepCallBooking: ConfirmedBooking;
 }
 
@@ -31,7 +31,7 @@ export interface PublicHackathon extends BookingConfiguration {
 	exitDeadline: string | null;
 	contractedAt: string | null;
 	price: ReturnType<typeof getPrice>;
-	hackathonBooking: BookingResultSummary;
+	hackathonBooking: BookingResultSummary | null;
 	prepCallBooking: BookingResultSummary;
 }
 
@@ -73,8 +73,8 @@ function pendingValues(id: string, config: BookingConfiguration, legalSnapshot: 
 		legalContentHash: legalSnapshot.contentHash,
 		legalSnapshot,
 		address: config.address,
-		eventStart: new Date(config.eventStart).toISOString(),
-		eventEnd: new Date(config.eventEnd).toISOString(),
+		eventStart: config.eventStart ? new Date(config.eventStart).toISOString() : null,
+		eventEnd: config.eventEnd ? new Date(config.eventEnd).toISOString() : null,
 		consultationSlot: new Date(config.consultationSlot).toISOString(),
 		billingModel: 'deposit_30' as const,
 		...price
@@ -237,8 +237,8 @@ export async function updateConfirmedHackathon(
 		businessCustomerConfirmed: Boolean(config.businessCustomerConfirmed),
 		authorityConfirmed: Boolean(config.authorityConfirmed),
 		address: config.address,
-		eventStart: new Date(config.eventStart).toISOString(),
-		eventEnd: new Date(config.eventEnd).toISOString(),
+		eventStart: config.eventStart ? new Date(config.eventStart).toISOString() : null,
+		eventEnd: config.eventEnd ? new Date(config.eventEnd).toISOString() : null,
 		consultationSlot: new Date(config.consultationSlot).toISOString(),
 		...(reprice ? price : {}),
 		...bookingValues(bookings),
@@ -291,13 +291,16 @@ export function recordToPrepCallBookingSummary(record: HackathonRecord): Booking
 	};
 }
 
-export function recordToHackathonBookingSummary(record: HackathonRecord): BookingResultSummary {
+
+export function recordToHackathonBookingSummary(record: HackathonRecord): BookingResultSummary | null {
+	const start = record.hackathonBookingStart ?? record.eventStart;
+	if (!start) return null;
 	return {
 		uid: record.hackathonBookingUid ?? undefined,
 		icsUid: record.hackathonBookingIcsUid ?? undefined,
 		title: record.hackathonBookingTitle ?? undefined,
-		start: record.hackathonBookingStart ?? record.eventStart,
-		end: record.hackathonBookingEnd ?? record.eventEnd
+		start,
+		end: record.hackathonBookingEnd ?? record.eventEnd ?? undefined
 	};
 }
 
@@ -337,7 +340,7 @@ export async function claimHackathonCancellation(id: string, now = new Date()) {
 	const db = await getDb();
 	const processingAt = now.toISOString();
 	const current = await getCustomerHackathonRecord(id);
-	const cancellationChargeSnapshot = current && ['contracted', 'confirmed'].includes(current.status)
+	const cancellationChargeSnapshot = current?.eventStart && ['contracted', 'confirmed'].includes(current.status)
 		? calculateCancellationCharge({
 			capacity: current.capacity as Capacity,
 			organizerDevices: current.deviceProvision === 'needed',
@@ -351,7 +354,7 @@ export async function claimHackathonCancellation(id: string, now = new Date()) {
 		cancellationProcessingAt: processingAt,
 		cancellationChargeSnapshot,
 		updatedAt: processingAt
-	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed']))).returning();
+	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['requested', 'prep_scheduled', 'contracted', 'confirmed']))).returning();
 	if (started) return { claimed: true, record: started };
 
 	const leaseExpiredAt = new Date(now.getTime() - CANCELLATION_LEASE_MS).toISOString();
@@ -405,6 +408,7 @@ export async function releaseHackathonCancellation(id: string, processingAt: str
 }
 
 export function toPublicHackathonTimer(record: Pick<HackathonRecord, 'id' | 'eventStart' | 'eventEnd' | 'lunch' | 'customLunch'>): PublicHackathonTimer {
+	if (!record.eventStart || !record.eventEnd) throw new Error('Der Hackathon-Termin wurde noch nicht festgelegt.');
 	return {
 		id: record.id,
 		eventStart: record.eventStart,
@@ -423,5 +427,5 @@ export async function getPublicHackathonTimer(id: string) {
 		lunch: hackathons.lunch,
 		customLunch: hackathons.customLunch
 	}).from(hackathons).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed', 'completed']))).limit(1);
-	return record ? toPublicHackathonTimer(record) : null;
+	return record?.eventStart && record.eventEnd ? toPublicHackathonTimer(record) : null;
 }

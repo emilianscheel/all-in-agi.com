@@ -61,12 +61,14 @@ export async function completeHackathonBooking(
 	const id = await store.createPending(config);
 	const bookings: Partial<ConfirmedBookings> = {};
 	try {
-		bookings.hackathonBooking = await providers.bookHackathon(config);
-		await store.checkpoint(id, bookings);
+		if (config.eventStart && config.eventEnd) {
+			bookings.hackathonBooking = await providers.bookHackathon(config);
+			await store.checkpoint(id, bookings);
+		}
 		bookings.prepCallBooking = await providers.bookPrepCall(config);
 		await store.checkpoint(id, bookings);
 		await store.confirm(id, bookings as ConfirmedBookings);
-		return { id, ...(bookings as ConfirmedBookings) };
+		return { id, hackathonBooking: bookings.hackathonBooking ?? null, prepCallBooking: bookings.prepCallBooking! };
 	} catch (error) {
 		await rollbackBookings(id, bookings, providers, store);
 		throw error;

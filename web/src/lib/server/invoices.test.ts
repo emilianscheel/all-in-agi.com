@@ -94,6 +94,6 @@ describe('invoice persistence orchestration', () => {
 				return current;
 			}
 		});
-		expect(final.snapshot).toMatchObject({ version: 2, kind: 'final', netTotalCents: 280000 });
+		expect(final.snapshot).toMatchObject({ version: 3, kind: 'final', netTotalCents: 280000 });
 	});
 });

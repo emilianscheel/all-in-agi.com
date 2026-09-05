@@ -146,12 +146,15 @@ export function buildBookingConfirmationText(
 ) {
     const customer = role === "customer";
 	const english = customer && input.config.locale === 'en';
+	const deferred = !input.config.eventStart;
 	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
     const content = [
 		customer ? (english ? `Hello ${input.config.contactName},` : `Hallo ${input.config.contactName},`) : "Hallo ALL IN AGI,",
         "",
         customer
-			? (english ? 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
+			? (english
+				? deferred ? 'Thank you for your non-binding company inquiry. The preparation call is reserved; the hackathon date will be selected later. This does not yet create a contract.' : 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.'
+				: deferred ? 'vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
 			: "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.",
         "",
         ...rows.map(rowText),
@@ -180,6 +183,7 @@ export function buildBookingConfirmationHtml(
 ) {
 	const customer = role === "customer";
 	const english = customer && input.config.locale === 'en';
+	const deferred = !input.config.eventStart;
 	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
 	const detailUrl = escapeHtml(bookingDetailUrl(input.id, english ? 'en' : 'de'));
     const options = rows
@@ -196,7 +200,9 @@ export function buildBookingConfirmationHtml(
         : "";
 
 	return `<p>${customer ? (english ? `Hello ${escapeHtml(input.config.contactName)},` : `Hallo ${escapeHtml(input.config.contactName)},`) : "Hallo ALL IN AGI,"}</p>
-	<p>${customer ? (english ? 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.") : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
+	<p>${customer ? (english
+		? deferred ? 'Thank you for your non-binding company inquiry. The preparation call is reserved; the hackathon date will be selected later. This does not yet create a contract.' : 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.'
+		: deferred ? 'vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.") : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
 	<p>${options}</p>
 	<p><a href="${detailUrl}">${english ? 'View inquiry' : 'Anfrage ansehen'}</a></p>
 	${contact}

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { decryptPlan, encryptPlan } from './plan-token';
-import type { SharedPlanV1, SharedPlanV2, SharedPlanV3, SharedPlanV4, SharedPlanV5 } from '$lib/shared-plan';
+import type { SharedPlanV1, SharedPlanV2, SharedPlanV3, SharedPlanV4, SharedPlanV5, SharedPlanV6 } from '$lib/shared-plan';
 
-const plan: SharedPlanV5 = {
-	v: 5,
+const plan: SharedPlanV6 = {
+	v: 6,
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
@@ -33,6 +33,7 @@ const { message: _message, ...planWithoutMessage } = v3Plan;
 const v2Plan: SharedPlanV2 = { ...planWithoutMessage, v: 2 };
 const { deviceProvision: _v4DeviceProvision, deviceCount: _v4DeviceCount, ...v4Base } = plan;
 const v4Plan: SharedPlanV4 = { ...v4Base, v: 4 };
+const v5Plan: SharedPlanV5 = { ...plan, v: 5, eventStart: plan.eventStart!, eventEnd: plan.eventEnd! };
 
 const legacyPlan: SharedPlanV1 = {
 	v: 1,
@@ -72,17 +73,26 @@ describe('encrypted plan tokens', () => {
 	test('migrates a v2 plan with an empty message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(v2Plan));
 		const { preferredEventDate: _preferredEventDate, ...legacy } = v2Plan;
-		expect(migrated).toEqual(standardize({ ...legacy, v: 5, message: '', eventStart: plan.eventStart, eventEnd: plan.eventEnd }));
+		expect(migrated).toEqual(standardize({ ...legacy, v: 6, message: '', eventStart: plan.eventStart, eventEnd: plan.eventEnd }));
 	});
 
-	test('migrates a v1 plan to v5 with default event times, unanswered tools and message', async () => {
+	test('migrates a v1 plan to v6 with default event times, unanswered tools and message', async () => {
 		const migrated = await decryptPlan(await encryptPlan(legacyPlan));
 		const { preferredEventDate: _preferredEventDate, ...legacy } = legacyPlan;
-		expect(migrated).toEqual(standardize({ ...legacy, v: 5, eventStart: plan.eventStart, eventEnd: plan.eventEnd, toolProvision: null, codingTools: [], customCodingTool: '', message: '' }));
+		expect(migrated).toEqual(standardize({ ...legacy, v: 6, eventStart: plan.eventStart, eventEnd: plan.eventEnd, toolProvision: null, codingTools: [], customCodingTool: '', message: '' }));
 	});
 
 	test('migrates a v4 plan to free existing devices', async () => {
-		expect(await decryptPlan(await encryptPlan(v4Plan))).toEqual(standardize({ ...v4Plan, v: 5 }));
+		expect(await decryptPlan(await encryptPlan(v4Plan))).toEqual(standardize({ ...v4Plan, v: 6 }));
+	});
+
+	test('migrates a scheduled v5 plan to v6', async () => {
+		expect(await decryptPlan(await encryptPlan(v5Plan))).toEqual(standardize({ ...v5Plan, v: 6 }));
+	});
+
+	test('round-trips an explicitly deferred v6 plan', async () => {
+		const deferred = { ...plan, eventStart: null, eventEnd: null };
+		expect(await decryptPlan(await encryptPlan(deferred))).toEqual(standardize(deferred));
 	});
 
 	test('rejects tampered tokens', async () => {

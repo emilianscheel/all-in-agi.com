@@ -79,7 +79,7 @@ describe('invoice snapshot', () => {
 	test('creates a seven-day 30 percent down-payment invoice and a reconciled final invoice', () => {
 		const downPayment = createDownPaymentInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));
 		expect(downPayment).toMatchObject({
-			version: 2,
+			version: 3,
 			kind: 'down-payment',
 			invoiceNumber: 'RE-HAA-AAA-AAA-AZ',
 			dueDate: '2099-05-08',
@@ -90,7 +90,7 @@ describe('invoice snapshot', () => {
 
 		const finalInvoice = createFinalInvoiceSnapshot(source, legal, downPayment, new Date('2099-06-21T10:00:00.000Z'));
 		expect(finalInvoice).toMatchObject({
-			version: 2,
+			version: 3,
 			kind: 'final',
 			invoiceNumber: 'RE-HAA-AAA-AAA-ER',
 			dueDate: '2099-07-05',
@@ -101,5 +101,12 @@ describe('invoice snapshot', () => {
 		expect(finalInvoice.items.at(-1)).toMatchObject({ netAmountCents: -195000 });
 		expect(finalInvoice.items.at(-1)?.description).toContain('enthaltene USt.');
 		expect(finalInvoice.grossTotalCents + downPayment.grossTotalCents).toBe(773500);
+	});
+
+	test('creates a v3 deposit without a service date and omits ZUGFeRD delivery', () => {
+		const downPayment = createDownPaymentInvoiceSnapshot({ ...source, eventStart: null }, legal);
+		expect(downPayment).toMatchObject({ version: 3, kind: 'down-payment', serviceDate: null });
+		expect(createZugferdXml(downPayment)).not.toContain('ApplicableHeaderTradeDelivery');
+		expect(() => createFinalInvoiceSnapshot({ ...source, eventStart: null }, legal, downPayment)).toThrow('service date');
 	});
 });

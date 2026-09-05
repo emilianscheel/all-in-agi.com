@@ -7,7 +7,7 @@ import {
 	type BookingProviders
 } from './book-hackathon';
 
-const configuration: BookingConfiguration = {
+const configuration = {
 	capacity: 15,
 	venueProvided: true,
 	equipment: 'projector',
@@ -27,7 +27,7 @@ const configuration: BookingConfiguration = {
 	eventStart: '2099-06-20T07:00:00.000Z',
 	eventEnd: '2099-06-20T15:00:00.000Z',
 	consultationSlot: '2099-05-10T10:00:00.000Z'
-};
+} satisfies BookingConfiguration;
 
 const hackathonBooking = { status: 'success' as const, demo: true, uid: 'event-1', start: configuration.eventStart, end: configuration.eventEnd };
 const prepCallBooking = { status: 'success' as const, demo: true, uid: 'prep-1', start: configuration.consultationSlot, end: '2099-05-10T10:30:00.000Z' };
@@ -55,6 +55,13 @@ describe('booking persistence orchestration', () => {
 		const result = await completeHackathonBooking(configuration, providers(log), store(log));
 		expect(log).toEqual(['pending', 'book:event', 'checkpoint:event', 'book:prep', 'checkpoint:both', 'confirmed']);
 		expect(result).toEqual({ id: 'HAA-AAA-AAA', hackathonBooking, prepCallBooking });
+	});
+
+	test('books only the prep call for an explicitly deferred hackathon', async () => {
+		const log: string[] = [];
+		const result = await completeHackathonBooking({ ...configuration, eventStart: null, eventEnd: null }, providers(log), store(log));
+		expect(log).toEqual(['pending', 'book:prep', 'checkpoint:both', 'confirmed']);
+		expect(result).toEqual({ id: 'HAA-AAA-AAA', hackathonBooking: null, prepCallBooking });
 	});
 
 	test('deletes the pending row when the first provider fails', async () => {

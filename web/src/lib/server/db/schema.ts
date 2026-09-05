@@ -59,8 +59,8 @@ export const hackathons = pgTable('hackathons', {
 	withdrawnBy: text('withdrawn_by').$type<'customer' | 'organizer'>(),
 	withdrawalReason: text('withdrawal_reason'),
 	address: jsonb('address').$type<EventAddress>().notNull(),
-	eventStart: timestamp('event_start', { withTimezone: true, mode: 'string' }).notNull(),
-	eventEnd: timestamp('event_end', { withTimezone: true, mode: 'string' }).notNull(),
+	eventStart: timestamp('event_start', { withTimezone: true, mode: 'string' }),
+	eventEnd: timestamp('event_end', { withTimezone: true, mode: 'string' }),
 	consultationSlot: timestamp('consultation_slot', { withTimezone: true, mode: 'string' }).notNull(),
 	basePrice: integer('base_price').notNull(),
 	venueSurcharge: integer('venue_surcharge').notNull(),
@@ -105,6 +105,7 @@ export const hackathons = pgTable('hackathons', {
 	check('hackathons_capacity_check', sql`${table.capacity} in (15, 30, 50)`),
 	check('hackathons_device_provision_check', sql`${table.deviceProvision} in ('existing', 'needed')`),
 	check('hackathons_device_count_check', sql`(${table.deviceProvision} = 'existing' and ${table.deviceCount} = 0) or (${table.deviceProvision} = 'needed' and ${table.deviceCount} between 1 and ${table.capacity})`),
+	check('hackathons_event_time_pair_check', sql`(${table.eventStart} is null and ${table.eventEnd} is null) or (${table.eventStart} is not null and ${table.eventEnd} is not null and ${table.eventEnd} > ${table.eventStart})`),
 	check('hackathons_devices_adjustment_check', sql`${table.devicesAdjustment} = case when ${table.deviceProvision} = 'needed' then ${table.deviceCount} * 150 else 0 end`)
 ]);
 

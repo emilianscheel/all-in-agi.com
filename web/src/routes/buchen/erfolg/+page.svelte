@@ -13,7 +13,7 @@
 
 	type SuccessSummary = BookingConfiguration & {
 		prepCallBooking: BookingResultSummary;
-		hackathonBooking: BookingResultSummary;
+		hackathonBooking: BookingResultSummary | null;
 		planUrl: string;
 		hackathonId?: string;
 		detailUrl?: string;
@@ -71,7 +71,8 @@
 			<div class="success-mark"><Check size={30} strokeWidth={2.5} aria-hidden="true" /></div>
 			<h1 id="success-title">{locale === 'en' ? 'Request received' : 'Anfrage eingegangen'}</h1>
 			{#if summary}
-				<p class="success-date">{formatEventTimeRange(summary.hackathonBooking.start || summary.eventStart, summary.hackathonBooking.end || summary.eventEnd, locale)}</p>
+				<p class="success-date">{formatEventTimeRange(summary.hackathonBooking?.start || summary.eventStart, summary.hackathonBooking?.end || summary.eventEnd, locale)}</p>
+				{#if !summary.hackathonBooking}<p>{locale === 'en' ? 'The hackathon date will be selected later. Only the preparation call has been reserved.' : 'Der Hackathon-Termin wird später festgelegt. Reserviert wurde nur der Prep Call.'}</p>{/if}
 				<p>{locale === 'en' ? 'Preparation call reserved' : 'Prep Call reserviert'}: {formatDate(summary.prepCallBooking.start || summary.consultationSlot, true, locale)}{locale === 'de' ? ' Uhr' : ''}</p>
 				<p>{locale === 'en' ? 'This is not yet a contract confirmation. During the preparation call, we will review the fixed scope together.' : 'Dies ist noch keine Vertragsbestätigung. Im Prep-Call stimmen wir die eingefrorene Leistung gemeinsam ab.'}</p>
 				<MiniContactCards {locale} />

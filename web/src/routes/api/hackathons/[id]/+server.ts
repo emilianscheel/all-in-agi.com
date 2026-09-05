@@ -23,7 +23,9 @@ import { dev } from '$app/environment';
 import { json } from '@sveltejs/kit';
 
 function confirmedFromRecord(record: NonNullable<Awaited<ReturnType<typeof getConfirmedHackathonRecord>>>): ConfirmedBooking {
-	return { status: 'success', demo: record.demoMode, ...recordToHackathonBookingSummary(record) };
+	const summary = recordToHackathonBookingSummary(record);
+	if (!summary) throw new Error('Für diesen Hackathon ist noch keine Kalenderbuchung vorhanden.');
+	return { status: 'success', demo: record.demoMode, ...summary };
 }
 
 export async function PATCH({ params, request, fetch, locals }) {
@@ -66,7 +68,6 @@ export async function PATCH({ params, request, fetch, locals }) {
 		}
 
 		if (update.section === 'event-time' && (next.eventStart !== current.eventStart || next.eventEnd !== current.eventEnd)) {
-			const currentBooking = confirmedFromRecord(record);
 			await assertHackathonDayAvailable(next, fetch, dev, record.hackathonBookingUid ?? undefined);
 			if (!record.hackathonBookingUid) {
 				const created = await bookHackathonDay(next, fetch, dev);
@@ -78,6 +79,9 @@ export async function PATCH({ params, request, fetch, locals }) {
 					throw error;
 				}
 			}
+			if (!next.eventStart || !next.eventEnd) throw new HackathonUpdateError('Bitte wählen Sie einen gültigen Hackathon-Termin.');
+			const currentBooking = confirmedFromRecord(record);
+			if (!current.eventStart || !current.eventEnd) throw new Error('Die bestehende Kalenderbuchung hat keinen gültigen Termin.');
 			const durationChanged = eventDurationMinutes(next.eventStart, next.eventEnd) !== eventDurationMinutes(current.eventStart, current.eventEnd);
 			if (!durationChanged) {
 				const rescheduled = await rescheduleHackathonDay(record.hackathonBookingUid, next.eventStart, next.eventEnd, fetch, record.demoMode);

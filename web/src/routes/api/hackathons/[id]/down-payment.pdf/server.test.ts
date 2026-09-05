@@ -39,7 +39,7 @@ describe('down-payment PDF endpoint', () => {
 			now: () => new Date('2099-05-01T10:00:00.000Z'),
 			freezeDownPayment: async (_id, snapshot, issuedAt) => (current = { ...current, downPaymentInvoiceSnapshot: snapshot, downPaymentInvoiceIssuedAt: issuedAt }),
 			createPdf: async (snapshot) => {
-				expect(snapshot).toMatchObject({ version: 2, kind: 'down-payment', netTotalCents: 150000 });
+				expect(snapshot).toMatchObject({ version: 3, kind: 'down-payment', netTotalCents: 150000 });
 				return new Uint8Array([37, 80, 68, 70]);
 			}
 		});

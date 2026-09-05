@@ -24,7 +24,8 @@
 		if (data.admin.needsPasskey) void registerPasskey();
 	});
 
-	function formatDate(value: string) {
+	function formatDate(value: string | null) {
+		if (!value) return 'Später festlegen';
 		return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(value));
 	}
 
@@ -199,7 +200,7 @@
 													<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => goto(`/${booking.id}`)}>
 														<Eye size={16} aria-hidden="true" />Details öffnen
 													</DropdownMenu.Item>
-											{#if booking.status === 'contracted' || booking.status === 'confirmed'}
+											{#if (booking.status === 'contracted' || booking.status === 'confirmed') && booking.eventStart && booking.eventEnd}
 														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => openTimer(booking.id)}>
 															<ExternalLink size={16} aria-hidden="true" />Timer öffnen
 														</DropdownMenu.Item>
@@ -207,10 +208,10 @@
 														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => confirmCancellation(booking)} disabled={cancellationBusyId !== null}>
 															<Ban size={16} aria-hidden="true" />Buchung stornieren
 														</DropdownMenu.Item>
-													{:else if !booking.cancellationEmailSentAt}
+											{:else if ['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(booking.status) && !booking.cancellationEmailSentAt}
 														<DropdownMenu.Separator class="dashboard-actions-separator" />
 														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => cancelBooking(booking)} disabled={cancellationBusyId !== null}>
-															<RotateCcw size={16} aria-hidden="true" />{cancellationBusyId === booking.id ? 'Wird fortgesetzt …' : booking.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
+													<RotateCcw size={16} aria-hidden="true" />{cancellationBusyId === booking.id ? 'Wird bearbeitet …' : booking.status === 'cancelled' ? 'E-Mail erneut senden' : booking.status === 'cancellation_pending' ? 'Stornierung fortsetzen' : 'Buchung stornieren'}
 														</DropdownMenu.Item>
 													{/if}
 												</DropdownMenu.Content>

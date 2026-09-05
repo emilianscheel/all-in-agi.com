@@ -1,4 +1,4 @@
-import { isValidEventTimeRange } from './event-time';
+import { isDeferredEventTime, isValidEventTimeRange } from './event-time';
 import type { Locale } from './i18n';
 
 export type Capacity = 15 | 30 | 50;
@@ -64,8 +64,8 @@ export interface BookingConfiguration {
 	phone: string;
 	message: string;
 	address: EventAddress;
-	eventStart: string;
-	eventEnd: string;
+	eventStart: string | null;
+	eventEnd: string | null;
 	consultationSlot: string;
 	billing?: BillingDetails;
 	businessCustomerConfirmed?: boolean;
@@ -129,8 +129,8 @@ export function bookingMetadata(config: BookingConfiguration): Record<string, st
 	return {
 		company: config.companyName,
 		capacity: String(config.capacity),
-		eventStart: config.eventStart,
-		eventEnd: config.eventEnd,
+		eventStart: config.eventStart ?? 'to_be_scheduled',
+		eventEnd: config.eventEnd ?? 'to_be_scheduled',
 		venueProvided: String(config.venueProvided),
 		equipment: config.equipment,
 		lunch: config.lunch,
@@ -194,7 +194,7 @@ export function validateConfiguration(config: BookingConfiguration) {
 		errors.push(message('Bitte vervollständigen Sie die Veranstaltungsadresse.', 'Please complete the event address.'));
 	}
 	if (typeof config.eventPhotos !== 'boolean') errors.push(message('Die Fotoeinstellung ist ungültig.', 'The event photography setting is invalid.'));
-	if (!isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push(message('Bitte wählen Sie einen verfügbaren zukünftigen Hackathon-Termin.', 'Please select an available future hackathon date.'));
+	if (!isDeferredEventTime(config.eventStart, config.eventEnd) && !isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push(message('Bitte wählen Sie einen verfügbaren Hackathon-Termin oder „Später festlegen“.', 'Please select an available hackathon date or “Choose later”.'));
 	const consultationDate = new Date(config.consultationSlot);
 	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push(message('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.', 'Please select a future preparation call time.'));
 	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push(message('Bitte beschreiben Sie Ihren Catering-Wunsch.', 'Please describe your catering preference.'));

@@ -97,6 +97,12 @@ describe('booking validation', () => {
 		expect(validateConfiguration(validConfiguration)).toEqual([]);
 	});
 
+	test('accepts explicit deferral but rejects untouched and mixed scheduling states', () => {
+		expect(validateConfiguration({ ...validConfiguration, eventStart: null, eventEnd: null })).toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, eventStart: '', eventEnd: '' })).not.toEqual([]);
+		expect(validateConfiguration({ ...validConfiguration, eventStart: null, eventEnd: validConfiguration.eventEnd })).not.toEqual([]);
+	});
+
 	test('rejects missing contact, address, date, and slot data', () => {
 		const errors = validateConfiguration({
 			...validConfiguration,

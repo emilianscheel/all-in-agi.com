@@ -50,11 +50,17 @@ export function eventTimesForDate(
 	};
 }
 
-export function eventDurationMinutes(eventStart: string, eventEnd: string) {
+export function eventDurationMinutes(eventStart: string | null, eventEnd: string | null) {
+	if (!eventStart || !eventEnd) return Number.NaN;
 	return (new Date(eventEnd).getTime() - new Date(eventStart).getTime()) / 60_000;
 }
 
-export function isValidEventTimeRange(eventStart: string, eventEnd: string, now = new Date()) {
+export function isDeferredEventTime(eventStart: string | null, eventEnd: string | null) {
+	return eventStart === null && eventEnd === null;
+}
+
+export function isValidEventTimeRange(eventStart: string | null, eventEnd: string | null, now = new Date()) {
+	if (!eventStart || !eventEnd) return false;
 	const start = new Date(eventStart);
 	const end = new Date(eventEnd);
 	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start <= now) return false;
@@ -65,7 +71,9 @@ export function isValidEventTimeRange(eventStart: string, eventEnd: string, now 
 		&& duration > 0;
 }
 
-export function formatEventTimeRange(eventStart: string, eventEnd: string, locale: 'de' | 'en' = 'de') {
+export function formatEventTimeRange(eventStart: string | null, eventEnd: string | null, locale: 'de' | 'en' = 'de') {
+	if (isDeferredEventTime(eventStart, eventEnd)) return locale === 'en' ? 'Choose later' : 'Später festlegen';
+	if (!eventStart || !eventEnd) return locale === 'en' ? 'Not set' : 'Noch offen';
 	const start = new Date(eventStart);
 	const end = new Date(eventEnd);
 	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return locale === 'en' ? 'Not set' : 'Noch offen';

@@ -40,7 +40,7 @@
     import AnimatedValue from "$lib/AnimatedValue.svelte";
     import EventDateTimeEditor from "$lib/EventDateTimeEditor.svelte";
     import { formatEventTimeRange } from "$lib/event-time";
-    import type { SharedPlanV5 } from "$lib/shared-plan";
+    import type { SharedPlanV6 } from "$lib/shared-plan";
     import { reveal } from "$lib/motion";
     import MapPreview from "$lib/MapPreview.svelte";
     import SharePlanButton from "$lib/SharePlanButton.svelte";
@@ -72,8 +72,8 @@
     let email = $state("");
     let phone = $state("");
     let message = $state("");
-    let eventStart = $state("");
-    let eventEnd = $state("");
+    let eventStart = $state<string | null>("");
+    let eventEnd = $state<string | null>("");
     let consultationSlot = $state("");
     let consultationMode = $state<"quick" | "custom">("quick");
     let customConsultationDate = $state("");
@@ -287,11 +287,11 @@
         return overviewRows.find((row) => row.id === id)!;
     }
 
-    function buildSharedPlan(): SharedPlanV5 {
-        return { v: 5, ...buildConfiguration(), consultationMode, customConsultationDate };
+    function buildSharedPlan(): SharedPlanV6 {
+        return { v: 6, ...buildConfiguration(), consultationMode, customConsultationDate };
     }
 
-    function applySharedPlan(plan: SharedPlanV5) {
+    function applySharedPlan(plan: SharedPlanV6) {
         capacity = plan.capacity;
         equipment = plan.equipment;
         toolProvision = plan.toolProvision;
@@ -335,7 +335,7 @@
         return `${location.origin}${path}`;
     }
 
-    function schedulePlanUrl(plan: SharedPlanV5) {
+    function schedulePlanUrl(plan: SharedPlanV6) {
         if (!browser || !planHydrated) return;
         if (planDebounce) clearTimeout(planDebounce);
         planDebounce = setTimeout(
@@ -585,15 +585,15 @@
                     <div class="event-details">
                         <a
 							href="#config-event-schedule"
-                            class:event-detail-unselected={!eventStart}
+                            class:event-detail-unselected={eventStart === ''}
                             class="event-detail"
-                            aria-hidden={!eventStart}
-							tabindex={eventStart ? undefined : -1}
+                            aria-hidden={eventStart === ''}
+							tabindex={eventStart === '' ? -1 : undefined}
                         >
                             <small>Event Date</small><b
                                 ><AnimatedValue
 									value={formatEventTimeRange(eventStart, eventEnd, locale)}
-                                    active={Boolean(eventStart)}
+                                    active={eventStart !== ''}
                                 /></b
                             >
                         </a>
@@ -795,7 +795,7 @@
                             /></span
                         ><b>{overviewRow("equipment").status}</b>
                     </div>
-                    {#if eventStart}<div class="summary-row">
+                    {#if eventStart !== ''}<div class="summary-row">
                             <CalendarDays size={18} aria-hidden="true" /><span
                                 ><small>{overviewRow("event-date").label}</small><AnimatedValue
                                     value={overviewRow("event-date").value}
@@ -850,7 +850,7 @@
                     <button
                         class="button-primary"
                         type="submit"
-                        disabled={submitting || slotsLoading || eventSlotsLoading}
+                        disabled={submitting || slotsLoading || (eventStart !== null && eventSlotsLoading)}
 						>{submitting ? (locale === 'en' ? 'Sending inquiry…' : "Anfrage wird gesendet …") : (locale === 'en' ? 'Reserve preparation call' : "Gespräch reservieren")}</button
                     >
 					<SharePlanButton getUrl={getShareUrl} {locale} />

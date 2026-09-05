@@ -23,7 +23,7 @@ export function contractConfirmationText(record: HackathonRecord) {
 		`Zustimmung Kunde: ${record.customerAgreementName}`,
 		`Zustimmung ALL IN AGI: ${record.organizerAgreementName}`,
 		`Zeitpunkt: ${berlinDateTime(record.oralAgreementAt)}`,
-		`Event: ${berlinDateTime(record.eventStart)}`,
+		`Event: ${record.eventStart ? berlinDateTime(record.eventStart) : 'Termin wird noch gemeinsam vereinbart'}`,
 		`Teilnehmendenpaket: bis ${record.capacity} Personen`,
 		`Nettoentgelt: ${formatPrice(record.totalPrice)}`,
 		`Umsatzsteuer 19 %: ${formatPrice(record.totalPrice * 0.19)}`,
@@ -50,4 +50,3 @@ export async function sendContractConfirmationEmail(record: HackathonRecord, dep
 		]
 	}, dependencies);
 }
-

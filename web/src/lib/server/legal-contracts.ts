@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { and, eq, inArray, lte } from 'drizzle-orm';
+import { and, eq, inArray, lte, sql } from 'drizzle-orm';
 import type { BookingConfiguration } from '$lib/booking';
 import {
 	LEGAL_DOCUMENT_STATUS,
@@ -142,7 +142,7 @@ export async function markContractCompleted(id: string, actor: string, now = new
 	const at = now.toISOString();
 	const db = await getDb();
 	const [record] = await db.update(hackathons).set({ status: 'completed', updatedAt: at })
-		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed']))).returning();
+		.where(and(eq(hackathons.id, id), inArray(hackathons.status, ['contracted', 'confirmed']), sql`${hackathons.eventStart} is not null`, sql`${hackathons.eventEnd} is not null`)).returning();
 	if (record) await appendContractEvent(id, 'contract_completed', actor, {}, at);
 	return record ?? null;
 }

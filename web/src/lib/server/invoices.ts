@@ -71,10 +71,10 @@ export async function getOrCreateInvoice(
 	const legal = (dependencies.getConfiguration ?? getInvoiceLegalConfiguration)();
 	let snapshot: InvoiceSnapshot;
 	if (current.billingModel === 'deposit_30') {
-		if (!current.downPaymentInvoiceSnapshot || !current.downPaymentPaidAt || now < new Date(current.eventEnd)) {
+		if (!current.eventStart || !current.eventEnd || !current.downPaymentInvoiceSnapshot || !current.downPaymentPaidAt || now < new Date(current.eventEnd)) {
 			throw new InvoiceNotIssuableError();
 		}
-		if (current.downPaymentInvoiceSnapshot.version !== 2 || current.downPaymentInvoiceSnapshot.kind !== 'down-payment') {
+		if (current.downPaymentInvoiceSnapshot.version === 1 || current.downPaymentInvoiceSnapshot.kind !== 'down-payment') {
 			throw new InvoiceNotIssuableError();
 		}
 		snapshot = createFinalInvoiceSnapshot({ ...current, locale: current.customerLocale }, legal, current.downPaymentInvoiceSnapshot, now, await invoiceNumber('final', current, now, dependencies));

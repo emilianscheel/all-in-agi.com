@@ -103,10 +103,11 @@
 	});
 	let overviewRows = $derived(bookingOverviewRows({ ...hackathon, locale }, hackathon.prepCallBooking));
 	let readOnly = $derived(!['prep_scheduled', 'confirmed'].includes(hackathon.status));
+	let canScheduleDeferredEvent = $derived(!hackathon.eventStart && ['prep_scheduled', 'exit_window', 'contracted', 'confirmed'].includes(hackathon.status));
 	let invoiceEligible = $derived(['contracted', 'confirmed', 'completed'].includes(hackathon.status));
 	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
 	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
-	let finalInvoiceAvailable = $derived(!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd)));
+	let finalInvoiceAvailable = $derived(Boolean(hackathon.eventEnd) && (!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd!))));
 	let standardOffer = $derived(hackathon.legalVersion === LEGAL_DOCUMENT_VERSION);
 	let billingComplete = $derived(validateBillingDetails(hackathon.billing, locale).length === 0);
 
@@ -226,7 +227,7 @@
 	}
 
 	function openEditor(section: EditSection) {
-		if (readOnly) return;
+		if (readOnly && !(section === 'event-time' && canScheduleDeferredEvent)) return;
 		if (activeSection === section) {
 			cancelEditor();
 			return;
@@ -253,7 +254,10 @@
 			case 'equipment': return { section, equipment: draft.equipment };
 			case 'lunch': return { section, lunch: draft.lunch, customLunch: draft.customLunch };
 			case 'address': return { section, address: draft.address };
-			case 'event-time': return { section, eventStart: draft.eventStart, eventEnd: draft.eventEnd };
+			case 'event-time': {
+				if (!draft.eventStart || !draft.eventEnd) throw new Error(locale === 'en' ? 'Please select a hackathon date.' : 'Bitte wählen Sie einen Hackathon-Termin.');
+				return { section, eventStart: draft.eventStart, eventEnd: draft.eventEnd };
+			}
 			case 'prep-call': return { section, consultationSlot: draft.consultationSlot };
 			case 'company': return { section, companyName: draft.companyName };
 			case 'contact': return { section, contactName: draft.contactName, email: draft.email, phone: draft.phone };
@@ -479,7 +483,7 @@
 			{:else if hackathon.status === 'cancellation_pending'}
 				<div class="booking-state-banner pending" role="status"><RotateCcw size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Cancellation in progress' : 'Stornierung in Bearbeitung'}</strong>{locale === 'en' ? 'At least one step still needs to be completed.' : 'Mindestens ein Schritt muss noch abgeschlossen werden.'}</span></div>
 			{:else if hackathon.status === 'prep_scheduled'}
-				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>{locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Prep-Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.'}</span></div>
+				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Prep-Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Prep-Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</span></div>
 			{:else if hackathon.status === 'exit_window'}
 				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Vertrag geschlossen · Lösungsfrist läuft</strong>Kostenfreier Rücktritt bis {hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.</span></div>
 			{:else if hackathon.status === 'contracted'}
@@ -522,7 +526,7 @@
 					{:else if hackathon.status === 'exit_window'}
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>Rücktritt ALL IN AGI erfassen</button>
-					{:else if hackathon.status === 'contracted' && new Date() >= new Date(hackathon.eventEnd)}
+					{:else if hackathon.status === 'contracted' && hackathon.eventEnd && new Date() >= new Date(hackathon.eventEnd)}
 						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>Durchführung abschließen</button>
 					{/if}
 					{#if invoiceIssued || (invoiceEligible && finalInvoiceAvailable)}
@@ -555,7 +559,7 @@
 						{/if}
 						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">Endrechnung nach dem Hackathon verfügbar.</p>{/if}
 					{/if}
-					{#if cancellableContract}
+					{#if cancellableContract && hackathon.eventStart && hackathon.eventEnd}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
 							<ExternalLink size={18} aria-hidden="true" />Timer
 						</a>
@@ -574,9 +578,11 @@
 								</AlertDialog.Content>
 							</AlertDialog.Portal>
 						</AlertDialog.Root>
-					{:else if !hackathon.cancellationEmailSentAt}
+					{:else if cancellableContract}
+						<p class="admin-action-message">{locale === 'en' ? 'Set the hackathon date before using the timer or cancelling this contracted booking.' : 'Legen Sie vor Timer-Nutzung oder Stornierung dieser vertraglichen Buchung den Hackathon-Termin fest.'}</p>
+					{:else if ['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(hackathon.status) && !hackathon.cancellationEmailSentAt}
 						<button class="button-primary action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
-							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird fortgesetzt …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : 'Stornierung fortsetzen'}
+							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird bearbeitet …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : hackathon.status === 'cancellation_pending' ? 'Stornierung fortsetzen' : 'Buchung stornieren'}
 						</button>
 					{/if}
 					{#if invoiceMessage}<p class="admin-action-message" role="status">{invoiceMessage}</p>{/if}

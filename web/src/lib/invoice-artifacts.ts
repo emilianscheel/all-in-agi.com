@@ -24,15 +24,16 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	const context = await createBrandPdf();
 	const { pdf, page, regular, bold } = context;
 	const { orange, ink, muted, line, surface } = context.colors;
-	pdf.setTitle(`${en ? (snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Deposit invoice' : snapshot.version === 2 ? 'Final invoice' : 'Invoice') : (snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : snapshot.version === 2 ? 'Endrechnung' : 'Rechnung')} ${snapshot.invoiceNumber}`);
+	const split = snapshot.version === 2 || snapshot.version === 3;
+	pdf.setTitle(`${en ? (split && snapshot.kind === 'down-payment' ? 'Deposit invoice' : split ? 'Final invoice' : 'Invoice') : (split && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : split ? 'Endrechnung' : 'Rechnung')} ${snapshot.invoiceNumber}`);
 	pdf.setAuthor('Emilian Scheel, handelnd unter ALL IN AGI');
 	pdf.setSubject('ZUGFeRD 2.3 / EN 16931 Hybridrechnung');
 	pdf.setKeywords(['ZUGFeRD', 'EN 16931', 'Rechnung']);
 	pdf.setCreator('ALL IN AGI');
 	pdf.setProducer('ALL IN AGI');
 	const invoiceTitle = en
-		? (snapshot.version === 2 ? (snapshot.kind === 'down-payment' ? 'Deposit invoice' : 'Final invoice') : 'Invoice')
-		: (snapshot.version === 2 ? (snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : 'Endrechnung') : 'Rechnung');
+		? (split ? (snapshot.kind === 'down-payment' ? 'Deposit invoice' : 'Final invoice') : 'Invoice')
+		: (split ? (snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung' : 'Endrechnung') : 'Rechnung');
 	drawBrandChrome(context, `${invoiceTitle} ${snapshot.invoiceNumber}`);
 
 	page.drawText(invoiceTitle, { x: LEFT, y: 724, font: bold, size: invoiceTitle.length > 14 ? 25 : 30, color: ink });
@@ -42,7 +43,7 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	const metaValueRight = RIGHT;
 	for (const [index, [label, value]] of [
 		[en ? 'INVOICE DATE' : 'RECHNUNGSDATUM', formatInvoiceDate(snapshot.issueDate, locale)],
-		[en ? (snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'EXPECTED SERVICE DATE' : 'SERVICE DATE') : (snapshot.version === 2 && snapshot.kind === 'down-payment' ? 'VORAUSS. LEISTUNGSDATUM' : 'LEISTUNGSDATUM'), formatInvoiceDate(snapshot.serviceDate, locale)],
+		[en ? (split && snapshot.kind === 'down-payment' ? 'EXPECTED SERVICE DATE' : 'SERVICE DATE') : (split && snapshot.kind === 'down-payment' ? 'VORAUSS. LEISTUNGSDATUM' : 'LEISTUNGSDATUM'), snapshot.serviceDate ? formatInvoiceDate(snapshot.serviceDate, locale) : (en ? 'Date to be agreed' : 'Termin noch zu vereinbaren')],
 		[en ? 'DUE DATE' : 'ZAHLBAR BIS', formatInvoiceDate(snapshot.dueDate, locale)]
 	].entries()) {
 		const y = 729 - index * 28;

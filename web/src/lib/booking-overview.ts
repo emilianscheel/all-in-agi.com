@@ -98,7 +98,7 @@ export function bookingOverviewRows(
 			id: 'event-date',
 			label: 'Event Date',
 			value: formatEventTimeRange(config.eventStart, config.eventEnd, locale),
-			status: en ? 'Planned' : 'Geplant'
+			status: config.eventStart ? (en ? 'Planned' : 'Geplant') : (en ? 'Open' : 'Offen')
 		},
 		{
 			id: 'prep-call',

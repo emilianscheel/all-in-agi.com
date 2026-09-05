@@ -383,7 +383,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 
 	drawRoundedCard(page, LEFT, 612, RIGHT - LEFT, 82, 16, surface);
 	page.drawText('EVENT', { x: 66, y: 670, font: bold, size: 7.5, color: muted });
-	drawWrapped(page, formatEventTimeRange(config.eventStart, config.eventEnd), 66, 651, 208, bold, 10.5, ink, 2);
+	drawWrapped(page, formatEventTimeRange(config.eventStart, config.eventEnd, config.locale ?? 'de'), 66, 651, 208, bold, 10.5, ink, 2);
 	drawWrapped(
 		page,
 		`${config.address.street}, ${config.address.postalCode} ${config.address.city}`,

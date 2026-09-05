@@ -45,10 +45,12 @@ function stateFromRecord(record: HackathonRecord, additions: Partial<Cancellatio
 }
 
 function confirmedBooking(record: HackathonRecord, kind: 'hackathon' | 'prep-call'): ConfirmedBooking {
+	const summary = kind === 'hackathon' ? recordToHackathonBookingSummary(record) : recordToPrepCallBookingSummary(record);
+	if (!summary) throw new Error('Keine Hackathon-Kalenderbuchung vorhanden.');
 	return {
 		status: 'success',
 		demo: record.demoMode,
-		...(kind === 'hackathon' ? recordToHackathonBookingSummary(record) : recordToPrepCallBookingSummary(record))
+		...summary
 	};
 }
 
@@ -75,7 +77,7 @@ export async function cancelHackathonBooking(
 	let record = claimed.record;
 	try {
 		if (record.status === 'cancellation_pending' && !record.hackathonCancelledAt) {
-			await cancelCalendar(confirmedBooking(record, 'hackathon'), requestFetch, 'Hackathon-Buchung durch ALL IN AGI storniert');
+			if (record.hackathonBookingUid || record.eventStart) await cancelCalendar(confirmedBooking(record, 'hackathon'), requestFetch, 'Hackathon-Buchung durch ALL IN AGI storniert');
 			record = await markCalendar(id, 'hackathon') ?? record;
 		}
 		if (record.status === 'cancellation_pending' && !record.prepCallCancelledAt) {

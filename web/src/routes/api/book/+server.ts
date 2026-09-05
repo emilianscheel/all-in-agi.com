@@ -65,7 +65,7 @@ export async function POST({ request, fetch }) {
 	if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 	try {
 		await Promise.all([
-			assertHackathonDayAvailable(config, fetch, dev),
+			...(config.eventStart && config.eventEnd ? [assertHackathonDayAvailable(config, fetch, dev)] : []),
 			assertPrepCallAvailable(config, fetch, dev)
 		]);
 		const result = await completeHackathonBookingWithConfirmation(
