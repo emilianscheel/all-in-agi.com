@@ -583,10 +583,12 @@
                         </div>
                     </div>
                     <div class="event-details">
-                        <div
+                        <a
+							href="#config-event-schedule"
                             class:event-detail-unselected={!eventStart}
                             class="event-detail"
                             aria-hidden={!eventStart}
+							tabindex={eventStart ? undefined : -1}
                         >
                             <small>Event Date</small><b
                                 ><AnimatedValue
@@ -594,24 +596,26 @@
                                     active={Boolean(eventStart)}
                                 /></b
                             >
-                        </div>
-                        <div class="event-detail">
+                        </a>
+                        <a class="event-detail" href="#config-team-size">
                             <small>Team</small><b
 								><AnimatedValue value={locale === 'en' ? `Up to ${capacity} people` : `Bis ${capacity} Personen`} /></b
                             >
-                        </div>
-                        <div class="event-detail">
+                        </a>
+                        <a class="event-detail" href="#config-event-address">
                             <small>Location</small><b
                                 ><AnimatedValue
 									value={venueProvided ? (locale === 'en' ? 'Your venue' : "Eigener Raum") : (locale === 'en' ? 'Organized by us' : "Von uns organisiert")}
                                 /></b
                             >
-                        </div>
-                        <div
+                        </a>
+                        <a
+							href="#config-tools"
                             class:event-detail-unselected={!toolProvision ||
                                 !codingToolLabels.length}
                             class="event-detail"
                             aria-hidden={!toolProvision || !codingToolLabels.length}
+							tabindex={toolProvision && codingToolLabels.length ? undefined : -1}
                         >
                             <small>Tools</small><b
                                 ><AnimatedValue
@@ -619,20 +623,22 @@
                                     active={Boolean(toolProvision && codingToolLabels.length)}
                                 /></b
                             >
-                        </div>
+                        </a>
                         <div class="event-detail">
 							<small>Devices</small><b>{locale === 'en' ? 'Your devices' : 'Eigene Geräte'}</b>
                         </div>
-                        <div class="event-detail">
+                        <a class="event-detail" href="#config-demo-setup">
                             <small>Screen</small><b><AnimatedValue value={equipmentLabel} /></b>
-                        </div>
+                        </a>
                         <div class="event-detail">
                             <small>Lunch</small><b><AnimatedValue value={lunchPreviewLabel} /></b>
                         </div>
-                        <div
+                        <a
+							href="#config-prep-call"
                             class:event-detail-unselected={!consultationSlot}
                             class="event-detail"
                             aria-hidden={!consultationSlot}
+							tabindex={consultationSlot ? undefined : -1}
                         >
                             <small>Prep Call</small><b
                                 ><AnimatedValue
@@ -642,7 +648,7 @@
                                     active={Boolean(consultationSlot)}
                                 /></b
                             >
-                        </div>
+                        </a>
                     </div>
                 </article>
             </MapPreview>
@@ -656,7 +662,7 @@
             }}
             novalidate
         >
-            <section class="config-section" use:reveal>
+            <section id="config-team-size" class="config-section" use:reveal>
 				<h2>{locale === 'en' ? 'Team size' : 'Teamgröße'}</h2>
                 <ConfigOptionCards
                     kind="capacity"
@@ -666,7 +672,7 @@
                 />
             </section>
 
-            <section class="config-section tools-section" use:reveal>
+            <section id="config-tools" class="config-section tools-section" use:reveal>
                 <h2>Tools</h2>
                 <ConfigOptionCards
                     kind="tools"
@@ -676,7 +682,7 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-demo-setup" class="config-section" use:reveal>
                 <h2>Demo setup</h2>
                 <ConfigOptionCards
                     kind="equipment"
@@ -686,7 +692,7 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-event-address" class="config-section" use:reveal>
 				<h2>{locale === 'en' ? 'Event address' : 'Veranstaltungsadresse'}</h2>
                 <AddressEditor
                     value={address}
@@ -697,7 +703,7 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-event-schedule" class="config-section" use:reveal>
 				<h2>{locale === 'en' ? 'Event date and time' : 'Veranstaltungsdatum und Uhrzeit'}</h2>
                 {#key eventAvailabilityKey}
                     <EventDateTimeEditor
@@ -712,7 +718,7 @@
                 {/key}
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-contact" class="config-section" use:reveal>
                 <h2>{locale === 'en' ? 'Contact' : 'Kontakt'}</h2>
                 <ContactFields
                     {companyName}
@@ -731,7 +737,7 @@
                 />
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-prep-call" class="config-section" use:reveal>
 				<h2>{locale === 'en' ? '30-minute preparation call' : '30 Min. Vorbereitungsgespräch'}</h2>
                 {#key availabilityKey}
                     <PrepCallEditor
@@ -748,17 +754,18 @@
                 {/key}
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-message" class="config-section" use:reveal>
 				<h2>{locale === 'en' ? 'Your message' : 'Ihre Nachricht'}</h2>
                 <MessageField
                     value={message}
                     onchange={(value) => { message = value; trackBookingMilestone("message"); }}
                     id="booking-message"
+					showLabel={false}
 					{locale}
                 />
             </section>
 
-            <section class="config-section" use:reveal>
+            <section id="config-summary" class="config-section" use:reveal>
                 <div class="summary-box overview-box" bind:this={overviewCard}>
                     <div class="summary-row">
                         <Users size={18} aria-hidden="true" /><span

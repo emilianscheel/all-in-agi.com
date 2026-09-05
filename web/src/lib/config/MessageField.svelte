@@ -1,11 +1,12 @@
 <script lang="ts">
-	let { value, onchange, id = 'message', locale = 'de' }: { value: string; onchange: (value: string) => void; id?: string; locale?: 'de' | 'en' } = $props();
+	let { value, onchange, id = 'message', locale = 'de', showLabel = true }: { value: string; onchange: (value: string) => void; id?: string; locale?: 'de' | 'en'; showLabel?: boolean } = $props();
 </script>
 
 <div class="field">
-	<label for={id}>{locale === 'en' ? 'Your message' : 'Ihre Nachricht'} <span class="optional-label">Optional</span></label>
+	{#if showLabel}<label for={id}>{locale === 'en' ? 'Your message' : 'Ihre Nachricht'} <span class="optional-label">Optional</span></label>{/if}
 	<textarea
 		{id}
+		aria-label={locale === 'en' ? 'Your message (optional)' : 'Ihre Nachricht (optional)'}
 		rows="5"
 		maxlength="500"
 		placeholder={locale === 'en' ? 'Is there anything we should know in advance?' : 'Gibt es etwas, das wir vorab wissen sollten?'}
