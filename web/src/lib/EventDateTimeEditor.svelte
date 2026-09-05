@@ -131,7 +131,7 @@
 		{maxValue}
 		{availableDates}
 		calendarLabel={locale === 'en' ? 'Hackathon date' : 'Datum für den Hackathon'}
-		emptyText={locale === 'en' ? 'Please select the hackathon date.' : 'Bitte wählen Sie den Hackathontag.'}
+		emptyText=""
 		onmonthchange={loadAvailability}
 		onchange={selectDate}
 	/>

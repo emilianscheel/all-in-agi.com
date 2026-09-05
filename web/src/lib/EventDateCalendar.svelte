@@ -93,7 +93,9 @@
 			{/each}
 		{/snippet}
 	</Calendar.Root>
-	<p class="calendar-selection" aria-live="polite">
-		{value ? `Ausgewählt: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`))}` : emptyText}
-	</p>
+	{#if value || emptyText}
+		<p class="calendar-selection" aria-live="polite">
+			{value ? `Ausgewählt: ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`))}` : emptyText}
+		</p>
+	{/if}
 </div>
