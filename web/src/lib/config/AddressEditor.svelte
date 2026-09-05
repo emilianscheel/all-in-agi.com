@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { Loader } from 'lucide-svelte';
 	import type { EventAddress } from '$lib/booking';
 	import type { Locale } from '$lib/i18n';
 	import { fetchAddressSuggestions } from '$lib/geocoding';
@@ -93,9 +94,15 @@
 			<ul id={`${idPrefix}-suggestions`} class="suggestions">
 				{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}
 			</ul>
-		{/if}
-		{#if searchStatus !== 'idle'}
-			<p id={`${idPrefix}-search-status`} class="helper" aria-live="polite">{locale === 'en' ? (searchStatus === 'loading' ? 'Searching addresses …' : searchStatus === 'empty' ? 'No matching address found. Please enter it manually below.' : 'Address search is unavailable. Please enter it manually below.') : (searchStatus === 'loading' ? 'Adressen werden gesucht …' : searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.')}</p>
+		{:else if searchStatus === 'loading'}
+			<div id={`${idPrefix}-search-status`} class="suggestions search-status-card" role="status" aria-live="polite">
+				<Loader class="search-loading-icon" size={22} strokeWidth={1.8} aria-hidden="true" />
+				<span class="visually-hidden">{locale === 'en' ? 'Searching addresses …' : 'Adressen werden gesucht …'}</span>
+			</div>
+		{:else if searchStatus === 'empty' || searchStatus === 'error'}
+			<div id={`${idPrefix}-search-status`} class="suggestions search-status-card search-status-message" role={searchStatus === 'error' ? 'alert' : 'status'} aria-live="polite">
+				{locale === 'en' ? (searchStatus === 'empty' ? 'No matching address found. Please enter it manually below.' : 'Address search is unavailable. Please enter it manually below.') : (searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.')}
+			</div>
 		{/if}
 	</div>
 	<div class="field full"><label for={`${idPrefix}-street`}>{locale === 'en' ? 'Street and number' : 'Straße und Hausnummer'}</label><input id={`${idPrefix}-street`} autocomplete="street-address" value={value.street} oninput={(event) => patch({ street: event.currentTarget.value, label: '' })} /></div>

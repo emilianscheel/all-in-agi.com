@@ -9,7 +9,7 @@
         Code2,
         Cookie,
 		LocateFixed,
-		LoaderCircle,
+		Loader,
         MapPin,
         Monitor,
         Pizza,
@@ -552,21 +552,20 @@
 						{:else if searchStatus === "loading"}
 							<div
 								id="map-address-search-status"
-								class="suggestions search-loading-card"
+								class="suggestions search-status-card"
 								role="status"
 								aria-live="polite"
 							>
-								<LoaderCircle class="search-loading-icon" size={28} strokeWidth={1.8} aria-hidden="true" />
+								<Loader class="search-loading-icon" size={22} strokeWidth={1.8} aria-hidden="true" />
 								<span class="visually-hidden">{locale === 'en' ? 'Searching addresses …' : 'Adressen werden gesucht …'}</span>
 							</div>
-                        {/if}
-						{#if locationMessage || searchStatus === "empty" || searchStatus === "error"}
-                            <p id="map-address-search-status" class="helper" aria-live="polite">
+						{:else if locationMessage || searchStatus === "empty" || searchStatus === "error"}
+							<div id="map-address-search-status" class="suggestions search-status-card search-status-message" role={searchStatus === 'error' ? 'alert' : 'status'} aria-live="polite">
 								{locationMessage || (locale === 'en'
 									? (searchStatus === "empty" ? "No matching address found. Please enter it manually below." : "Address search is unavailable. Please enter it manually below.")
 									: (searchStatus === "empty" ? "Keine passende Adresse gefunden. Bitte unten manuell eingeben." : "Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben."))}
-                            </p>
-                        {/if}
+							</div>
+						{/if}
                     </div>
                 </div>
                 <article

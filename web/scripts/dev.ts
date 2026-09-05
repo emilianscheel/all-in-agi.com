@@ -1,14 +1,14 @@
 import { databaseUrlForMigrations, startDatabase } from './database';
 
 async function run(command: string[], env?: Record<string, string | undefined>) {
-	const process = Bun.spawn(command, {
+	const child = Bun.spawn(command, {
 		stdin: 'inherit',
 		stdout: 'inherit',
 		stderr: 'inherit',
 		env
 	});
-	const exitCode = await process.exited;
-	if (exitCode !== 0) process.exit(exitCode);
+	const exitCode = await child.exited;
+	if (exitCode !== 0) globalThis.process.exit(exitCode);
 }
 
 try {

@@ -546,7 +546,8 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .suggestions { position: absolute; z-index: 8; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--soft-line); border-radius: 14px; background: var(--card); box-shadow: var(--floating-shadow); }
 .suggestions button { width: 100%; padding: 12px; border: 0; border-radius: 9px; background: transparent; text-align: left; cursor: pointer; }
 .suggestions button:hover { background: var(--surface); }
-.search-loading-card { height: 138px; display: grid; place-items: center; pointer-events: none; }
+.search-status-card { height: 138px; display: grid; place-items: center; padding: 18px 22px; color: var(--muted); text-align: center; line-height: 1.45; pointer-events: none; }
+.search-status-message { font-size: 13px; }
 .search-loading-icon { color: var(--muted); animation: search-spinner .9s linear infinite; }
 @keyframes search-spinner { to { transform: rotate(360deg); } }
 .helper { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
