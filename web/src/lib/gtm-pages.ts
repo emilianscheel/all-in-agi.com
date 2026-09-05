@@ -1074,12 +1074,19 @@ const ENGLISH_TITLES: Record<string, string> = {
 	'ki-hackathon-ruhrgebiet': 'The Ruhr Region Is Ready for Its Next Shift.'
 };
 
+const ENGLISH_FOOTER_LABELS: Record<string, string> = {
+	'hackathon-softwareunternehmen': 'Agentic Hackathon for Software Teams',
+	'hackathon-maschinenbau-automatisierung': 'Mechanical Engineering & Automation Hackathon',
+	'ki-hackathon-ostwestfalen-lippe': 'East Westphalia Builds the Factory of Tomorrow.'
+};
+
 function englishPage(page: GtmPage): GtmPage {
 	const title = ENGLISH_TITLES[page.slug] ?? page.title;
+	const footerLabel = ENGLISH_FOOTER_LABELS[page.slug] ?? title;
 	const description = `${title}: a practical ALL IN AGI perspective on turning real company workflows into secure, testable prototypes with modern coding agents.`;
 	if (page.kind === 'offer') {
 		return {
-			...page, title, footerLabel: title, description,
+			...page, title, footerLabel, description,
 			lead: [
 				`${title} brings engineering, product, and domain experts together around work that matters to the business. Instead of discussing AI in the abstract, small cross-functional teams use approved tools and realistic test data to build demonstrable workflows in a focused day.`,
 				`The format is prepared with the sponsor and challenge owners. Each challenge has a clear user, a narrow boundary, and a visible success test, so the day produces evidence rather than a collection of disconnected ideas.`
@@ -1121,7 +1128,7 @@ function englishPage(page: GtmPage): GtmPage {
 		{ title: 'What responsible adoption looks like', paragraphs: [{ text: 'Responsible adoption keeps humans accountable for decisions and makes sources, tests, permissions, and failure modes visible. It starts inside the company’s approved environment and avoids sensitive production data unless its use has been explicitly cleared.' }, { text: 'The goal is not to deploy autonomous agents in one day. It is to understand where the tools create leverage, what controls are required, and whether the organization can support a reliable next iteration.' }] },
 		{ title: 'From demonstration to decision', paragraphs: [{ text: 'After the demo, record the functional state, value hypothesis, known limits, tool friction, and next owner for each prototype. Continue only the ideas with a credible user and a concrete path to better evidence.' }, { text: 'This turns an AI event into capability building and product discovery. Participants gain direct experience, sponsors see actual behavior instead of slides, and the company gets a grounded basis for its next investment decision.' }] }
 	];
-	return { ...page, title, footerLabel: title, description, seoTitle: title, dek: description, sections };
+	return { ...page, title, footerLabel, description, seoTitle: title, dek: description, sections };
 }
 
 export function getGtmPage(slug: string, locale: Locale = 'de') {
