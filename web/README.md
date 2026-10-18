@@ -33,7 +33,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `CAL_API_KEY`: serverseitiger Cal.com API-Key
 - `CAL_EVENT_TYPE_ID`: ID des 30-minütigen Cal.com Event Types
 - `CAL_HACKATHON_EVENT_TYPE_ID`: ID des Cal.com Event Types für den Hackathontag; konfigurierte Dauern und freie Slots werden dynamisch aus Cal.com geladen
-- `ICLOUD_SMTP_USERNAME`: vollständige `@icloud.com`-Adresse des Apple-Kontos, dem `go@all-in-agi.com` zugeordnet ist
+- `APPLE_ACCOUNT`: vollständige `@icloud.com`-Adresse des Apple-Kontos, dem `go@all-in-agi.com` zugeordnet ist
 - `APPLE_APP_SPECIFIC_PASSWORD`: App-spezifisches Passwort dieses Apple-Kontos für SMTP; nur serverseitig speichern
 - `INVOICE_TAX_ID_LABEL` und `INVOICE_TAX_ID_VALUE`: Bezeichnung und Wert der Steuerkennung auf Rechnungen, zum Beispiel `USt-IdNr.`
 - `INVOICE_ACCOUNT_HOLDER`, `INVOICE_IBAN` und `INVOICE_BIC`: Zahlungsdaten für Rechnungen; ohne vollständige Werte bleibt die Rechnungserstellung deaktiviert
