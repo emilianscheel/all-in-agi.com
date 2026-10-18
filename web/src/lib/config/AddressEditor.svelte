@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { Loader } from 'lucide-svelte';
 	import type { EventAddress } from '$lib/booking';
 	import type { Locale } from '$lib/i18n';
@@ -26,6 +27,12 @@
 	let searchStatus = $state<'idle' | 'loading' | 'empty' | 'error'>('idle');
 	let abortController: AbortController | undefined;
 	let debounce: ReturnType<typeof setTimeout> | undefined;
+
+	function fadeSuggestions(node: Element) {
+		return fade(node, {
+			duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180
+		});
+	}
 
 	$effect(() => {
 		addressQuery = value.label || [value.street, value.city].filter(Boolean).join(', ');
@@ -92,7 +99,7 @@
 			oninput={updateSuggestions}
 		/>
 		{#if suggestions.length || searchStatus !== 'idle'}
-			<div class="suggestions animated-suggestions" use:animateContentHeight>
+			<div class="suggestions animated-suggestions" use:animateContentHeight transition:fadeSuggestions>
 				<div class="suggestions-content">
 					{#if suggestions.length}
 						<ul id={`${idPrefix}-suggestions`} class="suggestions-list">
