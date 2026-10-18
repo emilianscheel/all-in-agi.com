@@ -1,7 +1,9 @@
 import { CONTACT_EMAIL } from '$lib/contact';
+import nodemailer, { type SendMailOptions } from 'nodemailer';
 
-const CLOUDFLARE_API_BASE = 'https://api.cloudflare.com/client/v4';
 const DEFAULT_MAX_EMAIL_BYTES = 5 * 1024 * 1024;
+const SMTP_HOST = 'smtp.mail.me.com';
+const SMTP_PORT = 587;
 
 export type EmailTransportStage = 'configuration' | 'serialization' | 'network' | 'provider';
 
@@ -35,91 +37,95 @@ export type EmailMessage = EmailMessageBase & (
 	| { text?: string; html: string }
 );
 
+interface SmtpSubmission {
+	messageId?: string;
+	accepted?: string[];
+	rejected?: string[];
+}
+
 export interface EmailTransportDependencies {
-	fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-	accountId?: string;
-	apiToken?: string;
+	username?: string;
+	password?: string;
+	sendMail?: (options: SendMailOptions) => Promise<SmtpSubmission>;
 	maxMessageBytes?: number;
 }
 
-interface CloudflareEmailResponse {
-	success?: boolean;
-	errors?: Array<{ code?: number; message?: string }>;
-	result?: {
-		delivered?: string[];
-		queued?: string[];
-		permanent_bounces?: string[];
-		message_id?: string;
-	} | null;
+function smtpError(error: unknown): EmailTransportError {
+	const cause = error as { code?: string; responseCode?: number } | null;
+	const code = cause?.code;
+	const stage: EmailTransportStage = code && ['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'EDNS'].includes(code)
+		? 'network'
+		: 'provider';
+	return new EmailTransportError(
+		stage === 'network' ? 'iCloud Mail ist nicht erreichbar.' : 'iCloud Mail hat die E-Mail nicht angenommen.',
+		stage,
+		{ status: cause?.responseCode, providerCode: code ?? 'smtp_error', cause: error }
+	);
 }
 
 export async function sendEmailMessage(message: EmailMessage, dependencies: EmailTransportDependencies = {}) {
-	const accountId = dependencies.accountId ?? process.env.CLOUDFLARE_ACCOUNT_ID;
-	const apiToken = dependencies.apiToken ?? process.env.CLOUDFLARE_EMAIL_API_TOKEN;
-	if (!accountId || !apiToken) {
-		throw new EmailTransportError('Cloudflare Email Service ist nicht vollständig konfiguriert.', 'configuration', {
+	const username = dependencies.username ?? process.env.ICLOUD_SMTP_USERNAME;
+	const password = dependencies.password ?? process.env.APPLE_APP_SPECIFIC_PASSWORD;
+	if (!username?.trim() || !password?.trim()) {
+		throw new EmailTransportError('iCloud SMTP ist nicht vollständig konfiguriert.', 'configuration', {
 			providerCode: 'configuration_missing'
 		});
 	}
 
-	let body: string;
+	let options: SendMailOptions;
 	try {
-		body = JSON.stringify({
-			from: { address: CONTACT_EMAIL, name: 'ALL IN AGI' },
-			reply_to: { address: CONTACT_EMAIL, name: 'ALL IN AGI' },
-			...message
-		});
-		if (new TextEncoder().encode(body).byteLength > (dependencies.maxMessageBytes ?? DEFAULT_MAX_EMAIL_BYTES)) {
+		const size = Buffer.byteLength(JSON.stringify(message), 'utf8');
+		if (size > (dependencies.maxMessageBytes ?? DEFAULT_MAX_EMAIL_BYTES)) {
 			throw new EmailTransportError('Die E-Mail überschreitet die maximale Nachrichtengröße.', 'serialization', {
 				status: 400,
 				providerCode: 'message_too_big'
 			});
 		}
+		options = {
+			from: { address: CONTACT_EMAIL, name: 'ALL IN AGI' },
+			replyTo: { address: CONTACT_EMAIL, name: 'ALL IN AGI' },
+			to: message.to,
+			subject: message.subject,
+			text: message.text,
+			html: message.html,
+			headers: message.headers,
+			attachments: message.attachments?.map((attachment) => ({
+				filename: attachment.filename,
+				content: Buffer.from(attachment.content, 'base64'),
+				contentType: attachment.type,
+				contentDisposition: attachment.disposition
+			}))
+		};
 	} catch (cause) {
 		if (cause instanceof EmailTransportError) throw cause;
-		throw new EmailTransportError('Die E-Mail konnte nicht serialisiert werden.', 'serialization', {
-			providerCode: 'payload_serialization_failed',
-			cause
+		throw new EmailTransportError('Die E-Mail konnte nicht vorbereitet werden.', 'serialization', {
+			providerCode: 'payload_serialization_failed', cause
 		});
 	}
 
-	let response: Response;
+	let result: SmtpSubmission;
 	try {
-		response = await (dependencies.fetch ?? globalThis.fetch)(
-			`${CLOUDFLARE_API_BASE}/accounts/${encodeURIComponent(accountId)}/email/sending/send`,
-			{
-				method: 'POST',
-				headers: { authorization: `Bearer ${apiToken}`, 'content-type': 'application/json' },
-				body
-			}
-		);
-	} catch (cause) {
-		throw new EmailTransportError('Cloudflare Email Service ist nicht erreichbar.', 'network', {
-			providerCode: 'network_error',
-			cause
+		const transport = dependencies.sendMail ? null : nodemailer.createTransport({
+			host: SMTP_HOST,
+			port: SMTP_PORT,
+			secure: false,
+			requireTLS: true,
+			auth: { user: username, pass: password },
+			connectionTimeout: 10_000,
+			greetingTimeout: 10_000,
+			socketTimeout: 20_000
 		});
+		result = await (dependencies.sendMail
+			? dependencies.sendMail(options)
+			: transport!.sendMail(options));
+	} catch (error) {
+		throw smtpError(error);
 	}
 
-	let result: CloudflareEmailResponse = {};
-	try { result = await response.json() as CloudflareEmailResponse; }
-	catch { /* Preserve the HTTP status when the upstream body is not JSON. */ }
-	const delivered = (result.result?.delivered?.length ?? 0) > 0;
-	const queued = (result.result?.queued?.length ?? 0) > 0;
-	const bounced = (result.result?.permanent_bounces?.length ?? 0) > 0;
-	const accepted = Boolean(result.result?.message_id);
-	if (!response.ok || result.success !== true || (!delivered && !queued && !accepted) || bounced) {
-		throw new EmailTransportError(
-			result.errors?.[0]?.message ?? 'Cloudflare hat die E-Mail nicht angenommen.',
-			'provider',
-			{
-				status: response.status,
-				providerCode: result.errors?.[0]?.code ?? 'delivery_not_accepted',
-				messageId: result.result?.message_id
-			}
-		);
+	if (!result.accepted?.some((address) => address.toLowerCase() === message.to.address.toLowerCase())) {
+		throw new EmailTransportError('iCloud Mail hat den Empfänger nicht angenommen.', 'provider', {
+			providerCode: 'recipient_not_accepted', messageId: result.messageId
+		});
 	}
-	return {
-		messageId: result.result?.message_id,
-		status: delivered ? 'delivered' as const : queued ? 'queued' as const : 'accepted' as const
-	};
+	return { messageId: result.messageId, status: 'accepted' as const };
 }

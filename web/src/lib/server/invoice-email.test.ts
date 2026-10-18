@@ -28,20 +28,20 @@ describe('invoice email', () => {
 	test('sends the generated PDF as an attachment', async () => {
 		let payload: any;
 		const result = await sendInvoiceEmail(snapshot, {
-			accountId: 'account', apiToken: 'token',
+				username: 'owner@icloud.com', password: 'test-password',
 			createPdf: async () => new Uint8Array([37, 80, 68, 70]),
-			fetch: async (_input, init) => {
-				payload = JSON.parse(String(init?.body));
-				return Response.json({ success: true, result: { queued: ['ada@example.com'], message_id: 'invoice-mail-1' } });
+				sendMail: async (options) => {
+					payload = options;
+					return { accepted: ['ada@example.com'], messageId: 'invoice-mail-1' };
 			}
 		});
 		expect(result.messageId).toBe('invoice-mail-1');
 		expect(payload.subject).toContain('RE-HAA-AAA-AAA');
 		expect(payload.attachments).toEqual([{
-			content: 'JVBERg==',
+			content: Buffer.from([37, 80, 68, 70]),
 			filename: 'all-in-agi-rechnung-HAA-AAA-AAA.pdf',
-			type: 'application/pdf',
-			disposition: 'attachment'
+			contentType: 'application/pdf',
+			contentDisposition: 'attachment'
 		}]);
 	});
 });

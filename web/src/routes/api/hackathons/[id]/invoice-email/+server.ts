@@ -20,7 +20,7 @@ export interface InvoiceEmailEndpointDependencies extends InvoicePersistenceDepe
 }
 
 export function _createInvoiceEmailPost(dependencies: InvoiceEmailEndpointDependencies = {}) {
-	return async function POST({ params, locals, fetch }: { params: { id: string }; locals: App.Locals; fetch: typeof globalThis.fetch }) {
+	return async function POST({ params, locals }: { params: { id: string }; locals: App.Locals }) {
 		requireAdmin(locals);
 		const id = params.id.toUpperCase();
 		if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
@@ -29,10 +29,7 @@ export function _createInvoiceEmailPost(dependencies: InvoiceEmailEndpointDepend
 			if (!['contracted', 'confirmed', 'completed'].includes(record.status)) {
 				return json({ message: 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.' }, { status: 409 });
 			}
-			const delivery = await (dependencies.send ?? sendInvoiceEmail)(snapshot, {
-				...dependencies.email,
-				fetch: dependencies.email?.fetch ?? fetch
-			});
+			const delivery = await (dependencies.send ?? sendInvoiceEmail)(snapshot, dependencies.email);
 			const sentAt = dependencies.nowIso?.() ?? new Date().toISOString();
 			const updated = await (dependencies.markSent ?? markInvoiceEmailSent)(id, delivery.messageId, sentAt);
 			if (!updated) throw new Error('Invoice delivery state could not be saved.');

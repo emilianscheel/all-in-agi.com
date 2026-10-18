@@ -28,7 +28,8 @@
 | Vercel | Hosting | EU/USA | DPA/SCC und Transferprüfung | |
 | Neon | PostgreSQL | Frankfurt | DPA; Unterauftragsverarbeiter prüfen | |
 | Cal.com | Terminierung | EU/USA | DPA/SCC und Transferprüfung | |
-| Cloudflare | E-Mail/Netzwerk | global | DPA/SCC und Transferprüfung | |
+| Apple iCloud Mail | E-Mail | global | Vertragsbedingungen und Transferprüfung | |
+| Cloudflare | Netzwerk/DNS | global | DPA/SCC und Transferprüfung | |
 
 Änderungen an Unterauftragsverarbeitern, Auditrechte, Löschbestätigung und Haftung werden in der finalen AVV vereinbart.
 

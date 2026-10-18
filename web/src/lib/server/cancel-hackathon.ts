@@ -88,7 +88,7 @@ export async function cancelHackathonBooking(
 			record = await markCancelled(id) ?? record;
 		}
 		if (record.status === 'cancelled' && !record.cancellationEmailSentAt) {
-			const delivery = await sendEmail(record, { fetch: requestFetch });
+			const delivery = await sendEmail(record);
 			record = await markEmail(id, delivery.messageId) ?? record;
 		}
 		return { found: true, state: stateFromRecord(record) };

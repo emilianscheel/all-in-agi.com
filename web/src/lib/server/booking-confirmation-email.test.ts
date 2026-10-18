@@ -51,18 +51,6 @@ const input = {
     },
 };
 
-function acceptedResponse(address: string, status: "delivered" | "queued" = "delivered") {
-    return Response.json({
-        success: true,
-        result: {
-            delivered: status === "delivered" ? [address] : [],
-            queued: status === "queued" ? [address] : [],
-            permanent_bounces: [],
-            message_id: `message-${address}`,
-        },
-    });
-}
-
 describe("booking confirmation email", () => {
     test("builds recipient-specific plain-text confirmation structures", () => {
         const text = buildBookingConfirmationText(input);
@@ -113,299 +101,121 @@ describe("booking confirmation email", () => {
         expect(html).not.toContain("Ada <Admin>");
 
         const organizerHtml = buildBookingConfirmationHtml(input, "organizer");
-        expect(organizerHtml).toContain("<p>Es wurde eine nueva unverbindliche Hackathon-Anfrage gestellt.</p>");
+        expect(organizerHtml).toContain("<p>Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.</p>");
         expect(organizerHtml).not.toContain("Hallo ALL IN AGI,");
     });
 
     test("sends customer and organizer copies with the same generated attachments", async () => {
-        const requests: Array<{ url: string; init?: RequestInit }> = [];
+        const submissions: any[] = [];
         const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (url, init) => {
-                requests.push({ url: String(url), init });
-                const body = JSON.parse(String(init?.body));
-                return acceptedResponse(body.to.address);
+            username: "owner@icloud.com",
+            password: "test-password",
+            sendMail: async (options) => {
+                submissions.push(options);
+                const address = (options.to as { address: string }).address;
+                return { accepted: [address], messageId: `message-${address}` };
             },
         });
 
-        expect(result.customer).toMatchObject({
-            role: "customer",
-            sent: true,
-            status: "delivered",
-        });
-        expect(result.organizer).toMatchObject({
-            role: "organizer",
-            sent: true,
-            status: "delivered",
-        });
-        expect(requests).toHaveLength(2);
-        for (const request of requests) {
-            expect(request.url).toBe(
-                "https://api.cloudflare.com/client/v4/accounts/account-123/email/sending/send",
-            );
-            expect(new Headers(request.init?.headers).get("authorization")).toBe(
-                "Bearer secret-token",
-            );
-        }
-
-        const bodies = requests.map((request) => JSON.parse(String(request.init?.body)));
-        const customerBody = bodies.find((body) => body.to.address === config.email);
-        const organizerBody = bodies.find((body) => body.to.address === "go@all-in-agi.com");
-        expect(customerBody).toMatchObject({
+        expect(result.customer).toMatchObject({ role: "customer", sent: true, status: "accepted" });
+        expect(result.organizer).toMatchObject({ role: "organizer", sent: true, status: "accepted" });
+        expect(submissions).toHaveLength(2);
+        const customer = submissions.find((mail) => mail.to.address === config.email);
+        const organizer = submissions.find((mail) => mail.to.address === "go@all-in-agi.com");
+        expect(customer).toMatchObject({
             from: { address: "go@all-in-agi.com", name: "ALL IN AGI" },
-            reply_to: { address: "go@all-in-agi.com", name: "ALL IN AGI" },
+            replyTo: { address: "go@all-in-agi.com", name: "ALL IN AGI" },
             to: { address: "ada@example.com", name: "Ada Beispiel" },
-			subject: "Eingang Ihrer Hackathon-Anfrage HAA-AAA-AAA",
+            subject: "Eingang Ihrer Hackathon-Anfrage HAA-AAA-AAA",
             headers: { "X-Booking-ID": "HAA-AAA-AAA" },
         });
-        expect(organizerBody.to).toEqual({ address: "go@all-in-agi.com", name: "ALL IN AGI" });
-		expect(organizerBody.subject).toBe("Neue Hackathon-Anfrage HAA-AAA-AAA");
-        expect(organizerBody.text).not.toBe(customerBody.text);
-        expect(organizerBody.html).not.toBe(customerBody.html);
-        expect(organizerBody.attachments).toEqual(customerBody.attachments);
-        expect(customerBody.html).toContain("<strong>Team:</strong> Bis 15 Personen");
-        expect(customerBody.text).toContain("Wir freuen uns auf Sie!");
-        expect(organizerBody.text).not.toContain("Wir freuen uns auf Sie!");
-        expect(
-            customerBody.attachments.map((attachment: { filename: string; type: string }) => ({
-                filename: attachment.filename,
-                type: attachment.type,
-            })),
-        ).toEqual([
-            {
-                filename: "Vorbereitungsgespräch.ics",
-                type: "text/calendar; charset=utf-8",
-            },
-            {
-                filename: "Hackathon.pdf",
-                type: "application/pdf",
-            },
+        expect(organizer.subject).toBe("Neue Hackathon-Anfrage HAA-AAA-AAA");
+        expect(organizer.text).not.toBe(customer.text);
+        expect(organizer.html).not.toBe(customer.html);
+        expect(organizer.attachments).toEqual(customer.attachments);
+        expect(customer.attachments.map((attachment: any) => ({ filename: attachment.filename, contentType: attachment.contentType }))).toEqual([
+            { filename: "Vorbereitungsgespräch.ics", contentType: "text/calendar; charset=utf-8" },
+            { filename: "Hackathon.pdf", contentType: "application/pdf" },
         ]);
-        const calendar = Buffer.from(customerBody.attachments[0].content, "base64").toString(
-            "utf8",
-        );
+        const calendar = customer.attachments[0].content.toString("utf8");
         expect(calendar).toContain("LOCATION:https://meet.example.com/booking-1");
         expect(calendar).toContain("UID:booking-1@all-in-agi.com");
-		expect(calendar).toContain("URL:https://all-in-agi.com/de/HAA-AAA-AAA");
-		expect(calendar).toContain("Buchung verwalten: https://all-in-agi.com/de/HAA-AAA-AAA");
-        const pdfBytes = Buffer.from(customerBody.attachments[1].content, "base64");
-        expect((await PDFDocument.load(pdfBytes)).getPageCount()).toBe(1);
+        expect(calendar).toContain("URL:https://all-in-agi.com/de/HAA-AAA-AAA");
+        expect((await PDFDocument.load(customer.attachments[1].content)).getPageCount()).toBe(1);
     });
 
     test("resends a confirmation only to the customer", async () => {
         const recipients: string[] = [];
         const result = await sendCustomerBookingConfirmationEmail(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (_url, init) => {
-                const body = JSON.parse(String(init?.body));
-                recipients.push(body.to.address);
-                return acceptedResponse(body.to.address);
+            username: "owner@icloud.com",
+            password: "test-password",
+            sendMail: async (options) => {
+                const address = (options.to as { address: string }).address;
+                recipients.push(address);
+                return { accepted: [address] };
             },
         });
-
-        expect(result).toMatchObject({
-            role: "customer",
-            sent: true,
-            status: "delivered",
-        });
+        expect(result).toMatchObject({ role: "customer", sent: true, status: "accepted" });
         expect(recipients).toEqual(["ada@example.com"]);
-        expect(recipients).not.toContain("go@all-in-agi.com");
     });
 
-    test("accepts queued responses for both recipients", async () => {
+    test("reports missing SMTP credentials without sending", async () => {
+        let called = false;
         const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (_url, init) => {
-                const body = JSON.parse(String(init?.body));
-                return acceptedResponse(body.to.address, "queued");
-            },
+            username: "",
+            password: "",
+            sendMail: async () => { called = true; return { accepted: [] }; },
         });
-        expect(result.customer).toMatchObject({ sent: true, status: "queued" });
-        expect(result.organizer).toMatchObject({ sent: true, status: "queued" });
-    });
-
-    test("accepts display-name status entries and message-id-only responses", async () => {
-        const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (_url, init) => {
-                const body = JSON.parse(String(init?.body));
-                if (body.to.address === config.email) {
-                    return Response.json({
-                        success: true,
-                        result: {
-                            delivered: [`${body.to.name} <${body.to.address}>`],
-                            queued: [],
-                            permanent_bounces: [],
-                            message_id: "message-customer",
-                        },
-                    });
-                }
-                return Response.json({
-                    success: true,
-                    result: {
-                        delivered: [],
-                        queued: [],
-                        permanent_bounces: [],
-                        message_id: "message-organizer",
-                    },
-                });
-            },
-        });
-        expect(result.customer).toMatchObject({
-            sent: true,
-            status: "delivered",
-            messageId: "message-customer",
-        });
-        expect(result.organizer).toMatchObject({
-            sent: true,
-            status: "accepted",
-            messageId: "message-organizer",
-        });
-    });
-
-    test("reports missing credentials without making a request", async () => {
-        let fetchCalled = false;
-        const result = await sendBookingConfirmationEmails(input, {
-            accountId: "",
-            apiToken: "",
-            fetch: async () => {
-                fetchCalled = true;
-                return Response.json({});
-            },
-        });
-        expect(fetchCalled).toBe(false);
-        expect(result.customer).toMatchObject({
-            sent: false,
-            error: {
-                stage: "configuration",
-                providerCode: "configuration_missing",
-            },
-        });
-        expect(result.organizer).toMatchObject({
-            sent: false,
-            error: { stage: "configuration" },
-        });
+        expect(called).toBe(false);
+        expect(result.customer).toMatchObject({ sent: false, error: { stage: "configuration", providerCode: "configuration_missing" } });
+        expect(result.organizer).toMatchObject({ sent: false, error: { stage: "configuration" } });
     });
 
     test("reports attachment preparation failures with the original cause", async () => {
-        let fetchCalled = false;
+        let called = false;
         const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            createPdf: async () => {
-                throw new Error("font asset missing");
-            },
-            fetch: async () => {
-                fetchCalled = true;
-                return Response.json({});
-            },
+            username: "owner@icloud.com",
+            password: "test-password",
+            createPdf: async () => { throw new Error("font asset missing"); },
+            sendMail: async () => { called = true; return { accepted: [] }; },
         });
-        expect(fetchCalled).toBe(false);
-        expect(result.customer).toMatchObject({
-            sent: false,
-            error: {
-                stage: "attachments",
-                providerCode: "attachment_generation_failed",
-                causeName: "Error",
-                causeMessage: "font asset missing",
-            },
-        });
-        expect(result.organizer).toMatchObject({
-            sent: false,
-            error: { stage: "attachments" },
-        });
+        expect(called).toBe(false);
+        expect(result.customer).toMatchObject({ sent: false, error: {
+            stage: "attachments", providerCode: "attachment_generation_failed",
+            causeName: "Error", causeMessage: "font asset missing",
+        } });
+        expect(result.organizer).toMatchObject({ sent: false, error: { stage: "attachments" } });
     });
 
-    test("keeps recipient delivery attempts independent", async () => {
+    test("keeps recipient attempts independent", async () => {
         const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (_url, init) => {
-                const body = JSON.parse(String(init?.body));
-                if (body.to.address === "go@all-in-agi.com") {
-                    return Response.json(
-                        {
-                            success: false,
-                            errors: [{ code: 10101, message: "unauthorized" }],
-                            result: null,
-                        },
-                        { status: 401 },
-                    );
+            username: "owner@icloud.com",
+            password: "test-password",
+            sendMail: async (options) => {
+                const address = (options.to as { address: string }).address;
+                if (address === "go@all-in-agi.com") {
+                    throw Object.assign(new Error("recipient rejected"), { code: "EENVELOPE", responseCode: 550 });
                 }
-                return acceptedResponse(body.to.address);
+                return { accepted: [address], messageId: "customer-id" };
             },
         });
-        expect(result.customer).toMatchObject({ sent: true, status: "delivered" });
-        expect(result.organizer).toMatchObject({
-            sent: false,
-            error: { stage: "provider", status: 401, providerCode: 10101 },
-        });
+        expect(result.customer).toMatchObject({ sent: true, status: "accepted", messageId: "customer-id" });
+        expect(result.organizer).toMatchObject({ sent: false, error: { stage: "provider", status: 550, providerCode: "EENVELOPE" } });
     });
 
-    test("reports permanent bounces as provider failures", async () => {
-        const result = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async (_url, init) => {
-                const body = JSON.parse(String(init?.body));
-                return Response.json({
-                    success: true,
-                    result: {
-                        delivered: [],
-                        queued: [],
-                        permanent_bounces: [body.to.address],
-                        message_id: "message-bounced",
-                    },
-                });
-            },
-        });
-        expect(result.customer).toMatchObject({
-            sent: false,
-            error: {
-                stage: "provider",
-                providerCode: "delivery_not_accepted",
-                messageId: "message-bounced",
-            },
-        });
-        expect(result.organizer).toMatchObject({ sent: false, error: { stage: "provider" } });
-    });
-
-    test("reports oversized payloads and network failures by stage", async () => {
+    test("reports oversized messages and network failures by stage", async () => {
         const oversized = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            maxMessageBytes: 1,
-            fetch: async () => Response.json({}),
+            username: "owner@icloud.com", password: "test-password", maxMessageBytes: 1,
+            sendMail: async () => { throw new Error("should not send"); },
         });
-        expect(oversized.customer).toMatchObject({
-            sent: false,
-            error: { stage: "serialization", providerCode: "message_too_big" },
-        });
-        expect(oversized.organizer).toMatchObject({
-            sent: false,
-            error: { stage: "serialization", providerCode: "message_too_big" },
-        });
+        expect(oversized.customer).toMatchObject({ sent: false, error: { stage: "serialization", providerCode: "message_too_big" } });
+        expect(oversized.organizer).toMatchObject({ sent: false, error: { stage: "serialization" } });
 
         const network = await sendBookingConfirmationEmails(input, {
-            accountId: "account-123",
-            apiToken: "secret-token",
-            fetch: async () => {
-                throw new TypeError("fetch failed");
-            },
+            username: "owner@icloud.com", password: "test-password",
+            sendMail: async () => { throw Object.assign(new Error("connection lost"), { code: "ECONNECTION" }); },
         });
-        expect(network.customer).toMatchObject({
-            sent: false,
-            error: {
-                stage: "network",
-                providerCode: "network_error",
-                causeName: "TypeError",
-                causeMessage: "fetch failed",
-            },
-        });
+        expect(network.customer).toMatchObject({ sent: false, error: { stage: "network", providerCode: "ECONNECTION", causeMessage: "connection lost" } });
         expect(network.organizer).toMatchObject({ sent: false, error: { stage: "network" } });
     });
 });

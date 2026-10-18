@@ -6,7 +6,7 @@ import { recordOralAgreement } from '$lib/server/legal-contracts';
 import { getCustomerHackathonRecord } from '$lib/server/hackathons';
 import { json } from '@sveltejs/kit';
 
-export async function POST({ params, request, locals, fetch }: { params: { id: string }; request: Request; locals: App.Locals; fetch: typeof globalThis.fetch }) {
+export async function POST({ params, request, locals }: { params: { id: string }; request: Request; locals: App.Locals }) {
 	requireAdmin(locals);
 	const id = params.id.toUpperCase();
 	if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
@@ -22,7 +22,7 @@ export async function POST({ params, request, locals, fetch }: { params: { id: s
 	const record = await recordOralAgreement(id, body.customerName, body.organizerName, agreedAt);
 	if (!record) return json({ message: 'Die Zustimmung kann in diesem Status nicht erfasst werden.' }, { status: 409 });
 	try {
-		const delivery = await sendContractConfirmationEmail(record, { fetch });
+		const delivery = await sendContractConfirmationEmail(record);
 		return json({ status: record.status, exitDeadline: record.exitDeadline, emailSent: true, messageId: delivery.messageId });
 	} catch (error) {
 		console.error('Contract confirmation email failed', { id, error });

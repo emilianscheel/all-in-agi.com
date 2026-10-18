@@ -11,7 +11,7 @@
 		['3. Hackathon requests and contracts', 'We process company and contact data, event address, dates, configuration, communications, authority confirmations, and contract evidence to handle requests and perform contracts under Article 6(1)(b) GDPR and for traceable B2B communication and legal defense under Article 6(1)(f). Unsuccessful inquiries are normally deleted six months after the last contact; contract records remain for applicable limitation and retention periods.'],
 		['4. Scheduling with Cal.com', 'We use Cal.com to show availability and reserve preparation calls and hackathon dates. Necessary contact, schedule, and event data is transferred. Cal.com may process data in the United States under the applicable contractual safeguards.'],
 		['5. Maps, location access, and address search', 'Maps use MapLibre GL and tiles from OpenFreeMap. Address search and coordinates selected through browser location access or the map are sent through our server to the public Photon service operated by komoot and based on OpenStreetMap data. The providers receive technically necessary connection data. Location access is optional, requires browser permission, and can be denied; addresses can always be entered manually.'],
-		['6. Email delivery', 'Transactional email is sent through Cloudflare Email Service. Recipient, name, booking or contract details, attachments, time, delivery status, and technical message identifiers are processed under Article 6(1)(b) and (f) GDPR.'],
+		['6. Email delivery', 'Transactional email is sent through iCloud Mail (Apple). Recipient, name, booking or contract details, attachments, time, delivery status, and technical message identifiers are processed under Article 6(1)(b) and (f) GDPR.'],
 		['7. Invoices and payment records', 'We process billing address, contacts, email, optional VAT ID and purchase order, services, and payment data for invoicing and accounting under Article 6(1)(b) and (c) GDPR. Tax-relevant invoices and structured originals are generally retained for eight years.'],
 		['8. Participants, devices, and security data', 'Participant lists are collected only where required for access, safety, or an agreed service. Dietary requirements should be provided as anonymous totals. Personal data, production data, trade secrets, and confidential source code may not be used on supplied devices or accounts without a separate agreement.'],
 		['9. Photos and video', 'Capture, protected delivery, and publication are separate purposes. Marketing publication requires voluntary, documented consent under Article 6(1)(a) and Article 7 GDPR and Section 22 KUG. Consent can be withdrawn prospectively and participation remains possible without marketing consent.'],
@@ -26,14 +26,14 @@
 
 {#if locale === 'en'}
 <div class="simple-page"><article class="simple-card privacy-card">
-	<h1>Privacy Notice</h1><p class="document-meta">Last updated: September 5, 2026</p>
+	<h1>Privacy Notice</h1><p class="document-meta">Last updated: October 18, 2026</p>
 	{#each englishSections as section, index}<h2 id={index === 9 ? 'google-analytics' : undefined}>{section[0]}</h2><p>{section[1]}</p>{/each}
 	<p>You can withdraw analytics consent at any time: <button class="privacy-button" type="button" onclick={openCookieSettings}>open cookie settings</button>.</p>
 </article></div>
 {:else}
 <div class="simple-page"><article class="simple-card privacy-card">
 	<h1>Datenschutz</h1>
-	<p class="document-meta">Stand: 5. September 2026</p>
+	<p class="document-meta">Stand: 18. Oktober 2026</p>
 
 	<h2>1. Verantwortlicher</h2>
 	<p>Emilian Scheel, handelnd unter ALL IN AGI<br />Moosdorfstraße 10, 12435 Berlin<br /><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
@@ -53,7 +53,7 @@
 	<p>Für die Kartendarstellung werden MapLibre GL und Kartenkacheln von OpenFreeMap verwendet. Adresssuchen sowie Koordinaten aus der optionalen Browser-Standortabfrage oder einer Auswahl auf der Karte werden über unseren Server an den öffentlichen Photon-Dienst von komoot übermittelt, der auf OpenStreetMap-Daten basiert. Die Anbieter erhalten dabei technisch erforderliche Verbindungsdaten. Die Standortabfrage erfordert Ihre Browserfreigabe und kann abgelehnt werden; eine Adresse kann jederzeit manuell eingegeben werden.</p>
 
 	<h2>6. E-Mail-Versand</h2>
-	<p>Transaktions-E-Mails werden über Cloudflare Email Service versandt. Verarbeitet werden Empfängeradresse, Name, Buchungs-/Vertragsdaten, Anhänge, Versandzeitpunkt, Zustellstatus und technische Nachrichtenkennungen. Rechtsgrundlagen sind Art. 6 Abs. 1 lit. b und lit. f DSGVO.</p>
+	<p>Transaktions-E-Mails werden über iCloud Mail (Apple) versandt. Verarbeitet werden Empfängeradresse, Name, Buchungs-/Vertragsdaten, Anhänge, Versandzeitpunkt, Zustellstatus und technische Nachrichtenkennungen. Rechtsgrundlagen sind Art. 6 Abs. 1 lit. b und lit. f DSGVO.</p>
 
 	<h2>7. Rechnungen und Zahlungsnachweise</h2>
 	<p>Für Rechnungsstellung, Anzahlungen, Schlussrechnungen und Mahnwesen verarbeiten wir Rechnungsanschrift, Ansprechpartner, E-Mail-Adresse, optionale USt-IdNr. und Bestellnummer, Leistungs- und Zahlungsdaten. Rechtsgrundlagen sind Art. 6 Abs. 1 lit. b und c DSGVO. Steuerlich relevante Rechnungen und strukturierte Originaldateien werden grundsätzlich acht Jahre aufbewahrt.</p>

@@ -30,7 +30,7 @@ describe('invoice email endpoint', () => {
 		let marked: { id: string; messageId?: string; at?: string } | undefined;
 		const post = _createInvoiceEmailPost({
 			getRecord: async () => record(),
-			send: async () => ({ messageId: 'mail-1', status: 'queued' }),
+			send: async () => ({ messageId: 'mail-1', status: 'accepted' }),
 			nowIso: () => '2099-05-02T10:00:00.000Z',
 			markSent: async (id, messageId, at) => {
 				marked = { id, messageId, at };

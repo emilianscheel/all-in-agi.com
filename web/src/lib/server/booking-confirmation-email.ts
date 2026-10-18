@@ -3,7 +3,7 @@ import type { BookingConfiguration } from "$lib/booking";
 import { bookingOverviewRows } from "$lib/booking-overview";
 import { createPrepCallIcs, type BookingResultSummary } from "$lib/booking-ics";
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from "$lib/contact";
-import { EmailTransportError, sendEmailMessage } from './email-transport';
+import { EmailTransportError, sendEmailMessage, type EmailTransportDependencies } from './email-transport';
 
 export interface BookingConfirmationInput {
     id: string;
@@ -11,11 +11,7 @@ export interface BookingConfirmationInput {
     booking: BookingResultSummary;
 }
 
-export interface BookingConfirmationDependencies {
-    fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-    accountId?: string;
-    apiToken?: string;
-    maxMessageBytes?: number;
+export interface BookingConfirmationDependencies extends EmailTransportDependencies {
     createPdf?: typeof createPlanPdf;
     createCalendar?: typeof createPrepCallIcs;
 }
@@ -28,7 +24,7 @@ export type BookingConfirmationAttempt =
     | {
           role: BookingConfirmationRecipientRole;
           sent: true;
-          status: "delivered" | "queued" | "accepted";
+          status: "accepted";
           messageId?: string;
       }
     | {
@@ -149,11 +145,11 @@ export function buildBookingConfirmationText(
 	const deferred = !input.config.eventStart;
 	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
     const content = [
-		...(customer ? [`Hallo ${input.config.contactName},`, ""] : []),
+        ...(customer ? [`Hallo ${input.config.contactName},`, ""] : []),
         customer
 			? (english
 				? deferred ? 'Thank you for your non-binding company inquiry. The preparation call is reserved; the hackathon date will be selected later. This does not yet create a contract.' : 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.'
-				: deferred ? 'vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
+				: deferred ? 'vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
 			: "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.",
         "",
         ...rows.map(rowText),
@@ -276,20 +272,13 @@ async function sendPreparedBookingConfirmation(
     role: BookingConfirmationRecipientRole,
     recipient: { address: string; name: string },
     prepared: PreparedBookingConfirmation,
-    accountId: string,
-    apiToken: string,
     dependencies: BookingConfirmationDependencies,
 ): Promise<BookingConfirmationAttempt> {
     try {
         const result = await sendEmailMessage({
             to: recipient,
             ...prepared,
-        }, {
-            fetch: dependencies.fetch,
-            accountId,
-            apiToken,
-            maxMessageBytes: dependencies.maxMessageBytes
-        });
+        }, dependencies);
         return { role, sent: true, messageId: result.messageId, status: result.status };
     } catch (error) {
         if (!(error instanceof EmailTransportError)) throw error;
@@ -310,29 +299,12 @@ export async function sendCustomerBookingConfirmationEmail(
     input: BookingConfirmationInput,
     dependencies: BookingConfirmationDependencies = {},
 ): Promise<BookingConfirmationAttempt> {
-    const accountId = dependencies.accountId ?? process.env.CLOUDFLARE_ACCOUNT_ID;
-    const apiToken = dependencies.apiToken ?? process.env.CLOUDFLARE_EMAIL_API_TOKEN;
-    if (!accountId || !apiToken) {
-        return failedAttempt(
-            "customer",
-            new BookingConfirmationEmailError(
-                "Cloudflare Email Service ist nicht vollständig konfiguriert.",
-                {
-                    stage: "configuration",
-                    providerCode: "configuration_missing",
-                },
-            ),
-        );
-    }
-
     try {
         const prepared = await prepareBookingConfirmation(input, dependencies, "customer");
         return await sendPreparedBookingConfirmation(
             "customer",
             { address: input.config.email, name: input.config.contactName },
             prepared,
-            accountId,
-            apiToken,
             dependencies,
         );
     } catch (error) {
@@ -344,20 +316,6 @@ export async function sendBookingConfirmationEmails(
     input: BookingConfirmationInput,
     dependencies: BookingConfirmationDependencies = {},
 ): Promise<BookingConfirmationReport> {
-    const accountId = dependencies.accountId ?? process.env.CLOUDFLARE_ACCOUNT_ID;
-    const apiToken = dependencies.apiToken ?? process.env.CLOUDFLARE_EMAIL_API_TOKEN;
-    if (!accountId || !apiToken) {
-        return failedReport(
-            new BookingConfirmationEmailError(
-                "Cloudflare Email Service ist nicht vollständig konfiguriert.",
-                {
-                    stage: "configuration",
-                    providerCode: "configuration_missing",
-                },
-            ),
-        );
-    }
-
     let customerPrepared: PreparedBookingConfirmation;
     let organizerPrepared: PreparedBookingConfirmation;
     try {
@@ -387,16 +345,12 @@ export async function sendBookingConfirmationEmails(
             "customer",
             { address: input.config.email, name: input.config.contactName },
             customerPrepared,
-            accountId,
-            apiToken,
             dependencies,
         ),
         sendPreparedBookingConfirmation(
             "organizer",
             { address: CONTACT_EMAIL, name: "ALL IN AGI" },
             organizerPrepared,
-            accountId,
-            apiToken,
             dependencies,
         ),
     ]);

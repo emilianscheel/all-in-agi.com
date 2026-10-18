@@ -33,7 +33,7 @@ function logFailure(hackathonId: string, attempt: BookingConfirmationAttempt) {
 export function _createConfirmationEmailPost(
 	dependencies: ConfirmationEmailEndpointDependencies = {}
 ) {
-	return async function POST({ params, fetch }: { params: { id: string }; fetch: typeof globalThis.fetch }) {
+		return async function POST({ params }: { params: { id: string } }) {
 		const id = params.id.toUpperCase();
 		if (!isHackathonId(id)) {
 			return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
@@ -47,8 +47,7 @@ export function _createConfirmationEmailPost(
 				id,
 				config: recordToBookingConfiguration(record),
 				booking: recordToPrepCallBookingSummary(record)
-			},
-			{ fetch }
+				}
 		);
 		if (!attempt.sent) {
 			logFailure(id, attempt);

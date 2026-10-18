@@ -20,10 +20,10 @@ describe('booking cancellation email', () => {
 	test('sends one attachment-free customer message through the shared transport', async () => {
 		let payload: any;
 		const result = await sendBookingCancellationEmail(record, {
-			accountId: 'account', apiToken: 'token',
-			fetch: async (_input, init) => {
-				payload = JSON.parse(String(init?.body));
-				return new Response(JSON.stringify({ success: true, result: { queued: ['ada@example.com'], message_id: 'mail-1' } }), { status: 200 });
+			username: 'owner@icloud.com', password: 'test-password',
+			sendMail: async (options) => {
+				payload = options;
+				return { accepted: ['ada@example.com'], messageId: 'mail-1' };
 			}
 		});
 		expect(result.messageId).toBe('mail-1');

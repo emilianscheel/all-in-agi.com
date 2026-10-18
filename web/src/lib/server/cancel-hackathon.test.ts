@@ -42,7 +42,7 @@ function harness(record = cancellationRecord()) {
 		markEmail: async (_id, messageId) => { log.push(`mark:email:${messageId}`); record.cancellationEmailSentAt = new Date().toISOString(); return record; },
 		release: async () => { log.push('release'); },
 		cancelCalendar: async (booking) => { log.push(`cancel:${booking.uid}`); },
-		sendEmail: async () => { log.push('email'); return { messageId: 'mail-1', status: 'queued' as const }; }
+		sendEmail: async () => { log.push('email'); return { messageId: 'mail-1', status: 'accepted' as const }; }
 	};
 	return { record, log, dependencies };
 }

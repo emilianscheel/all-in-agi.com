@@ -75,8 +75,8 @@ export async function POST({ request, fetch }) {
 				bookPrepCall: (bookingConfig) => bookPrepCall(bookingConfig, fetch, dev),
 				cancel: (booking) => cancelCalBooking(booking, fetch)
 			},
-			(id, bookingConfig, booking) =>
-				sendBookingConfirmationEmails({ id, config: bookingConfig, booking }, { fetch })
+				(id, bookingConfig, booking) =>
+					sendBookingConfirmationEmails({ id, config: bookingConfig, booking })
 		);
 		const { id, hackathonBooking, prepCallBooking } = result;
 		let customerAttempt: BookingConfirmationAttempt;
