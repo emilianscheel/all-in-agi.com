@@ -46,7 +46,7 @@ const input = {
         end: "2099-05-10T10:30:00.000Z",
         uid: "booking-1",
         icsUid: "booking-1@all-in-agi.com",
-        title: "ALL IN AGI Prep Call",
+        title: "ALL IN AGI Preparation Call",
         meetingUrl: "https://meet.example.com/booking-1",
     },
 };
@@ -69,7 +69,7 @@ describe("booking confirmation email", () => {
         expect(text.split("\n").slice(0, 3)).toEqual([
             "Hallo Ada Beispiel,",
             "",
-			"vielen Dank für Ihre unverbindliche Firmenanfrage. Der Prep-Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.",
+			"vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.",
         ]);
         expect(text).toContain("- Coding Tools: Bereits vorhanden: Codex");
         expect(text).not.toContain("Inklusive");

@@ -105,7 +105,7 @@
 				minValue={min}
 				maxValue={max}
 				availableDates={prepCallDates}
-				calendarLabel={locale === 'en' ? 'Preparation call date' : 'Datum für den Prep Call'}
+				calendarLabel={locale === 'en' ? 'Preparation call date' : 'Datum für den Preparation Call'}
 				emptyText={locale === 'en' ? 'Please select an available day.' : 'Bitte wählen Sie einen verfügbaren Tag.'}
 				onchange={selectCustomDate}
 			/>

@@ -155,7 +155,7 @@ const gtmPageContent: GtmPageContent[] = [
 			'Product-, Innovation- und Fachverantwortliche, die gemeinsam mit Engineers reale Workflows testen wollen.'
 		],
 		security: [
-			'Das Tool-Setup wird nicht am Eventtag improvisiert. Im Prep Call werden Accounts, Repositories, Datenklassen, erlaubte Modelle und die Nutzung von Quellcode geklärt. Wenn produktive Daten nicht genutzt werden dürfen, wird die Challenge mit synthetischen oder de-identifizierten Beispielen vorbereitet.',
+			'Das Tool-Setup wird nicht am Eventtag improvisiert. Im Preparation Call werden Accounts, Repositories, Datenklassen, erlaubte Modelle und die Nutzung von Quellcode geklärt. Wenn produktive Daten nicht genutzt werden dürfen, wird die Challenge mit synthetischen oder de-identifizierten Beispielen vorbereitet.',
 			'ALL IN AGI arbeitet innerhalb der Regeln des Unternehmens. Es werden keine nicht freigegebenen Accounts vorausgesetzt und keine produktiven Agenten in Live-Prozesse eingebaut. Ziel ist ein sicherer, sichtbarer Prototyp mit dokumentierten Grenzen und einem verantwortlichen nächsten Schritt.'
 		],
 		outcome: [
@@ -323,7 +323,7 @@ const gtmPageContent: GtmPageContent[] = [
 			'Fachbereiche, Security und Engineering, die einen konkreten Fall gemeinsam statt nacheinander bewerten wollen.'
 		],
 		security: [
-			'Im Prep Call werden Datenklassen, Modellzugriff, Logging, Quellcode-Regeln, Dokumentenquellen und Verantwortlichkeiten festgehalten. Kann kein realistischer Sandbox- oder Synthetic-Data-Pfad geschaffen werden, wird die Challenge nicht für den Event eingeplant.',
+			'Im Preparation Call werden Datenklassen, Modellzugriff, Logging, Quellcode-Regeln, Dokumentenquellen und Verantwortlichkeiten festgehalten. Kann kein realistischer Sandbox- oder Synthetic-Data-Pfad geschaffen werden, wird die Challenge nicht für den Event eingeplant.',
 			'Die Teams dokumentieren, wo ein Mensch freigibt, welche Aussage aus welcher Quelle kommt und welche Teile nur simuliert sind. Der Hackathon liefert keine regulatorische Freigabe, aber einen deutlich besseren Gegenstand für die anschließende Security- und Machbarkeitsbewertung.'
 		],
 		outcome: [
@@ -575,7 +575,7 @@ const gtmPageContent: GtmPageContent[] = [
 			'Product- und Domänenrollen, die reale Challenges und Bewertungskriterien in die Teams bringen.'
 		],
 		security: [
-			'Adoption darf nicht bedeuten, Regeln zu überspringen. Im Prep Call werden freigegebene Modelle, Accounts, Erweiterungen, Repositories und Datenklassen festgelegt. Teams erhalten ein Setup, in dem sie schnell arbeiten können, ohne über Grundsatzfragen während des Sprints zu verhandeln.',
+			'Adoption darf nicht bedeuten, Regeln zu überspringen. Im Preparation Call werden freigegebene Modelle, Accounts, Erweiterungen, Repositories und Datenklassen festgelegt. Teams erhalten ein Setup, in dem sie schnell arbeiten können, ohne über Grundsatzfragen während des Sprints zu verhandeln.',
 			'Alle Ergebnisse bleiben Prototypen und durchlaufen vor einer Weiterverwendung die normalen Reviews. Gemessen werden praktische Tool-Nutzung, demonstrierte Workflows, Reibungspunkte und benannte nächste Eigentümer – nicht die Menge automatisch erzeugten Codes.'
 		],
 		outcome: [
@@ -659,7 +659,7 @@ const gtmPageContent: GtmPageContent[] = [
 			'Security und Toolchain Owner für freigegebene Agent- und Repository-Zugriffe.'
 		],
 		security: [
-			'Interne Dokumentation und Quellcode bleiben in der genehmigten Umgebung. Der Prep Call klärt, welche Quellen ein Agent sehen darf, wie Zugriffe protokolliert werden und welche Beispiel-Repositories sich für den Event eignen.',
+			'Interne Dokumentation und Quellcode bleiben in der genehmigten Umgebung. Der Preparation Call klärt, welche Quellen ein Agent sehen darf, wie Zugriffe protokolliert werden und welche Beispiel-Repositories sich für den Event eignen.',
 			'Prototypen markieren veraltete oder unsichere Informationen nicht als Wahrheit. Quellenverweise, Review-Schritte und klare Zuständigkeiten gehören zum Nutzerfluss. So verbessert die Lösung nicht nur Geschwindigkeit, sondern auch Vertrauen und Wartbarkeit.'
 		],
 		outcome: [
@@ -785,7 +785,7 @@ const gtmPageContent: GtmPageContent[] = [
 			'Security- und Tool-Ansprechpartner für ein verlässliches Setup vor dem Termin.'
 		],
 		security: [
-			'Im Prep Call werden Tools, Accounts, Datenklassen, Repositories, Foto- oder Aufzeichnungsregeln und technische Zugänge geklärt. Synthetische Daten sind der Standard, wenn reale Informationen nicht eindeutig freigegeben sind.',
+			'Im Preparation Call werden Tools, Accounts, Datenklassen, Repositories, Foto- oder Aufzeichnungsregeln und technische Zugänge geklärt. Synthetische Daten sind der Standard, wenn reale Informationen nicht eindeutig freigegeben sind.',
 			'Der Event produziert Prototypen, keine Produktionssysteme. Diese Grenze wird allen Teams kommuniziert und in den Demos sichtbar gemacht. Erfolgreiche Ideen gehen anschließend durch die normalen fachlichen, technischen und rechtlichen Prüfungen.'
 		],
 		outcome: [

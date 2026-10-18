@@ -483,7 +483,7 @@
 			{:else if hackathon.status === 'cancellation_pending'}
 				<div class="booking-state-banner pending" role="status"><RotateCcw size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Cancellation in progress' : 'Stornierung in Bearbeitung'}</strong>{locale === 'en' ? 'At least one step still needs to be completed.' : 'Mindestens ein Schritt muss noch abgeschlossen werden.'}</span></div>
 			{:else if hackathon.status === 'prep_scheduled'}
-				<div class="booking-state-banner pending request-pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Prep-Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Prep-Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</span></div>
+				<div class="booking-state-banner pending request-pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Preparation Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Preparation Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</span></div>
 			{:else if hackathon.status === 'exit_window'}
 				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Vertrag geschlossen · Lösungsfrist läuft</strong>Kostenfreier Rücktritt bis {hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.</span></div>
 			{:else if hackathon.status === 'contracted'}
@@ -570,7 +570,7 @@
 								<AlertDialog.Content class="confirmation-dialog">
 									<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
 									<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
-									<AlertDialog.Description>Der Hackathontag und der Prep Call werden bei Cal.com storniert. Anschließend erhält {hackathon.contactName} eine Stornierungs-E-Mail.</AlertDialog.Description>
+									<AlertDialog.Description>Der Hackathontag und der Preparation Call werden bei Cal.com storniert. Anschließend erhält {hackathon.contactName} eine Stornierungs-E-Mail.</AlertDialog.Description>
 									<div class="confirmation-dialog-actions">
 										<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
 										<AlertDialog.Action class="button-primary" onclick={cancelBooking}>Buchung stornieren</AlertDialog.Action>

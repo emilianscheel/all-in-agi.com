@@ -635,9 +635,13 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .success-schedule { display: grid; gap: 10px; margin-top: 24px; }
 .success-schedule-card { padding: 17px 20px; border-radius: 18px; background: var(--surface); }
 .success-schedule-card span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.success-schedule-time { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .success-schedule-card strong { display: block; color: var(--ink); font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
-.success-panel > .success-contract-note { margin-top: 17px; font-size: 12px; line-height: 1.5; }
+.success-calendar-button { flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.success-calendar-button:hover { color: var(--ink); }
+.success-panel > p.success-contract-note { margin-top: 17px; font-size: 11px; line-height: 1.5; }
 .mini-contact-grid { margin-top: 26px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.success-schedule + .mini-contact-grid { margin-top: 10px; }
 .mini-contact-card { min-width: 0; min-height: 148px; padding: 20px 18px; border-radius: 18px; background: linear-gradient(155deg, color-mix(in srgb, var(--surface) 88%, white), var(--surface)); }
 .mini-contact-card svg { color: var(--ink); }
 .mini-contact-card h3 { margin: 18px 0 0; font-size: 20px; line-height: 1; letter-spacing: -.035em; }

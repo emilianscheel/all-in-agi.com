@@ -60,7 +60,7 @@ export function bookPrepCall(config: BookingConfiguration, requestFetch: typeof 
 		eventTypeId: env.CAL_EVENT_TYPE_ID,
 		start: start.toISOString(),
 		end: new Date(start.getTime() + PREP_CALL_DURATION_MINUTES * 60_000).toISOString(),
-		title: 'ALL IN AGI Prep Call',
+		title: 'ALL IN AGI Preparation Call',
 		field: 'prep-call',
 		includeLengthInMinutes: false
 	}, env.CAL_API_KEY);

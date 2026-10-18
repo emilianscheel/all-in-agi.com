@@ -102,7 +102,7 @@ export function bookingOverviewRows(
 		},
 		{
 			id: 'prep-call',
-			label: 'Prep Call',
+			label: 'Preparation Call',
 			value: `${formatDate(prepCallStart, true, locale)}${en ? '' : ' Uhr'}`,
 			status: en ? 'Booked' : 'Gebucht'
 		},

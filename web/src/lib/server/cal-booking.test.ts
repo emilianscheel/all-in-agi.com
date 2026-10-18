@@ -65,7 +65,7 @@ describe('Cal.com booking contracts', () => {
 		}) as typeof fetch;
 		await createCalBookingWithToken(configuration, mockFetch, false, {
 			eventTypeId: '456', start: configuration.consultationSlot, end: '2099-05-10T11:00:00.000Z',
-			title: 'ALL IN AGI Prep Call', field: 'prep-call', includeLengthInMinutes: false
+			title: 'ALL IN AGI Preparation Call', field: 'prep-call', includeLengthInMinutes: false
 		}, 'cal_test');
 		expect(body).not.toHaveProperty('lengthInMinutes');
 	});
@@ -148,7 +148,7 @@ describe('Cal.com booking contracts', () => {
 			})) as unknown as typeof fetch;
 			const promise = createCalBookingWithToken(configuration, mockFetch, false, {
 				eventTypeId: '456', start: configuration.consultationSlot, end: '2099-05-10T11:00:00.000Z',
-				title: 'ALL IN AGI Prep Call', field: 'prep-call', includeLengthInMinutes: false
+				title: 'ALL IN AGI Preparation Call', field: 'prep-call', includeLengthInMinutes: false
 			}, 'cal_test');
 			await expect(promise).rejects.toEqual(expect.objectContaining({
 				message: 'Der Vorbereitungstermin ist im Kalender nicht korrekt als 30-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.',
@@ -197,7 +197,7 @@ describe('prep-call rescheduling', () => {
 				data: {
 					uid: 'new-uid',
 					icsUid: 'new-ics',
-					title: 'Prep Call',
+					title: 'Preparation Call',
 					start: '2099-05-11T10:00:00.000Z',
 					end: '2099-05-11T11:00:00.000Z',
 					meetingUrl: 'https://meet.example.com'

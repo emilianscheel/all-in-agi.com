@@ -41,10 +41,10 @@ export const BASE_LEGAL_SECTIONS: LegalSection[] = [
 	},
 	{
 		id: 'formation',
-		title: '2. Anfrage, Prep-Call und Vertragsschluss',
+		title: '2. Anfrage, Preparation Call und Vertragsschluss',
 		paragraphs: [
-			'Die Online-Konfiguration und Terminreservierung sind eine unverbindliche Anfrage und noch keine Annahme oder Buchungsbestätigung. Der angezeigte Preis ist die Kalkulationsgrundlage für den Prep-Call.',
-			'Der Vertrag kommt zustande, sobald Kunde und ALL IN AGI im Prep-Call der konkret zusammengefassten Leistung mündlich zustimmen. ALL IN AGI dokumentiert die Namen der zustimmenden Personen, den Zeitpunkt, die Konfiguration, den Preis, die einbezogenen AGB-Module und die AGB-Version und übersendet diese Vertragsbestätigung unverzüglich in Textform.',
+			'Die Online-Konfiguration und Terminreservierung sind eine unverbindliche Anfrage und noch keine Annahme oder Buchungsbestätigung. Der angezeigte Preis ist die Kalkulationsgrundlage für den Preparation Call.',
+			'Der Vertrag kommt zustande, sobald Kunde und ALL IN AGI im Preparation Call der konkret zusammengefassten Leistung mündlich zustimmen. ALL IN AGI dokumentiert die Namen der zustimmenden Personen, den Zeitpunkt, die Konfiguration, den Preis, die einbezogenen AGB-Module und die AGB-Version und übersendet diese Vertragsbestätigung unverzüglich in Textform.',
 			'Beide Parteien können sich bis zum Ablauf von zwei Geschäftstagen nach der dokumentierten Zustimmung ohne Kosten durch eine formlose E-Mail vom Vertrag lösen. Geschäftstage sind Montag bis Freitag, ausgenommen gesetzliche Feiertage am Sitz von ALL IN AGI. Das vertragliche Lösungsrecht ist kein gesetzliches Verbraucher-Widerrufsrecht.'
 		]
 	},

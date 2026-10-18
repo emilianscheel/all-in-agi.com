@@ -401,7 +401,7 @@ export async function createPlanPdf(config: BookingConfiguration, options: PlanP
 		thickness: 0.8,
 		color: line
 	});
-	page.drawText('PREP CALL', { x: 319, y: 670, font: bold, size: 7.5, color: muted });
+	page.drawText('PREPARATION CALL', { x: 319, y: 670, font: bold, size: 7.5, color: muted });
 	drawWrapped(
 		page,
 		longDateLabel(options.booking?.start || config.consultationSlot, true),

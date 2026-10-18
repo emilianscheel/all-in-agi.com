@@ -16,7 +16,7 @@ export function contractConfirmationText(record: HackathonRecord) {
 	if (!record.oralAgreementAt || !record.exitDeadline || !record.legalSnapshot) throw new Error('Vertragsdaten sind unvollständig.');
 	return [
 		`Hallo ${record.contactName},`, '',
-		'vielen Dank für die beiderseitige Zustimmung im Prep-Call. Der B2B-Vertrag ist mit der mündlichen Zustimmung zustande gekommen.',
+		'vielen Dank für die beiderseitige Zustimmung im Preparation Call. Der B2B-Vertrag ist mit der mündlichen Zustimmung zustande gekommen.',
 		`Beide Parteien können sich bis ${berlinDateTime(record.exitDeadline)} durch eine formlose E-Mail kostenfrei vom Vertrag lösen.`, '',
 		`Hackathon-ID: ${record.id}`,
 		`Kunde: ${record.billing?.companyName ?? record.companyName}`,

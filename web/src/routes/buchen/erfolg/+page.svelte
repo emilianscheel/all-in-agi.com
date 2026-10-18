@@ -4,7 +4,7 @@
 	import MapPreview from '$lib/MapPreview.svelte';
 	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
-	import { createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
+	import { createBookingCalendarIcs, createHackathonIcs, createPrepCallIcs, type BookingResultSummary } from '$lib/booking-ics';
 	import { formatDate, type BookingConfiguration } from '$lib/booking';
 	import { formatEventTimeRange } from '$lib/event-time';
 	import { trackAnalyticsEvent } from '$lib/analytics';
@@ -51,9 +51,16 @@
 		} catch { downloadState = 'error'; }
 	}
 
-	function downloadCalendar() {
+	function downloadCalendar(kind: 'prep' | 'hackathon' | 'both') {
 		if (!summary) return;
-		downloadBlob(new Blob([createPrepCallIcs(summary, summary.prepCallBooking)], { type: 'text/calendar;charset=utf-8' }), 'all-in-agi-prep-call.ics');
+		const calendar = kind === 'prep'
+			? createPrepCallIcs(summary, summary.prepCallBooking)
+			: kind === 'hackathon'
+				? createHackathonIcs(summary, summary.hackathonBooking)
+				: createBookingCalendarIcs(summary, summary.prepCallBooking, summary.hackathonBooking);
+		if (!calendar) return;
+		const filename = kind === 'prep' ? 'all-in-agi-preparation-call.ics' : kind === 'hackathon' ? 'all-in-agi-hackathon.ics' : 'all-in-agi-events.ics';
+		downloadBlob(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }), filename);
 		trackAnalyticsEvent('booking_calendar_downloaded');
 	}
 </script>
@@ -74,14 +81,17 @@
 				<div class="success-schedule">
 					<div class="success-schedule-card">
 						<span>Hackathon</span>
-						<strong>{formatEventTimeRange(summary.hackathonBooking?.start || summary.eventStart, summary.hackathonBooking?.end || summary.eventEnd, locale)}</strong>
+						<div class="success-schedule-time"><strong>{formatEventTimeRange(summary.hackathonBooking?.start || summary.eventStart, summary.hackathonBooking?.end || summary.eventEnd, locale)}</strong>
+							{#if (summary.hackathonBooking?.start || summary.eventStart) && (summary.hackathonBooking?.end || summary.eventEnd)}<button class="success-calendar-button" type="button" aria-label={locale === 'en' ? 'Add Hackathon to calendar' : 'Hackathon zum Kalender hinzufügen'} onclick={() => downloadCalendar('hackathon')}><CalendarPlus size={18} aria-hidden="true" /></button>{/if}
+						</div>
 					</div>
 					<div class="success-schedule-card">
-						<span>Prep Call</span>
-						<strong>{formatDate(summary.prepCallBooking.start || summary.consultationSlot, true, locale)}{locale === 'de' ? ' Uhr' : ''}</strong>
+						<span>Preparation Call</span>
+						<div class="success-schedule-time"><strong>{formatDate(summary.prepCallBooking.start || summary.consultationSlot, true, locale)}{locale === 'de' ? ' Uhr' : ''}</strong>
+							<button class="success-calendar-button" type="button" aria-label={locale === 'en' ? 'Add Preparation Call to calendar' : 'Preparation Call zum Kalender hinzufügen'} onclick={() => downloadCalendar('prep')}><CalendarPlus size={18} aria-hidden="true" /></button>
+						</div>
 					</div>
 				</div>
-				<p class="success-contract-note">{locale === 'en' ? 'This is not yet a contract confirmation. During the preparation call, we will review the fixed scope together.' : 'Dies ist noch keine Vertragsbestätigung. Im Prep-Call stimmen wir die eingefrorene Leistung gemeinsam ab.'}</p>
 				<MiniContactCards {locale} />
 				<div class="success-actions">
 					{#if summary.hackathonId}
@@ -93,10 +103,11 @@
 					<button class="button-secondary action-button" type="button" onclick={downloadPlan} disabled={downloadState === 'loading'}>
 						<Download size={18} aria-hidden="true" />{locale === 'en' ? (downloadState === 'loading' ? 'Creating plan …' : downloadState === 'error' ? 'Try download again' : 'Download plan') : (downloadState === 'loading' ? 'Plan wird erstellt …' : downloadState === 'error' ? 'Download erneut versuchen' : 'Plan herunterladen')}
 					</button>
-					<button class="button-secondary action-button" type="button" onclick={downloadCalendar}>
+					<button class="button-secondary action-button" type="button" onclick={() => downloadCalendar('both')}>
 						<CalendarPlus size={18} aria-hidden="true" />{locale === 'en' ? 'Add calendar event' : 'Kalenderereignis hinzufügen'}
 					</button>
 				</div>
+				<p class="success-contract-note">{locale === 'en' ? 'This is not yet a contract confirmation. During the Preparation Call, we will review the fixed scope together.' : 'Dies ist noch keine Vertragsbestätigung. Im Preparation Call stimmen wir die eingefrorene Leistung gemeinsam ab.'}</p>
 			{:else}
 				<p>{locale === 'en' ? 'The booking summary is no longer available in this browser session.' : 'Die Buchungszusammenfassung ist in dieser Browsersitzung nicht mehr verfügbar.'}</p>
 				<MiniContactCards {locale} />

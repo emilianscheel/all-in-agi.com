@@ -31,7 +31,7 @@
 
 	function statusLabel(status: string) {
 		if (status === 'requested') return 'Angefragt';
-		if (status === 'prep_scheduled') return 'Prep Call geplant';
+		if (status === 'prep_scheduled') return 'Preparation Call geplant';
 		if (status === 'exit_window') return 'Lösungsfrist';
 		if (status === 'contracted' || status === 'confirmed') return 'Vertraglich';
 		if (status === 'completed') return 'Durchgeführt';
@@ -234,7 +234,7 @@
 				<AlertDialog.Content class="confirmation-dialog">
 					<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
 					<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
-					<AlertDialog.Description>Der Hackathontag und der Prep Call werden bei Cal.com storniert. Anschließend erhält {cancellationTarget?.contactName ?? 'der Kunde'} eine Stornierungs-E-Mail.</AlertDialog.Description>
+					<AlertDialog.Description>Der Hackathontag und der Preparation Call werden bei Cal.com storniert. Anschließend erhält {cancellationTarget?.contactName ?? 'der Kunde'} eine Stornierungs-E-Mail.</AlertDialog.Description>
 					<div class="confirmation-dialog-actions">
 						<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
 						<AlertDialog.Action class="button-primary" onclick={() => cancelBooking(cancellationTarget)} disabled={cancellationBusyId !== null}>Buchung stornieren</AlertDialog.Action>

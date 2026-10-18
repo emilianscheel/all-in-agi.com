@@ -44,7 +44,7 @@ export function bookingsCsv(bookings: AdminBooking[]) {
 	const headers = [
 		'ID', 'Status', 'Unternehmen', 'Kontakt', 'E-Mail', 'Telefon', 'Nachricht',
 		'Rechnungsfirma', 'Rechnungs-Rechtsform', 'Rechnungskontakt', 'Rechnungs-E-Mail', 'Rechnungsstraße', 'Rechnungs-PLZ', 'Rechnungsort', 'USt-IdNr.', 'Bestellnummer',
-		'Event Start', 'Event Ende', 'Prep Call', 'Kapazität', 'Location gestellt',
+		'Event Start', 'Event Ende', 'Preparation Call', 'Kapazität', 'Location gestellt',
 		'Equipment', 'Lunch', 'Custom Lunch', 'Tool-Bereitstellung', 'Coding Tools',
 		'Custom Coding Tool', 'Geräte-Bereitstellung', 'Geräteanzahl', 'Eventfotos', 'Straße', 'PLZ', 'Stadt', 'Land', 'Basispreis',
 		'Location-Aufpreis', 'Lunch-Anpassung', 'Tools-Anpassung', 'Geräte-Anpassung', 'Gesamtpreis netto',

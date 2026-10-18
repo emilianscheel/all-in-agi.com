@@ -43,7 +43,7 @@ describe('booking overview rows', () => {
 			'Devices',
 			'Demo Setup',
 			'Event Date',
-			'Prep Call',
+			'Preparation Call',
 			'Lunch',
 			'Winner Poster',
 			'Event-Fotos',

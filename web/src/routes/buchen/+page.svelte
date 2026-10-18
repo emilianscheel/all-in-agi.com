@@ -639,7 +639,7 @@
                             aria-hidden={!consultationSlot}
 							tabindex={consultationSlot ? undefined : -1}
                         >
-                            <small>Prep Call</small><b
+                            <small>Preparation Call</small><b
                                 ><AnimatedValue
                                     value={consultationSlot
 										? `${formatDate(consultationSlot, true, locale)}${locale === 'en' ? '' : ' Uhr'}`

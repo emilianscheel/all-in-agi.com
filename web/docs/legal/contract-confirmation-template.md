@@ -13,7 +13,7 @@
 
 ## Zustimmung und Lösungsfrist
 
-- Zeitpunkt der beiderseitigen mündlichen Zustimmung im Prep-Call:
+- Zeitpunkt der beiderseitigen mündlichen Zustimmung im Preparation Call:
 - Ende der kostenlosen beiderseitigen Lösungsfrist (zwei Geschäftstage):
 - AGB-Version und Prüfsumme:
 - Einbezogene AGB-Module:
