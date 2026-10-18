@@ -17,6 +17,7 @@
 		type DeviceProvision
 	} from '$lib/booking';
 	import type { Locale } from '$lib/i18n';
+	import { animateContentHeight } from '$lib/animateContentHeight';
 
 	export interface OptionValues {
 		capacity: Capacity;
@@ -117,25 +118,29 @@
 	</div>
 	{#if values.toolProvision}
 		<div class:has-custom-tool={values.codingTools.includes('custom')} class="coding-tools" transition:slide={{ duration: 300 }}>
-			<p>{locale === 'en' ? (values.toolProvision === 'needed' ? 'Which tools should we provide?' : 'Which coding tools will be used?') : (values.toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?')}</p>
-			<div class="coding-tool-list">
-				{#each visibleCodingTools as tool}
-					<label class="coding-tool-option">
-						<input type="checkbox" checked={values.codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
-						<span class="round-checkbox" aria-hidden="true">{#if values.codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
-						<span class="coding-tool-label">{tool.label}</span>
-						{#if tool.icon}<img class="coding-tool-icon" src={tool.icon} alt="" width="30" height="30" loading="lazy" decoding="async" aria-hidden="true" />{/if}
-					</label>
-				{/each}
-			</div>
-			{#if values.codingTools.includes('custom')}
-				<div class="custom-tool" transition:slide={{ duration: 280 }}>
-					<div class="field">
-						<label for={`${idPrefix}-custom-coding-tool`}>{locale === 'en' ? 'Custom coding tool' : 'Individuelles Coding Tool'}</label>
-						<input id={`${idPrefix}-custom-coding-tool`} maxlength="160" placeholder={locale === 'en' ? 'e.g. an internal agent framework' : 'z. B. internes Agent Framework'} value={values.customCodingTool} oninput={(event) => onchange({ customCodingTool: event.currentTarget.value })} />
+			<div class="coding-tools-height" use:animateContentHeight>
+				<div class="coding-tools-content">
+					<p>{locale === 'en' ? (values.toolProvision === 'needed' ? 'Which tools should we provide?' : 'Which coding tools will be used?') : (values.toolProvision === 'needed' ? 'Welche Tools sollen wir mitbringen?' : 'Welche Coding Tools werden eingesetzt?')}</p>
+					<div class="coding-tool-list">
+						{#each visibleCodingTools as tool}
+							<label class="coding-tool-option">
+								<input type="checkbox" checked={values.codingTools.includes(tool.id)} onchange={() => toggleCodingTool(tool.id)} />
+								<span class="round-checkbox" aria-hidden="true">{#if values.codingTools.includes(tool.id)}<Check size={18} strokeWidth={2.4} />{/if}</span>
+								<span class="coding-tool-label">{tool.label}</span>
+								{#if tool.icon}<img class="coding-tool-icon" src={tool.icon} alt="" width="30" height="30" loading="lazy" decoding="async" aria-hidden="true" />{/if}
+							</label>
+						{/each}
 					</div>
+					{#if values.codingTools.includes('custom')}
+						<div class="custom-tool" transition:slide={{ duration: 280 }}>
+							<div class="field">
+								<label for={`${idPrefix}-custom-coding-tool`}>{locale === 'en' ? 'Custom coding tool' : 'Individuelles Coding Tool'}</label>
+								<input id={`${idPrefix}-custom-coding-tool`} maxlength="160" placeholder={locale === 'en' ? 'e.g. an internal agent framework' : 'z. B. internes Agent Framework'} value={values.customCodingTool} oninput={(event) => onchange({ customCodingTool: event.currentTarget.value })} />
+							</div>
+						</div>
+					{/if}
 				</div>
-			{/if}
+			</div>
 		</div>
 	{/if}
 {:else if kind === 'equipment'}

@@ -497,7 +497,8 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .custom-lunch { margin: 11px -3px -3px; padding: 3px; overflow: visible; }
 .coding-tools { margin-top: 18px; padding: 20px 20px 14px; border: 1px solid var(--soft-line); border-radius: 18px; background: var(--card); overflow: hidden; }
 .coding-tools.has-custom-tool { padding-bottom: 20px; }
-.coding-tools > p { margin: 0 0 8px; color: var(--secondary-ink); font-size: 13px; font-weight: 600; }
+.coding-tools-height { overflow: hidden; }
+.coding-tools-content > p { margin: 0 0 8px; color: var(--secondary-ink); font-size: 13px; font-weight: 600; }
 .device-count-panel { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--soft-line); border-radius: 18px; background: var(--card); overflow: hidden; }
 .device-count-panel > label { display: block; margin-bottom: 10px; color: var(--secondary-ink); font-size: 13px; font-weight: 600; }
 .device-count-panel > p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
@@ -544,6 +545,10 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .calendar-selection { min-height: 18px; margin: 15px 2px 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
 .address-search-wrap { position: relative; }
 .suggestions { position: absolute; z-index: 8; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--soft-line); border-radius: 14px; background: var(--card); box-shadow: var(--floating-shadow); }
+.animated-suggestions { padding: 0; overflow: hidden; }
+.suggestions-list { margin: 0; padding: 6px; list-style: none; }
+.suggestions-content { min-width: 0; }
+.animated-suggestions .search-status-card { height: 136px; }
 .suggestions button { width: 100%; padding: 12px; border: 0; border-radius: 9px; background: transparent; text-align: left; cursor: pointer; }
 .suggestions button:hover { background: var(--surface); }
 .search-status-card { height: 138px; display: grid; place-items: center; padding: 18px 22px; color: var(--muted); text-align: center; line-height: 1.45; pointer-events: none; }

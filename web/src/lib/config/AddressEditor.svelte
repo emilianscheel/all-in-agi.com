@@ -5,6 +5,7 @@
 	import type { Locale } from '$lib/i18n';
 	import { fetchAddressSuggestions } from '$lib/geocoding';
 	import { normalizePhotonAddress, photonFeatureLabel, type PhotonFeature } from '$lib/photon';
+	import { animateContentHeight } from '$lib/animateContentHeight';
 
 	let {
 		value,
@@ -90,18 +91,24 @@
 			bind:value={addressQuery}
 			oninput={updateSuggestions}
 		/>
-		{#if suggestions.length}
-			<ul id={`${idPrefix}-suggestions`} class="suggestions">
-				{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}
-			</ul>
-		{:else if searchStatus === 'loading'}
-			<div id={`${idPrefix}-search-status`} class="suggestions search-status-card" role="status" aria-live="polite">
-				<Loader class="search-loading-icon" size={22} strokeWidth={1.8} aria-hidden="true" />
-				<span class="visually-hidden">{locale === 'en' ? 'Searching addresses …' : 'Adressen werden gesucht …'}</span>
-			</div>
-		{:else if searchStatus === 'empty' || searchStatus === 'error'}
-			<div id={`${idPrefix}-search-status`} class="suggestions search-status-card search-status-message" role={searchStatus === 'error' ? 'alert' : 'status'} aria-live="polite">
-				{locale === 'en' ? (searchStatus === 'empty' ? 'No matching address found. Please enter it manually below.' : 'Address search is unavailable. Please enter it manually below.') : (searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.')}
+		{#if suggestions.length || searchStatus !== 'idle'}
+			<div class="suggestions animated-suggestions" use:animateContentHeight>
+				<div class="suggestions-content">
+					{#if suggestions.length}
+						<ul id={`${idPrefix}-suggestions`} class="suggestions-list">
+							{#each suggestions as suggestion}<li><button type="button" onclick={() => selectSuggestion(suggestion)}>{suggestion.label}</button></li>{/each}
+						</ul>
+					{:else if searchStatus === 'loading'}
+						<div id={`${idPrefix}-search-status`} class="search-status-card" role="status" aria-live="polite">
+							<Loader class="search-loading-icon" size={22} strokeWidth={1.8} aria-hidden="true" />
+							<span class="visually-hidden">{locale === 'en' ? 'Searching addresses …' : 'Adressen werden gesucht …'}</span>
+						</div>
+					{:else if searchStatus === 'empty' || searchStatus === 'error'}
+						<div id={`${idPrefix}-search-status`} class="search-status-card search-status-message" role={searchStatus === 'error' ? 'alert' : 'status'} aria-live="polite">
+							{locale === 'en' ? (searchStatus === 'empty' ? 'No matching address found. Please enter it manually below.' : 'Address search is unavailable. Please enter it manually below.') : (searchStatus === 'empty' ? 'Keine passende Adresse gefunden. Bitte unten manuell eingeben.' : 'Adresssuche derzeit nicht verfügbar. Bitte unten manuell eingeben.')}
+						</div>
+					{/if}
+				</div>
 			</div>
 		{/if}
 	</div>
