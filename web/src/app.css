@@ -575,6 +575,7 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .summary-row > svg { color: var(--muted); }
 .summary-row span { min-width: 0; }
 .summary-row span small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
+.summary-secondary-values { display: grid; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
 .summary-row b { text-align: right; transition: transform .24s ease; }
 .summary-row.total { border: 0; padding-top: 18px; font-size: 20px; font-weight: 700; }
 .editable-summary-item { position: relative; }
@@ -625,6 +626,12 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .success-panel h1 { margin: 0; font-size: clamp(34px, 3.8vw, 48px); line-height: 1; letter-spacing: -.05em; }
 .success-panel > p:not(.eyebrow) { margin: 20px 0 0; color: var(--muted); font-size: 18px; line-height: 1.5; }
 .success-panel .success-date { color: var(--ink) !important; font-size: 22px !important; font-weight: 600; }
+.success-panel:not(.detail-panel) h1 { font-size: clamp(28px, 3vw, 38px); }
+.success-schedule { display: grid; gap: 10px; margin-top: 24px; }
+.success-schedule-card { padding: 17px 20px; border-radius: 18px; background: var(--surface); }
+.success-schedule-card span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.success-schedule-card strong { display: block; color: var(--ink); font-size: clamp(16px, 1.7vw, 20px); line-height: 1.35; overflow-wrap: anywhere; }
+.success-panel > .success-contract-note { margin-top: 17px; font-size: 12px; line-height: 1.5; }
 .mini-contact-grid { margin-top: 26px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .mini-contact-card { min-width: 0; min-height: 148px; padding: 20px 18px; border-radius: 18px; background: linear-gradient(155deg, color-mix(in srgb, var(--surface) 88%, white), var(--surface)); }
 .mini-contact-card svg { color: var(--ink); }
@@ -637,7 +644,7 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .detail-map { position: sticky; top: 72px; height: calc(100svh - 102px); }
 .detail-panel > .success-mark { margin-bottom: 0; }
 .detail-panel { justify-content: flex-start; }
-.detail-panel h1 { margin-top: 12px; }
+.detail-panel h1 { margin-top: 12px; font-size: clamp(28px, 3vw, 38px); line-height: 1.1; }
 .detail-overview { margin-top: 42px; }
 .detail-readonly .summary-edit-button { display: none; }
 .booking-state-banner { width: 100%; margin-top: 22px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 11px; border-radius: 15px; text-align: left; font-size: 13px; line-height: 1.45; }
@@ -645,6 +652,8 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .booking-state-banner span { display: grid; gap: 2px; }
 .booking-state-banner.cancelled { background: var(--error-bg); color: var(--error-ink); }
 .booking-state-banner.pending { background: var(--warning-bg); color: var(--warning-ink); }
+.booking-state-banner.request-pending { flex-direction: column; gap: 8px; background: var(--surface); color: var(--ink); }
+.booking-state-banner.request-pending svg { margin-top: 0; color: var(--muted); }
 .admin-detail-actions { width: 100%; margin-top: 10px; display: grid; gap: 10px; }
 .admin-detail-actions .action-button { width: 100%; min-height: 50px; }
 .admin-action-message { margin: 2px 4px 0; color: var(--muted); font-size: 13px; line-height: 1.45; text-align: center; }

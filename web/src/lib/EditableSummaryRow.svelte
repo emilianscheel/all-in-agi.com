@@ -9,6 +9,7 @@
 		icon: Icon,
 		label,
 		value,
+		secondaryValues = [],
 		status,
 		active = false,
 		saving = false,
@@ -22,6 +23,7 @@
 		icon: any;
 		label: string;
 		value: string;
+		secondaryValues?: string[];
 		status: string;
 		active?: boolean;
 		saving?: boolean;
@@ -40,7 +42,7 @@
 <div class:editable-summary-item={editable} class:active class:summary-total={total}>
 	<div class:total class="summary-row">
 		<Icon size={total ? 20 : 18} aria-hidden="true" />
-		<span>{#if !total}<small>{label}</small>{/if}{value}</span>
+		<span>{#if !total}<small>{label}</small>{/if}{value}{#if secondaryValues.length}<span class="summary-secondary-values">{#each secondaryValues as secondaryValue}<span>{secondaryValue}</span>{/each}</span>{/if}</span>
 		<b>{status}</b>
 		{#if editable}
 			<button
