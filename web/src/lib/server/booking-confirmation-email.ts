@@ -149,12 +149,11 @@ export function buildBookingConfirmationText(
 	const deferred = !input.config.eventStart;
 	const rows = bookingOverviewRows({ ...input.config, locale: english ? 'en' : 'de' }, input.booking);
     const content = [
-		customer ? (english ? `Hello ${input.config.contactName},` : `Hallo ${input.config.contactName},`) : "Hallo ALL IN AGI,",
-        "",
+		...(customer ? [`Hallo ${input.config.contactName},`, ""] : []),
         customer
 			? (english
 				? deferred ? 'Thank you for your non-binding company inquiry. The preparation call is reserved; the hackathon date will be selected later. This does not yet create a contract.' : 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.'
-				: deferred ? 'vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
+				: deferred ? 'vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")
 			: "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.",
         "",
         ...rows.map(rowText),
@@ -199,10 +198,10 @@ export function buildBookingConfirmationHtml(
 			<p>Wir freuen uns auf Sie!</p>`)
         : "";
 
-	return `<p>${customer ? (english ? `Hello ${escapeHtml(input.config.contactName)},` : `Hallo ${escapeHtml(input.config.contactName)},`) : "Hallo ALL IN AGI,"}</p>
-	<p>${customer ? (english
+	return `${customer ? `<p>Hallo ${escapeHtml(input.config.contactName)},</p>` : ""}
+	${customer ? `<p>${english
 		? deferred ? 'Thank you for your non-binding company inquiry. The preparation call is reserved; the hackathon date will be selected later. This does not yet create a contract.' : 'Thank you for your non-binding company inquiry. The preparation call and hackathon day are initially reserved; this does not yet create a contract.'
-		: deferred ? 'vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.") : "Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt."}</p>
+		: (deferred ? 'vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call ist reserviert; den Hackathon-Termin legen wir später fest. Ein Vertrag entsteht dadurch noch nicht.' : "vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.")}</p>` : "<p>Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.</p>"}
 	<p>${options}</p>
 	<p><a href="${detailUrl}">${english ? 'View inquiry' : 'Anfrage ansehen'}</a></p>
 	${contact}

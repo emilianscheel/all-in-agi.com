@@ -69,7 +69,7 @@ describe("booking confirmation email", () => {
         expect(text.split("\n").slice(0, 3)).toEqual([
             "Hallo Ada Beispiel,",
             "",
-			"vielen Dank für Ihre unverbindliche Firmenanfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.",
+			"vielen Dank für Ihre unverbindliche Anfrage. Der Preparation Call und der Hackathontag sind zunächst reserviert; ein Vertrag entsteht dadurch noch nicht.",
         ]);
         expect(text).toContain("- Coding Tools: Bereits vorhanden: Codex");
         expect(text).not.toContain("Inklusive");
@@ -81,7 +81,8 @@ describe("booking confirmation email", () => {
         expect(text.endsWith("\n\n\n")).toBe(true);
 
         const organizer = buildBookingConfirmationText(input, "organizer");
-		expect(organizer).toStartWith("Hallo ALL IN AGI,\n\nEs wurde eine neue unverbindliche Hackathon-Anfrage gestellt.");
+		expect(organizer).toStartWith("Es wurde eine neue unverbindliche Hackathon-Anfrage gestellt.");
+		expect(organizer).not.toContain("Hallo ALL IN AGI,");
 		expect(organizer).toContain("Anfrage ansehen: https://all-in-agi.com/de/HAA-AAA-AAA");
         expect(organizer).not.toContain("Bei Fragen oder Änderungswünschen");
         expect(organizer).not.toContain("Wir freuen uns auf Sie!");
@@ -99,6 +100,7 @@ describe("booking confirmation email", () => {
             },
         });
         expect(html).toContain("Hallo Ada &lt;Admin&gt; &amp; Co.,");
+        expect(html).toContain("vielen Dank für Ihre unverbindliche Anfrage.");
         expect(html).toContain("<strong>Team:</strong> Bis 15 Personen");
         expect(html).toContain("<strong>Lunch:</strong> Bowls &lt;vegan&gt; &amp; Salat");
         expect(html).not.toContain("Inklusive");
@@ -109,6 +111,10 @@ describe("booking confirmation email", () => {
         expect(html).toContain('<a href="mailto:go@all-in-agi.com">go@all-in-agi.com</a>');
         expect(html).not.toMatch(/<!doctype|<html|<body|<table|style=/i);
         expect(html).not.toContain("Ada <Admin>");
+
+        const organizerHtml = buildBookingConfirmationHtml(input, "organizer");
+        expect(organizerHtml).toContain("<p>Es wurde eine nueva unverbindliche Hackathon-Anfrage gestellt.</p>");
+        expect(organizerHtml).not.toContain("Hallo ALL IN AGI,");
     });
 
     test("sends customer and organizer copies with the same generated attachments", async () => {
