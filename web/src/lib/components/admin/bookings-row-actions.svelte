@@ -1,5 +1,17 @@
 <script lang="ts">
-	import { Ban, Clock, Ellipsis, ExternalLink, Eye, RotateCcw } from 'lucide-svelte';
+	import {
+		Ban,
+		CalendarPlus,
+		Clock,
+		Download,
+		Ellipsis,
+		ExternalLink,
+		Eye,
+		Mail,
+		RotateCcw,
+		Share
+	} from 'lucide-svelte';
+	import { validateBillingDetails } from '$lib/booking';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import type { Locale } from '$lib/i18n';
@@ -9,23 +21,40 @@
 		booking,
 		locale,
 		cancellationBusyId,
+		confirmationBusyId,
 		onOpenDetails,
 		onOpenTimer,
 		onOpenClock,
+		onShare,
+		onDownloadPlan,
+		onAddCalendar,
+		onSendConfirmation,
+		onOpenAgreementTest,
+		onOpenAgreementRecord,
 		onConfirmCancellation,
 		onCancelBooking
 	}: {
 		booking: BookingTableRow;
 		locale: Locale;
 		cancellationBusyId: string | null;
+		confirmationBusyId: string | null;
 		onOpenDetails: (id: string) => void;
 		onOpenTimer: (id: string) => void;
 		onOpenClock: () => void;
+		onShare: (booking: BookingTableRow) => void;
+		onDownloadPlan: (booking: BookingTableRow) => void;
+		onAddCalendar: (booking: BookingTableRow) => void;
+		onSendConfirmation: (booking: BookingTableRow) => void;
+		onOpenAgreementTest: (booking: BookingTableRow) => void;
+		onOpenAgreementRecord: (booking: BookingTableRow) => void;
 		onConfirmCancellation: (booking: BookingTableRow) => void;
 		onCancelBooking: (booking: BookingTableRow) => void;
 	} = $props();
 
 	let canTimerClock = $derived(booking.status === 'contracted' || booking.status === 'confirmed');
+	let isEditable = $derived(booking.status === 'prep_scheduled' || booking.status === 'confirmed');
+	let canContractFlow = $derived(booking.status === 'prep_scheduled');
+	let billingComplete = $derived(validateBillingDetails(booking.billing, locale).length === 0);
 	let canEarlyCancel = $derived(
 		['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(booking.status) &&
 			!booking.cancellationEmailSentAt
@@ -46,12 +75,56 @@
 			</Button>
 		{/snippet}
 	</DropdownMenu.Trigger>
-	<DropdownMenu.Content class="min-w-[220px]" align="end" sideOffset={6}>
+	<DropdownMenu.Content class="min-w-[280px]" align="end" sideOffset={6}>
 		<DropdownMenu.Item onSelect={() => onOpenDetails(booking.id)}>
 			<Eye size={16} aria-hidden="true" />
 			{locale === 'en' ? 'Open details' : 'Details öffnen'}
 		</DropdownMenu.Item>
+
+		<DropdownMenu.Separator />
+
+		<DropdownMenu.Item onSelect={() => onShare(booking)}>
+			<Share size={16} aria-hidden="true" />
+			{locale === 'en' ? 'Share hackathon' : 'Hackathon teilen'}
+		</DropdownMenu.Item>
+		<DropdownMenu.Item onSelect={() => onDownloadPlan(booking)}>
+			<Download size={16} aria-hidden="true" />
+			{locale === 'en' ? 'Download plan' : 'Plan herunterladen'}
+		</DropdownMenu.Item>
+		{#if isEditable}
+			<DropdownMenu.Item onSelect={() => onAddCalendar(booking)}>
+				<CalendarPlus size={16} aria-hidden="true" />
+				{locale === 'en' ? 'Add calendar event' : 'Kalenderereignis hinzufügen'}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				disabled={confirmationBusyId !== null}
+				onSelect={() => onSendConfirmation(booking)}
+			>
+				<Mail size={16} aria-hidden="true" />
+				{#if confirmationBusyId === booking.id}
+					{locale === 'en' ? 'Sending email …' : 'E-Mail wird gesendet …'}
+				{:else}
+					{locale === 'en' ? 'Send confirmation email' : 'Bestätigungs-E-Mail senden'}
+				{/if}
+			</DropdownMenu.Item>
+		{/if}
+
+		{#if canContractFlow}
+			<DropdownMenu.Separator />
+			<DropdownMenu.Item onSelect={() => onOpenAgreementTest(booking)}>
+				<Mail size={16} aria-hidden="true" />
+				{locale === 'en' ? 'Send contract email as test to me' : 'Vertrags-E-Mail als Test an mich senden'}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item
+				disabled={!billingComplete}
+				onSelect={() => onOpenAgreementRecord(booking)}
+			>
+				{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}
+			</DropdownMenu.Item>
+		{/if}
+
 		{#if canTimerClock}
+			<DropdownMenu.Separator />
 			{#if booking.eventStart && booking.eventEnd}
 				<DropdownMenu.Item onSelect={() => onOpenTimer(booking.id)}>
 					<ExternalLink size={16} aria-hidden="true" />

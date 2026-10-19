@@ -19,18 +19,32 @@
 		bookings,
 		locale,
 		cancellationBusyId,
+		confirmationBusyId,
 		onOpenDetails,
 		onOpenTimer,
 		onOpenClock,
+		onShare,
+		onDownloadPlan,
+		onAddCalendar,
+		onSendConfirmation,
+		onOpenAgreementTest,
+		onOpenAgreementRecord,
 		onConfirmCancellation,
 		onCancelBooking
 	}: {
 		bookings: BookingTableRow[];
 		locale: Locale;
 		cancellationBusyId: string | null;
+		confirmationBusyId: string | null;
 		onOpenDetails: (id: string) => void;
 		onOpenTimer: (id: string) => void;
 		onOpenClock: () => void;
+		onShare: (booking: BookingTableRow) => void;
+		onDownloadPlan: (booking: BookingTableRow) => void;
+		onAddCalendar: (booking: BookingTableRow) => void;
+		onSendConfirmation: (booking: BookingTableRow) => void;
+		onOpenAgreementTest: (booking: BookingTableRow) => void;
+		onOpenAgreementRecord: (booking: BookingTableRow) => void;
 		onConfirmCancellation: (booking: BookingTableRow) => void;
 		onCancelBooking: (booking: BookingTableRow) => void;
 	} = $props();
@@ -49,7 +63,8 @@
 
 	function statusLabel(status: string) {
 		if (status === 'requested') return locale === 'en' ? 'Requested' : 'Angefragt';
-		if (status === 'prep_scheduled') return 'Preparation Call geplant';
+		if (status === 'prep_scheduled')
+			return locale === 'en' ? 'Preparation call scheduled' : 'Preparation Call geplant';
 		if (status === 'exit_window') return locale === 'en' ? 'Exit window' : 'Lösungsfrist';
 		if (status === 'contracted' || status === 'confirmed') return locale === 'en' ? 'Contracted' : 'Vertraglich';
 		if (status === 'completed') return locale === 'en' ? 'Completed' : 'Durchgeführt';
@@ -104,9 +119,16 @@
 						booking: row.original,
 						locale,
 						cancellationBusyId,
+						confirmationBusyId,
 						onOpenDetails,
 						onOpenTimer,
 						onOpenClock,
+						onShare,
+						onDownloadPlan,
+						onAddCalendar,
+						onSendConfirmation,
+						onOpenAgreementTest,
+						onOpenAgreementRecord,
 						onConfirmCancellation,
 						onCancelBooking
 					})

@@ -1,3 +1,5 @@
+import type { BillingDetails } from '$lib/booking';
+
 export type BookingTableRow = {
 	id: string;
 	companyName: string;
@@ -10,6 +12,7 @@ export type BookingTableRow = {
 	totalPrice: number;
 	createdAt: string;
 	cancellationEmailSentAt: string | null;
+	billing?: BillingDetails | null;
 };
 
 export type UserTableRow = {
