@@ -36,7 +36,8 @@
 <style>
 	.cookie-banner { position: fixed; z-index: 200; right: 0; bottom: 0; left: 0; width: 100%; padding: 14px max(22px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: space-between; gap: 18px; background: var(--card); box-shadow: 0 -12px 32px rgba(0,0,0,.1); }
 	.cookie-banner p { margin: 0; color: var(--secondary-ink); font-size: 13px; line-height: 1.45; }
-	.cookie-banner a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+	.cookie-banner a { color: var(--muted); text-decoration: none; transition: color .2s ease; }
+	.cookie-banner a:hover { color: var(--ink); }
 	.cookie-actions { display: flex; flex: none; gap: 8px; }
 	.cookie-actions button { min-height: 38px; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 650; cursor: pointer; }
 	.cookie-reject { border: 1px solid var(--line); background: var(--card); color: var(--ink); }
