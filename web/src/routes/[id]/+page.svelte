@@ -22,9 +22,12 @@
 		Plane,
 		ReceiptEuro,
 		RotateCcw,
+		Undo2,
+		UserRoundX,
 		Users
 	} from 'lucide-svelte';
 	import InvoiceActionsMenu from '$lib/components/admin/invoice-actions-menu.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { AlertDialog } from 'bits-ui';
 	import { invalidateAll } from '$app/navigation';
 	import AddressEditor from '$lib/config/AddressEditor.svelte';
@@ -633,8 +636,26 @@
 						{#if !billingComplete}<p class="admin-action-message">{locale === 'en' ? 'Billing details must be complete before recording the agreement.' : 'Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.'}</p>{/if}
 						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}</button>
 					{:else if hackathon.status === 'exit_window'}
-						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>{locale === 'en' ? 'Record customer withdrawal' : 'Rücktritt Kunde erfassen'}</button>
-						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>{locale === 'en' ? 'Record ALL IN AGI withdrawal' : 'Rücktritt ALL IN AGI erfassen'}</button>
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger>
+								{#snippet child({ props })}
+									<button {...props} class="button-secondary action-button" type="button" disabled={contractBusy}>
+										<Undo2 size={18} aria-hidden="true" />
+										{locale === 'en' ? 'Record withdrawal' : 'Rücktritt erfassen'}
+									</button>
+								{/snippet}
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content class="min-w-[280px]" align="end" sideOffset={6}>
+								<DropdownMenu.Item disabled={contractBusy} onSelect={() => withdrawDuringExitWindow('customer')}>
+									<UserRoundX size={16} aria-hidden="true" />
+									{locale === 'en' ? 'Record customer withdrawal' : 'Rücktritt Kunde erfassen'}
+								</DropdownMenu.Item>
+								<DropdownMenu.Item disabled={contractBusy} onSelect={() => withdrawDuringExitWindow('organizer')}>
+									<Building2 size={16} aria-hidden="true" />
+									{locale === 'en' ? 'Record ALL IN AGI withdrawal' : 'Rücktritt ALL IN AGI erfassen'}
+								</DropdownMenu.Item>
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
 					{:else if hackathon.status === 'contracted' && hackathon.eventEnd && new Date() >= new Date(hackathon.eventEnd)}
 						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>{locale === 'en' ? 'Mark as completed' : 'Durchführung abschließen'}</button>
 					{/if}
