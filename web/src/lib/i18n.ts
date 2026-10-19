@@ -153,13 +153,13 @@ export const ui = {
 		agenda: 'Agenda', price: 'Preis', contact: 'Kontakt', plan: 'Hackathon planen',
 		legalNotice: 'Impressum', terms: 'Allgemeine Geschäftsbedingungen', privacy: 'Datenschutz', manage: 'Buchung verwalten',
 		cookieLabel: 'Cookie-Einstellungen', cookieText: 'Wir verwenden optionale Analyse-Cookies, um unsere Website und den Buchungsprozess zu verbessern.',
-		rejectCookies: 'Alle ablehnen', acceptCookies: 'Alle Cookies erlauben', closingTitle: 'Was shippt Ihr Team an einem Tag?'
+		rejectCookies: 'Alle ablehnen', acceptCookies: 'Alle Cookies erlauben', closingTitle: 'Was shippt Ihr Team\nan einem Tag?'
 	},
 	en: {
 		skip: 'Skip to content', navLabel: 'Main navigation', homeLabel: 'ALL IN AGI home',
 		agenda: 'Agenda', price: 'Pricing', contact: 'Contact', plan: 'Plan a hackathon',
 		legalNotice: 'Legal notice', terms: 'Terms and Conditions', privacy: 'Privacy', manage: 'Manage booking',
 		cookieLabel: 'Cookie settings', cookieText: 'We use optional analytics cookies to improve our website and booking experience.',
-		rejectCookies: 'Reject all', acceptCookies: 'Allow all cookies', closingTitle: 'What will your team ship in one day?'
+		rejectCookies: 'Reject all', acceptCookies: 'Allow all cookies', closingTitle: 'What will your team\nship in one day?'
 	}
 } as const;
