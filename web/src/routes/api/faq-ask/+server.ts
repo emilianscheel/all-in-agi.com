@@ -1,5 +1,6 @@
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
-import { streamText } from 'ai';
+import { createGateway, generateText } from 'ai';
 import { LOCALES, type Locale } from '$lib/i18n';
 import { _llmsContent } from '../../llms.txt/+server';
 import type { RequestHandler } from './$types';
@@ -49,6 +50,12 @@ Write in ${language}. Keep answers concise (2–5 short sentences), plain prose 
 ${knowledge}`;
 }
 
+function failureMessage(locale: Locale) {
+	return locale === 'en'
+		? 'Could not generate an answer right now.'
+		: 'Antwort konnte gerade nicht erzeugt werden.';
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	let body: unknown;
 	try {
@@ -69,7 +76,25 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		: ((locals.locale ?? 'de') as Locale);
 	const history = normalizeHistory(record.history);
 	const knowledge = _llmsContent[locale](locale);
+	const apiKey = env.AI_GATEWAY_API_KEY?.trim();
 
+	// SvelteKit private env is not always mirrored onto process.env for the AI SDK default gateway.
+	if (!apiKey && !env.VERCEL_OIDC_TOKEN) {
+		console.error(
+			'FAQ ask missing AI_GATEWAY_API_KEY (add it to web/.env and restart the dev server)'
+		);
+		return json(
+			{
+				error:
+					locale === 'en'
+						? 'AI Gateway is not configured. Set AI_GATEWAY_API_KEY and restart the server.'
+						: 'AI Gateway ist nicht konfiguriert. AI_GATEWAY_API_KEY setzen und Server neu starten.'
+			},
+			{ status: 503 }
+		);
+	}
+
+	const gateway = createGateway(apiKey ? { apiKey } : undefined);
 	const messages = [
 		...history.flatMap((item) => [
 			{ role: 'user' as const, content: item.question },
@@ -79,22 +104,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	];
 
 	try {
-		const result = streamText({
-			model: MODEL,
+		const { text } = await generateText({
+			model: gateway(MODEL),
 			system: buildSystemPrompt(locale, knowledge),
 			messages
 		});
-		return result.toTextStreamResponse();
+		const answer = text.trim();
+		if (!answer) {
+			return json({ error: failureMessage(locale) }, { status: 502 });
+		}
+		return new Response(answer, {
+			headers: { 'content-type': 'text/plain; charset=utf-8' }
+		});
 	} catch (error) {
 		console.error('FAQ ask failed', error);
-		return json(
-			{
-				error:
-					locale === 'en'
-						? 'Could not generate an answer right now.'
-						: 'Antwort konnte gerade nicht erzeugt werden.'
-			},
-			{ status: 502 }
-		);
+		return json({ error: failureMessage(locale) }, { status: 502 });
 	}
 };
