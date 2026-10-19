@@ -2,8 +2,10 @@ import type { ConfirmedBooking } from './hackathons';
 import { PREP_CALL_DURATION_MINUTES } from '$lib/prep-call';
 
 export class BookingProviderError extends Error {
-	constructor(message: string, readonly status: number, readonly field?: 'hackathon' | 'prep-call') {
+	readonly englishMessage: string;
+	constructor(message: string, readonly status: number, readonly field?: 'hackathon' | 'prep-call', englishMessage?: string) {
 		super(message);
+		this.englishMessage = englishMessage ?? message;
 	}
 }
 
@@ -16,7 +18,7 @@ export async function reschedulePrepCallWithToken(
 	options: { end?: string; title?: string; reason?: string; field?: 'hackathon' | 'prep-call' } = {}
 ): Promise<ConfirmedBooking> {
 	const start = new Date(startValue);
-	if (Number.isNaN(start.getTime())) throw new BookingProviderError('Der neue Termin ist ungültig.', 400, options.field);
+	if (Number.isNaN(start.getTime())) throw new BookingProviderError('Der neue Termin ist ungültig.', 400, options.field, 'The new time is invalid.');
 	const end = options.end ? new Date(options.end) : new Date(start.getTime() + PREP_CALL_DURATION_MINUTES * 60_000);
 	if (demo) {
 		const uid = bookingUid ?? `demo-${Date.now()}`;
@@ -32,7 +34,7 @@ export async function reschedulePrepCallWithToken(
 		};
 	}
 
-	if (!token || !bookingUid) throw new BookingProviderError('Der gebuchte Termin kann derzeit nicht geändert werden.', 503, options.field);
+	if (!token || !bookingUid) throw new BookingProviderError('Der gebuchte Termin kann derzeit nicht geändert werden.', 503, options.field, 'The booked time cannot be changed right now.');
 	try {
 		const response = await requestFetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(bookingUid)}/reschedule`, {
 			method: 'POST',
@@ -54,7 +56,10 @@ export async function reschedulePrepCallWithToken(
 					? 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Slot.'
 					: options.field === 'hackathon' ? 'Der Hackathon-Termin konnte nicht geändert werden.' : 'Der Vorbereitungstermin konnte nicht geändert werden.',
 				conflict ? 409 : response.status,
-				options.field
+				options.field,
+				conflict
+					? 'This time was just taken. Please choose a new slot.'
+					: options.field === 'hackathon' ? 'The hackathon date could not be changed.' : 'The preparation call could not be changed.'
 			);
 		}
 		return {
@@ -69,6 +74,6 @@ export async function reschedulePrepCallWithToken(
 		};
 	} catch (error) {
 		if (error instanceof BookingProviderError) throw error;
-		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, options.field);
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, options.field, 'The calendar service is temporarily unavailable.');
 	}
 }

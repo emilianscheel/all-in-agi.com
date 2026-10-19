@@ -1,13 +1,12 @@
+import { localeMessage } from '$lib/locale-message';
 import { isHackathonId } from '$lib/public-id';
 import { requireAdmin } from '$lib/server/admin-auth';
 import { EmailTransportError } from '$lib/server/email-transport';
 import { sendInvoiceEmail, type InvoiceEmailDependencies } from '$lib/server/invoice-email';
-import { InvoiceConfigurationError } from '$lib/server/invoice-config';
+import { invoiceErrorResponse } from '$lib/server/invoice-messages';
 import { markDownPaymentInvoiceEmailSent, type HackathonRecord } from '$lib/server/hackathons';
 import {
 	getOrCreateDownPaymentInvoice,
-	InvoiceNotFoundError,
-	InvoiceNotIssuableError,
 	type InvoicePersistenceDependencies
 } from '$lib/server/invoices';
 import { json } from '@sveltejs/kit';
@@ -26,19 +25,19 @@ export function _createDownPaymentEmailPost(dependencies: DownPaymentEmailEndpoi
 		if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
 		try {
 			const { record, snapshot } = await getOrCreateDownPaymentInvoice(id, dependencies);
-			if (!['contracted', 'confirmed', 'completed'].includes(record.status)) return json({ message: 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.' }, { status: 409 });
+			if (!['contracted', 'confirmed', 'completed'].includes(record.status)) return json({ message: localeMessage(locals.locale, 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.', 'An invoice cannot be sent for this contract status.') }, { status: 409 });
 			const delivery = await (dependencies.send ?? sendInvoiceEmail)(snapshot, dependencies.email);
 			const sentAt = dependencies.nowIso?.() ?? new Date().toISOString();
 			const updated = await (dependencies.markSent ?? markDownPaymentInvoiceEmailSent)(id, delivery.messageId, sentAt);
 			if (!updated) throw new Error('Down-payment delivery state could not be saved.');
 			return json({ sent: true, sentAt });
 		} catch (error) {
-			if (error instanceof InvoiceNotFoundError) return json({ message: error.message }, { status: 404 });
-			if (error instanceof InvoiceNotIssuableError) return json({ message: error.message }, { status: 409 });
-			if (error instanceof InvoiceConfigurationError) return json({ message: 'Die Rechnungskonfiguration ist unvollständig.' }, { status: 503 });
-			if (error instanceof EmailTransportError) return json({ message: 'Die Anzahlungsrechnung konnte nicht gesendet werden.' }, { status: error.stage === 'configuration' ? 503 : 502 });
+			const failure = invoiceErrorResponse(error, locals.locale);
+			if (failure) return json({ message: failure.message }, { status: failure.status });
+			const message = localeMessage(locals.locale, 'Die Anzahlungsrechnung konnte nicht gesendet werden.', 'The deposit invoice could not be sent.');
+			if (error instanceof EmailTransportError) return json({ message }, { status: error.stage === 'configuration' ? 503 : 502 });
 			console.error('Down-payment invoice email failed', { hackathonId: id, error });
-			return json({ message: 'Die Anzahlungsrechnung konnte nicht gesendet werden.' }, { status: 500 });
+			return json({ message }, { status: 500 });
 		}
 	};
 }

@@ -176,6 +176,7 @@ export async function freezeDownPaymentInvoiceSnapshot(id: string, snapshot: Inv
 	const [record] = await db.update(hackathons).set({
 		downPaymentInvoiceSnapshot: snapshot,
 		downPaymentInvoiceIssuedAt: issuedAt,
+		billingModel: 'deposit_30',
 		updatedAt: issuedAt
 	}).where(and(
 		eq(hackathons.id, id),

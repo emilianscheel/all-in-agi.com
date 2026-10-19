@@ -1,4 +1,5 @@
-import { validateBillingDetails, validateConfiguration } from '$lib/booking';
+import { configurationDateChecks, validateBillingDetails, validateConfiguration } from '$lib/booking';
+import { localeMessage } from '$lib/locale-message';
 import { eventDurationMinutes } from '$lib/event-time';
 import { applyHackathonUpdate, HackathonUpdateError, parseHackathonUpdate } from '$lib/hackathon-edit';
 import { isHackathonId } from '$lib/public-id';
@@ -22,32 +23,33 @@ import { recordBillingDetailsUpdated } from '$lib/server/legal-contracts';
 import { dev } from '$app/environment';
 import { json } from '@sveltejs/kit';
 
-function confirmedFromRecord(record: NonNullable<Awaited<ReturnType<typeof getConfirmedHackathonRecord>>>): ConfirmedBooking {
+function confirmedFromRecord(record: NonNullable<Awaited<ReturnType<typeof getConfirmedHackathonRecord>>>, locale: App.Locals['locale']): ConfirmedBooking {
 	const summary = recordToHackathonBookingSummary(record);
-	if (!summary) throw new Error('Für diesen Hackathon ist noch keine Kalenderbuchung vorhanden.');
+	if (!summary) throw new HackathonUpdateError(localeMessage(locale, 'Für diesen Hackathon ist noch keine Kalenderbuchung vorhanden.', 'This hackathon does not have a calendar booking yet.'));
 	return { status: 'success', demo: record.demoMode, ...summary };
 }
 
 export async function PATCH({ params, request, fetch, locals }) {
 	const id = params.id.toUpperCase();
-	if (!isHackathonId(id)) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
+	const say = (de: string, en: string) => localeMessage(locals.locale, de, en);
+	if (!isHackathonId(id)) return json({ message: say('Hackathon nicht gefunden.', 'Hackathon not found.') }, { status: 404 });
 	const record = await getConfirmedHackathonRecord(id);
-	if (!record) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
+	if (!record) return json({ message: say('Hackathon nicht gefunden.', 'Hackathon not found.') }, { status: 404 });
 
 	let body: unknown;
 	try { body = await request.json(); }
-	catch { return json({ message: 'Die Änderungen sind ungültig.' }, { status: 400 }); }
+	catch { return json({ message: say('Die Änderungen sind ungültig.', 'The changes are invalid.') }, { status: 400 }); }
 
 	try {
-		const update = parseHackathonUpdate(body);
+		const update = parseHackathonUpdate(body, locals.locale);
 		const priceAffecting = ['capacity', 'venue', 'tools', 'devices', 'lunch'].includes(update.section);
 		if (priceAffecting && (record.invoiceSnapshot || record.downPaymentInvoiceSnapshot)) {
-			return json({ message: 'Preisrelevante Angaben können nach Ausstellung einer Rechnung nicht mehr geändert werden.' }, { status: 409 });
+			return json({ message: say('Preisrelevante Angaben können nach Ausstellung einer Rechnung nicht mehr geändert werden.', 'Price-related details cannot be changed after an invoice has been issued.') }, { status: 409 });
 		}
 		const current = recordToBookingConfiguration(record);
 		const next = applyHackathonUpdate(current, update);
-		const errors = validateConfiguration(next);
-		if (update.section === 'billing') errors.push(...validateBillingDetails(next.billing));
+		const errors = validateConfiguration({ ...next, locale: locals.locale }, configurationDateChecks(update.section));
+		if (update.section === 'billing') errors.push(...validateBillingDetails(next.billing, locals.locale));
 		if (errors.length) return json({ message: errors[0], errors }, { status: 400 });
 
 		if (update.section === 'prep-call' && next.consultationSlot !== current.consultationSlot) {
@@ -79,9 +81,9 @@ export async function PATCH({ params, request, fetch, locals }) {
 					throw error;
 				}
 			}
-			if (!next.eventStart || !next.eventEnd) throw new HackathonUpdateError('Bitte wählen Sie einen gültigen Hackathon-Termin.');
-			const currentBooking = confirmedFromRecord(record);
-			if (!current.eventStart || !current.eventEnd) throw new Error('Die bestehende Kalenderbuchung hat keinen gültigen Termin.');
+			if (!next.eventStart || !next.eventEnd) throw new HackathonUpdateError(say('Bitte wählen Sie einen gültigen Hackathon-Termin.', 'Please select a valid hackathon date.'));
+			const currentBooking = confirmedFromRecord(record, locals.locale);
+			if (!current.eventStart || !current.eventEnd) throw new HackathonUpdateError(say('Die bestehende Kalenderbuchung hat keinen gültigen Termin.', 'The existing calendar booking does not have a valid time.'));
 			const durationChanged = eventDurationMinutes(next.eventStart, next.eventEnd) !== eventDurationMinutes(current.eventStart, current.eventEnd);
 			if (!durationChanged) {
 				const rescheduled = await rescheduleHackathonDay(record.hackathonBookingUid, next.eventStart, next.eventEnd, fetch, record.demoMode);
@@ -124,8 +126,8 @@ export async function PATCH({ params, request, fetch, locals }) {
 		return json({ hackathon: toPublicHackathon(updated) });
 	} catch (error) {
 		if (error instanceof HackathonUpdateError) return json({ message: error.message }, { status: 400 });
-		if (error instanceof BookingProviderError) return json({ message: error.message, field: error.field }, { status: error.status });
+		if (error instanceof BookingProviderError) return json({ message: locals.locale === 'en' ? error.englishMessage : error.message, field: error.field }, { status: error.status });
 		console.error('Hackathon update failed', error);
-		return json({ message: 'Die Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.' }, { status: 503 });
+		return json({ message: say('Die Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.', 'The changes could not be saved. Please try again.') }, { status: 503 });
 	}
 }

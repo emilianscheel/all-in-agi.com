@@ -211,14 +211,22 @@
 			</a>
 		</header>
 
-		<section class="dashboard-stats" aria-label={locale === 'en' ? 'Metrics' : 'Kennzahlen'}>
+		<section class="dashboard-stats dashboard-stats-wide" aria-label={locale === 'en' ? 'Metrics' : 'Kennzahlen'}>
 			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Confirmed bookings' : 'Bestätigte Buchungen'}</span>
 				<strong>{data.summary.bookingCount}</strong>
 			</article>
 			<article class="dashboard-stat-card">
-				<span>{locale === 'en' ? 'Booked net revenue' : 'Gebuchter Nettoumsatz'}</span>
+				<span>{locale === 'en' ? 'Total net revenue' : 'Gesamter Nettoumsatz'}</span>
 				<strong>{formatPrice(data.summary.totalRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Pipeline net revenue' : 'Pipeline-Nettoumsatz'}</span>
+				<strong>{formatPrice(data.summary.pipelineRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Contracted net revenue' : 'Vertraglicher Nettoumsatz'}</span>
+				<strong>{formatPrice(data.summary.contractedRevenue)}</strong>
 			</article>
 		</section>
 

@@ -12,7 +12,6 @@
 		Contact,
 		Cookie,
 		Download,
-		ExternalLink,
 		MapPin,
 		MapPinned,
 		Laptop,
@@ -25,6 +24,7 @@
 		RotateCcw,
 		Users
 	} from 'lucide-svelte';
+	import InvoiceActionsMenu from '$lib/components/admin/invoice-actions-menu.svelte';
 	import { AlertDialog } from 'bits-ui';
 	import { invalidateAll } from '$app/navigation';
 	import AddressEditor from '$lib/config/AddressEditor.svelte';
@@ -39,7 +39,7 @@
 	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { eventDateBounds } from '$lib/event-date';
-	import { formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
+	import { configurationDateChecks, formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
 	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
 	import { isStandardOfferLegalVersion } from '$lib/legal';
@@ -62,10 +62,12 @@
 	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
 	let invoiceEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let invoiceTestState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceIssued = $state(Boolean(initialInvoice?.issued));
 	let invoiceEmailSentAt = $state<string | null>(initialInvoice?.emailSentAt ?? null);
 	let downPaymentDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
 	let downPaymentEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
+	let downPaymentTestState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let downPaymentIssued = $state(Boolean(initialInvoice?.downPayment.issued));
 	let downPaymentEmailSentAt = $state<string | null>(initialInvoice?.downPayment.emailSentAt ?? null);
 	let downPaymentPaidAt = $state<string | null>(initialInvoice?.downPayment.paidAt ?? null);
@@ -117,7 +119,11 @@
 	let canScheduleDeferredEvent = $derived(!hackathon.eventStart && ['prep_scheduled', 'exit_window', 'contracted', 'confirmed'].includes(hackathon.status));
 	let invoiceEligible = $derived(['contracted', 'confirmed', 'completed'].includes(hackathon.status));
 	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
-	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
+	let billingModel = $state(initialInvoice?.billingModel ?? null);
+	let invoiceKind = $state(initialInvoice?.kind ?? null);
+	let splitBilling = $derived(billingModel === 'deposit_30');
+	let showDepositInvoice = $derived(splitBilling && (invoiceEligible || downPaymentIssued));
+	let invoiceIsFinal = $derived(splitBilling && (invoiceKind === 'final' || !invoiceIssued));
 	let finalInvoiceAvailable = $derived(Boolean(hackathon.eventEnd) && (!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd!))));
 	let standardOffer = $derived(isStandardOfferLegalVersion(hackathon.legalVersion));
 	let billingComplete = $derived(validateBillingDetails(hackathon.billing, locale).length === 0);
@@ -235,11 +241,11 @@
 				method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ by })
 			});
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Der Rücktritt konnte nicht gespeichert werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The withdrawal could not be saved.' : 'Der Rücktritt konnte nicht gespeichert werden.'));
 			hackathon = { ...hackathon, status: result.status };
-			contractMessage = 'Der kostenfreie Rücktritt wurde revisionsfest gespeichert.';
+			contractMessage = locale === 'en' ? 'The free withdrawal was saved in the audit log.' : 'Der kostenfreie Rücktritt wurde revisionsfest gespeichert.';
 			await invalidateAll();
-		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Der Rücktritt konnte nicht gespeichert werden.'; }
+		} catch (error) { contractMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The withdrawal could not be saved.' : 'Der Rücktritt konnte nicht gespeichert werden.'); }
 		finally { contractBusy = false; }
 	}
 
@@ -249,11 +255,11 @@
 		try {
 			const response = await fetch(`/api/hackathons/${hackathon.id}/contract-complete`, { method: 'POST' });
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Der Vertrag konnte nicht abgeschlossen werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The contract could not be completed.' : 'Der Vertrag konnte nicht abgeschlossen werden.'));
 			hackathon = { ...hackathon, status: result.status };
-			contractMessage = 'Durchführung als abgeschlossen markiert.';
+			contractMessage = locale === 'en' ? 'Marked as completed.' : 'Durchführung als abgeschlossen markiert.';
 			await invalidateAll();
-		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Der Vertrag konnte nicht abgeschlossen werden.'; }
+		} catch (error) { contractMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The contract could not be completed.' : 'Der Vertrag konnte nicht abgeschlossen werden.'); }
 		finally { contractBusy = false; }
 	}
 
@@ -319,7 +325,7 @@
 
 	async function saveEditor() {
 		if (!activeSection) return;
-		const errors = validateConfiguration(draft);
+		const errors = validateConfiguration({ ...draft, locale }, configurationDateChecks(activeSection));
 		if (activeSection === 'billing') errors.push(...validateBillingDetails(draft.billing, locale));
 		if (errors.length) {
 			editError = errors[0];
@@ -336,13 +342,13 @@
 			const result = await response.json();
 			if (!response.ok) {
 				if (response.status === 409 && result.field === 'hackathon') eventAvailabilityKey += 1;
-				throw new Error(result.message ?? 'Die Änderungen konnten nicht gespeichert werden.');
+				throw new Error(result.message ?? (locale === 'en' ? 'The changes could not be saved.' : 'Die Änderungen konnten nicht gespeichert werden.'));
 			}
 			hackathon = result.hackathon;
 			draft = configurationFromHackathon(result.hackathon);
 			activeSection = null;
 		} catch (error) {
-			editError = error instanceof Error ? error.message : 'Die Änderungen konnten nicht gespeichert werden.';
+			editError = error instanceof Error ? error.message : (locale === 'en' ? 'The changes could not be saved.' : 'Die Änderungen konnten nicht gespeichert werden.');
 		} finally {
 			saving = false;
 		}
@@ -359,7 +365,7 @@
 			const response = await fetch(`/api/hackathons/${hackathon.id}/confirmation-email`, {
 				method: 'POST'
 			});
-			if (!response.ok) throw new Error('Die Bestätigungs-E-Mail konnte nicht gesendet werden.');
+			if (!response.ok) throw new Error(locale === 'en' ? 'The confirmation email could not be sent.' : 'Die Bestätigungs-E-Mail konnte nicht gesendet werden.');
 			confirmationEmailState = 'sent';
 		} catch {
 			confirmationEmailState = 'error';
@@ -374,7 +380,7 @@
 			const response = await fetch(`/api/hackathons/${hackathon.id}/invoice.pdf`, { method: 'POST' });
 			if (!response.ok) {
 				const result = await response.json().catch(() => ({}));
-				throw new Error(result.message ?? 'Die Rechnung konnte nicht heruntergeladen werden.');
+				throw new Error(result.message ?? (locale === 'en' ? 'The invoice could not be downloaded.' : 'Die Rechnung konnte nicht heruntergeladen werden.'));
 			}
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);
@@ -386,10 +392,11 @@
 			link.remove();
 			setTimeout(() => URL.revokeObjectURL(url), 0);
 			invoiceIssued = true;
+			if (splitBilling) invoiceKind = 'final';
 			invoiceDownloadState = 'idle';
 		} catch (error) {
 			invoiceDownloadState = 'error';
-			invoiceMessage = error instanceof Error ? error.message : 'Die Rechnung konnte nicht heruntergeladen werden.';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The invoice could not be downloaded.' : 'Die Rechnung konnte nicht heruntergeladen werden.');
 		}
 	}
 
@@ -400,14 +407,31 @@
 		try {
 			const response = await fetch(`/api/hackathons/${hackathon.id}/invoice-email`, { method: 'POST' });
 			const result = await response.json().catch(() => ({}));
-			if (!response.ok) throw new Error(result.message ?? 'Die Rechnungs-E-Mail konnte nicht gesendet werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The invoice email could not be sent.' : 'Die Rechnungs-E-Mail konnte nicht gesendet werden.'));
 			invoiceIssued = true;
+			if (splitBilling) invoiceKind = 'final';
 			invoiceEmailSentAt = result.sentAt;
 			invoiceEmailState = 'sent';
-			invoiceMessage = 'Die Rechnung wurde per E-Mail gesendet.';
+			invoiceMessage = locale === 'en' ? 'The invoice was sent by email.' : 'Die Rechnung wurde per E-Mail gesendet.';
 		} catch (error) {
 			invoiceEmailState = 'error';
-			invoiceMessage = error instanceof Error ? error.message : 'Die Rechnungs-E-Mail konnte nicht gesendet werden.';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The invoice email could not be sent.' : 'Die Rechnungs-E-Mail konnte nicht gesendet werden.');
+		}
+	}
+
+	async function sendInvoiceTest() {
+		if (invoiceTestState === 'loading') return;
+		invoiceTestState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/invoice-email-test`, { method: 'POST' });
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The test invoice email could not be sent.' : 'Die Test-Rechnungs-E-Mail konnte nicht gesendet werden.'));
+			invoiceTestState = 'sent';
+			invoiceMessage = locale === 'en' ? 'Test invoice sent to go@all-in-agi.com.' : 'Test-Rechnungs-E-Mail an go@all-in-agi.com gesendet.';
+		} catch (error) {
+			invoiceTestState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The test invoice email could not be sent.' : 'Die Test-Rechnungs-E-Mail konnte nicht gesendet werden.');
 		}
 	}
 
@@ -419,7 +443,7 @@
 			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment.pdf`, { method: 'POST' });
 			if (!response.ok) {
 				const result = await response.json().catch(() => ({}));
-				throw new Error(result.message ?? 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.');
+				throw new Error(result.message ?? (locale === 'en' ? 'The deposit invoice could not be downloaded.' : 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.'));
 			}
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);
@@ -431,10 +455,11 @@
 			link.remove();
 			setTimeout(() => URL.revokeObjectURL(url), 0);
 			downPaymentIssued = true;
+			billingModel = 'deposit_30';
 			downPaymentDownloadState = 'idle';
 		} catch (error) {
 			downPaymentDownloadState = 'error';
-			invoiceMessage = error instanceof Error ? error.message : 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The deposit invoice could not be downloaded.' : 'Die Anzahlungsrechnung konnte nicht heruntergeladen werden.');
 		}
 	}
 
@@ -445,14 +470,31 @@
 		try {
 			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment-email`, { method: 'POST' });
 			const result = await response.json().catch(() => ({}));
-			if (!response.ok) throw new Error(result.message ?? 'Die Anzahlungsrechnung konnte nicht gesendet werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The deposit invoice could not be sent.' : 'Die Anzahlungsrechnung konnte nicht gesendet werden.'));
 			downPaymentIssued = true;
+			billingModel = 'deposit_30';
 			downPaymentEmailSentAt = result.sentAt;
 			downPaymentEmailState = 'sent';
-			invoiceMessage = 'Die Anzahlungsrechnung wurde per E-Mail gesendet.';
+			invoiceMessage = locale === 'en' ? 'The deposit invoice was sent by email.' : 'Die Anzahlungsrechnung wurde per E-Mail gesendet.';
 		} catch (error) {
 			downPaymentEmailState = 'error';
-			invoiceMessage = error instanceof Error ? error.message : 'Die Anzahlungsrechnung konnte nicht gesendet werden.';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The deposit invoice could not be sent.' : 'Die Anzahlungsrechnung konnte nicht gesendet werden.');
+		}
+	}
+
+	async function sendDownPaymentTest() {
+		if (downPaymentTestState === 'loading') return;
+		downPaymentTestState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment-email-test`, { method: 'POST' });
+			const result = await response.json().catch(() => ({}));
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The test deposit invoice could not be sent.' : 'Die Test-Anzahlungsrechnung konnte nicht gesendet werden.'));
+			downPaymentTestState = 'sent';
+			invoiceMessage = locale === 'en' ? 'Test deposit invoice sent to go@all-in-agi.com.' : 'Test-Anzahlungsrechnung an go@all-in-agi.com gesendet.';
+		} catch (error) {
+			downPaymentTestState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The test deposit invoice could not be sent.' : 'Die Test-Anzahlungsrechnung konnte nicht gesendet werden.');
 		}
 	}
 
@@ -463,11 +505,11 @@
 		try {
 			const response = await fetch(`/api/hackathons/${hackathon.id}/down-payment-paid`, { method: 'POST' });
 			const result = await response.json().catch(() => ({}));
-			if (!response.ok) throw new Error(result.message ?? 'Der Zahlungseingang konnte nicht gespeichert werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The payment could not be saved.' : 'Der Zahlungseingang konnte nicht gespeichert werden.'));
 			downPaymentPaidAt = result.paidAt;
-			invoiceMessage = 'Der Zahlungseingang wurde gespeichert.';
+			invoiceMessage = locale === 'en' ? 'The payment was saved.' : 'Der Zahlungseingang wurde gespeichert.';
 		} catch (error) {
-			invoiceMessage = error instanceof Error ? error.message : 'Der Zahlungseingang konnte nicht gespeichert werden.';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The payment could not be saved.' : 'Der Zahlungseingang konnte nicht gespeichert werden.');
 		} finally {
 			downPaymentPaidBusy = false;
 		}
@@ -586,39 +628,40 @@
 						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>{locale === 'en' ? 'Mark as completed' : 'Durchführung abschließen'}</button>
 					{/if}
 					{#if invoiceIssued || (invoiceEligible && finalInvoiceAvailable)}
-						<button class="button-secondary action-button" type="button" onclick={downloadInvoice} disabled={invoiceDownloadState === 'loading'}>
-							<Download size={18} aria-hidden="true" />{#if invoiceDownloadState === 'loading'}{locale === 'en' ? 'Creating invoice …' : 'Rechnung wird erstellt …'}{:else if invoiceDownloadState === 'error'}{locale === 'en' ? 'Try download again' : 'Download erneut versuchen'}{:else if splitBilling}{locale === 'en' ? 'Download final invoice' : 'Endrechnung herunterladen'}{:else}{locale === 'en' ? 'Download invoice' : 'Rechnung herunterladen'}{/if}
-						</button>
+						<InvoiceActionsMenu
+							label={invoiceIsFinal ? (locale === 'en' ? 'Final invoice' : 'Endrechnung') : (locale === 'en' ? 'Invoice' : 'Rechnung')}
+							downloadLabel={invoiceDownloadState === 'loading' ? (locale === 'en' ? 'Creating invoice …' : 'Rechnung wird erstellt …') : invoiceDownloadState === 'error' ? (locale === 'en' ? 'Try download again' : 'Download erneut versuchen') : invoiceIsFinal ? (locale === 'en' ? 'Download final invoice' : 'Endrechnung herunterladen') : (locale === 'en' ? 'Download invoice' : 'Rechnung herunterladen')}
+							sendLabel={invoiceEmailState === 'loading' ? (locale === 'en' ? 'Sending invoice …' : 'Rechnung wird gesendet …') : invoiceEmailState === 'error' ? (locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen') : invoiceEmailSentAt || invoiceEmailState === 'sent' ? (invoiceIsFinal ? (locale === 'en' ? 'Resend final invoice' : 'Endrechnung erneut senden') : (locale === 'en' ? 'Resend invoice' : 'Rechnung erneut senden')) : (invoiceIsFinal ? (locale === 'en' ? 'Send final invoice' : 'Endrechnung senden') : (locale === 'en' ? 'Send invoice' : 'Rechnung senden'))}
+							testLabel={invoiceTestState === 'loading' ? (locale === 'en' ? 'Sending test invoice …' : 'Test-Rechnung wird gesendet …') : invoiceTestState === 'error' ? (locale === 'en' ? 'Try test again' : 'Test erneut versuchen') : invoiceTestState === 'sent' ? (locale === 'en' ? 'Test invoice sent' : 'Test-Rechnung gesendet') : (locale === 'en' ? 'Send invoice as test to me' : 'Rechnung als Test an mich senden')}
+							downloadDisabled={invoiceDownloadState === 'loading'}
+							sendDisabled={invoiceEmailState === 'loading' || !(invoiceEligible && finalInvoiceAvailable)}
+							testDisabled={invoiceTestState === 'loading'}
+							onDownload={downloadInvoice}
+							onSend={sendInvoice}
+							onTest={sendInvoiceTest}
+						/>
 					{/if}
-					{#if invoiceEligible && finalInvoiceAvailable}
-						<button class="button-secondary action-button" type="button" onclick={sendInvoice} disabled={invoiceEmailState === 'loading'} aria-live="polite">
-							{#if invoiceEmailState === 'sent'}
-								<Check size={18} aria-hidden="true" />{splitBilling ? (locale === 'en' ? 'Resend final invoice' : 'Endrechnung erneut senden') : (locale === 'en' ? 'Resend invoice' : 'Rechnung erneut senden')}
-							{:else}
-								<Mail size={18} aria-hidden="true" />{#if invoiceEmailState === 'loading'}{locale === 'en' ? 'Sending invoice …' : 'Rechnung wird gesendet …'}{:else if invoiceEmailState === 'error'}{locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen'}{:else if invoiceEmailSentAt}{splitBilling ? (locale === 'en' ? 'Resend final invoice' : 'Endrechnung erneut senden') : (locale === 'en' ? 'Resend invoice' : 'Rechnung erneut senden')}{:else}{splitBilling ? (locale === 'en' ? 'Send final invoice' : 'Endrechnung senden') : (locale === 'en' ? 'Send invoice' : 'Rechnung senden')}{/if}
-							{/if}
-						</button>
-					{/if}
-					{#if splitBilling && (invoiceEligible || downPaymentIssued)}
-						<button class="button-secondary action-button" type="button" onclick={downloadDownPaymentInvoice} disabled={downPaymentDownloadState === 'loading'}>
-							<Download size={18} aria-hidden="true" />{#if downPaymentDownloadState === 'loading'}{locale === 'en' ? 'Creating deposit invoice …' : 'Anzahlungsrechnung wird erstellt …'}{:else if downPaymentDownloadState === 'error'}{locale === 'en' ? 'Try download again' : 'Download erneut versuchen'}{:else}{locale === 'en' ? 'Download deposit invoice' : 'Anzahlungsrechnung herunterladen'}{/if}
-						</button>
-					{/if}
-					{#if splitBilling && invoiceEligible}
-						<button class="button-secondary action-button" type="button" onclick={sendDownPaymentInvoice} disabled={downPaymentEmailState === 'loading'} aria-live="polite">
-							<Mail size={18} aria-hidden="true" />{#if downPaymentEmailState === 'loading'}{locale === 'en' ? 'Sending deposit invoice …' : 'Anzahlungsrechnung wird gesendet …'}{:else if downPaymentEmailState === 'error'}{locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen'}{:else if downPaymentEmailSentAt}{locale === 'en' ? 'Resend deposit invoice' : 'Anzahlungsrechnung erneut senden'}{:else}{locale === 'en' ? 'Send deposit invoice' : 'Anzahlungsrechnung senden'}{/if}
-						</button>
+					{#if showDepositInvoice}
+						<InvoiceActionsMenu
+							label={locale === 'en' ? 'Deposit invoice' : 'Anzahlungsrechnung'}
+							downloadLabel={downPaymentDownloadState === 'loading' ? (locale === 'en' ? 'Creating deposit invoice …' : 'Anzahlungsrechnung wird erstellt …') : downPaymentDownloadState === 'error' ? (locale === 'en' ? 'Try download again' : 'Download erneut versuchen') : (locale === 'en' ? 'Download deposit invoice' : 'Anzahlungsrechnung herunterladen')}
+							sendLabel={downPaymentEmailState === 'loading' ? (locale === 'en' ? 'Sending deposit invoice …' : 'Anzahlungsrechnung wird gesendet …') : downPaymentEmailState === 'error' ? (locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen') : downPaymentEmailSentAt || downPaymentEmailState === 'sent' ? (locale === 'en' ? 'Resend deposit invoice' : 'Anzahlungsrechnung erneut senden') : (locale === 'en' ? 'Send deposit invoice' : 'Anzahlungsrechnung senden')}
+							testLabel={downPaymentTestState === 'loading' ? (locale === 'en' ? 'Sending test deposit invoice …' : 'Test-Anzahlungsrechnung wird gesendet …') : downPaymentTestState === 'error' ? (locale === 'en' ? 'Try test again' : 'Test erneut versuchen') : downPaymentTestState === 'sent' ? (locale === 'en' ? 'Test deposit invoice sent' : 'Test-Anzahlungsrechnung gesendet') : (locale === 'en' ? 'Send deposit invoice as test to me' : 'Anzahlungsrechnung als Test an mich senden')}
+							downloadDisabled={downPaymentDownloadState === 'loading'}
+							sendDisabled={downPaymentEmailState === 'loading' || !invoiceEligible}
+							testDisabled={downPaymentTestState === 'loading'}
+							onDownload={downloadDownPaymentInvoice}
+							onSend={sendDownPaymentInvoice}
+							onTest={sendDownPaymentTest}
+						/>
 						{#if downPaymentIssued}
 							<button class="button-secondary action-button" type="button" onclick={markDownPaymentReceived} disabled={downPaymentPaidBusy || Boolean(downPaymentPaidAt)}>
 								<Check size={18} aria-hidden="true" />{#if downPaymentPaidBusy}{locale === 'en' ? 'Saving …' : 'Wird gespeichert …'}{:else}{locale === 'en' ? 'Payment received' : 'Zahlung eingegangen'}{/if}
 							</button>
 						{/if}
-						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">{locale === 'en' ? 'Final invoice available after the hackathon.' : 'Endrechnung nach dem Hackathon verfügbar.'}</p>{/if}
+						{#if downPaymentPaidAt && !invoiceIssued && !finalInvoiceAvailable}<p class="admin-action-message">{locale === 'en' ? 'Final invoice available after the hackathon.' : 'Endrechnung nach dem Hackathon verfügbar.'}</p>{/if}
 					{/if}
 					{#if cancellableContract && hackathon.eventStart && hackathon.eventEnd}
-						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
-							<ExternalLink size={18} aria-hidden="true" />Timer
-						</a>
 						<AlertDialog.Root bind:open={cancelDialogOpen}>
 							<AlertDialog.Trigger class="button-primary action-button"><Ban size={18} aria-hidden="true" />{locale === 'en' ? 'Cancel booking' : 'Buchung stornieren'}</AlertDialog.Trigger>
 							<AlertDialog.Portal>
@@ -635,7 +678,7 @@
 							</AlertDialog.Portal>
 						</AlertDialog.Root>
 					{:else if cancellableContract}
-						<p class="admin-action-message">{locale === 'en' ? 'Set the hackathon date before using the timer or cancelling this contracted booking.' : 'Legen Sie vor Timer-Nutzung oder Stornierung dieser vertraglichen Buchung den Hackathon-Termin fest.'}</p>
+						<p class="admin-action-message">{locale === 'en' ? 'Set the hackathon date before cancelling this contracted booking.' : 'Legen Sie vor der Stornierung dieser vertraglichen Buchung den Hackathon-Termin fest.'}</p>
 					{:else if ['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(hackathon.status) && !hackathon.cancellationEmailSentAt}
 						<button class="button-primary action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
 							<RotateCcw size={18} aria-hidden="true" />{#if cancellationBusy}{locale === 'en' ? 'Working …' : 'Wird bearbeitet …'}{:else if hackathon.status === 'cancelled'}{locale === 'en' ? 'Resend email' : 'E-Mail erneut senden'}{:else if hackathon.status === 'cancellation_pending'}{locale === 'en' ? 'Continue cancellation' : 'Stornierung fortsetzen'}{:else}{locale === 'en' ? 'Cancel booking' : 'Buchung stornieren'}{/if}

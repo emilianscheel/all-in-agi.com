@@ -202,7 +202,15 @@ export function formatDate(value: string, withTime = false, locale: Locale = 'de
 	}).format(date);
 }
 
-export function validateConfiguration(config: BookingConfiguration) {
+export type ConfigurationDateChecks = 'all' | 'event' | 'prep' | 'none';
+
+export function configurationDateChecks(section: string): ConfigurationDateChecks {
+	if (section === 'event-time') return 'event';
+	if (section === 'prep-call') return 'prep';
+	return 'none';
+}
+
+export function validateConfiguration(config: BookingConfiguration, dates: ConfigurationDateChecks = 'all') {
 	const errors: string[] = [];
 	const en = config.locale === 'en';
 	const message = (de: string, english: string) => en ? english : de;
@@ -220,9 +228,11 @@ export function validateConfiguration(config: BookingConfiguration) {
 		errors.push(message('Bitte vervollständigen Sie die Veranstaltungsadresse.', 'Please complete the event address.'));
 	}
 	if (typeof config.eventPhotos !== 'boolean') errors.push(message('Die Fotoeinstellung ist ungültig.', 'The event photography setting is invalid.'));
-	if (!isDeferredEventTime(config.eventStart, config.eventEnd) && !isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push(message('Bitte wählen Sie einen verfügbaren Hackathon-Termin oder „Später festlegen“.', 'Please select an available hackathon date or “Choose later”.'));
-	const consultationDate = new Date(config.consultationSlot);
-	if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push(message('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.', 'Please select a future preparation call time.'));
+	if ((dates === 'all' || dates === 'event') && !isDeferredEventTime(config.eventStart, config.eventEnd) && !isValidEventTimeRange(config.eventStart, config.eventEnd)) errors.push(message('Bitte wählen Sie einen verfügbaren Hackathon-Termin oder „Später festlegen“.', 'Please select an available hackathon date or “Choose later”.'));
+	if (dates === 'all' || dates === 'prep') {
+		const consultationDate = new Date(config.consultationSlot);
+		if (!config.consultationSlot || Number.isNaN(consultationDate.getTime()) || consultationDate <= new Date()) errors.push(message('Bitte wählen Sie einen zukünftigen Termin für das Erstgespräch.', 'Please select a future preparation call time.'));
+	}
 	if (config.lunch === 'custom' && !config.customLunch.trim()) errors.push(message('Bitte beschreiben Sie Ihren Catering-Wunsch.', 'Please describe your catering preference.'));
 	if (!config.toolProvision || !['existing', 'needed'].includes(config.toolProvision)) {
 		errors.push(message('Bitte wählen Sie aus, ob Coding Tools vorhanden sind.', 'Please specify whether coding tools are available.'));

@@ -1,12 +1,11 @@
+import { localeMessage } from '$lib/locale-message';
 import { isHackathonId } from '$lib/public-id';
 import { requireAdmin } from '$lib/server/admin-auth';
 import { EmailTransportError } from '$lib/server/email-transport';
 import { sendInvoiceEmail, type InvoiceEmailDependencies } from '$lib/server/invoice-email';
-import { InvoiceConfigurationError } from '$lib/server/invoice-config';
+import { invoiceErrorResponse } from '$lib/server/invoice-messages';
 import {
 	getOrCreateInvoice,
-	InvoiceNotFoundError,
-	InvoiceNotIssuableError,
 	type InvoicePersistenceDependencies
 } from '$lib/server/invoices';
 import { markInvoiceEmailSent, type HackathonRecord } from '$lib/server/hackathons';
@@ -27,7 +26,7 @@ export function _createInvoiceEmailPost(dependencies: InvoiceEmailEndpointDepend
 		try {
 			const { record, snapshot } = await getOrCreateInvoice(id, dependencies);
 			if (!['contracted', 'confirmed', 'completed'].includes(record.status)) {
-				return json({ message: 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.' }, { status: 409 });
+				return json({ message: localeMessage(locals.locale, 'Für diesen Vertragsstatus kann keine Rechnung versandt werden.', 'An invoice cannot be sent for this contract status.') }, { status: 409 });
 			}
 			const delivery = await (dependencies.send ?? sendInvoiceEmail)(snapshot, dependencies.email);
 			const sentAt = dependencies.nowIso?.() ?? new Date().toISOString();
@@ -35,19 +34,16 @@ export function _createInvoiceEmailPost(dependencies: InvoiceEmailEndpointDepend
 			if (!updated) throw new Error('Invoice delivery state could not be saved.');
 			return json({ sent: true, sentAt });
 		} catch (error) {
-			if (error instanceof InvoiceNotFoundError) return json({ message: error.message }, { status: 404 });
-			if (error instanceof InvoiceNotIssuableError) return json({ message: error.message }, { status: 409 });
-			if (error instanceof InvoiceConfigurationError) {
-				return json({ message: 'Die Rechnungskonfiguration ist unvollständig.' }, { status: 503 });
-			}
+			const failure = invoiceErrorResponse(error, locals.locale);
+			if (failure) return json({ message: failure.message }, { status: failure.status });
 			if (error instanceof EmailTransportError) {
 				const status = error.stage === 'configuration' ? 503
 					: error.stage === 'network' || error.stage === 'provider' ? 502
 					: 500;
-				return json({ message: 'Die Rechnungs-E-Mail konnte nicht gesendet werden.' }, { status });
+				return json({ message: localeMessage(locals.locale, 'Die Rechnungs-E-Mail konnte nicht gesendet werden.', 'The invoice email could not be sent.') }, { status });
 			}
 			console.error('Invoice email failed', { hackathonId: id, error });
-			return json({ message: 'Die Rechnungs-E-Mail konnte nicht gesendet werden.' }, { status: 500 });
+			return json({ message: localeMessage(locals.locale, 'Die Rechnungs-E-Mail konnte nicht gesendet werden.', 'The invoice email could not be sent.') }, { status: 500 });
 		}
 	};
 }

@@ -1,11 +1,10 @@
 import { createInvoicePdf } from '$lib/invoice-artifacts';
+import { localeMessage } from '$lib/locale-message';
 import { isHackathonId } from '$lib/public-id';
 import { requireAdmin } from '$lib/server/admin-auth';
-import { InvoiceConfigurationError } from '$lib/server/invoice-config';
+import { invoiceErrorResponse } from '$lib/server/invoice-messages';
 import {
 	getOrCreateInvoice,
-	InvoiceNotFoundError,
-	InvoiceNotIssuableError,
 	type InvoicePersistenceDependencies
 } from '$lib/server/invoices';
 import { json } from '@sveltejs/kit';
@@ -31,13 +30,10 @@ export function _createInvoicePdfPost(dependencies: InvoicePdfEndpointDependenci
 				}
 			});
 		} catch (error) {
-			if (error instanceof InvoiceNotFoundError) return json({ message: error.message }, { status: 404 });
-			if (error instanceof InvoiceNotIssuableError) return json({ message: error.message }, { status: 409 });
-			if (error instanceof InvoiceConfigurationError) {
-				return json({ message: 'Die Rechnungskonfiguration ist unvollständig.' }, { status: 503 });
-			}
+			const failure = invoiceErrorResponse(error, locals.locale);
+			if (failure) return json({ message: failure.message }, { status: failure.status });
 			console.error('Invoice PDF generation failed', { hackathonId: id, error });
-			return json({ message: 'Die Rechnung konnte nicht erstellt werden.' }, { status: 500 });
+			return json({ message: localeMessage(locals.locale, 'Die Rechnung konnte nicht erstellt werden.', 'The invoice could not be created.') }, { status: 500 });
 		}
 	};
 }

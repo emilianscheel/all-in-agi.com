@@ -18,10 +18,18 @@ export async function listCustomerBookings() {
 export async function getDashboardSummary() {
 	const db = await getDb();
 	const [summary] = await db.select({
-		bookingCount: sql<number>`count(*)::int`,
-		totalRevenue: sql<number>`coalesce(sum(${hackathons.totalPrice}), 0)::int`
-	}).from(hackathons).where(inArray(hackathons.status, ['contracted', 'confirmed', 'completed']));
-	return summary ?? { bookingCount: 0, totalRevenue: 0 };
+		bookingCount: sql<number>`count(*) filter (where ${hackathons.status} in ('contracted', 'confirmed', 'completed'))::int`,
+		pipelineRevenue: sql<number>`coalesce(sum(${hackathons.totalPrice}) filter (where ${hackathons.status} in ('requested', 'prep_scheduled')), 0)::int`,
+		contractedRevenue: sql<number>`coalesce(sum(${hackathons.totalPrice}) filter (where ${hackathons.status} in ('exit_window', 'contracted', 'confirmed', 'completed')), 0)::int`
+	}).from(hackathons);
+	const pipelineRevenue = summary?.pipelineRevenue ?? 0;
+	const contractedRevenue = summary?.contractedRevenue ?? 0;
+	return {
+		bookingCount: summary?.bookingCount ?? 0,
+		pipelineRevenue,
+		contractedRevenue,
+		totalRevenue: pipelineRevenue + contractedRevenue
+	};
 }
 
 export async function getDashboardBookings() {

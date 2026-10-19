@@ -52,15 +52,25 @@ export function buildInvoiceEmailHtml(snapshot: InvoiceSnapshot) {
 	return `<p>Hallo ${escapeHtml(snapshot.customer.contactName)},</p><p>anbei erhalten Sie die ${label} für Ihren ALL IN AGI Agentic Engineering Hackathon.</p><p><strong>Rechnungsnummer:</strong> ${escapeHtml(snapshot.invoiceNumber)}<br><strong>Gesamtbetrag:</strong> ${escapeHtml(formatInvoiceMoney(snapshot.grossTotalCents))}<br><strong>Zahlbar bis:</strong> ${escapeHtml(formatInvoiceDate(snapshot.dueDate))}</p><p>Viele Grüße<br>ALL IN AGI</p>`;
 }
 
-export async function sendInvoiceEmail(snapshot: InvoiceSnapshot, dependencies: InvoiceEmailDependencies = {}) {
+export interface InvoiceEmailDelivery {
+	to?: { address: string; name: string };
+	subjectPrefix?: string;
+}
+
+export async function sendInvoiceEmail(
+	snapshot: InvoiceSnapshot,
+	dependencies: InvoiceEmailDependencies = {},
+	delivery: InvoiceEmailDelivery = {}
+) {
 	const en = snapshot.locale === 'en';
 	const split = snapshot.version === 2 || snapshot.version === 3;
 	const label = split && snapshot.kind === 'down-payment' ? 'Anzahlungsrechnung'
 		: split && snapshot.kind === 'final' ? 'Endrechnung' : 'Rechnung';
+	const subject = en ? `Your ALL IN AGI hackathon invoice – ${snapshot.invoiceNumber}` : `Ihre ${label} für den ALL IN AGI Hackathon – ${snapshot.invoiceNumber}`;
 	const pdf = await (dependencies.createPdf ?? createInvoicePdf)(snapshot);
 	return sendEmailMessage({
-		to: { address: snapshot.customer.email, name: snapshot.customer.contactName },
-		subject: en ? `Your ALL IN AGI hackathon invoice – ${snapshot.invoiceNumber}` : `Ihre ${label} für den ALL IN AGI Hackathon – ${snapshot.invoiceNumber}`,
+		to: delivery.to ?? { address: snapshot.customer.email, name: snapshot.customer.contactName },
+		subject: delivery.subjectPrefix ? `${delivery.subjectPrefix}${subject}` : subject,
 		text: buildInvoiceEmailText(snapshot),
 		html: buildInvoiceEmailHtml(snapshot),
 		headers: {

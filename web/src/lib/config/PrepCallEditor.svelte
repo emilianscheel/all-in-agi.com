@@ -53,13 +53,13 @@
 			endDate.setDate(endDate.getDate() + 45);
 			const response = await fetch(`/api/availability?start=${start}&end=${endDate.toISOString().slice(0, 10)}&tz=Europe/Berlin`);
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Verfügbarkeit konnte nicht geladen werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'Availability could not be loaded.' : 'Verfügbarkeit konnte nicht geladen werden.'));
 			slots = normalizeAvailabilitySlots(Array.isArray(result.slots) ? result.slots : []);
 			if (clearUnavailableValue && value && !slots.includes(value)) onchange('');
 			if (customDate && !availablePrepCallDates(slots).includes(customDate)) oncustomdatechange('');
 		} catch (error) {
 			slots = [];
-			loadError = error instanceof Error ? error.message : 'Verfügbarkeit konnte nicht geladen werden.';
+			loadError = error instanceof Error ? error.message : (locale === 'en' ? 'Availability could not be loaded.' : 'Verfügbarkeit konnte nicht geladen werden.');
 		} finally {
 			loading = false;
 			onloadingchange(false);

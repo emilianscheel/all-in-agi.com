@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { InvoiceLegalConfiguration } from '$lib/invoice';
-import { getOrCreateDownPaymentInvoice, getOrCreateInvoice, InvoiceNotIssuableError } from './invoices';
+import { getOrCreateDownPaymentInvoice, getOrCreateInvoice, InvoiceNotIssuableError, previewDownPaymentInvoice, previewInvoice } from './invoices';
 import type { HackathonRecord } from './hackathons';
 
 const legal: InvoiceLegalConfiguration = {
@@ -95,5 +95,81 @@ describe('invoice persistence orchestration', () => {
 			}
 		});
 		expect(final.snapshot).toMatchObject({ version: 3, kind: 'final', netTotalCents: 280000 });
+	});
+
+	test('issues a standard invoice after the event has happened', async () => {
+		const past = { ...record(), eventStart: '2020-06-20T07:00:00.000Z', eventEnd: '2020-06-20T15:00:00.000Z' };
+		const result = await getOrCreateInvoice(past.id, {
+			getRecord: async () => past,
+			getConfiguration: () => legal,
+			now: () => new Date('2026-10-19T10:00:00.000Z'),
+			freeze: async (_id, snapshot, issuedAt) => ({ ...past, invoiceSnapshot: snapshot, invoiceIssuedAt: issuedAt })
+		});
+		expect(result.snapshot.serviceDate).toBe('2020-06-20');
+	});
+
+	test('issues the final invoice after a past event when the deposit was paid', async () => {
+		const past = {
+			...record(),
+			billingModel: 'deposit_30' as const,
+			eventStart: '2020-06-20T07:00:00.000Z',
+			eventEnd: '2020-06-20T15:00:00.000Z'
+		};
+		let current = past;
+		const downPayment = await getOrCreateDownPaymentInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2020-05-01T10:00:00.000Z'),
+			freezeDownPayment: async (_id, snapshot, issuedAt) => {
+				current = { ...current, downPaymentInvoiceSnapshot: snapshot, downPaymentInvoiceIssuedAt: issuedAt };
+				return current;
+			}
+		});
+		current = { ...current, downPaymentPaidAt: '2020-05-08T10:00:00.000Z' };
+		const final = await getOrCreateInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2026-10-19T10:00:00.000Z'),
+			freeze: async (_id, snapshot, issuedAt) => {
+				current = { ...current, invoiceSnapshot: snapshot, invoiceIssuedAt: issuedAt };
+				return current;
+			}
+		});
+		expect(downPayment.snapshot.version === 2 || downPayment.snapshot.version === 3).toBe(true);
+		expect(final.snapshot.version === 2 || final.snapshot.version === 3).toBe(true);
+		if (final.snapshot.version === 2 || final.snapshot.version === 3) expect(final.snapshot.kind).toBe('final');
+	});
+
+	test('previews an invoice without freezing an official snapshot', async () => {
+		let frozen = false;
+		const current = record();
+		const preview = await previewInvoice(current.id, {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2099-05-01T10:00:00.000Z'),
+			freeze: async () => { frozen = true; return null; }
+		});
+		expect(frozen).toBe(false);
+		expect(preview.snapshot.invoiceNumber).toBe('RE-HAA-AAA-AAA');
+		expect(current.invoiceSnapshot).toBeNull();
+
+		const deposit = { ...current, billingModel: 'deposit_30' as const };
+		const downPayment = await previewDownPaymentInvoice(deposit.id, {
+			getRecord: async () => deposit,
+			getConfiguration: () => legal,
+			now: () => new Date('2099-05-01T10:00:00.000Z'),
+			freezeDownPayment: async () => { frozen = true; return null; }
+		});
+		expect(frozen).toBe(false);
+		expect(downPayment.snapshot.invoiceNumber).toBe('RE-HAA-AAA-AAA-AZ');
+	});
+
+	test('does not issue a deposit invoice for a single-invoice booking', async () => {
+		const legacy = { ...record(), billingModel: 'legacy_full' as const, status: 'confirmed' as const };
+		await expect(previewDownPaymentInvoice(legacy.id, {
+			getRecord: async () => legacy,
+			getConfiguration: () => legal,
+			now: () => new Date('2026-10-19T10:00:00.000Z')
+		})).rejects.toBeInstanceOf(InvoiceNotIssuableError);
 	});
 });

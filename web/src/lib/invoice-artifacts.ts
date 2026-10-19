@@ -72,18 +72,22 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	addressLines(snapshot.seller.address).forEach((value, index) => {
 		page.drawText(safeText(value), { x: 360, y: 584 - index * 14, font: regular, size: 9.5, color: ink });
 	});
-	drawWrapped(
-		page,
-		`${snapshot.seller.taxIdLabel}: ${snapshot.seller.taxIdValue}`,
-		360,
-		542,
-		RIGHT - 360,
-		regular,
-		8.5,
-		muted,
-		2,
-		11
-	);
+	if (snapshot.seller.taxIdValue) {
+		drawWrapped(
+			page,
+			snapshot.seller.taxIdLabel
+				? `${snapshot.seller.taxIdLabel}: ${snapshot.seller.taxIdValue}`
+				: snapshot.seller.taxIdValue,
+			360,
+			542,
+			RIGHT - 360,
+			regular,
+			8.5,
+			muted,
+			2,
+			11
+		);
+	}
 
 	page.drawText(en ? 'Services' : 'Leistungsübersicht', { x: LEFT, y: 503, font: bold, size: 16, color: ink });
 	page.drawLine({ start: { x: LEFT, y: 480 }, end: { x: RIGHT, y: 480 }, thickness: 1, color: line });

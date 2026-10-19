@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
-	PUBLIC_ROUTE_ENTRIES, canonicalPublicPath, internalPathForPublic, localizedPath,
+	PUBLIC_ROUTE_ENTRIES, canonicalPublicPath, internalPathForPublic, localeFromReferer, localizedPath,
 	preferredLocale, publicPathForInternal, reroutePath, stripLocale, switchLocalePath
 } from './i18n';
 
@@ -47,6 +47,13 @@ describe('locale selection', () => {
 		expect(preferredLocale('DE', 'en-US')).toBe('de');
 		expect(preferredLocale('AT', 'de-DE')).toBe('en');
 		expect(preferredLocale('US', 'de-DE')).toBe('en');
+	});
+
+	test('reads the page locale from an API referer', () => {
+		expect(localeFromReferer('http://localhost:3000/en/HMV-HRA-L1W')).toBe('en');
+		expect(localeFromReferer('http://localhost:3000/de/buchungen')).toBe('de');
+		expect(localeFromReferer('http://localhost:3000/api/hackathons/HMV-HRA-L1W/invoice.pdf')).toBeNull();
+		expect(localeFromReferer(null)).toBeNull();
 	});
 
 	test('uses weighted browser language and falls back to German', () => {

@@ -11,7 +11,7 @@ import { BookingProviderError, reschedulePrepCallWithToken } from './cal-resched
 export { BookingProviderError } from './cal-reschedule';
 
 export function bookHackathonDay(config: BookingConfiguration, requestFetch: typeof fetch, development: boolean) {
-	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon');
+	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon', 'Please select a hackathon date first.');
 	const location = hackathonCalendarLocation(config);
 	return createCalBookingWithToken(config, requestFetch, development, {
 		eventTypeId: env.CAL_HACKATHON_EVENT_TYPE_ID,
@@ -29,12 +29,12 @@ export async function assertHackathonDayAvailable(
 	development: boolean,
 	bookingUidToReschedule?: string
 ) {
-	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon');
+	if (!config.eventStart || !config.eventEnd) throw new BookingProviderError('Bitte wählen Sie zuerst einen Hackathon-Termin.', 400, 'hackathon', 'Please select a hackathon date first.');
 	const token = env.CAL_API_KEY;
 	const eventTypeId = env.CAL_HACKATHON_EVENT_TYPE_ID;
 	if (!token || !eventTypeId) {
 		if (development) return;
-		throw new BookingProviderError('Die Hackathon-Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'hackathon');
+		throw new BookingProviderError('Die Hackathon-Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'hackathon', 'Hackathon scheduling is not configured for live operation yet.');
 	}
 	try {
 		const available = await isCalHackathonSlotAvailable(requestFetch, {
@@ -44,13 +44,13 @@ export async function assertHackathonDayAvailable(
 			end: config.eventEnd,
 			bookingUidToReschedule
 		});
-		if (!available) throw new BookingProviderError('Dieser Hackathon-Termin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'hackathon');
+		if (!available) throw new BookingProviderError('Dieser Hackathon-Termin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'hackathon', 'This hackathon date is no longer available. Please choose a new date.');
 	} catch (error) {
 		if (error instanceof BookingProviderError) throw error;
 		if (error instanceof CalAvailabilityError) {
 			throw new BookingProviderError(error.message, error.status >= 500 ? error.status : 502, 'hackathon');
 		}
-		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'hackathon');
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'hackathon', 'The calendar service is temporarily unavailable.');
 	}
 }
 
@@ -75,23 +75,23 @@ export async function assertPrepCallAvailable(
 	const eventTypeId = env.CAL_EVENT_TYPE_ID;
 	if (!token || !eventTypeId) {
 		if (development) return;
-		throw new BookingProviderError('Die Vorbereitungstermin-Buchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'prep-call');
+		throw new BookingProviderError('Die Vorbereitungstermin-Buchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, 'prep-call', 'Preparation call booking is not configured for live operation yet.');
 	}
 	const selected = new Date(config.consultationSlot);
-	if (Number.isNaN(selected.getTime())) throw new BookingProviderError('Bitte wählen Sie einen gültigen Vorbereitungstermin.', 400, 'prep-call');
+	if (Number.isNaN(selected.getTime())) throw new BookingProviderError('Bitte wählen Sie einen gültigen Vorbereitungstermin.', 400, 'prep-call', 'Please select a valid preparation call time.');
 	const date = berlinInputsFromIso(selected.toISOString()).date;
 	try {
 		const slots = await getCalPrepCallSlots(requestFetch, { token, eventTypeId, start: date, end: date });
 		const selectedIso = selected.toISOString();
 		if (!slots.some((slot) => new Date(slot).toISOString() === selectedIso)) {
-			throw new BookingProviderError('Dieser Vorbereitungstermin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'prep-call');
+			throw new BookingProviderError('Dieser Vorbereitungstermin ist nicht mehr verfügbar. Bitte wählen Sie einen neuen Termin.', 409, 'prep-call', 'This preparation call time is no longer available. Please choose a new time.');
 		}
 	} catch (error) {
 		if (error instanceof BookingProviderError) throw error;
 		if (error instanceof CalPrepAvailabilityError) {
 			throw new BookingProviderError(error.message, error.status >= 500 ? error.status : 502, 'prep-call');
 		}
-		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'prep-call');
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, 'prep-call', 'The calendar service is temporarily unavailable.');
 	}
 }
 

@@ -41,7 +41,13 @@ describe('invoice snapshot', () => {
 		expect(xml).toContain('urn:cen.eu:en16931:2017#compliant#urn:zugferd.de:2p3:EN16931');
 		expect(xml).toContain(`<ram:ID>${snapshot.invoiceNumber}</ram:ID>`);
 		expect(xml).toContain('<ram:GrandTotalAmount>');
+		expect(xml).toContain('<ram:ID schemeID="FC">DE123456789</ram:ID>');
 		expect(xml).not.toContain('& ');
+	});
+	test('omits the seller tax registration when no tax ID is configured', () => {
+		const snapshot = createInvoiceSnapshot(source, { ...legal, taxIdLabel: '', taxIdValue: '' });
+		expect(createZugferdXml(snapshot)).not.toContain('SpecifiedTaxRegistration');
+		expect(snapshot.seller.taxIdValue).toBe('');
 	});
 	test('creates a complete 19 percent VAT invoice with optional adjustments', () => {
 		const result = createInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));

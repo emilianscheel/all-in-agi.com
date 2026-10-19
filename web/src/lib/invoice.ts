@@ -327,6 +327,9 @@ export function createZugferdXml(snapshot: InvoiceSnapshot) {
 <ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>S</ram:CategoryCode><ram:RateApplicablePercent>${item.vatRatePercent ?? snapshot.vatRatePercent}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${(item.netAmountCents / 100).toFixed(2)}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement>
 </ram:IncludedSupplyChainTradeLineItem>`).join('');
 	const sellerName = `${snapshot.seller.legalName}, handelnd unter ${snapshot.seller.brandName}`;
+	const sellerTax = snapshot.seller.taxIdValue
+		? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">${xmlEscape(snapshot.seller.taxIdValue)}</ram:ID></ram:SpecifiedTaxRegistration>`
+		: '';
 	const buyerReference = snapshot.customer.purchaseOrder ? `<ram:BuyerReference>${xmlEscape(snapshot.customer.purchaseOrder)}</ram:BuyerReference>` : '';
 	const delivery = snapshot.serviceDate ? `<ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.serviceDate)}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>` : '';
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -335,7 +338,7 @@ export function createZugferdXml(snapshot: InvoiceSnapshot) {
 <rsm:ExchangedDocument><ram:ID>${xmlEscape(snapshot.invoiceNumber)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${zugferdDate(snapshot.issueDate)}</udt:DateTimeString></ram:IssueDateTime></rsm:ExchangedDocument>
 <rsm:SupplyChainTradeTransaction>${itemXml}
 <ram:ApplicableHeaderTradeAgreement>
-<ram:SellerTradeParty><ram:Name>${xmlEscape(sellerName)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.seller.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.seller.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.seller.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress><ram:SpecifiedTaxRegistration><ram:ID schemeID="FC">${xmlEscape(snapshot.seller.taxIdValue)}</ram:ID></ram:SpecifiedTaxRegistration></ram:SellerTradeParty>
+<ram:SellerTradeParty><ram:Name>${xmlEscape(sellerName)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.seller.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.seller.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.seller.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>${sellerTax}</ram:SellerTradeParty>
 <ram:BuyerTradeParty><ram:Name>${xmlEscape(`${snapshot.customer.companyName}${snapshot.customer.legalForm ? ` ${snapshot.customer.legalForm}` : ''}`)}</ram:Name><ram:PostalTradeAddress><ram:PostcodeCode>${xmlEscape(snapshot.customer.address.postalCode)}</ram:PostcodeCode><ram:LineOne>${xmlEscape(snapshot.customer.address.street)}</ram:LineOne><ram:CityName>${xmlEscape(snapshot.customer.address.city)}</ram:CityName><ram:CountryID>DE</ram:CountryID></ram:PostalTradeAddress>${snapshot.customer.vatId ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${xmlEscape(snapshot.customer.vatId)}</ram:ID></ram:SpecifiedTaxRegistration>` : ''}</ram:BuyerTradeParty>
 </ram:ApplicableHeaderTradeAgreement>
 ${delivery}

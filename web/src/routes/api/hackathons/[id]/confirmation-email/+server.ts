@@ -1,3 +1,4 @@
+import { localeMessage } from '$lib/locale-message';
 import { isHackathonId } from '$lib/public-id';
 import {
 	sendCustomerBookingConfirmationEmail,
@@ -33,14 +34,15 @@ function logFailure(hackathonId: string, attempt: BookingConfirmationAttempt) {
 export function _createConfirmationEmailPost(
 	dependencies: ConfirmationEmailEndpointDependencies = {}
 ) {
-		return async function POST({ params }: { params: { id: string } }) {
+		return async function POST({ params, locals }: { params: { id: string }; locals?: App.Locals }) {
 		const id = params.id.toUpperCase();
+		const say = (de: string, en: string) => localeMessage(locals?.locale, de, en);
 		if (!isHackathonId(id)) {
-			return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
+			return json({ message: say('Hackathon nicht gefunden.', 'Hackathon not found.') }, { status: 404 });
 		}
 
 		const record = await (dependencies.getRecord ?? getConfirmedHackathonRecord)(id);
-		if (!record) return json({ message: 'Hackathon nicht gefunden.' }, { status: 404 });
+		if (!record) return json({ message: say('Hackathon nicht gefunden.', 'Hackathon not found.') }, { status: 404 });
 
 		const attempt = await (dependencies.sendConfirmation ?? sendCustomerBookingConfirmationEmail)(
 			{
@@ -55,7 +57,7 @@ export function _createConfirmationEmailPost(
 				: attempt.error.stage === 'network' || attempt.error.stage === 'provider' ? 502
 				: 500;
 			return json(
-				{ message: 'Die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.' },
+				{ message: say('Die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut.', 'The confirmation email could not be sent. Please try again.') },
 				{ status }
 			);
 		}

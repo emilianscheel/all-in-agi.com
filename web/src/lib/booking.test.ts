@@ -97,6 +97,32 @@ describe('booking validation', () => {
 		expect(validateConfiguration(validConfiguration)).toEqual([]);
 	});
 
+	test('checks only the date being edited so a past value on the other field does not block it', () => {
+		expect(validateConfiguration({
+			...validConfiguration,
+			consultationSlot: '2020-01-01T10:00:00.000Z'
+		}, 'event')).toEqual([]);
+		expect(validateConfiguration({
+			...validConfiguration,
+			eventStart: '2020-01-01T08:00:00.000Z',
+			eventEnd: '2020-01-01T16:00:00.000Z'
+		}, 'prep')).toEqual([]);
+		expect(validateConfiguration({
+			...validConfiguration,
+			eventStart: '2020-01-01T08:00:00.000Z',
+			eventEnd: '2020-01-01T16:00:00.000Z',
+			consultationSlot: '2020-01-01T10:00:00.000Z'
+		}, 'none')).toEqual([]);
+	});
+
+	test('uses the viewer locale for a past preparation call', () => {
+		expect(validateConfiguration({
+			...validConfiguration,
+			locale: 'en',
+			consultationSlot: '2020-01-01T10:00:00.000Z'
+		}, 'prep')).toContain('Please select a future preparation call time.');
+	});
+
 	test('accepts explicit deferral but rejects untouched and mixed scheduling states', () => {
 		expect(validateConfiguration({ ...validConfiguration, eventStart: null, eventEnd: null })).toEqual([]);
 		expect(validateConfiguration({ ...validConfiguration, eventStart: '', eventEnd: '' })).not.toEqual([]);

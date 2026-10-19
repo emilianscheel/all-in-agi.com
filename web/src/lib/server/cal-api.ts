@@ -23,35 +23,38 @@ function bookingRejection(result: unknown, status: number, field: 'hackathon' | 
 	try { details = JSON.stringify(result).toLowerCase(); } catch { details = ''; }
 
 	if (status === 409 || /slot|availability|conflict/.test(details)) {
-		return { message: 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Termin.', status: 409 };
+		return { message: 'Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen neuen Termin.', englishMessage: 'This time was just taken. Please choose a new time.', status: 409 };
 	}
 	if (/phone|telefon/.test(details)) {
-		return { message: 'Die Telefonnummer konnte nicht verarbeitet werden. Bitte verwenden Sie ein internationales Format, zum Beispiel +49 30 123456.', status: 400 };
+		return { message: 'Die Telefonnummer konnte nicht verarbeitet werden. Bitte verwenden Sie ein internationales Format, zum Beispiel +49 30 123456.', englishMessage: 'The phone number could not be processed. Please use an international format, for example +49 30 123456.', status: 400 };
 	}
 	if (/location|address|adresse/.test(details)) {
-		return { message: 'Die Veranstaltungsadresse konnte nicht verarbeitet werden. Bitte prüfen Sie Straße, PLZ und Ort.', status: 400 };
+		return { message: 'Die Veranstaltungsadresse konnte nicht verarbeitet werden. Bitte prüfen Sie Straße, PLZ und Ort.', englishMessage: 'The event address could not be processed. Please check the street, postal code, and city.', status: 400 };
 	}
 	if (/length|duration|dauer/.test(details)) {
 		return field === 'prep-call'
-			? { message: `Der Vorbereitungstermin ist im Kalender nicht korrekt als ${PREP_CALL_DURATION_MINUTES}-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.`, status: 503 }
-			: { message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.', status: 400 };
+			? { message: `Der Vorbereitungstermin ist im Kalender nicht korrekt als ${PREP_CALL_DURATION_MINUTES}-Minuten-Termin konfiguriert. Bitte kontaktieren Sie uns.`, englishMessage: `The preparation call is not configured in the calendar as a ${PREP_CALL_DURATION_MINUTES}-minute appointment. Please contact us.`, status: 503 }
+			: { message: 'Die gewählte Termindauer wird vom Kalender nicht unterstützt. Bitte wählen Sie ein anderes Start- und Endzeitfenster.', englishMessage: 'The selected duration is not supported by the calendar. Please choose a different start and end time.', status: 400 };
 	}
 	if (/booking.?window|out.?of.?bounds|minimum.?booking.?notice|too.?soon/.test(details)) {
-		return { message: 'Der gewählte Termin liegt außerhalb des buchbaren Zeitraums. Bitte wählen Sie ein anderes Datum.', status: 400 };
+		return { message: 'Der gewählte Termin liegt außerhalb des buchbaren Zeitraums. Bitte wählen Sie ein anderes Datum.', englishMessage: 'The selected time is outside the bookable range. Please choose another date.', status: 400 };
 	}
 	if (status === 401 || status === 403 || status === 404 || /event.?type|not.?found/.test(details)) {
-		return { message: 'Unser Buchungskalender ist derzeit nicht vollständig verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns.', status: 503 };
+		return { message: 'Unser Buchungskalender ist derzeit nicht vollständig verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns.', englishMessage: 'Our booking calendar is not fully available right now. Please try again later or contact us.', status: 503 };
 	}
 	if (status === 429) {
-		return { message: 'Der Kalenderdienst erhält gerade zu viele Anfragen. Bitte versuchen Sie es in wenigen Minuten erneut.', status: 503 };
+		return { message: 'Der Kalenderdienst erhält gerade zu viele Anfragen. Bitte versuchen Sie es in wenigen Minuten erneut.', englishMessage: 'The calendar service is receiving too many requests. Please try again in a few minutes.', status: 503 };
 	}
 	if (status >= 500) {
-		return { message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar. Bitte versuchen Sie es später erneut.', status: 502 };
+		return { message: 'Der Kalenderdienst ist vorübergehend nicht erreichbar. Bitte versuchen Sie es später erneut.', englishMessage: 'The calendar service is temporarily unavailable. Please try again later.', status: 502 };
 	}
 	return {
 		message: field === 'hackathon'
 			? 'Der Hackathon-Termin wurde vom Kalender abgelehnt. Bitte prüfen Sie Datum, Uhrzeit und Adresse.'
 			: 'Der Vorbereitungstermin wurde vom Kalender abgelehnt. Bitte wählen Sie einen anderen Termin.',
+		englishMessage: field === 'hackathon'
+			? 'The calendar rejected the hackathon date. Please check the date, time, and address.'
+			: 'The calendar rejected the preparation call. Please choose another time.',
 		status
 	};
 }
@@ -79,7 +82,7 @@ export async function createCalBookingWithToken(
 			const demoUid = `demo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 			return { status: 'success', demo: true, uid: demoUid, icsUid: `${demoUid}@all-in-agi.com`, title: options.title, start: options.start, end: options.end, meetingUrl: '' };
 		}
-		throw new BookingProviderError('Die Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, options.field);
+		throw new BookingProviderError('Die Terminbuchung ist noch nicht für den Live-Betrieb konfiguriert.', 503, options.field, 'Scheduling is not configured for live operation yet.');
 	}
 
 	try {
@@ -106,7 +109,7 @@ export async function createCalBookingWithToken(
 				providerDetails: providerErrorDetail(result?.error?.details)
 			});
 			const rejection = bookingRejection(result, response.status, options.field);
-			throw new BookingProviderError(rejection.message, rejection.status, options.field);
+			throw new BookingProviderError(rejection.message, rejection.status, options.field, rejection.englishMessage);
 		}
 		return {
 			status: 'success', demo: false, uid: result?.data?.uid, icsUid: result?.data?.icsUid, title: result?.data?.title,
@@ -115,7 +118,7 @@ export async function createCalBookingWithToken(
 		};
 	} catch (error) {
 		if (error instanceof BookingProviderError) throw error;
-		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, options.field);
+		throw new BookingProviderError('Der Kalenderdienst ist vorübergehend nicht erreichbar.', 502, options.field, 'The calendar service is temporarily unavailable.');
 	}
 }
 
@@ -126,7 +129,7 @@ export async function cancelCalBookingWithToken(
 	options: { reason?: string } = {}
 ) {
 	if (booking.demo) return;
-	if (!token || !booking.uid) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', 503);
+	if (!token || !booking.uid) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', 503, undefined, 'The calendar event could not be cancelled.');
 	const response = await requestFetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(booking.uid)}/cancel`, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${token}`, 'cal-api-version': CAL_API_VERSION, 'content-type': 'application/json' },
@@ -137,6 +140,6 @@ export async function cancelCalBookingWithToken(
 		try { result = await response.json(); } catch { result = null; }
 		const alreadyCancelled = (response.status === 404 || response.status === 409)
 			&& /cancelled|canceled|already|not found/i.test(JSON.stringify(result));
-		if (!alreadyCancelled) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', response.status);
+		if (!alreadyCancelled) throw new BookingProviderError('Der Kalendertermin konnte nicht storniert werden.', response.status, undefined, 'The calendar event could not be cancelled.');
 	}
 }

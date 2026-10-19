@@ -92,14 +92,14 @@
 		try {
 			const response = await fetch(`/api/hackathon-availability?${params}`, { signal: controller.signal, cache: 'no-store' });
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Die Hackathon-Verfügbarkeit konnte nicht geladen werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'Hackathon availability could not be loaded.' : 'Die Hackathon-Verfügbarkeit konnte nicht geladen werden.'));
 			const normalized = { ...result, slots: normalizeHackathonSlots(Array.isArray(result.slots) ? result.slots : []) } as HackathonAvailabilityResponse;
 			monthCache.set(month, normalized);
 			applyAvailability(normalized, month);
 		} catch (error) {
 			if ((error as Error).name === 'AbortError') return;
 			slots = [];
-			loadError = error instanceof Error ? error.message : 'Die Hackathon-Verfügbarkeit konnte nicht geladen werden.';
+			loadError = error instanceof Error ? error.message : (locale === 'en' ? 'Hackathon availability could not be loaded.' : 'Die Hackathon-Verfügbarkeit konnte nicht geladen werden.');
 		} finally {
 			if (!controller.signal.aborted) {
 				loading = false;

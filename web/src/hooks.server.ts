@@ -8,6 +8,7 @@ import {
 	canonicalPublicPath,
 	internalPathForPublic,
 	localeFromPath,
+	localeFromReferer,
 	localizedPathFromPublic,
 	preferredLocale,
 	publicPathForInternal,
@@ -38,7 +39,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	event.locals.locale = explicitLocale ?? 'de';
+	event.locals.locale = explicitLocale ?? localeFromReferer(event.request.headers.get('referer')) ?? 'de';
 	const authSession = await auth.api.getSession({ headers: event.request.headers });
 	event.locals.session = authSession?.session ?? null;
 	event.locals.user = authSession?.user ?? null;

@@ -88,6 +88,15 @@ export function localeFromPath(pathname: string): Locale | null {
 	return isLocale(segment) ? segment : null;
 }
 
+export function localeFromReferer(referer: string | null): Locale | null {
+	if (!referer) return null;
+	try {
+		return localeFromPath(new URL(referer).pathname);
+	} catch {
+		return null;
+	}
+}
+
 export function stripLocale(pathname: string) {
 	const locale = localeFromPath(pathname);
 	if (!locale) return { locale: null, pathname } as const;

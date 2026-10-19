@@ -107,7 +107,7 @@
 			</article>
 			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Booked net revenue' : 'Gebuchter Nettoumsatz'}</span>
-				<strong>{formatPrice(data.summary.totalRevenue)}</strong>
+				<strong>{formatPrice(data.summary.contractedRevenue)}</strong>
 			</article>
 			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Users' : 'Nutzer'}</span>

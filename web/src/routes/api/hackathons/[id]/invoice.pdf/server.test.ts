@@ -56,6 +56,20 @@ describe('invoice PDF endpoint', () => {
 		});
 		const response = await post({ params: { id: 'HAA-AAA-AAA' }, locals: adminLocals });
 		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({ message: 'Die Rechnungskonfiguration ist unvollständig.' });
 		expect(frozen).toBe(false);
+	});
+
+	test('translates the incomplete configuration notice', async () => {
+		const post = _createInvoicePdfPost({
+			getRecord: async () => record(),
+			getConfiguration: () => { throw new InvoiceConfigurationError(['taxIdValue']); }
+		});
+		const response = await post({
+			params: { id: 'HAA-AAA-AAA' },
+			locals: { ...adminLocals, locale: 'en' }
+		});
+		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({ message: 'The invoice configuration is incomplete.' });
 	});
 });

@@ -15,7 +15,7 @@ export function getInvoiceLegalConfiguration(): InvoiceLegalConfiguration {
 		iban: process.env.INVOICE_IBAN?.trim() ?? '',
 		bic: process.env.INVOICE_BIC?.trim() ?? ''
 	};
-	const missing = Object.entries(values).filter(([, value]) => !value).map(([key]) => key);
-	if (missing.length) throw new InvoiceConfigurationError(missing);
+	const missing = (['accountHolder', 'iban', 'bic'] as const).filter((key) => !values[key]);
+	if (missing.length) throw new InvoiceConfigurationError([...missing]);
 	return values;
 }

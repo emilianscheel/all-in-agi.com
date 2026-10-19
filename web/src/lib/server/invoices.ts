@@ -90,6 +90,10 @@ export async function getOrCreateInvoice(
 	throw new InvoiceNotIssuableError();
 }
 
+function canIssueDownPayment(record: HackathonRecord) {
+	return record.billingModel === 'deposit_30' && ['contracted', 'confirmed', 'completed'].includes(record.status);
+}
+
 export async function getOrCreateDownPaymentInvoice(
 	id: string,
 	dependencies: InvoicePersistenceDependencies = {}
@@ -99,9 +103,7 @@ export async function getOrCreateDownPaymentInvoice(
 	const current = await getRecord(id);
 	if (!current) throw new InvoiceNotFoundError();
 	if (current.downPaymentInvoiceSnapshot) return { record: current, snapshot: current.downPaymentInvoiceSnapshot };
-	if (!['contracted', 'confirmed', 'completed'].includes(current.status) || current.billingModel !== 'deposit_30' || current.invoiceSnapshot) {
-		throw new InvoiceNotIssuableError();
-	}
+	if (!canIssueDownPayment(current)) throw new InvoiceNotIssuableError();
 	if (validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
 	const now = dependencies.now?.() ?? new Date();
 	const snapshot = createDownPaymentInvoiceSnapshot(
@@ -116,6 +118,61 @@ export async function getOrCreateDownPaymentInvoice(
 	if (!concurrent) throw new InvoiceNotFoundError();
 	if (concurrent.downPaymentInvoiceSnapshot) return { record: concurrent, snapshot: concurrent.downPaymentInvoiceSnapshot };
 	throw new InvoiceNotIssuableError();
+}
+
+export async function previewInvoice(
+	id: string,
+	dependencies: InvoicePersistenceDependencies = {}
+): Promise<IssuedInvoice> {
+	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
+	const current = await getRecord(id);
+	if (!current) throw new InvoiceNotFoundError();
+	if (current.invoiceSnapshot) return { record: current, snapshot: current.invoiceSnapshot };
+	if (!['contracted', 'confirmed', 'completed'].includes(current.status)) throw new InvoiceNotIssuableError();
+	if (current.billingModel === 'deposit_30' && validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
+
+	const now = dependencies.now?.() ?? new Date();
+	const legal = (dependencies.getConfiguration ?? getInvoiceLegalConfiguration)();
+	if (current.billingModel === 'deposit_30') {
+		if (!current.eventStart || !current.eventEnd || !current.downPaymentInvoiceSnapshot || !current.downPaymentPaidAt || now < new Date(current.eventEnd)) {
+			throw new InvoiceNotIssuableError();
+		}
+		if (current.downPaymentInvoiceSnapshot.version === 1 || current.downPaymentInvoiceSnapshot.kind !== 'down-payment') {
+			throw new InvoiceNotIssuableError();
+		}
+		return {
+			record: current,
+			snapshot: createFinalInvoiceSnapshot({ ...current, locale: current.customerLocale }, legal, current.downPaymentInvoiceSnapshot, now, `RE-${current.id}-ER`)
+		};
+	}
+	return {
+		record: current,
+		snapshot: createInvoiceSnapshot({ ...current, locale: current.customerLocale }, legal, now, `RE-${current.id}`)
+	};
+}
+
+export async function previewDownPaymentInvoice(
+	id: string,
+	dependencies: InvoicePersistenceDependencies = {}
+): Promise<IssuedInvoice> {
+	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
+	const current = await getRecord(id);
+	if (!current) throw new InvoiceNotFoundError();
+	if (current.downPaymentInvoiceSnapshot) return { record: current, snapshot: current.downPaymentInvoiceSnapshot };
+	if (!canIssueDownPayment(current)) throw new InvoiceNotIssuableError();
+	if (validateBillingDetails(current.billing).length) throw new InvoiceNotIssuableError();
+	const now = dependencies.now?.() ?? new Date();
+	return {
+		record: current,
+		snapshot: createDownPaymentInvoiceSnapshot(
+			{ ...current, locale: current.customerLocale },
+			(dependencies.getConfiguration ?? getInvoiceLegalConfiguration)(),
+			now,
+			`RE-${current.id}-AZ`
+		)
+	};
 }
 
 export async function getExistingInvoice(
