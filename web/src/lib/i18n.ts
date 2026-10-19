@@ -157,7 +157,9 @@ export const ui = {
 		cmdkLabel: 'Seitensuche',
 		cmdkPlaceholder: 'Seite suchen oder Frage stellen…',
 		cmdkAskAi: 'Mit KI fragen',
-		cmdkEmpty: 'Enter drücken',
+		cmdkEmptyBefore: '',
+		cmdkEmptyKey: 'enter',
+		cmdkEmptyAfter: 'drücken',
 		cmdkThinking: 'Denkt nach…',
 		cmdkError: 'Etwas ist schiefgelaufen.'
 	},
@@ -170,7 +172,9 @@ export const ui = {
 		cmdkLabel: 'Page search',
 		cmdkPlaceholder: 'Search pages or ask a question…',
 		cmdkAskAi: 'Ask AI',
-		cmdkEmpty: 'Press enter',
+		cmdkEmptyBefore: 'Press',
+		cmdkEmptyKey: 'enter',
+		cmdkEmptyAfter: '',
 		cmdkThinking: 'Thinking…',
 		cmdkError: 'Something went wrong.'
 	}

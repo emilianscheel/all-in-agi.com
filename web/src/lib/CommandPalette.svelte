@@ -273,7 +273,11 @@
 									</div>
 								{:else}
 									<Command.Empty class="cmdk-empty">
-										<p>{copy.cmdkEmpty}</p>
+										<p>
+											{#if copy.cmdkEmptyBefore}{copy.cmdkEmptyBefore}{' '}{/if}<kbd
+												class="cmdk-kbd">{copy.cmdkEmptyKey}</kbd
+											>{#if copy.cmdkEmptyAfter}{' '}{copy.cmdkEmptyAfter}{/if}
+										</p>
 									</Command.Empty>
 
 									<Command.Item

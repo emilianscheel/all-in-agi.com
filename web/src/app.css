@@ -915,11 +915,11 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	color: var(--ink);
 	font: inherit;
 	font-size: 16px;
-	font-weight: 550;
+	font-weight: 450;
 	line-height: 1.35;
 	outline: none;
 }
-.cmdk-input::placeholder { color: var(--muted); font-weight: 500; }
+.cmdk-input::placeholder { color: var(--muted); font-weight: 400; }
 .cmdk-kbd {
 	flex: none;
 	padding: 3px 7px;
@@ -928,7 +928,7 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	background: var(--surface);
 	color: var(--muted);
 	font-size: 11px;
-	font-weight: 650;
+	font-weight: 550;
 	letter-spacing: 0.02em;
 	text-transform: uppercase;
 }
@@ -966,16 +966,22 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-size: 14px;
-	font-weight: 600;
+	font-weight: 500;
 	line-height: 1.3;
 }
 .cmdk-empty {
 	padding: 28px 16px;
-	text-align: center;
+	display: flex;
+	justify-content: center;
 	color: var(--muted);
 	font-size: 14px;
 }
-.cmdk-empty p { margin: 0; }
+.cmdk-empty p {
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
 .cmdk-answer { padding: 8px 8px 12px; }
 .cmdk-ai-status, .cmdk-ai-error {
 	margin: 0;
