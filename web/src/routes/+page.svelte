@@ -730,7 +730,7 @@
                     <h3>Emilian Scheel</h3>
                     <div class="team-profile-links">
                         <a
-                            href="mailto:emilian@all-in.com"
+                            href="mailto:emilian@all-in-agi.com"
                             aria-label="E-Mail an Emilian Scheel"
                             title="E-Mail"
                         >
