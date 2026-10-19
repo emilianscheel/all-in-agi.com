@@ -34,13 +34,13 @@
         Video,
         Vote,
     } from "lucide-svelte";
-    import { Accordion } from "bits-ui";
     import { CODING_TOOLS } from "$lib/booking";
     import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from "$lib/contact";
     import { reveal } from "$lib/motion";
     import SeoHead from "$lib/SeoHead.svelte";
     import JsonLd from "$lib/JsonLd.svelte";
     import ClosingCta from "$lib/ClosingCta.svelte";
+    import FaqSection from "$lib/FaqSection.svelte";
     import { page } from "$app/state";
     import { localizedPath, type Locale } from "$lib/i18n";
 
@@ -859,29 +859,6 @@
     </button>
 {/if}
 
-<section>
-    <div class="section-wrap faq-wrap">
-        <div use:reveal>
-            <h2 class="section-title">
-                {locale === "en" ? "Frequently asked questions" : "Häufige Fragen"}
-            </h2>
-        </div>
-        <Accordion.Root class="faq-list" type="multiple">
-            {#each faqs as faq, index}
-                <Accordion.Item class="faq-item" value={`faq-${index}`}>
-                    <Accordion.Header class="faq-header">
-                        <Accordion.Trigger class="faq-trigger"
-                            >{faq.question}<span class="faq-symbol" aria-hidden="true"
-                            ></span></Accordion.Trigger
-                        >
-                    </Accordion.Header>
-                    <Accordion.Content class="faq-answer"
-                        ><div><p>{faq.answer}</p></div></Accordion.Content
-                    >
-                </Accordion.Item>
-            {/each}
-        </Accordion.Root>
-    </div>
-</section>
+<FaqSection {locale} {faqs} />
 
 <ClosingCta {locale} />
