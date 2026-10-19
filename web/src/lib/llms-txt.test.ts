@@ -15,8 +15,14 @@ describe('localized /llms.txt', () => {
 		expect(de).toContain('https://all-in-agi.com/de/go');
 		expect(de).toContain('Agentic Engineering Hackathon');
 		expect(de).toContain('4.000 €');
+		expect(de).toContain('5.000 €');
+		expect(de).toContain('6.000 €');
+		expect(de).toContain('09:00');
 		expect(en).toContain('https://all-in-agi.com/en/go');
 		expect(en).toContain('Plan a hackathon');
 		expect(en).toContain('€4,000');
+		expect(en).toContain('€5,000');
+		expect(en).toContain('€6,000');
+		expect(en).toContain('Demo session');
 	});
 });

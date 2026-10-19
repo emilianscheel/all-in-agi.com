@@ -6,7 +6,7 @@ import { _llmsContent } from '../../llms.txt/+server';
 import type { RequestHandler } from './$types';
 
 const MAX_QUESTION_LENGTH = 500;
-const MAX_HISTORY = 8;
+const MAX_HISTORY = 16;
 const MODEL = 'openai/gpt-6-luna';
 
 type HistoryItem = { question: string; answer: string };
@@ -44,6 +44,7 @@ function buildSystemPrompt(locale: Locale, knowledge: string) {
 Answer visitor questions about ALL IN AGI services, hackathons, booking, pricing, tools, logistics, and contact.
 Use only the knowledge below. If something is unknown, say so briefly and point to go@all-in-agi.com or the booking page.
 Write in ${language}. Keep answers concise (2–5 short sentences), plain prose suitable for an FAQ accordion — no markdown headings, no bullet lists unless essential, no fluff.
+Emails and phone numbers may be written plainly; for booking or other pages you may use a markdown link like [Plan a hackathon](https://all-in-agi.com/...).
 
 ## Knowledge base
 

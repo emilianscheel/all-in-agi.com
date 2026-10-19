@@ -302,11 +302,13 @@ img { display: block; max-width: 100%; }
 .faq-answer[data-state="closed"] { animation: faq-collapse .28s cubic-bezier(.4, 0, .2, 1); }
 .faq-answer > div { overflow: hidden; }
 .faq-list p { margin: 0; padding: 0 48px 24px 4px; color: var(--muted); line-height: 1.55; }
+.faq-answer-body a { color: inherit; text-decoration: none; }
+.faq-answer-body a:hover, .faq-answer-body a:focus-visible { color: var(--ink); }
 .faq-ask-row { max-width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 4px; border-bottom: 1px solid var(--line); }
 .faq-wrap > .faq-ask-row { max-width: 880px; }
-.faq-ask-label { flex: 1; min-width: 0; display: block; }
-.faq-ask-input { width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 20px; font-weight: 600; line-height: 1.3; padding: 0; outline: none; }
-.faq-ask-input::placeholder { color: var(--muted); font-weight: 600; opacity: 1; }
+.faq-ask-label { position: relative; flex: 1; min-width: 0; display: block; }
+.faq-ask-placeholder { position: absolute; inset: 0; display: flex; align-items: center; color: var(--muted); font-size: 20px; font-weight: 600; line-height: 1.3; pointer-events: none; transition: opacity .18s ease; white-space: nowrap; overflow: hidden; }
+.faq-ask-input { width: 100%; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 20px; font-weight: 600; line-height: 1.3; padding: 0; outline: none; position: relative; z-index: 1; }
 .faq-ask-input:disabled { opacity: .6; }
 .faq-ask-submit { flex: 0 0 18px; width: 18px; height: 18px; padding: 0; display: inline-grid; place-items: center; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .faq-ask-submit:hover:not(:disabled), .faq-ask-submit:focus-visible:not(:disabled) { color: var(--ink); }

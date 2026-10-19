@@ -3,6 +3,7 @@
 	import { Accordion } from 'bits-ui';
 	import { ArrowUp } from 'lucide-svelte';
 	import { reveal } from '$lib/motion';
+	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
 	import type { Locale } from '$lib/i18n';
 
 	export type FaqItem = { question: string; answer: string };
@@ -16,7 +17,7 @@
 	} = $props();
 
 	const PENDING_VALUE = 'pending-faq';
-	const MAX_HISTORY = 8;
+	const MAX_HISTORY = 16;
 
 	let userFaqs = $state<FaqItem[]>([]);
 	let draft = $state('');
@@ -28,11 +29,27 @@
 	let openValues = $state<string[]>([]);
 	let hydrated = $state(false);
 	let typewriterTimer: ReturnType<typeof setInterval> | null = null;
+	let placeholderTimer: ReturnType<typeof setInterval> | null = null;
+	let placeholderFadeTimer: ReturnType<typeof setTimeout> | null = null;
 	let askInput = $state<HTMLInputElement | null>(null);
+	let placeholderOpacity = $state(0.45);
+	let displayedPlaceholder = $state('');
+	let lastAnimatedPlaceholder = $state<string | null>(null);
 
 	let storageKey = $derived(`all-in-agi:user-faqs:${locale}`);
-	let placeholder = $derived(
+	let defaultPlaceholder = $derived(
 		locale === 'en' ? 'Type in your question here' : 'Stelle hier deine Frage'
+	);
+	let continuePlaceholder = $derived(
+		locale === 'en' ? 'Continue asking...' : 'Weiter fragen...'
+	);
+	let latestUserValue = $derived(
+		userFaqs.length > 0 ? `user-faq-${userFaqs.length - 1}` : null
+	);
+	let targetPlaceholder = $derived(
+		pending || (latestUserValue !== null && openValues.includes(latestUserValue))
+			? continuePlaceholder
+			: defaultPlaceholder
 	);
 	let title = $derived(locale === 'en' ? 'Frequently asked questions' : 'Häufige Fragen');
 	let submitLabel = $derived(locale === 'en' ? 'Ask question' : 'Frage absenden');
@@ -56,6 +73,8 @@
 		} catch {
 			// ignore corrupt cache
 		}
+		displayedPlaceholder = targetPlaceholder;
+		lastAnimatedPlaceholder = targetPlaceholder;
 		hydrated = true;
 	});
 
@@ -73,7 +92,16 @@
 	$effect(() => {
 		return () => {
 			if (typewriterTimer) clearInterval(typewriterTimer);
+			if (placeholderTimer) clearInterval(placeholderTimer);
+			if (placeholderFadeTimer) clearTimeout(placeholderFadeTimer);
 		};
+	});
+
+	$effect(() => {
+		if (!hydrated) return;
+		const next = targetPlaceholder;
+		if (next === lastAnimatedPlaceholder) return;
+		animatePlaceholder(next);
 	});
 
 	function stopTypewriter() {
@@ -83,10 +111,42 @@
 		}
 	}
 
-	function ensureOpen(value: string) {
-		if (!openValues.includes(value)) {
-			openValues = [...openValues, value];
+	function stopPlaceholderAnimation() {
+		if (placeholderTimer) {
+			clearInterval(placeholderTimer);
+			placeholderTimer = null;
 		}
+		if (placeholderFadeTimer) {
+			clearTimeout(placeholderFadeTimer);
+			placeholderFadeTimer = null;
+		}
+	}
+
+	function animatePlaceholder(next: string) {
+		stopPlaceholderAnimation();
+		lastAnimatedPlaceholder = next;
+		placeholderOpacity = 0;
+		placeholderFadeTimer = setTimeout(() => {
+			displayedPlaceholder = '';
+			placeholderOpacity = 0.45;
+			placeholderTimer = setInterval(() => {
+				if (displayedPlaceholder.length >= next.length) {
+					if (placeholderTimer) {
+						clearInterval(placeholderTimer);
+						placeholderTimer = null;
+					}
+					return;
+				}
+				const step = Math.min(2, next.length - displayedPlaceholder.length);
+				displayedPlaceholder = next.slice(0, displayedPlaceholder.length + step);
+			}, 18);
+		}, 180);
+	}
+
+	function openOnlyAi(value: string) {
+		openValues = openValues
+			.filter((v) => !v.startsWith('user-faq-') && v !== PENDING_VALUE)
+			.concat(value);
 	}
 
 	function startTypewriter() {
@@ -117,9 +177,7 @@
 		stopTypewriter();
 		userFaqs = [...userFaqs, item];
 		const userIndex = userFaqs.length - 1;
-		openValues = openValues
-			.filter((value) => value !== PENDING_VALUE)
-			.concat(`user-faq-${userIndex}`);
+		openOnlyAi(`user-faq-${userIndex}`);
 		pending = null;
 		draft = '';
 		queueMicrotask(() => askInput?.focus());
@@ -133,7 +191,7 @@
 		submitting = true;
 		pending = { question, fullAnswer: '', displayedAnswer: '' };
 		draft = '';
-		ensureOpen(PENDING_VALUE);
+		openOnlyAi(PENDING_VALUE);
 		startTypewriter();
 
 		try {
@@ -219,7 +277,13 @@
 						>
 					</Accordion.Header>
 					<Accordion.Content class="faq-answer"
-						><div><p>{faq.answer}</p></div></Accordion.Content
+						><div>
+							{#if isUser}
+								<p class="faq-answer-body">{@html linkifyFaqAnswer(faq.answer)}</p>
+							{:else}
+								<p>{faq.answer}</p>
+							{/if}
+						</div></Accordion.Content
 					>
 				</Accordion.Item>
 			{/each}
@@ -233,12 +297,14 @@
 						>
 					</Accordion.Header>
 					<Accordion.Content class="faq-answer"
-						><div
-							><p
-								>{pending.displayedAnswer}<span class="faq-typewriter-caret" aria-hidden="true"
+						><div>
+							<p class="faq-answer-body"
+								>{@html linkifyFaqAnswer(pending.displayedAnswer)}<span
+									class="faq-typewriter-caret"
+									aria-hidden="true"
 								></span></p
-							></div
-						></Accordion.Content
+							>
+						</div></Accordion.Content
 					>
 				</Accordion.Item>
 			{/if}
@@ -253,13 +319,20 @@
 				}}
 			>
 				<label class="faq-ask-label">
-					<span class="visually-hidden">{placeholder}</span>
+					<span class="visually-hidden">{targetPlaceholder}</span>
+					{#if !draft}
+						<span
+							class="faq-ask-placeholder"
+							aria-hidden="true"
+							style={`opacity: ${placeholderOpacity}`}
+							>{displayedPlaceholder}</span
+						>
+					{/if}
 					<input
 						bind:this={askInput}
 						class="faq-ask-input"
 						type="text"
 						bind:value={draft}
-						{placeholder}
 						autocomplete="off"
 						maxlength={500}
 						disabled={submitting}
