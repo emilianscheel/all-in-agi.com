@@ -37,7 +37,7 @@ Der Vertrag ist mit der beiderseitigen Zustimmung zustande gekommen. Beide Parte
 - Nettoentgelt:
 - Umsatzsteuer:
 - Bruttoentgelt:
-- 30-%-Anzahlung, fällig sieben Kalendertage nach Rechnung:
+- 30-%-Anzahlung, fällig 14 Kalendertage nach Rechnung:
 - Schlusszahlung nach Veranstaltung, fällig 14 Kalendertage nach Rechnung:
 
 Änderungen werden ausschließlich durch eine neue nummerierte Änderungsbestätigung dokumentiert. Die ursprüngliche Bestätigung bleibt unverändert archiviert.

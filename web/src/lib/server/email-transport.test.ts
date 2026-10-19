@@ -23,8 +23,8 @@ describe('iCloud SMTP transport', () => {
 		});
 		expect(result).toEqual({ status: 'accepted', messageId: '<mail-1@icloud.com>' });
 		expect(submitted).toMatchObject({
-			from: { address: 'go@all-in-agi.com', name: 'ALL IN AGI' },
-			replyTo: { address: 'go@all-in-agi.com', name: 'ALL IN AGI' },
+			from: { address: 'go@all-in-agi.com', name: 'Emilian von ALL IN AGI' },
+			replyTo: { address: 'go@all-in-agi.com', name: 'Emilian von ALL IN AGI' },
 			to: message.to,
 			subject: message.subject,
 			text: message.text,

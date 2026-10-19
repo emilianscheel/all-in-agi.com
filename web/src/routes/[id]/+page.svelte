@@ -42,7 +42,7 @@
 	import { formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
 	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
-	import { LEGAL_DOCUMENT_VERSION } from '$lib/legal';
+	import { isStandardOfferLegalVersion } from '$lib/legal';
 	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import type { Locale } from '$lib/i18n';
@@ -111,7 +111,7 @@
 	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
 	let splitBilling = $derived(initialInvoice?.billingModel === 'deposit_30');
 	let finalInvoiceAvailable = $derived(Boolean(hackathon.eventEnd) && (!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd!))));
-	let standardOffer = $derived(hackathon.legalVersion === LEGAL_DOCUMENT_VERSION);
+	let standardOffer = $derived(isStandardOfferLegalVersion(hackathon.legalVersion));
 	let billingComplete = $derived(validateBillingDetails(hackathon.billing, locale).length === 0);
 
 	function billingDraft(value: typeof data.hackathon): BillingDetails {

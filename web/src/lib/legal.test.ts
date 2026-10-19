@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { LEGAL_MODULES, legalDocumentPlainText, legalModulesForConfiguration } from './legal';
+import { LEGAL_DOCUMENT_VERSION, LEGAL_MODULES, isStandardOfferLegalVersion, legalDocumentPlainText, legalModulesForConfiguration } from './legal';
 
 describe('versioned legal modules', () => {
 	test('derives only modules actually selected in the booking', () => {
@@ -14,5 +14,12 @@ describe('versioned legal modules', () => {
 		expect(text).not.toContain('Zusatzmodul:');
 		expect(text).not.toContain('Veranstaltergeräte');
 		expect(text).toContain('Dem Kunden bleibt ausdrücklich der Nachweis gestattet');
+		expect(text).toContain(`Version ${LEGAL_DOCUMENT_VERSION}`);
+		expect(text).toContain('Zahlungsziel von 14 Kalendertagen');
+		expect(text).not.toContain('sieben Kalendertagen');
+		expect(legalDocumentPlainText(undefined, 'en')).toContain('14 calendar days for payment');
+		expect(isStandardOfferLegalVersion(LEGAL_DOCUMENT_VERSION)).toBe(true);
+		expect(isStandardOfferLegalVersion('2026-08-02.2')).toBe(true);
+		expect(isStandardOfferLegalVersion('2026-01-01.1')).toBe(false);
 	});
 });

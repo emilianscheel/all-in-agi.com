@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL } from "$lib/contact";
+import { CONTACT_EMAIL, CONTACT_SENDER_NAME } from "$lib/contact";
 import nodemailer, { type SendMailOptions } from "nodemailer";
 
 const DEFAULT_MAX_EMAIL_BYTES = 5 * 1024 * 1024;
@@ -99,8 +99,8 @@ export async function sendEmailMessage(
             );
         }
         options = {
-            from: { address: CONTACT_EMAIL, name: "ALL IN AGI" },
-            replyTo: { address: CONTACT_EMAIL, name: "ALL IN AGI" },
+            from: { address: CONTACT_EMAIL, name: CONTACT_SENDER_NAME },
+            replyTo: { address: CONTACT_EMAIL, name: CONTACT_SENDER_NAME },
             to: message.to,
             subject: message.subject,
             text: message.text,

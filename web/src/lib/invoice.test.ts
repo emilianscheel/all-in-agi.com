@@ -76,13 +76,14 @@ describe('invoice snapshot', () => {
 		expect(result.netTotalCents).toBe(695000);
 	});
 
-	test('creates a seven-day 30 percent down-payment invoice and a reconciled final invoice', () => {
+	test('creates a 14-day 30 percent down-payment invoice and a reconciled final invoice', () => {
 		const downPayment = createDownPaymentInvoiceSnapshot(source, legal, new Date('2099-05-01T10:00:00.000Z'));
 		expect(downPayment).toMatchObject({
 			version: 3,
 			kind: 'down-payment',
 			invoiceNumber: 'RE-HAA-AAA-AAA-AZ',
-			dueDate: '2099-05-08',
+			dueDate: '2099-05-15',
+			payment: { termsDays: 14 },
 			netTotalCents: 195000,
 			vatAmountCents: 37050,
 			grossTotalCents: 232050

@@ -240,7 +240,7 @@ function splitInvoiceBase(
 			accountHolder: legal.accountHolder,
 			iban: legal.iban,
 			bic: legal.bic,
-			termsDays: kind === 'down-payment' ? 7 : 14
+			termsDays: 14
 		}
 	};
 }
@@ -258,7 +258,7 @@ export function createDownPaymentInvoiceSnapshot(
 		legal,
 		invoiceNumber,
 		issueDate,
-		addCalendarDays(issueDate, 7),
+		addCalendarDays(issueDate, 14),
 		[{ description: source.locale === 'en' ? `30% deposit – Agentic Engineering Hackathon for up to ${source.capacity} people` : `30 % Anzahlung – Agentic Engineering Hackathon für bis zu ${source.capacity} Personen`, netAmountCents }],
 		'down-payment'
 	);

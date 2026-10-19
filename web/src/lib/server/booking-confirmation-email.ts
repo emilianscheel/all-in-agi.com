@@ -2,7 +2,8 @@ import { createPlanPdf, hackathonDetailUrl } from "$lib/booking-artifacts";
 import type { BookingConfiguration } from "$lib/booking";
 import { bookingOverviewRows } from "$lib/booking-overview";
 import { createPrepCallIcs, type BookingResultSummary } from "$lib/booking-ics";
-import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF } from "$lib/contact";
+import { CONTACT_EMAIL } from "$lib/contact";
+import { emailSignatureHtml, emailSignatureText } from "$lib/email-signature";
 import { EmailTransportError, sendEmailMessage, type EmailTransportDependencies } from './email-transport';
 
 export interface BookingConfirmationInput {
@@ -161,10 +162,10 @@ export function buildBookingConfirmationText(
         content.push(
             "",
 			english ? 'Please contact us at any time if you have questions or would like to make changes.' : "Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.",
-			`${english ? 'Phone' : 'Telefon'}: ${CONTACT_PHONE_DISPLAY} (tel:${CONTACT_PHONE_HREF})`,
-			`${english ? 'Email' : 'E-Mail'}: ${CONTACT_EMAIL} (mailto:${CONTACT_EMAIL})`,
             "",
 			english ? 'We look forward to working with you!' : "Wir freuen uns auf Sie!",
+			"",
+			...emailSignatureText(english ? 'en' : 'de'),
         );
     }
 
@@ -189,9 +190,8 @@ export function buildBookingConfirmationHtml(
         .join("<br>");
     const contact = customer
 		? (english ? `<p>Please contact us at any time if you have questions or would like to make changes.</p>
-			<p><strong>Phone:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>Email:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p><p>We look forward to working with you!</p>` : `<p>Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
-			<p><strong>Telefon:</strong> <a href="tel:${escapeHtml(CONTACT_PHONE_HREF)}">${escapeHtml(CONTACT_PHONE_DISPLAY)}</a><br><strong>E-Mail:</strong> <a href="mailto:${escapeHtml(CONTACT_EMAIL)}">${escapeHtml(CONTACT_EMAIL)}</a></p>
-			<p>Wir freuen uns auf Sie!</p>`)
+			<p>We look forward to working with you!</p>${emailSignatureHtml('en')}` : `<p>Bei Fragen oder Änderungswünschen können Sie uns gerne jederzeit kontaktieren.</p>
+			<p>Wir freuen uns auf Sie!</p>${emailSignatureHtml('de')}`)
         : "";
 
 	return `${customer ? `<p>Hallo ${escapeHtml(input.config.contactName)},</p>` : ""}
