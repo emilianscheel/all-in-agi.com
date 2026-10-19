@@ -8,7 +8,7 @@ import {
 	drawWrapped,
 	safeText
 } from './booking-artifacts';
-import { createZugferdXml, formatInvoiceDate, formatInvoiceMoney, type InvoiceSnapshot } from './invoice';
+import { createZugferdXml, formatIban, formatInvoiceDate, formatInvoiceMoney, type InvoiceSnapshot } from './invoice';
 
 function addressLines(address: InvoiceSnapshot['customer']['address']) {
 	return [
@@ -129,17 +129,40 @@ export async function createInvoicePdf(snapshot: InvoiceSnapshot) {
 	}
 
 	drawRoundedCard(page, LEFT, 94, RIGHT - LEFT, 92, 14, surface);
-	page.drawText(en ? 'PAYMENT' : 'ZAHLUNG', { x: 64, y: 164, font: bold, size: 7, color: muted });
-	page.drawText(
-		en ? `Please transfer the total amount by ${formatInvoiceDate(snapshot.dueDate, locale)} without deduction.` : `Bitte überweisen Sie den Gesamtbetrag bis zum ${formatInvoiceDate(snapshot.dueDate, locale)} ohne Abzug.`,
-		{ x: 64, y: 146, font: regular, size: 9.2, color: ink }
+	const paymentRight = RIGHT - 16;
+	const valueSize = 8.4;
+	const referenceLabel = en ? 'REFERENCE' : 'Verwendungszweck';
+	const referenceValue = safeText(snapshot.invoiceNumber);
+	const referenceWidth = Math.max(
+		bold.widthOfTextAtSize(referenceLabel, 7),
+		regular.widthOfTextAtSize(referenceValue, valueSize)
 	);
-	page.drawText(en ? 'ACCOUNT HOLDER' : 'Kontoinhaber', { x: 64, y: 122, font: bold, size: 7, color: muted });
-	page.drawText(safeText(snapshot.payment.accountHolder), { x: 64, y: 108, font: regular, size: 8.8, color: ink });
-	page.drawText('IBAN', { x: 230, y: 122, font: bold, size: 7, color: muted });
-	page.drawText(safeText(snapshot.payment.iban), { x: 230, y: 108, font: regular, size: 8.8, color: ink });
-	page.drawText('BIC', { x: 430, y: 122, font: bold, size: 7, color: muted });
-	page.drawText(safeText(snapshot.payment.bic), { x: 430, y: 108, font: regular, size: 8.8, color: ink });
+	const transferNote = en
+		? `Please transfer the total amount by ${formatInvoiceDate(snapshot.dueDate, locale)} without deduction.`
+		: `Bitte überweisen Sie den Gesamtbetrag bis zum ${formatInvoiceDate(snapshot.dueDate, locale)} ohne Abzug.`;
+	page.drawText(en ? 'PAYMENT' : 'ZAHLUNG', { x: 64, y: 164, font: bold, size: 7, color: muted });
+	drawRight(page, referenceLabel, paymentRight, 164, bold, 7, muted);
+	drawWrapped(page, transferNote, 64, 150, paymentRight - 64 - referenceWidth - 18, regular, 9.2, ink, 2, 11);
+	drawRight(page, referenceValue, paymentRight, 150, regular, valueSize, ink);
+	const paymentColumns = [
+		[en ? 'ACCOUNT HOLDER' : 'Kontoinhaber', snapshot.payment.accountHolder],
+		['IBAN', formatIban(snapshot.payment.iban)],
+		['BIC', snapshot.payment.bic],
+		[en ? 'BANK' : 'Bank', snapshot.payment.bank ?? '']
+	].filter((entry): entry is [string, string] => Boolean(entry[1]));
+	const columnGap = 12;
+	const columnWidths = paymentColumns.map(([label, value]) => Math.max(
+		bold.widthOfTextAtSize(label, 7),
+		regular.widthOfTextAtSize(safeText(value), valueSize)
+	));
+	const used = columnWidths.reduce((sum, width) => sum + width, 0) + columnGap * Math.max(0, paymentColumns.length - 1);
+	const extraGap = paymentColumns.length > 1 ? Math.max(0, paymentRight - 64 - used) / (paymentColumns.length - 1) : 0;
+	let columnX = 64;
+	for (const [index, [label, value]] of paymentColumns.entries()) {
+		page.drawText(label, { x: columnX, y: 122, font: bold, size: 7, color: muted });
+		page.drawText(safeText(value), { x: columnX, y: 108, font: regular, size: valueSize, color: ink });
+		columnX += columnWidths[index] + columnGap + extraGap;
+	}
 
 	await pdf.attach(new TextEncoder().encode(createZugferdXml(snapshot)), 'factur-x.xml', {
 		mimeType: 'application/xml',

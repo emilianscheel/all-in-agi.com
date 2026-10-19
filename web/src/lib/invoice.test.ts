@@ -4,6 +4,7 @@ import {
 	createFinalInvoiceSnapshot,
 	createInvoiceSnapshot,
 	createZugferdXml,
+	formatIban,
 	formatInvoiceMoney,
 	type InvoiceLegalConfiguration,
 	type InvoiceSource
@@ -43,6 +44,10 @@ describe('invoice snapshot', () => {
 		expect(xml).toContain('<ram:GrandTotalAmount>');
 		expect(xml).toContain('<ram:ID schemeID="FC">DE123456789</ram:ID>');
 		expect(xml).not.toContain('& ');
+	});
+	test('groups an IBAN into fours regardless of the stored spacing', () => {
+		expect(formatIban('de55100123450677120911')).toBe('DE55 1001 2345 0677 1209 11');
+		expect(formatIban('DE55 1001 2345 0677 1209 11')).toBe('DE55 1001 2345 0677 1209 11');
 	});
 	test('omits the seller tax registration when no tax ID is configured', () => {
 		const snapshot = createInvoiceSnapshot(source, { ...legal, taxIdLabel: '', taxIdValue: '' });

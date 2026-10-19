@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { getInvoiceLegalConfiguration, InvoiceConfigurationError } from './invoice-config';
 
-const keys = ['INVOICE_TAX_ID_LABEL', 'INVOICE_TAX_ID_VALUE', 'INVOICE_ACCOUNT_HOLDER', 'INVOICE_IBAN', 'INVOICE_BIC'] as const;
+const keys = ['INVOICE_TAX_ID_LABEL', 'INVOICE_TAX_ID_VALUE', 'INVOICE_ACCOUNT_HOLDER', 'INVOICE_IBAN', 'INVOICE_BIC', 'INVOICE_BANK'] as const;
 const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
 afterEach(() => {
@@ -17,14 +17,16 @@ describe('invoice legal configuration', () => {
 		delete process.env.INVOICE_TAX_ID_LABEL;
 		delete process.env.INVOICE_TAX_ID_VALUE;
 		process.env.INVOICE_ACCOUNT_HOLDER = 'Emilian Scheel';
-		process.env.INVOICE_IBAN = 'DE02120300000000202051';
+		process.env.INVOICE_IBAN = 'de02 120300000000202051';
 		process.env.INVOICE_BIC = 'BYLADEM1001';
+		process.env.INVOICE_BANK = 'Trade Republic';
 		expect(getInvoiceLegalConfiguration()).toEqual({
 			taxIdLabel: '',
 			taxIdValue: '',
 			accountHolder: 'Emilian Scheel',
-			iban: 'DE02120300000000202051',
-			bic: 'BYLADEM1001'
+			iban: 'de02 120300000000202051',
+			bic: 'BYLADEM1001',
+			bank: 'Trade Republic'
 		});
 	});
 

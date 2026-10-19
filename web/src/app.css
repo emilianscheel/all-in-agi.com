@@ -608,9 +608,9 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .summary-box { padding: 22px; border-radius: 18px; background: var(--surface); }
 .summary-row { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 0; font-size: 14px; border-bottom: 1px solid var(--line); }
 .summary-row > svg { color: var(--muted); }
-.summary-row span { min-width: 0; }
+.summary-row span { min-width: 0; line-height: 1.2; }
 .summary-row span small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
-.summary-secondary-values { display: grid; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.summary-secondary-values { display: grid; gap: 1px; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.15; overflow-wrap: anywhere; }
 .summary-row b { text-align: right; transition: transform .24s ease; }
 .summary-row.total { border: 0; padding-top: 18px; font-size: 20px; font-weight: 700; }
 .editable-summary-item { position: relative; }
@@ -686,6 +686,10 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .detail-panel h1 { margin-top: 12px; font-size: clamp(28px, 3vw, 38px); line-height: 1.1; }
 .detail-overview { margin-top: 42px; }
 .detail-readonly .summary-edit-button { display: none; }
+.detail-readonly .editable-summary-item .summary-row > b,
+.detail-readonly .editable-summary-item:hover .summary-row > b,
+.detail-readonly .editable-summary-item:focus-within .summary-row > b,
+.detail-readonly .editable-summary-item.active .summary-row > b { transform: none; }
 .booking-state-banner { width: 100%; margin-top: 22px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 11px; border-radius: 15px; text-align: left; font-size: 13px; line-height: 1.45; }
 .booking-state-banner svg { flex: none; margin-top: 1px; }
 .booking-state-banner span { display: grid; gap: 2px; }

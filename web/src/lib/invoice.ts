@@ -37,6 +37,7 @@ export interface InvoicePayment {
 	accountHolder: string;
 	iban: string;
 	bic: string;
+	bank?: string;
 	termsDays: number;
 }
 
@@ -82,6 +83,7 @@ export interface InvoiceLegalConfiguration {
 	accountHolder: string;
 	iban: string;
 	bic: string;
+	bank?: string;
 }
 
 export interface InvoiceSource {
@@ -192,12 +194,7 @@ export function createInvoiceSnapshot(
 		vatRatePercent: 19,
 		vatAmountCents,
 		grossTotalCents: netTotalCents + vatAmountCents,
-		payment: {
-			accountHolder: legal.accountHolder,
-			iban: legal.iban,
-			bic: legal.bic,
-			termsDays: 14
-		}
+		payment: invoicePayment(legal)
 	};
 }
 
@@ -236,12 +233,7 @@ function splitInvoiceBase(
 		vatRatePercent: 19,
 		vatAmountCents,
 		grossTotalCents: netTotalCents + vatAmountCents,
-		payment: {
-			accountHolder: legal.accountHolder,
-			iban: legal.iban,
-			bic: legal.bic,
-			termsDays: 14
-		}
+		payment: invoicePayment(legal)
 	};
 }
 
@@ -347,6 +339,20 @@ ${delivery}
 	return xml
 		.replace('<ram:ApplicableHeaderTradeAgreement>', `<ram:ApplicableHeaderTradeAgreement>${buyerReference}`)
 		.replace(`<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${buyerReference}`, '<ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>');
+}
+
+function invoicePayment(legal: InvoiceLegalConfiguration): InvoicePayment {
+	return {
+		accountHolder: legal.accountHolder,
+		iban: legal.iban,
+		bic: legal.bic,
+		...(legal.bank ? { bank: legal.bank } : {}),
+		termsDays: 14
+	};
+}
+
+export function formatIban(value: string) {
+	return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().replace(/(.{4})(?=.)/g, '$1 ');
 }
 
 export function formatInvoiceMoney(cents: number, locale: Locale = 'de') {
