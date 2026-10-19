@@ -90,7 +90,15 @@
 		hackathon.address.street,
 		[hackathon.address.postalCode, hackathon.address.city].filter(Boolean).join(' ')
 	].filter(Boolean).join(', '));
-	let equipmentLabel = $derived(hackathon.equipment === 'none' ? (locale === 'en' ? 'Provided by us' : 'Wird von uns gestellt') : 'Projector / Display');
+	let equipmentLabel = $derived(
+		hackathon.equipment === 'none'
+			? locale === 'en'
+				? 'Provided by us'
+				: 'Wird von uns gestellt'
+			: locale === 'en'
+				? 'Projector / Display'
+				: 'Beamer / Display'
+	);
 	let codingToolLabels = $derived(selectedCodingToolLabels(hackathon));
 	let draftOptions = $derived<OptionValues>({
 		capacity: draft.capacity,
@@ -184,12 +192,14 @@
 				body: JSON.stringify({ customerName: agreementCustomerName, organizerName: agreementOrganizerName })
 			});
 			const result = await response.json();
-			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Zustimmung konnte nicht gespeichert werden.');
+			if (!response.ok && response.status !== 202) throw new Error(result.message ?? (locale === 'en' ? 'The agreement could not be saved.' : 'Die Zustimmung konnte nicht gespeichert werden.'));
 			hackathon = { ...hackathon, status: result.status, exitDeadline: result.exitDeadline };
-			contractMessage = result.emailSent ? 'Zustimmung gespeichert und Vertragsbestätigung versandt.' : result.message;
+			contractMessage = result.emailSent
+				? (locale === 'en' ? 'Agreement saved and contract confirmation sent.' : 'Zustimmung gespeichert und Vertragsbestätigung versandt.')
+				: result.message;
 			agreementModalOpen = false;
 			await invalidateAll();
-		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Die Zustimmung konnte nicht gespeichert werden.'; }
+		} catch (error) { contractMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The agreement could not be saved.' : 'Die Zustimmung konnte nicht gespeichert werden.'); }
 		finally { contractBusy = false; }
 	}
 
@@ -204,13 +214,13 @@
 				body: JSON.stringify({ customerName: agreementCustomerName, organizerName: agreementOrganizerName })
 			});
 			const result = await response.json();
-			if (!response.ok) throw new Error(result.message ?? 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.');
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The test contract email could not be sent.' : 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.'));
 			contractTestEmailState = 'sent';
-			contractMessage = 'Test-Vertrags-E-Mail an go@all-in-agi.com gesendet.';
+			contractMessage = locale === 'en' ? 'Test contract email sent to go@all-in-agi.com.' : 'Test-Vertrags-E-Mail an go@all-in-agi.com gesendet.';
 			agreementModalOpen = false;
 		} catch (error) {
 			contractTestEmailState = 'error';
-			contractMessage = error instanceof Error ? error.message : 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.';
+			contractMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The test contract email could not be sent.' : 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.');
 		} finally {
 			contractBusy = false;
 		}
@@ -470,7 +480,7 @@
 		try {
 			const response = await fetch(`/api/hackathons/${hackathon.id}/cancel`, { method: 'POST' });
 			const result = await response.json();
-			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Stornierung konnte nicht gestartet werden.');
+			if (!response.ok && response.status !== 202) throw new Error(result.message ?? (locale === 'en' ? 'Cancellation could not be started.' : 'Die Stornierung konnte nicht gestartet werden.'));
 			hackathon = {
 				...hackathon,
 				status: result.status,
@@ -478,12 +488,12 @@
 				cancellationEmailSentAt: result.emailSent ? hackathon.cancellationEmailSentAt ?? new Date().toISOString() : hackathon.cancellationEmailSentAt
 			};
 			cancellationMessage = result.complete
-				? 'Die Buchung wurde storniert und der Kunde benachrichtigt.'
-				: result.message ?? 'Die Stornierung ist noch nicht vollständig. Bitte versuchen Sie es erneut.';
+				? (locale === 'en' ? 'The booking was cancelled and the customer notified.' : 'Die Buchung wurde storniert und der Kunde benachrichtigt.')
+				: result.message ?? (locale === 'en' ? 'Cancellation is not complete yet. Please try again.' : 'Die Stornierung ist noch nicht vollständig. Bitte versuchen Sie es erneut.');
 			cancelDialogOpen = false;
 			await invalidateAll();
 		} catch (error) {
-			cancellationMessage = error instanceof Error ? error.message : 'Die Stornierung konnte nicht gestartet werden.';
+			cancellationMessage = error instanceof Error ? error.message : (locale === 'en' ? 'Cancellation could not be started.' : 'Die Stornierung konnte nicht gestartet werden.');
 		} finally {
 			cancellationBusy = false;
 		}
@@ -530,13 +540,13 @@
 					<p>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Preparation Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Preparation Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</p>
 				</div>
 			{:else if hackathon.status === 'exit_window'}
-				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Vertrag geschlossen · Lösungsfrist läuft</strong>Kostenfreier Rücktritt bis {hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.</span></div>
+				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Contract concluded · Exit window open' : 'Vertrag geschlossen · Lösungsfrist läuft'}</strong>{locale === 'en' ? `Free withdrawal until ${hackathon.exitDeadline ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'deadline being calculated'}.` : `Kostenfreier Rücktritt bis ${hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.`}</span></div>
 			{:else if hackathon.status === 'contracted'}
-				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>Vertrag verbindlich</strong>Die kostenlose beiderseitige Lösungsfrist ist abgelaufen.</span></div>
+				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Contract binding' : 'Vertrag verbindlich'}</strong>{locale === 'en' ? 'The free mutual exit window has ended.' : 'Die kostenlose beiderseitige Lösungsfrist ist abgelaufen.'}</span></div>
 			{:else if hackathon.status === 'withdrawn'}
-				<div class="booking-state-banner cancelled" role="status"><Ban size={18} aria-hidden="true" /><span><strong>Kostenfrei zurückgetreten</strong>Der Vertrag wurde innerhalb der Lösungsfrist beendet.</span></div>
+				<div class="booking-state-banner cancelled" role="status"><Ban size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Withdrawn free of charge' : 'Kostenfrei zurückgetreten'}</strong>{locale === 'en' ? 'The contract was ended within the exit window.' : 'Der Vertrag wurde innerhalb der Lösungsfrist beendet.'}</span></div>
 			{:else if hackathon.status === 'completed'}
-				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>Durchgeführt</strong>Der Hackathon wurde abgeschlossen.</span></div>
+				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Completed' : 'Durchgeführt'}</strong>{locale === 'en' ? 'The hackathon has been completed.' : 'Der Hackathon wurde abgeschlossen.'}</span></div>
 			{/if}
 
 			<MiniContactCards {locale} />
@@ -558,68 +568,68 @@
 					</button>
 					{#if data.admin.authorized && hackathon.status === 'prep_scheduled'}
 						<button class="button-secondary action-button" type="button" onclick={() => openAgreementModal('test')} disabled={contractBusy || contractTestEmailState === 'loading'} aria-live="polite">
-							<Mail size={18} aria-hidden="true" />{contractTestEmailState === 'loading' ? 'Test-E-Mail wird gesendet …' : contractTestEmailState === 'error' ? 'Test erneut versuchen' : contractTestEmailState === 'sent' ? 'Test-Vertrags-E-Mail gesendet' : 'Vertrags-E-Mail als Test an mich senden'}
+							<Mail size={18} aria-hidden="true" />{#if contractTestEmailState === 'loading'}{locale === 'en' ? 'Sending test email …' : 'Test-E-Mail wird gesendet …'}{:else if contractTestEmailState === 'error'}{locale === 'en' ? 'Try test again' : 'Test erneut versuchen'}{:else if contractTestEmailState === 'sent'}{locale === 'en' ? 'Test contract email sent' : 'Test-Vertrags-E-Mail gesendet'}{:else}{locale === 'en' ? 'Send contract email as test to me' : 'Vertrags-E-Mail als Test an mich senden'}{/if}
 						</button>
 					{/if}
 				{/if}
 			</div>
 
 			{#if data.admin.authorized}
-				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
+				<div class="admin-detail-actions" aria-label={locale === 'en' ? 'Admin actions' : 'Admin-Aktionen'}>
 					{#if hackathon.status === 'prep_scheduled'}
-						{#if !billingComplete}<p class="admin-action-message">Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.</p>{/if}
+						{#if !billingComplete}<p class="admin-action-message">{locale === 'en' ? 'Billing details must be complete before recording the agreement.' : 'Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.'}</p>{/if}
 						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}</button>
 					{:else if hackathon.status === 'exit_window'}
-						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
-						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>Rücktritt ALL IN AGI erfassen</button>
+						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>{locale === 'en' ? 'Record customer withdrawal' : 'Rücktritt Kunde erfassen'}</button>
+						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>{locale === 'en' ? 'Record ALL IN AGI withdrawal' : 'Rücktritt ALL IN AGI erfassen'}</button>
 					{:else if hackathon.status === 'contracted' && hackathon.eventEnd && new Date() >= new Date(hackathon.eventEnd)}
-						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>Durchführung abschließen</button>
+						<button class="button-secondary action-button" type="button" onclick={completeContract} disabled={contractBusy}>{locale === 'en' ? 'Mark as completed' : 'Durchführung abschließen'}</button>
 					{/if}
 					{#if invoiceIssued || (invoiceEligible && finalInvoiceAvailable)}
 						<button class="button-secondary action-button" type="button" onclick={downloadInvoice} disabled={invoiceDownloadState === 'loading'}>
-							<Download size={18} aria-hidden="true" />{invoiceDownloadState === 'loading' ? 'Rechnung wird erstellt …' : invoiceDownloadState === 'error' ? 'Download erneut versuchen' : splitBilling ? 'Endrechnung herunterladen' : 'Rechnung herunterladen'}
+							<Download size={18} aria-hidden="true" />{#if invoiceDownloadState === 'loading'}{locale === 'en' ? 'Creating invoice …' : 'Rechnung wird erstellt …'}{:else if invoiceDownloadState === 'error'}{locale === 'en' ? 'Try download again' : 'Download erneut versuchen'}{:else if splitBilling}{locale === 'en' ? 'Download final invoice' : 'Endrechnung herunterladen'}{:else}{locale === 'en' ? 'Download invoice' : 'Rechnung herunterladen'}{/if}
 						</button>
 					{/if}
 					{#if invoiceEligible && finalInvoiceAvailable}
 						<button class="button-secondary action-button" type="button" onclick={sendInvoice} disabled={invoiceEmailState === 'loading'} aria-live="polite">
 							{#if invoiceEmailState === 'sent'}
-								<Check size={18} aria-hidden="true" />{splitBilling ? 'Endrechnung erneut senden' : 'Rechnung erneut senden'}
+								<Check size={18} aria-hidden="true" />{splitBilling ? (locale === 'en' ? 'Resend final invoice' : 'Endrechnung erneut senden') : (locale === 'en' ? 'Resend invoice' : 'Rechnung erneut senden')}
 							{:else}
-								<Mail size={18} aria-hidden="true" />{invoiceEmailState === 'loading' ? 'Rechnung wird gesendet …' : invoiceEmailState === 'error' ? 'Senden erneut versuchen' : invoiceEmailSentAt ? (splitBilling ? 'Endrechnung erneut senden' : 'Rechnung erneut senden') : (splitBilling ? 'Endrechnung senden' : 'Rechnung senden')}
+								<Mail size={18} aria-hidden="true" />{#if invoiceEmailState === 'loading'}{locale === 'en' ? 'Sending invoice …' : 'Rechnung wird gesendet …'}{:else if invoiceEmailState === 'error'}{locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen'}{:else if invoiceEmailSentAt}{splitBilling ? (locale === 'en' ? 'Resend final invoice' : 'Endrechnung erneut senden') : (locale === 'en' ? 'Resend invoice' : 'Rechnung erneut senden')}{:else}{splitBilling ? (locale === 'en' ? 'Send final invoice' : 'Endrechnung senden') : (locale === 'en' ? 'Send invoice' : 'Rechnung senden')}{/if}
 							{/if}
 						</button>
 					{/if}
 					{#if splitBilling && (invoiceEligible || downPaymentIssued)}
 						<button class="button-secondary action-button" type="button" onclick={downloadDownPaymentInvoice} disabled={downPaymentDownloadState === 'loading'}>
-							<Download size={18} aria-hidden="true" />{downPaymentDownloadState === 'loading' ? 'Anzahlungsrechnung wird erstellt …' : downPaymentDownloadState === 'error' ? 'Download erneut versuchen' : 'Anzahlungsrechnung herunterladen'}
+							<Download size={18} aria-hidden="true" />{#if downPaymentDownloadState === 'loading'}{locale === 'en' ? 'Creating deposit invoice …' : 'Anzahlungsrechnung wird erstellt …'}{:else if downPaymentDownloadState === 'error'}{locale === 'en' ? 'Try download again' : 'Download erneut versuchen'}{:else}{locale === 'en' ? 'Download deposit invoice' : 'Anzahlungsrechnung herunterladen'}{/if}
 						</button>
 					{/if}
 					{#if splitBilling && invoiceEligible}
 						<button class="button-secondary action-button" type="button" onclick={sendDownPaymentInvoice} disabled={downPaymentEmailState === 'loading'} aria-live="polite">
-							<Mail size={18} aria-hidden="true" />{downPaymentEmailState === 'loading' ? 'Anzahlungsrechnung wird gesendet …' : downPaymentEmailState === 'error' ? 'Senden erneut versuchen' : downPaymentEmailSentAt ? 'Anzahlungsrechnung erneut senden' : 'Anzahlungsrechnung senden'}
+							<Mail size={18} aria-hidden="true" />{#if downPaymentEmailState === 'loading'}{locale === 'en' ? 'Sending deposit invoice …' : 'Anzahlungsrechnung wird gesendet …'}{:else if downPaymentEmailState === 'error'}{locale === 'en' ? 'Try sending again' : 'Senden erneut versuchen'}{:else if downPaymentEmailSentAt}{locale === 'en' ? 'Resend deposit invoice' : 'Anzahlungsrechnung erneut senden'}{:else}{locale === 'en' ? 'Send deposit invoice' : 'Anzahlungsrechnung senden'}{/if}
 						</button>
 						{#if downPaymentIssued}
 							<button class="button-secondary action-button" type="button" onclick={markDownPaymentReceived} disabled={downPaymentPaidBusy || Boolean(downPaymentPaidAt)}>
-								<Check size={18} aria-hidden="true" />{downPaymentPaidAt ? 'Zahlung eingegangen' : downPaymentPaidBusy ? 'Wird gespeichert …' : 'Zahlung eingegangen'}
+								<Check size={18} aria-hidden="true" />{#if downPaymentPaidBusy}{locale === 'en' ? 'Saving …' : 'Wird gespeichert …'}{:else}{locale === 'en' ? 'Payment received' : 'Zahlung eingegangen'}{/if}
 							</button>
 						{/if}
-						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">Endrechnung nach dem Hackathon verfügbar.</p>{/if}
+						{#if downPaymentPaidAt && !finalInvoiceAvailable}<p class="admin-action-message">{locale === 'en' ? 'Final invoice available after the hackathon.' : 'Endrechnung nach dem Hackathon verfügbar.'}</p>{/if}
 					{/if}
 					{#if cancellableContract && hackathon.eventStart && hackathon.eventEnd}
 						<a class="button-secondary action-button" href={`/${hackathon.id}/timer`} target="_blank" rel="noopener">
 							<ExternalLink size={18} aria-hidden="true" />Timer
 						</a>
 						<AlertDialog.Root bind:open={cancelDialogOpen}>
-							<AlertDialog.Trigger class="button-primary action-button"><Ban size={18} aria-hidden="true" />Cancel booking</AlertDialog.Trigger>
+							<AlertDialog.Trigger class="button-primary action-button"><Ban size={18} aria-hidden="true" />{locale === 'en' ? 'Cancel booking' : 'Buchung stornieren'}</AlertDialog.Trigger>
 							<AlertDialog.Portal>
 								<AlertDialog.Overlay class="confirmation-overlay" />
 								<AlertDialog.Content class="confirmation-dialog">
 									<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
-									<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
-									<AlertDialog.Description>Der Hackathontag und der Preparation Call werden bei Cal.com storniert. Anschließend erhält {hackathon.contactName} eine Stornierungs-E-Mail.</AlertDialog.Description>
+									<AlertDialog.Title>{locale === 'en' ? 'Really cancel booking?' : 'Booking wirklich stornieren?'}</AlertDialog.Title>
+									<AlertDialog.Description>{locale === 'en' ? `The hackathon day and preparation call will be cancelled in Cal.com. ${hackathon.contactName} will then receive a cancellation email.` : `Der Hackathontag und der Preparation Call werden bei Cal.com storniert. Anschließend erhält ${hackathon.contactName} eine Stornierungs-E-Mail.`}</AlertDialog.Description>
 									<div class="confirmation-dialog-actions">
-										<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
-										<AlertDialog.Action class="button-primary" onclick={cancelBooking}>Buchung stornieren</AlertDialog.Action>
+										<AlertDialog.Cancel class="button-secondary">{locale === 'en' ? 'Cancel' : 'Abbrechen'}</AlertDialog.Cancel>
+										<AlertDialog.Action class="button-primary" onclick={cancelBooking}>{locale === 'en' ? 'Cancel booking' : 'Buchung stornieren'}</AlertDialog.Action>
 									</div>
 								</AlertDialog.Content>
 							</AlertDialog.Portal>
@@ -628,7 +638,7 @@
 						<p class="admin-action-message">{locale === 'en' ? 'Set the hackathon date before using the timer or cancelling this contracted booking.' : 'Legen Sie vor Timer-Nutzung oder Stornierung dieser vertraglichen Buchung den Hackathon-Termin fest.'}</p>
 					{:else if ['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(hackathon.status) && !hackathon.cancellationEmailSentAt}
 						<button class="button-primary action-button" type="button" onclick={cancelBooking} disabled={cancellationBusy}>
-							<RotateCcw size={18} aria-hidden="true" />{cancellationBusy ? 'Wird bearbeitet …' : hackathon.status === 'cancelled' ? 'E-Mail erneut senden' : hackathon.status === 'cancellation_pending' ? 'Stornierung fortsetzen' : 'Buchung stornieren'}
+							<RotateCcw size={18} aria-hidden="true" />{#if cancellationBusy}{locale === 'en' ? 'Working …' : 'Wird bearbeitet …'}{:else if hackathon.status === 'cancelled'}{locale === 'en' ? 'Resend email' : 'E-Mail erneut senden'}{:else if hackathon.status === 'cancellation_pending'}{locale === 'en' ? 'Continue cancellation' : 'Stornierung fortsetzen'}{:else}{locale === 'en' ? 'Cancel booking' : 'Buchung stornieren'}{/if}
 						</button>
 					{/if}
 					{#if invoiceMessage}<p class="admin-action-message" role="status">{invoiceMessage}</p>{/if}
@@ -668,48 +678,48 @@
 			{/if}
 
 			<div class="summary-box overview-box detail-overview">
-				<EditableSummaryRow icon={Building2} label="Unternehmen" value={hackathon.companyName} status="Gespeichert" active={activeSection === 'company'} {saving} error={activeSection === 'company' ? editError : ''} onedit={() => openEditor('company')} onsave={saveEditor} oncancel={cancelEditor}>
-					{#snippet editor()}<div class="field"><label for="detail-company">Unternehmen</label><input id="detail-company" autocomplete="organization" value={draft.companyName} oninput={(event) => (draft = { ...draft, companyName: event.currentTarget.value })} /></div>{/snippet}
+				<EditableSummaryRow icon={Building2} label={locale === 'en' ? 'Company' : 'Unternehmen'} value={hackathon.companyName} status={locale === 'en' ? 'Saved' : 'Gespeichert'} active={activeSection === 'company'} {saving} error={activeSection === 'company' ? editError : ''} onedit={() => openEditor('company')} onsave={saveEditor} oncancel={cancelEditor}>
+					{#snippet editor()}<div class="field"><label for="detail-company">{locale === 'en' ? 'Company' : 'Unternehmen'}</label><input id="detail-company" autocomplete="organization" value={draft.companyName} oninput={(event) => (draft = { ...draft, companyName: event.currentTarget.value })} /></div>{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={Contact} label="Kontakt" value={hackathon.contactName} secondaryValues={[hackathon.email, hackathon.phone]} status="Gespeichert" active={activeSection === 'contact'} {saving} error={activeSection === 'contact' ? editError : ''} onedit={() => openEditor('contact')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={Contact} label={locale === 'en' ? 'Contact' : 'Kontakt'} value={hackathon.contactName} secondaryValues={[hackathon.email, hackathon.phone]} status={locale === 'en' ? 'Saved' : 'Gespeichert'} active={activeSection === 'contact'} {saving} error={activeSection === 'contact' ? editError : ''} onedit={() => openEditor('contact')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ContactFields companyName={draft.companyName} contactName={draft.contactName} email={draft.email} phone={draft.phone} showCompany={false} idPrefix="detail-contact" {locale} onchange={(patch) => (draft = { ...draft, ...patch })} />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={ReceiptEuro} label="Rechnungsdaten" value={hackathon.billing ? `${hackathon.billing.companyName}${hackathon.billing.legalForm ? ` ${hackathon.billing.legalForm}` : ''}` : 'Noch nicht hinterlegt'} secondaryValues={hackathon.billing ? [hackathon.billing.email] : []} status={billingComplete ? 'Vollständig' : 'Vor Vertragsschluss erforderlich'} active={activeSection === 'billing'} {saving} error={activeSection === 'billing' ? editError : ''} onedit={() => openEditor('billing')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={ReceiptEuro} label={locale === 'en' ? 'Billing details' : 'Rechnungsdaten'} value={hackathon.billing ? `${hackathon.billing.companyName}${hackathon.billing.legalForm ? ` ${hackathon.billing.legalForm}` : ''}` : (locale === 'en' ? 'Not provided yet' : 'Noch nicht hinterlegt')} secondaryValues={hackathon.billing ? [hackathon.billing.email] : []} status={billingComplete ? (locale === 'en' ? 'Complete' : 'Vollständig') : (locale === 'en' ? 'Required before contract' : 'Vor Vertragsschluss erforderlich')} active={activeSection === 'billing'} {saving} error={activeSection === 'billing' ? editError : ''} onedit={() => openEditor('billing')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}
 						<div class="field-grid billing-fields">
-							<div class="field"><label for="detail-billing-company">Firma</label><input id="detail-billing-company" autocomplete="organization" value={draft.billing!.companyName} oninput={(event) => updateDraftBilling({ companyName: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-legal-form">Rechtsform <small>(optional)</small></label><input id="detail-billing-legal-form" placeholder="z. B. GmbH" value={draft.billing!.legalForm} oninput={(event) => updateDraftBilling({ legalForm: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-contact">Rechnungskontakt</label><input id="detail-billing-contact" autocomplete="name" value={draft.billing!.contactName} oninput={(event) => updateDraftBilling({ contactName: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-email">Rechnungs-E-Mail</label><input id="detail-billing-email" type="email" autocomplete="email" value={draft.billing!.email} oninput={(event) => updateDraftBilling({ email: event.currentTarget.value })} /></div>
-							<div class="field full"><label for="detail-billing-street">Straße und Hausnummer</label><input id="detail-billing-street" autocomplete="billing street-address" value={draft.billing!.address.street} oninput={(event) => updateDraftBillingAddress({ street: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-postal">Postleitzahl</label><input id="detail-billing-postal" autocomplete="billing postal-code" value={draft.billing!.address.postalCode} oninput={(event) => updateDraftBillingAddress({ postalCode: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-city">Ort</label><input id="detail-billing-city" autocomplete="billing address-level2" value={draft.billing!.address.city} oninput={(event) => updateDraftBillingAddress({ city: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-vat">USt-IdNr. <small>(optional)</small></label><input id="detail-billing-vat" value={draft.billing!.vatId} oninput={(event) => updateDraftBilling({ vatId: event.currentTarget.value })} /></div>
-							<div class="field"><label for="detail-billing-po">Bestellnummer <small>(optional)</small></label><input id="detail-billing-po" value={draft.billing!.purchaseOrder} oninput={(event) => updateDraftBilling({ purchaseOrder: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-company">{locale === 'en' ? 'Company' : 'Firma'}</label><input id="detail-billing-company" autocomplete="organization" value={draft.billing!.companyName} oninput={(event) => updateDraftBilling({ companyName: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-legal-form">{locale === 'en' ? 'Legal form' : 'Rechtsform'} <small>({locale === 'en' ? 'optional' : 'optional'})</small></label><input id="detail-billing-legal-form" placeholder={locale === 'en' ? 'e.g. Ltd' : 'z. B. GmbH'} value={draft.billing!.legalForm} oninput={(event) => updateDraftBilling({ legalForm: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-contact">{locale === 'en' ? 'Billing contact' : 'Rechnungskontakt'}</label><input id="detail-billing-contact" autocomplete="name" value={draft.billing!.contactName} oninput={(event) => updateDraftBilling({ contactName: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-email">{locale === 'en' ? 'Billing email' : 'Rechnungs-E-Mail'}</label><input id="detail-billing-email" type="email" autocomplete="email" value={draft.billing!.email} oninput={(event) => updateDraftBilling({ email: event.currentTarget.value })} /></div>
+							<div class="field full"><label for="detail-billing-street">{locale === 'en' ? 'Street and number' : 'Straße und Hausnummer'}</label><input id="detail-billing-street" autocomplete="billing street-address" value={draft.billing!.address.street} oninput={(event) => updateDraftBillingAddress({ street: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-postal">{locale === 'en' ? 'Postal code' : 'Postleitzahl'}</label><input id="detail-billing-postal" autocomplete="billing postal-code" value={draft.billing!.address.postalCode} oninput={(event) => updateDraftBillingAddress({ postalCode: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-city">{locale === 'en' ? 'City' : 'Ort'}</label><input id="detail-billing-city" autocomplete="billing address-level2" value={draft.billing!.address.city} oninput={(event) => updateDraftBillingAddress({ city: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-vat">{locale === 'en' ? 'VAT ID' : 'USt-IdNr.'} <small>({locale === 'en' ? 'optional' : 'optional'})</small></label><input id="detail-billing-vat" value={draft.billing!.vatId} oninput={(event) => updateDraftBilling({ vatId: event.currentTarget.value })} /></div>
+							<div class="field"><label for="detail-billing-po">{locale === 'en' ? 'Purchase order' : 'Bestellnummer'} <small>({locale === 'en' ? 'optional' : 'optional'})</small></label><input id="detail-billing-po" value={draft.billing!.purchaseOrder} oninput={(event) => updateDraftBilling({ purchaseOrder: event.currentTarget.value })} /></div>
 						</div>
 					{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={MessageSquareText} label="Ihre Nachricht" value={hackathon.message || 'Keine Nachricht hinterlegt'} status={hackathon.message ? 'Vorhanden' : 'Optional'} active={activeSection === 'message'} {saving} error={activeSection === 'message' ? editError : ''} onedit={() => openEditor('message')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={MessageSquareText} label={locale === 'en' ? 'Your message' : 'Ihre Nachricht'} value={hackathon.message || (locale === 'en' ? 'No message provided' : 'Keine Nachricht hinterlegt')} status={hackathon.message ? (locale === 'en' ? 'Provided' : 'Vorhanden') : (locale === 'en' ? 'Optional' : 'Optional')} active={activeSection === 'message'} {saving} error={activeSection === 'message' ? editError : ''} onedit={() => openEditor('message')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<MessageField value={draft.message} onchange={(message) => (draft = { ...draft, message })} id="detail-message" {locale} />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Users} label={overviewRow('team').label} value={overviewRow('team').value} status={overviewRow('team').status} active={activeSection === 'capacity'} {saving} error={activeSection === 'capacity' ? editError : ''} onedit={() => openEditor('capacity')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="capacity" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-capacity" {locale} />{/snippet}
 				</EditableSummaryRow>
 				{#if standardOffer}
-					<EditableSummaryRow icon={MapPin} label="Veranstaltungsort" value="Räume des Kunden" status="Vorausgesetzt" />
+					<EditableSummaryRow icon={MapPin} label={locale === 'en' ? 'Venue' : 'Veranstaltungsort'} value={locale === 'en' ? 'Customer premises' : 'Räume des Kunden'} status={locale === 'en' ? 'Required' : 'Vorausgesetzt'} />
 				{:else}
 					<EditableSummaryRow icon={MapPin} label={overviewRow('location').label} value={overviewRow('location').value} status={overviewRow('location').status} active={activeSection === 'venue'} {saving} error={activeSection === 'venue' ? editError : ''} onedit={() => openEditor('venue')} onsave={saveEditor} oncancel={cancelEditor}>
 						{#snippet editor()}<ConfigOptionCards kind="venue" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-venue" {locale} />{/snippet}
 					</EditableSummaryRow>
 				{/if}
-				<EditableSummaryRow icon={MapPinned} label={hackathon.venueProvided ? 'Veranstaltungsadresse' : 'Gewünschtes Suchgebiet'} value={eventAddressLabel} status={hackathon.venueProvided ? 'Geplant' : 'Location wird bestätigt'} active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={MapPinned} label={hackathon.venueProvided ? (locale === 'en' ? 'Event address' : 'Veranstaltungsadresse') : (locale === 'en' ? 'Preferred search area' : 'Gewünschtes Suchgebiet')} value={eventAddressLabel} status={hackathon.venueProvided ? (locale === 'en' ? 'Planned' : 'Geplant') : (locale === 'en' ? 'Location to be confirmed' : 'Location wird bestätigt')} active={activeSection === 'address'} {saving} error={activeSection === 'address' ? editError : ''} onedit={() => openEditor('address')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<AddressEditor value={draft.address} onchange={(address) => (draft = { ...draft, address })} idPrefix="detail-address" searchArea={!draft.venueProvided} {locale} />{/snippet}
 				</EditableSummaryRow>
 				<EditableSummaryRow icon={Code2} label={overviewRow('tools').label} value={overviewRow('tools').value} status={overviewRow('tools').status} active={activeSection === 'tools'} {saving} error={activeSection === 'tools' ? editError : ''} onedit={() => openEditor('tools')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ConfigOptionCards kind="tools" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-tools" {locale} />{/snippet}
 				</EditableSummaryRow>
 				{#if standardOffer}
-					<EditableSummaryRow icon={Laptop} label="Devices" value="Kundengeräte mit Administratorrechten" status="Vorausgesetzt" />
+					<EditableSummaryRow icon={Laptop} label={locale === 'en' ? 'Devices' : 'Devices'} value={locale === 'en' ? 'Customer devices with admin rights' : 'Kundengeräte mit Administratorrechten'} status={locale === 'en' ? 'Required' : 'Vorausgesetzt'} />
 				{:else}
 					<EditableSummaryRow icon={Laptop} label={overviewRow('devices').label} value={overviewRow('devices').value} status={overviewRow('devices').status} active={activeSection === 'devices'} {saving} error={activeSection === 'devices' ? editError : ''} onedit={() => openEditor('devices')} onsave={saveEditor} oncancel={cancelEditor}>
 						{#snippet editor()}<ConfigOptionCards kind="devices" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-devices" {locale} />{/snippet}
@@ -725,7 +735,7 @@
 					{#snippet editor()}<PrepCallEditor value={draft.consultationSlot} mode={prepCallMode} customDate={customPrepCallDate} {locale} onchange={(consultationSlot) => (draft = { ...draft, consultationSlot })} onmodechange={(value) => (prepCallMode = value)} oncustomdatechange={(value) => (customPrepCallDate = value)} />{/snippet}
 				</EditableSummaryRow>
 				{#if standardOffer}
-					<EditableSummaryRow icon={Pizza} label="Mittagessen" value="Pizza: Margherita, Salami und vegetarische Sorten" status="Inklusive" />
+					<EditableSummaryRow icon={Pizza} label={locale === 'en' ? 'Lunch' : 'Mittagessen'} value={locale === 'en' ? 'Pizza: Margherita, salami, and vegetarian options' : 'Pizza: Margherita, Salami und vegetarische Sorten'} status={locale === 'en' ? 'Included' : 'Inklusive'} />
 				{:else}
 					<EditableSummaryRow icon={Pizza} label={overviewRow('lunch').label} value={overviewRow('lunch').value} status={overviewRow('lunch').status} active={activeSection === 'lunch'} {saving} error={activeSection === 'lunch' ? editError : ''} onedit={() => openEditor('lunch')} onsave={saveEditor} oncancel={cancelEditor}>
 						{#snippet editor()}<ConfigOptionCards kind="lunch" values={draftOptions} onchange={updateDraftOptions} idPrefix="detail-lunch" {locale} />{/snippet}

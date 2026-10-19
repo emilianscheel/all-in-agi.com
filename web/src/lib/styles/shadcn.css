@@ -88,6 +88,17 @@
 }
 
 @layer base {
+	/*
+	  Restore Tailwind’s border reset without Preflight heading resets.
+	  Without `border-style: solid`, utilities like `border-b` do not paint.
+	*/
+	*,
+	::after,
+	::before {
+		border-style: solid;
+		border-width: 0;
+	}
+
 	* {
 		@apply border-border outline-ring/50;
 	}

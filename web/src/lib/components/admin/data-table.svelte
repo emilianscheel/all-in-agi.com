@@ -16,8 +16,8 @@
 	} = $props();
 </script>
 
-<div class="overflow-hidden rounded-2xl border border-border bg-card">
-	<Table.Root>
+<div class="admin-data-table overflow-hidden rounded-2xl border border-border bg-card">
+	<Table.Root class="border-separate border-spacing-0">
 		<Table.Header>
 			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 				<Table.Row class="hover:bg-transparent">
@@ -52,3 +52,16 @@
 		</Table.Body>
 	</Table.Root>
 </div>
+
+<style>
+	.admin-data-table :global(table),
+	.admin-data-table :global(thead),
+	.admin-data-table :global(tbody),
+	.admin-data-table :global(tr),
+	.admin-data-table :global(th),
+	.admin-data-table :global(td) {
+		border: 0 !important;
+		border-width: 0 !important;
+		box-shadow: none !important;
+	}
+</style>
