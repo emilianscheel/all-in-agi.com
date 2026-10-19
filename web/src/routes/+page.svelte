@@ -47,7 +47,7 @@
     let locale = $derived((page.data.locale ?? "de") as Locale);
     let priceDuration = $derived(locale === "en" ? "1 full day" : "1 ganzer Tag");
 
-    const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
+    const carouselTools = CODING_TOOLS.filter((tool) => tool.icon && tool.href);
     const carouselRepeats = [0, 1, 2, 3];
     let carouselLabel = $derived(
         `${locale === "en" ? "Coding tools used in the hackathon" : "Coding Tools im Hackathon"}: ${carouselTools.map((tool) => tool.label).join(", ")}`,
@@ -416,17 +416,29 @@
                 : "Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen."}
         </p>
     </div>
-    <div class="tool-carousel" role="img" aria-label={carouselLabel}>
+    <nav class="tool-carousel" aria-label={carouselLabel}>
         <div class="tool-carousel-window">
-            <div class="tool-carousel-track" aria-hidden="true">
+            <div class="tool-carousel-track">
                 {#each [0, 1] as copy}
                     <div class:duplicate={copy === 1} class="tool-carousel-group">
                         {#each carouselRepeats as repetition}
                             <div class:duplicate-set={repetition > 0} class="tool-carousel-set">
                                 {#each carouselTools as tool}
                                     <div class="tool-carousel-item">
-                                        <img src={tool.icon} alt="" width="96" height="96" />
-                                        <span>{tool.label}</span>
+                                        <a
+                                            class="tool-carousel-link"
+                                            href={tool.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={locale === "en"
+                                                ? `Download ${tool.label} (opens in a new tab)`
+                                                : `${tool.label} herunterladen (öffnet in neuem Tab)`}
+                                            aria-hidden={copy !== 0 || repetition !== 0}
+                                            tabindex={copy === 0 && repetition === 0 ? 0 : -1}
+                                        >
+                                            <img src={tool.icon} alt="" width="96" height="96" />
+                                            <span>{tool.label}</span>
+                                        </a>
                                     </div>
                                 {/each}
                             </div>
@@ -435,7 +447,7 @@
                 {/each}
             </div>
         </div>
-    </div>
+    </nav>
 </section>
 
 <section

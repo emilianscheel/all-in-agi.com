@@ -20,23 +20,29 @@ export type CodingTool =
 	| 'delta'
 	| 'lovable'
 	| 'replit'
+	| 'pycharm'
+	| 'intellij-idea'
+	| 'visual-studio-code'
 	| 'custom';
 export const PROVIDED_CODING_TOOLS: CodingTool[] = ['codex', 'cursor', 'claude-code'];
 
-export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?: string }> = [
-	{ id: 'github-copilot', label: 'GitHub Copilot', icon: '/images/coding-tools/github-copilot.png' },
-	{ id: 'codex', label: 'Codex', icon: '/images/coding-tools/codex.png' },
-	{ id: 'claude-code', label: 'Claude Code', icon: '/images/coding-tools/claude-code.png' },
-	{ id: 'cursor', label: 'Cursor', icon: '/images/coding-tools/cursor.png' },
-	{ id: 'devin', label: 'Devin', icon: '/images/coding-tools/devin.png' },
-	{ id: 'opencode', label: 'opencode', icon: '/images/coding-tools/opencode.png' },
-	{ id: 'antigravity', label: 'Antigravity', icon: '/images/coding-tools/antigravity.png' },
-	{ id: 'conductor', label: 'Conductor', icon: '/images/coding-tools/conductor.png' },
-	{ id: 'super-engineering', label: 'super.engineering', icon: '/images/coding-tools/super-engineering.png' },
-	{ id: 'zed', label: 'Zed', icon: '/images/coding-tools/zed.png' },
-	{ id: 'delta', label: 'Delta', icon: '/images/coding-tools/delta.png' },
-	{ id: 'lovable', label: 'Lovable', icon: '/images/coding-tools/lovable.png' },
-	{ id: 'replit', label: 'Replit', icon: '/images/coding-tools/replit.png' },
+export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?: string; href?: string }> = [
+	{ id: 'github-copilot', label: 'GitHub Copilot', icon: '/images/coding-tools/github-copilot.png', href: 'https://github.com/features/copilot' },
+	{ id: 'codex', label: 'Codex', icon: '/images/coding-tools/codex.png', href: 'https://chatgpt.com/codex' },
+	{ id: 'claude-code', label: 'Claude Code', icon: '/images/coding-tools/claude-code.png', href: 'https://claude.ai/download' },
+	{ id: 'cursor', label: 'Cursor', icon: '/images/coding-tools/cursor.png', href: 'https://cursor.com/download' },
+	{ id: 'devin', label: 'Devin', icon: '/images/coding-tools/devin.png', href: 'https://devin.ai/' },
+	{ id: 'opencode', label: 'opencode', icon: '/images/coding-tools/opencode.png', href: 'https://opencode.ai/' },
+	{ id: 'antigravity', label: 'Antigravity', icon: '/images/coding-tools/antigravity.png', href: 'https://antigravity.google/' },
+	{ id: 'conductor', label: 'Conductor', icon: '/images/coding-tools/conductor.png', href: 'https://conductor.build/' },
+	{ id: 'super-engineering', label: 'super.engineering', icon: '/images/coding-tools/super-engineering.png', href: 'https://super.engineering/' },
+	{ id: 'zed', label: 'Zed', icon: '/images/coding-tools/zed.png', href: 'https://zed.dev/download' },
+	{ id: 'delta', label: 'Delta', icon: '/images/coding-tools/delta.png', href: 'https://delta.dev/download' },
+	{ id: 'lovable', label: 'Lovable', icon: '/images/coding-tools/lovable.png', href: 'https://lovable.dev/' },
+	{ id: 'replit', label: 'Replit', icon: '/images/coding-tools/replit.png', href: 'https://replit.com/desktop' },
+	{ id: 'pycharm', label: 'PyCharm', icon: '/images/coding-tools/pycharm.png', href: 'https://www.jetbrains.com/pycharm/download/' },
+	{ id: 'intellij-idea', label: 'IntelliJ IDEA', icon: '/images/coding-tools/intellij-idea.png', href: 'https://www.jetbrains.com/idea/download/' },
+	{ id: 'visual-studio-code', label: 'Visual Studio Code', icon: '/images/coding-tools/visual-studio-code.png', href: 'https://code.visualstudio.com/download' },
 	{ id: 'custom', label: 'Custom' }
 ];
 

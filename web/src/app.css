@@ -143,12 +143,20 @@ img { display: block; max-width: 100%; }
 	-webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 	mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
-.tool-carousel-track { display: flex; width: max-content; will-change: transform; animation: tool-carousel-scroll 80s linear infinite; }
+.tool-carousel-track { display: flex; width: max-content; will-change: transform; animation: tool-carousel-scroll 180s linear infinite; }
 .tool-carousel-group, .tool-carousel-set { display: flex; flex: none; align-items: center; }
 .tool-carousel-set { gap: clamp(30px, 4.5vw, 58px); padding-right: clamp(30px, 4.5vw, 58px); }
-.tool-carousel-item { min-width: clamp(68px, 7vw, 92px); display: flex; flex-direction: column; align-items: center; gap: 11px; }
-.tool-carousel img { width: clamp(46px, 5vw, 62px); height: clamp(46px, 5vw, 62px); flex: none; object-fit: contain; }
-.tool-carousel-item span { color: var(--replacement-muted); font-size: 12px; line-height: 1.2; font-weight: 500; white-space: nowrap; }
+.tool-carousel-item { min-width: clamp(68px, 7vw, 92px); }
+.tool-carousel-link {
+	display: flex; flex-direction: column; align-items: center; gap: 11px;
+	color: inherit; text-decoration: none; cursor: pointer;
+}
+.tool-carousel img {
+	width: clamp(46px, 5vw, 62px); height: clamp(46px, 5vw, 62px); flex: none; object-fit: contain;
+	transform: scale(1); transition: transform 0.28s ease;
+}
+.tool-carousel-link:hover img { transform: scale(1.14); }
+.tool-carousel-link span { color: var(--replacement-muted); font-size: 12px; line-height: 1.2; font-weight: 500; white-space: nowrap; }
 @keyframes tool-carousel-scroll { to { transform: translateX(-50%); } }
 
 .adoption-gap {
@@ -783,8 +791,9 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	.tool-carousel-window { -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent); }
 	.tool-carousel-set { gap: 28px; padding-right: 28px; }
 	.tool-carousel img { width: 46px; height: 46px; }
-	.tool-carousel-item { min-width: 66px; gap: 9px; }
-	.tool-carousel-item span { font-size: 11px; }
+	.tool-carousel-item { min-width: 66px; }
+	.tool-carousel-link { gap: 9px; }
+	.tool-carousel-link span { font-size: 11px; }
 	.adoption-gap { min-height: 0; margin: 0; border-radius: 0; }
 	.adoption-gap-image { object-position: 48% center; }
 	.adoption-gap::after {
