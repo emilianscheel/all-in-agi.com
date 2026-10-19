@@ -6,7 +6,21 @@ export type Equipment = 'projector' | 'tv' | 'none';
 export type Lunch = 'pizza' | 'custom' | 'none' | 'self-organized';
 export type ToolProvision = 'existing' | 'needed';
 export type DeviceProvision = 'existing' | 'needed';
-export type CodingTool = 'github-copilot' | 'codex' | 'claude-code' | 'cursor' | 'devin' | 'opencode' | 'antigravity' | 'custom';
+export type CodingTool =
+	| 'github-copilot'
+	| 'codex'
+	| 'claude-code'
+	| 'cursor'
+	| 'devin'
+	| 'opencode'
+	| 'antigravity'
+	| 'conductor'
+	| 'super-engineering'
+	| 'zed'
+	| 'delta'
+	| 'lovable'
+	| 'replit'
+	| 'custom';
 export const PROVIDED_CODING_TOOLS: CodingTool[] = ['codex', 'cursor', 'claude-code'];
 
 export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?: string }> = [
@@ -17,6 +31,12 @@ export const CODING_TOOLS: ReadonlyArray<{ id: CodingTool; label: string; icon?:
 	{ id: 'devin', label: 'Devin', icon: '/images/coding-tools/devin.png' },
 	{ id: 'opencode', label: 'opencode', icon: '/images/coding-tools/opencode.png' },
 	{ id: 'antigravity', label: 'Antigravity', icon: '/images/coding-tools/antigravity.png' },
+	{ id: 'conductor', label: 'Conductor', icon: '/images/coding-tools/conductor.png' },
+	{ id: 'super-engineering', label: 'super.engineering', icon: '/images/coding-tools/super-engineering.png' },
+	{ id: 'zed', label: 'Zed', icon: '/images/coding-tools/zed.png' },
+	{ id: 'delta', label: 'Delta', icon: '/images/coding-tools/delta.png' },
+	{ id: 'lovable', label: 'Lovable', icon: '/images/coding-tools/lovable.png' },
+	{ id: 'replit', label: 'Replit', icon: '/images/coding-tools/replit.png' },
 	{ id: 'custom', label: 'Custom' }
 ];
 
