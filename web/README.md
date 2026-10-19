@@ -42,6 +42,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `BETTER_AUTH_SECRET`: mindestens 32 Zeichen langes Secret für Better-Auth-Sessions
 - `BETTER_AUTH_URL`: vollständiger Origin der Anwendung ohne abschließenden Slash; lokal standardmäßig `http://localhost:3000`
 - `SEED_ADMIN_EMAIL`: einzige E-Mail-Adresse, die das Admin-Konto einrichten darf
+- `SEED_ADMIN_NAME`: Anzeigename des Seed-Admins (Fallback: `ALL IN AGI Admin`)
 - `SEED_ADMIN_PASSWORD`: Seed-Passwort mit mindestens 8 Zeichen; es wird nur bis zur erfolgreichen Passkey-Einrichtung akzeptiert
 - `PUBLIC_GA_MEASUREMENT_ID`: öffentliche GA4 Measurement ID, derzeit `G-WD6MW6STST`; Analytics wird erst nach einer Cookie-Einwilligung im Browser geladen
 
@@ -53,7 +54,7 @@ Gebuchte Hackathons werden dauerhaft in PostgreSQL gespeichert und erhalten eine
 
 Das Admin-Dashboard liegt unter `/de/dashboard` bzw. `/en/dashboard`. Die Buchungsliste liegt unter `/de/buchungen` und `/en/bookings`; die Benutzerverwaltung unter `/de/user` bzw. `/en/user`.
 
-Der erste Admin wird über `SEED_ADMIN_EMAIL` und `SEED_ADMIN_PASSWORD` eingerichtet. Nach der Anmeldung mit dem Seed-Passwort muss unmittelbar ein Passkey registriert werden; Buchungsdaten und Admin-Endpunkte bleiben bis dahin gesperrt. Weitere Admins werden unter **User → Create user** angelegt und erhalten ein generiertes Initialpasswort. Beim ersten Login müssen auch sie einen Passkey registrieren. Sobald ein Passkey vorhanden ist, weist der Server Passwort-Anmeldungen für diesen Benutzer zurück und akzeptiert nur noch WebAuthn/Passkey. Es gibt kein Rollensystem: jeder Benutzer mit Passkey ist voller Admin.
+Der erste Admin wird über `SEED_ADMIN_EMAIL`, `SEED_ADMIN_NAME` und `SEED_ADMIN_PASSWORD` eingerichtet. Nach der Anmeldung mit dem Seed-Passwort muss unmittelbar ein Passkey registriert werden; Buchungsdaten und Admin-Endpunkte bleiben bis dahin gesperrt. Weitere Admins werden unter **User → Create user** angelegt und erhalten ein generiertes Initialpasswort. Beim ersten Login müssen auch sie einen Passkey registrieren. Sobald ein Passkey vorhanden ist, weist der Server Passwort-Anmeldungen für diesen Benutzer zurück und akzeptiert nur noch WebAuthn/Passkey. Es gibt kein Rollensystem: jeder Benutzer mit Passkey ist voller Admin.
 
 Passkeys benötigen im Live-Betrieb HTTPS und einen `BETTER_AUTH_URL`-Origin, der exakt zur aufgerufenen Domain passt. `localhost` funktioniert für die lokale Entwicklung. Das Dashboard zeigt Kennzahlen zu Buchungen und Benutzern; die Buchungsseite bietet CSV-Export und Aktionsmenüs. Die öffentliche Hackathon-Detailseite ergänzt für angemeldete Admins Timer-, Vertrags- und Stornierungsaktionen.
 

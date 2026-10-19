@@ -22,6 +22,11 @@ export function seedAdminEmail() {
 	return normalizeEmail(process.env.SEED_ADMIN_EMAIL);
 }
 
+export function seedAdminName() {
+	const configured = String(process.env.SEED_ADMIN_NAME ?? '').trim();
+	return configured || 'ALL IN AGI Admin';
+}
+
 export function isSeedAdminEmail(value: unknown) {
 	const configured = seedAdminEmail();
 	return Boolean(configured) && normalizeEmail(value) === configured;

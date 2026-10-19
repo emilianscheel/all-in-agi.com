@@ -68,7 +68,7 @@
 		try {
 			const result = accountExists
 				? await authClient.signIn.email({ email, password })
-				: await authClient.signUp.email({ email, password, name: 'ALL IN AGI Admin' });
+				: await authClient.signUp.email({ email, password, name: data.seedAdminName });
 			if (result.error) throw new Error(result.error.message ?? 'Die Anmeldedaten sind ungültig.');
 			password = '';
 			await registerPasskey();

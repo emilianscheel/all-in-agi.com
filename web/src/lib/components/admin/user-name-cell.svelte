@@ -1,8 +1,5 @@
 <script lang="ts">
-	let { name, id }: { name: string; id: string } = $props();
+	let { name }: { name: string } = $props();
 </script>
 
-<div class="booking-primary-link">
-	<strong>{name}</strong>
-	<small>{id}</small>
-</div>
+<span class="font-medium tracking-[-0.015em]">{name}</span>

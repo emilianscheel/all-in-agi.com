@@ -45,8 +45,7 @@
 				header: () => 'Name',
 				cell: ({ row }) =>
 					renderComponent(UserNameCell, {
-						name: row.original.name,
-						id: row.original.id
+						name: row.original.name
 					})
 			}),
 			columnHelper.accessor('email', {

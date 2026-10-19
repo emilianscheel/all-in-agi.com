@@ -7,6 +7,7 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { seedAdminName } from './admin-auth';
 import { getDb } from './db';
 import * as schema from './db/schema';
 
@@ -73,7 +74,7 @@ export const auth = betterAuth({
 				return {
 					context: {
 						...ctx,
-						body: { ...ctx.body, email: seedEmail, name: 'ALL IN AGI Admin' }
+						body: { ...ctx.body, email: seedEmail, name: seedAdminName() }
 					}
 				};
 			}
