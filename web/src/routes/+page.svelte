@@ -41,14 +41,16 @@
     import SeoHead from "$lib/SeoHead.svelte";
     import JsonLd from "$lib/JsonLd.svelte";
     import ClosingCta from "$lib/ClosingCta.svelte";
-    import { page } from '$app/state';
-    import { localizedPath, type Locale } from '$lib/i18n';
+    import { page } from "$app/state";
+    import { localizedPath, type Locale } from "$lib/i18n";
 
-	let locale = $derived((page.data.locale ?? 'de') as Locale);
+    let locale = $derived((page.data.locale ?? "de") as Locale);
 
     const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
     const carouselRepeats = [0, 1, 2, 3];
-    let carouselLabel = $derived(`${locale === 'en' ? 'Coding tools used in the hackathon' : 'Coding Tools im Hackathon'}: ${carouselTools.map((tool) => tool.label).join(", ")}`);
+    let carouselLabel = $derived(
+        `${locale === "en" ? "Coding tools used in the hackathon" : "Coding Tools im Hackathon"}: ${carouselTools.map((tool) => tool.label).join(", ")}`,
+    );
     const customFormatUrl = "https://cal.com/emilian.scheel/hackathon-vorbereitung";
 
     const formatFeatures = [
@@ -74,7 +76,11 @@
         { de: "Cookies", en: "Cookies", icon: Cookie },
         { de: "Event-Fotos", en: "Event photography", icon: Camera },
         { de: "Präsentationstechnik", en: "Presentation equipment", icon: Projector },
-        { de: "Eigener oder bereitgestellter Tool Stack", en: "Your tool stack or one provided by us", icon: Bot },
+        {
+            de: "Eigene/ bereitgestellte Tools",
+            en: "Your or our tool stack",
+            icon: Bot,
+        },
         { de: "IT- & Security-Abstimmung", en: "IT and security coordination", icon: ShieldCheck },
         { de: "Pitch-Vorbereitung", en: "Pitch preparation", icon: Speech },
         { de: "Pitch- & Voting-System", en: "Pitch and voting system", icon: Vote },
@@ -97,9 +103,10 @@
     }
 
     function zoomTarget() {
-        const size = window.innerWidth <= 640
-            ? Math.min(window.innerWidth * 0.68, 260)
-            : window.innerHeight * 0.3;
+        const size =
+            window.innerWidth <= 640
+                ? Math.min(window.innerWidth * 0.68, 260)
+                : window.innerHeight * 0.3;
         return {
             size,
             left: (window.innerWidth - size) / 2,
@@ -154,7 +161,11 @@
         const destination = originImage?.getBoundingClientRect() ?? profileOrigin;
         if (!reducedMotion() && destination) {
             const current = profileZoomImage.getBoundingClientRect();
-            backdropAnimation = animate(profileZoomBackdrop, { opacity: [1, 0] }, { duration: 0.24 });
+            backdropAnimation = animate(
+                profileZoomBackdrop,
+                { opacity: [1, 0] },
+                { duration: 0.24 },
+            );
             profileAnimation = animate(
                 profileZoomImage,
                 {
@@ -215,23 +226,54 @@
             answer: "Zu jeder Buchung gehört ein 30-minütiges Vorbereitungsgespräch. Dort schärfen wir Anwendungsfälle, Team, Tool Stack und Rahmenbedingungen; anschließend wird der Termin über den Konfigurator angefragt.",
         },
         {
-            question: "Wir haben eine eigene Idee oder besondere Anforderungen – passt das trotzdem?",
+            question:
+                "Wir haben eine eigene Idee oder besondere Anforderungen – passt das trotzdem?",
             answer: "Unbedingt. Der Hackathon ist unser erprobtes Standardformat, zugleich sind wir offen für Ihre Ideen, konkreten Use Cases und Anforderungen. Schreiben Sie uns oder besprechen Sie Ihr Vorhaben unverbindlich mit uns.",
         },
     ];
-	const englishFaqs = [
-		{ question: 'What is an Agentic Engineering Hackathon?', answer: 'A facilitated, hands-on format at your company: teams from engineering, product, and business functions build a working prototype with current AI coding agents and developer tools in one day.' },
-		{ question: 'Does everyone need to know how to code?', answer: 'No. Challenges are designed for different skill levels so engineering, product, and domain experts can build and learn together.' },
-		{ question: 'What team sizes does the format support?', answer: 'Standard formats are available for up to 15, 30, or 50 people. Custom formats can support up to 200 people with several build teams.' },
-		{ question: 'What happens during the day?', answer: 'The standard on-site day includes a kickoff and live demo, challenge setup, two build sprints, lunch, and a final demo session.' },
-		{ question: 'Which tools do participants use?', answer: 'We use your approved tool stack or provide suitable coding tools by prior agreement. The exact setup is confirmed during the preparation call.' },
-		{ question: 'How do you handle IT, security, and privacy?', answer: 'We agree on tools, accounts, data classes, and the working environment before the event. Teams build only inside the approved setup.' },
-		{ question: 'What do we need on site?', answer: 'A suitable room, stable Wi-Fi, work devices, and motivated builders. We can provide presentation equipment if a large display is unavailable.' },
-		{ question: 'What is included in the price?', answer: 'The price includes two facilitators, challenge design, demo session, follow-up, pizza and cookies, a winner poster, event photos, and travel within Germany. Net prices start at €4,000 for up to 15 people.' },
-		{ question: 'How do preparation and booking work?', answer: 'Every request includes a 30-minute preparation call. We refine use cases, team composition, tool stack, and constraints before confirming the event.' },
-		{ question: 'Can we bring our own idea or special requirements?', answer: 'Absolutely. The hackathon is a proven standard format, but we adapt its challenges and setup to your use cases and requirements.' }
-	];
-	let faqs = $derived(locale === 'en' ? englishFaqs : germanFaqs);
+    const englishFaqs = [
+        {
+            question: "What is an Agentic Engineering Hackathon?",
+            answer: "A facilitated, hands-on format at your company: teams from engineering, product, and business functions build a working prototype with current AI coding agents and developer tools in one day.",
+        },
+        {
+            question: "Does everyone need to know how to code?",
+            answer: "No. Challenges are designed for different skill levels so engineering, product, and domain experts can build and learn together.",
+        },
+        {
+            question: "What team sizes does the format support?",
+            answer: "Standard formats are available for up to 15, 30, or 50 people. Custom formats can support up to 200 people with several build teams.",
+        },
+        {
+            question: "What happens during the day?",
+            answer: "The standard on-site day includes a kickoff and live demo, challenge setup, two build sprints, lunch, and a final demo session.",
+        },
+        {
+            question: "Which tools do participants use?",
+            answer: "We use your approved tool stack or provide suitable coding tools by prior agreement. The exact setup is confirmed during the preparation call.",
+        },
+        {
+            question: "How do you handle IT, security, and privacy?",
+            answer: "We agree on tools, accounts, data classes, and the working environment before the event. Teams build only inside the approved setup.",
+        },
+        {
+            question: "What do we need on site?",
+            answer: "A suitable room, stable Wi-Fi, work devices, and motivated builders. We can provide presentation equipment if a large display is unavailable.",
+        },
+        {
+            question: "What is included in the price?",
+            answer: "The price includes two facilitators, challenge design, demo session, follow-up, pizza and cookies, a winner poster, event photos, and travel within Germany. Net prices start at €4,000 for up to 15 people.",
+        },
+        {
+            question: "How do preparation and booking work?",
+            answer: "Every request includes a 30-minute preparation call. We refine use cases, team composition, tool stack, and constraints before confirming the event.",
+        },
+        {
+            question: "Can we bring our own idea or special requirements?",
+            answer: "Absolutely. The hackathon is a proven standard format, but we adapt its challenges and setup to your use cases and requirements.",
+        },
+    ];
+    let faqs = $derived(locale === "en" ? englishFaqs : germanFaqs);
 
     let schema = $derived({
         "@context": "https://schema.org",
@@ -240,7 +282,10 @@
                 "@type": "Organization",
                 "@id": "https://all-in-agi.com/#organization",
                 name: "ALL IN AGI",
-                description: locale === 'en' ? "Agentic engineering hackathons for established companies in Germany." : "Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.",
+                description:
+                    locale === "en"
+                        ? "Agentic engineering hackathons for established companies in Germany."
+                        : "Agentic Engineering Hackathons für etablierte Unternehmen in Deutschland.",
                 url: "https://all-in-agi.com",
                 logo: "https://all-in-agi.com/brand/all-in-agi-logo.png",
                 email: CONTACT_EMAIL,
@@ -251,16 +296,25 @@
                 "@id": "https://all-in-agi.com/#website",
                 url: "https://all-in-agi.com",
                 name: "ALL IN AGI",
-                inLanguage: locale === 'en' ? "en-US" : "de-DE",
+                inLanguage: locale === "en" ? "en-US" : "de-DE",
                 publisher: { "@id": "https://all-in-agi.com/#organization" },
             },
             {
                 "@type": "Service",
                 "@id": "https://all-in-agi.com/#agentic-engineering-hackathon",
                 name: "Agentic Engineering Hackathon",
-                serviceType: locale === 'en' ? "Facilitated agentic engineering hackathon for companies" : "Moderierter Agentic Engineering Hackathon für Unternehmen",
-                description: locale === 'en' ? "Teams build a working prototype together with current AI developer tools in one day." : "Teams entwickeln an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.",
-                areaServed: { "@type": "Country", name: locale === 'en' ? "Germany" : "Deutschland" },
+                serviceType:
+                    locale === "en"
+                        ? "Facilitated agentic engineering hackathon for companies"
+                        : "Moderierter Agentic Engineering Hackathon für Unternehmen",
+                description:
+                    locale === "en"
+                        ? "Teams build a working prototype together with current AI developer tools in one day."
+                        : "Teams entwickeln an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.",
+                areaServed: {
+                    "@type": "Country",
+                    name: locale === "en" ? "Germany" : "Deutschland",
+                },
                 provider: { "@id": "https://all-in-agi.com/#organization" },
                 url: "https://all-in-agi.com/",
             },
@@ -306,10 +360,14 @@
 </script>
 
 <SeoHead
-	title={locale === 'en' ? 'Agentic Engineering Hackathon for Companies | ALL IN AGI' : 'Agentic Engineering Hackathon für Unternehmen | ALL IN AGI'}
-	description={locale === 'en' ? 'Your team builds a working prototype with current coding agents in one facilitated, on-site hackathon day in Germany.' : 'Ihr Team baut in einem Tag einen funktionierenden Prototyp mit aktuellen Coding Agents – als moderierter Hackathon vor Ort in Deutschland.'}
+    title={locale === "en"
+        ? "Agentic Engineering Hackathon for Companies | ALL IN AGI"
+        : "Agentic Engineering Hackathon für Unternehmen | ALL IN AGI"}
+    description={locale === "en"
+        ? "Your team builds a working prototype with current coding agents in one facilitated, on-site hackathon day in Germany."
+        : "Ihr Team baut in einem Tag einen funktionierenden Prototyp mit aktuellen Coding Agents – als moderierter Hackathon vor Ort in Deutschland."}
     path="/"
-	{locale}
+    {locale}
 />
 
 <JsonLd data={schema} />
@@ -318,17 +376,29 @@
     <div class="hero-copy" use:reveal>
         <h1 class="display-title">Your Team Can Just Build Things</h1>
         <p class="lede">
-			{locale === 'en' ? 'Let your team experience what coding agents can do in a hands-on hackathon at your company.' : 'Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben.'}
+            {locale === "en"
+                ? "Let your team experience what coding agents can do in a hands-on hackathon at your company."
+                : "Lassen Sie Ihr Team die neuen Möglichkeiten von Coding Agents Hands-on mit einem Hackathon bei Ihnen vor Ort erleben."}
         </p>
         <div class="hero-actions">
-			<a class="button-primary" href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="hero">{locale === 'en' ? 'Plan a hackathon' : 'Hackathon planen'}</a>
-			<a class="button-secondary" href="#format">{locale === 'en' ? 'View agenda' : 'Agenda ansehen'}</a>
+            <a
+                class="button-primary"
+                href={localizedPath(locale, "/buchen")}
+                data-analytics-event="booking_cta"
+                data-analytics-placement="hero"
+                >{locale === "en" ? "Plan a hackathon" : "Hackathon planen"}</a
+            >
+            <a class="button-secondary" href="#format"
+                >{locale === "en" ? "View agenda" : "Agenda ansehen"}</a
+            >
         </div>
     </div>
     <div class="hero-image">
         <img
             src="/images/all-in-agi-event.webp"
-            alt={locale === 'en' ? 'Team working together on a hackathon project' : 'Team arbeitet gemeinsam an einem Hackathon-Projekt'}
+            alt={locale === "en"
+                ? "Team working together on a hackathon project"
+                : "Team arbeitet gemeinsam an einem Hackathon-Projekt"}
             fetchpriority="high"
         />
     </div>
@@ -336,9 +406,13 @@
 
 <section class="manifesto" aria-labelledby="manifesto-title">
     <div class="manifesto-content" use:reveal>
-		<h2 id="manifesto-title"><s>{locale === 'en' ? 'Training' : 'Fortbildung'}</s> Hackathon</h2>
+        <h2 id="manifesto-title">
+            <s>{locale === "en" ? "Training" : "Fortbildung"}</s> Hackathon
+        </h2>
         <p>
-			{locale === 'en' ? 'Instead of sitting through theoretical training, your team builds a working prototype together with current AI developer tools.' : 'Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen.'}
+            {locale === "en"
+                ? "Instead of sitting through theoretical training, your team builds a working prototype together with current AI developer tools."
+                : "Statt theoretischer Schulung entwickelt Ihr Team an einem Tag gemeinsam einen funktionierenden Prototyp mit aktuellen KI-Entwicklerwerkzeugen."}
         </p>
     </div>
     <div class="tool-carousel" role="img" aria-label={carouselLabel}>
@@ -363,7 +437,12 @@
     </div>
 </section>
 
-<section class="adoption-gap" aria-label={locale === 'en' ? 'The gap between AI ambition and practical adoption' : 'Die Lücke zwischen KI-Ambition und praktischer Anwendung'}>
+<section
+    class="adoption-gap"
+    aria-label={locale === "en"
+        ? "The gap between AI ambition and practical adoption"
+        : "Die Lücke zwischen KI-Ambition und praktischer Anwendung"}
+>
     <img
         class="adoption-gap-image"
         src="/images/ai-adoption-hackathon.webp"
@@ -374,13 +453,16 @@
     <div class="adoption-gap-inner">
         <div class="adoption-gap-copy" use:reveal>
             <p class="adoption-gap-conclusion">
-				{locale === 'en' ? 'The best way to close the adoption gap is a hackathon where the team builds and experiments together.' : 'Der beste Weg, die Adaptionslücke zu schließen: ein Hackathon, bei dem das Team gemeinsam baut und ausprobiert.'}
+                {locale === "en"
+                    ? "The best way to close the adoption gap is a hackathon where the team builds and experiments together."
+                    : "Der beste Weg, die Adaptionslücke zu schließen: ein Hackathon, bei dem das Team gemeinsam baut und ausprobiert."}
             </p>
             <div class="adoption-gap-source">
-                <a class="button-secondary"
+                <a
+                    class="button-secondary"
                     href="https://www.celonis.com/de/news/press/the-enterprise-ai-reality-check-high-ambitions-meet-operational-barriers"
                     target="_blank"
-					rel="noreferrer">{locale === 'en' ? 'Learn more' : 'Mehr erfahren'}</a
+                    rel="noreferrer">{locale === "en" ? "Learn more" : "Mehr erfahren"}</a
                 >
             </div>
         </div>
@@ -388,11 +470,19 @@
         <dl class="adoption-gap-stats" use:reveal={{ group: true }}>
             <div class="adoption-gap-stat">
                 <dt><strong>85</strong><span>%</span></dt>
-				<dd>{locale === 'en' ? 'want to become an agentic enterprise within the next two to three years.' : 'wollen in den nächsten zwei bis drei Jahren zum Agentic Enterprise werden.'}</dd>
+                <dd>
+                    {locale === "en"
+                        ? "want to become an agentic enterprise within the next two to three years."
+                        : "wollen in den nächsten zwei bis drei Jahren zum Agentic Enterprise werden."}
+                </dd>
             </div>
             <div class="adoption-gap-stat">
                 <dt><strong>17</strong><span>%</span></dt>
-				<dd>{locale === 'en' ? 'of companies in the DACH region already use AI agents.' : 'der Unternehmen im DACH-Raum nutzen bereits AI Agents.'}</dd>
+                <dd>
+                    {locale === "en"
+                        ? "of companies in the DACH region already use AI agents."
+                        : "der Unternehmen im DACH-Raum nutzen bereits AI Agents."}
+                </dd>
             </div>
         </dl>
     </div>
@@ -401,7 +491,9 @@
 <section class="custom-formats" aria-labelledby="custom-formats-title">
     <div class="section-wrap">
         <div use:reveal>
-			<h2 id="custom-formats-title" class="section-title">{locale === 'en' ? 'Built around your needs' : 'Wie Sie es brauchen'}</h2>
+            <h2 id="custom-formats-title" class="section-title">
+                {locale === "en" ? "Built around your needs" : "Wie Sie es brauchen"}
+            </h2>
         </div>
         <div class="feature-cloud" use:reveal={{ group: true }}>
             {#each formatFeatures as feature}
@@ -420,7 +512,8 @@
                 target="_blank"
                 rel="noreferrer"
                 data-analytics-event="booking_cta"
-				data-analytics-placement="custom-formats">{locale === 'en' ? 'Contact us' : 'Kontakt aufnehmen'}</a
+                data-analytics-placement="custom-formats"
+                >{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a
             >
         </div>
     </div>
@@ -432,22 +525,38 @@
             <article class="agenda-card">
                 <span class="time">09:00</span>
                 <h3>Kickoff</h3>
-				<p>{locale === 'en' ? 'Live demo, tool stack, teams, and challenges.' : 'Live Demo, Tool Stack, Teams und Challenges.'}</p>
+                <p>
+                    {locale === "en"
+                        ? "Live demo, tool stack, teams, and challenges."
+                        : "Live Demo, Tool Stack, Teams und Challenges."}
+                </p>
             </article>
             <article class="agenda-card">
                 <span class="time">09:30</span>
                 <h3>Build Sprint</h3>
-				<p>{locale === 'en' ? 'From problem and user flow to the first working prototype.' : 'Von Problem und User Flow zum ersten Working Prototype.'}</p>
+                <p>
+                    {locale === "en"
+                        ? "From problem and user flow to the first working prototype."
+                        : "Von Problem und User Flow zum ersten Working Prototype."}
+                </p>
             </article>
             <article class="agenda-card">
                 <span class="time">13:00</span>
                 <h3>Pizza</h3>
-				<p>{locale === 'en' ? 'Shared lunch, feedback, and the second build sprint.' : 'Gemeinsamer Lunch, Feedback und zweiter Build Sprint.'}</p>
+                <p>
+                    {locale === "en"
+                        ? "Shared lunch, feedback, and the second build sprint."
+                        : "Gemeinsamer Lunch, Feedback und zweiter Build Sprint."}
+                </p>
             </article>
             <article class="agenda-card">
                 <span class="time">16:30</span>
                 <h3>Demo Session</h3>
-				<p>{locale === 'en' ? 'Problem, solution, how it is used, and how it was built.' : 'Problem, Lösung, How its used and build'}</p>
+                <p>
+                    {locale === "en"
+                        ? "Problem, solution, how it is used, and how it was built."
+                        : "Problem, Lösung, How its used and build"}
+                </p>
             </article>
         </div>
     </div>
@@ -457,44 +566,61 @@
     <div class="section-wrap">
         <div class="pricing-grid" use:reveal={{ group: true }}>
             <article class="price-card">
-				<h3>{locale === 'en' ? 'Up to 15 people' : 'Bis 15 Personen'}</h3>
-                <strong>4.000 €</strong><span>{locale === 'en' ? 'net' : 'netto'}</span>
+                <h3>{locale === "en" ? "Up to 15 people" : "Bis 15 Personen"}</h3>
+                <strong>4.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
-                    <li><MapPin size={17} />{locale === 'en' ? 'On site at your premises' : 'Vor Ort in Ihren Räumen'}</li>
+                    <li>
+                        <MapPin size={17} />{locale === "en"
+                            ? "On site at your premises"
+                            : "Vor Ort in Ihren Räumen"}
+                    </li>
                 </ul>
             </article>
             <article class="price-card featured">
                 <span class="tag">Most popular</span>
-				<h3>{locale === 'en' ? 'Up to 30 people' : 'Bis 30 Personen'}</h3>
-                <strong>5.000 €</strong><span>{locale === 'en' ? 'net' : 'netto'}</span>
+                <h3>{locale === "en" ? "Up to 30 people" : "Bis 30 Personen"}</h3>
+                <strong>5.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
-                    <li><MapPin size={17} />{locale === 'en' ? 'On site at your premises' : 'Vor Ort in Ihren Räumen'}</li>
+                    <li>
+                        <MapPin size={17} />{locale === "en"
+                            ? "On site at your premises"
+                            : "Vor Ort in Ihren Räumen"}
+                    </li>
                 </ul>
             </article>
             <article class="price-card">
-				<h3>{locale === 'en' ? 'Up to 50 people' : 'Bis 50 Personen'}</h3>
-                <strong>6.000 €</strong><span>{locale === 'en' ? 'net' : 'netto'}</span>
+                <h3>{locale === "en" ? "Up to 50 people" : "Bis 50 Personen"}</h3>
+                <strong>6.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
-                    <li><MapPin size={17} />{locale === 'en' ? 'On site at your premises' : 'Vor Ort in Ihren Räumen'}</li>
+                    <li>
+                        <MapPin size={17} />{locale === "en"
+                            ? "On site at your premises"
+                            : "Vor Ort in Ihren Räumen"}
+                    </li>
                 </ul>
             </article>
         </div>
         <div class="section-action">
-			<a class="button-primary" href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="pricing">{locale === 'en' ? 'Plan a hackathon' : 'Hackathon planen'}</a><a
-                class="button-secondary"
-				href="#contact">{locale === 'en' ? 'Contact us' : 'Kontakt aufnehmen'}</a
+            <a
+                class="button-primary"
+                href={localizedPath(locale, "/buchen")}
+                data-analytics-event="booking_cta"
+                data-analytics-placement="pricing"
+                >{locale === "en" ? "Plan a hackathon" : "Hackathon planen"}</a
+            ><a class="button-secondary" href="#contact"
+                >{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a
             >
         </div>
     </div>
@@ -502,18 +628,30 @@
 
 <section id="contact" class="contact-section">
     <div class="section-wrap">
-		<div use:reveal><h2 class="section-title">{locale === 'en' ? 'Contact' : 'Kontakt'}</h2></div>
-        <div class="team-profiles" use:reveal={{ group: true }} aria-label={locale === 'en' ? 'Your contacts' : 'Ihre Ansprechpartner'}>
+        <div use:reveal>
+            <h2 class="section-title">{locale === "en" ? "Contact" : "Kontakt"}</h2>
+        </div>
+        <div
+            class="team-profiles"
+            use:reveal={{ group: true }}
+            aria-label={locale === "en" ? "Your contacts" : "Ihre Ansprechpartner"}
+        >
             <article class="team-profile">
                 <button
                     type="button"
                     class="team-profile-image-button"
-                    aria-label={locale === 'en' ? 'Enlarge profile photo of Maddox Sciuchetti' : 'Profilbild von Maddox Sciuchetti vergrößern'}
+                    aria-label={locale === "en"
+                        ? "Enlarge profile photo of Maddox Sciuchetti"
+                        : "Profilbild von Maddox Sciuchetti vergrößern"}
                     aria-expanded={activeProfile?.name === "Maddox Sciuchetti"}
-                    onclick={(event) => openProfile(
-                        { name: "Maddox Sciuchetti", src: "/images/team/maddox-sciuchetti.jpg" },
-                        event.currentTarget,
-                    )}
+                    onclick={(event) =>
+                        openProfile(
+                            {
+                                name: "Maddox Sciuchetti",
+                                src: "/images/team/maddox-sciuchetti.jpg",
+                            },
+                            event.currentTarget,
+                        )}
                 >
                     <img
                         src="/images/team/maddox-sciuchetti.jpg"
@@ -527,7 +665,11 @@
                 <div class="team-profile-details">
                     <h3>Maddox Sciuchetti</h3>
                     <div class="team-profile-links">
-                        <a href="mailto:maddox@all-in-agi.com" aria-label="E-Mail an Maddox Sciuchetti" title="E-Mail">
+                        <a
+                            href="mailto:maddox@all-in-agi.com"
+                            aria-label="E-Mail an Maddox Sciuchetti"
+                            title="E-Mail"
+                        >
                             <Mail size={15} strokeWidth={2} aria-hidden="true" />
                         </a>
                         <a
@@ -565,12 +707,15 @@
                 <button
                     type="button"
                     class="team-profile-image-button"
-                    aria-label={locale === 'en' ? 'Enlarge profile photo of Emilian Scheel' : 'Profilbild von Emilian Scheel vergrößern'}
+                    aria-label={locale === "en"
+                        ? "Enlarge profile photo of Emilian Scheel"
+                        : "Profilbild von Emilian Scheel vergrößern"}
                     aria-expanded={activeProfile?.name === "Emilian Scheel"}
-                    onclick={(event) => openProfile(
-                        { name: "Emilian Scheel", src: "/images/team/emilian-scheel.jpg" },
-                        event.currentTarget,
-                    )}
+                    onclick={(event) =>
+                        openProfile(
+                            { name: "Emilian Scheel", src: "/images/team/emilian-scheel.jpg" },
+                            event.currentTarget,
+                        )}
                 >
                     <img
                         src="/images/team/emilian-scheel.jpg"
@@ -584,7 +729,11 @@
                 <div class="team-profile-details">
                     <h3>Emilian Scheel</h3>
                     <div class="team-profile-links">
-                        <a href="mailto:emilian@all-in.com" aria-label="E-Mail an Emilian Scheel" title="E-Mail">
+                        <a
+                            href="mailto:emilian@all-in.com"
+                            aria-label="E-Mail an Emilian Scheel"
+                            title="E-Mail"
+                        >
                             <Mail size={15} strokeWidth={2} aria-hidden="true" />
                         </a>
                         <a
@@ -623,15 +772,19 @@
             <article class="contact-card">
                 <Mail size={46} strokeWidth={1.7} aria-hidden="true" />
                 <h3>E-Mail</h3>
-				<p>{locale === 'en' ? 'Any time.' : 'Jederzeit.'}</p>
+                <p>{locale === "en" ? "Any time." : "Jederzeit."}</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
                     >{CONTACT_EMAIL} <span aria-hidden="true">›</span></a
                 >
             </article>
             <article class="contact-card">
                 <Phone size={46} strokeWidth={1.7} aria-hidden="true" />
-				<h3>{locale === 'en' ? 'Phone' : 'Telefon'}</h3>
-				<p>{locale === 'en' ? 'Call any time or request a quick callback.' : 'Jederzeit oder schneller Rückruf.'}</p>
+                <h3>{locale === "en" ? "Phone" : "Telefon"}</h3>
+                <p>
+                    {locale === "en"
+                        ? "Call any time or request a quick callback."
+                        : "Jederzeit oder schneller Rückruf."}
+                </p>
                 <a href={`tel:${CONTACT_PHONE_HREF}`}
                     >{CONTACT_PHONE_DISPLAY} <span aria-hidden="true">›</span></a
                 >
@@ -639,8 +792,18 @@
             <article class="contact-card">
                 <CalendarClock size={46} strokeWidth={1.7} aria-hidden="true" />
                 <h3>Intro Call</h3>
-				<p>{locale === 'en' ? '30 minutes for all your questions, with no obligation.' : '30 Minuten für alle Fragen. Unverbindlich.'}</p>
-				<a href={localizedPath(locale, '/buchen')} data-analytics-event="booking_cta" data-analytics-placement="contact">{locale === 'en' ? 'Choose a time' : 'Termin auswählen'} <span aria-hidden="true">›</span></a>
+                <p>
+                    {locale === "en"
+                        ? "30 minutes for all your questions, with no obligation."
+                        : "30 Minuten für alle Fragen. Unverbindlich."}
+                </p>
+                <a
+                    href={localizedPath(locale, "/buchen")}
+                    data-analytics-event="booking_cta"
+                    data-analytics-placement="contact"
+                    >{locale === "en" ? "Choose a time" : "Termin auswählen"}
+                    <span aria-hidden="true">›</span></a
+                >
             </article>
         </div>
     </div>
@@ -651,7 +814,9 @@
         bind:this={profileZoomBackdrop}
         type="button"
         class="profile-zoom-backdrop"
-        aria-label={locale === 'en' ? `Close enlarged profile photo of ${activeProfile.name}` : `Vergrößertes Profilbild von ${activeProfile.name} schließen`}
+        aria-label={locale === "en"
+            ? `Close enlarged profile photo of ${activeProfile.name}`
+            : `Vergrößertes Profilbild von ${activeProfile.name} schließen`}
         onclick={closeProfile}
     >
         <img
@@ -665,7 +830,11 @@
 
 <section>
     <div class="section-wrap faq-wrap">
-		<div use:reveal><h2 class="section-title">{locale === 'en' ? 'Frequently asked questions' : 'Häufige Fragen'}</h2></div>
+        <div use:reveal>
+            <h2 class="section-title">
+                {locale === "en" ? "Frequently asked questions" : "Häufige Fragen"}
+            </h2>
+        </div>
         <Accordion.Root class="faq-list" type="multiple">
             {#each faqs as faq, index}
                 <Accordion.Item class="faq-item" value={`faq-${index}`}>
