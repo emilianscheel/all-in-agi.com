@@ -24,8 +24,8 @@ export const OFFER_SERVICE_IDS = [
 export type OfferServiceId = (typeof OFFER_SERVICE_IDS)[number];
 
 export const OFFER_CLIENT_LOGOS = [
-    { id: "hitachi", label: "Hitachi Rail" },
-    { id: "none", label: "Kein Kundenlogo" },
+    { id: "hitachi", label: "Hitachi Rail", labelEn: "Hitachi Rail" },
+    { id: "none", label: "Kein Kundenlogo", labelEn: "No client logo" },
 ] as const;
 
 export type OfferClientLogoId = (typeof OFFER_CLIENT_LOGOS)[number]["id"];
@@ -33,51 +33,68 @@ export type OfferClientLogoId = (typeof OFFER_CLIENT_LOGOS)[number]["id"];
 export interface OfferService {
     id: OfferServiceId;
     label: string;
+    labelEn: string;
     description?: string;
+    descriptionEn?: string;
 }
 
 export const OFFER_SERVICES: readonly OfferService[] = [
-    { id: "facilitators", label: "Zwei Facilitators" },
-    { id: "preparation", label: "4 Tage Vorbereitungstage Konzeption" },
-    { id: "challenge-design", label: "Challenge Design" },
-    { id: "demo-follow-up", label: "Demo Session" },
-    { id: "on-site", label: "Wir begleiten das Event von Berlin aus oder bei Ihnen vor Ort" },
-    { id: "date-range", label: "Januar oder Februar 2026" },
-    { id: "duration", label: "2,5 Tage gesamt, 1 Tag à 10 h" },
-    { id: "project-work", label: "2 Tage Projektarbeit" },
-    { id: "pitch-preparation", label: "0,5 Tage Pitch und Projektpitches" },
-    { id: "participants", label: "Bis zu 100 teilnehmende Personen" },
-    { id: "remote-teams", label: "Vollkommen online über Microsoft Teams" },
-    { id: "availability", label: "Während der Wettbewerbszeit jederzeit erreichbar" },
-    { id: "breakout-sessions", label: "Proaktive Unterstützung in direkten Breakout-Sessions" },
-    { id: "introduction", label: "30-minütige Einführungspräsentation am ersten Wettbewerbstag" },
+    { id: "facilitators", label: "Zwei Facilitators", labelEn: "Two facilitators" },
+    { id: "preparation", label: "4 Tage Vorbereitungstage Konzeption", labelEn: "4 days of preparation (concepting)" },
+    { id: "challenge-design", label: "Challenge Design", labelEn: "Challenge Design" },
+    { id: "demo-follow-up", label: "Demo Session", labelEn: "Demo session" },
+    { id: "on-site", label: "Wir begleiten das Event von Berlin aus oder bei Ihnen vor Ort", labelEn: "We accompany the event from Berlin or on-site at your location" },
+    { id: "date-range", label: "Januar oder Februar 2026", labelEn: "January or February 2026" },
+    { id: "duration", label: "2,5 Tage gesamt, 1 Tag à 10 h", labelEn: "2.5 days total, 1 day at 10 h" },
+    { id: "project-work", label: "2 Tage Projektarbeit", labelEn: "2 days of project work" },
+    { id: "pitch-preparation", label: "0,5 Tage Pitch und Projektpitches", labelEn: "0.5 day for pitch and project pitches" },
+    { id: "participants", label: "Bis zu 100 teilnehmende Personen", labelEn: "Up to 100 participants" },
+    { id: "remote-teams", label: "Vollkommen online über Microsoft Teams", labelEn: "Fully online via Microsoft Teams" },
+    { id: "availability", label: "Während der Wettbewerbszeit jederzeit erreichbar", labelEn: "Reachable at all times during the competition period" },
+    { id: "breakout-sessions", label: "Proaktive Unterstützung in direkten Breakout-Sessions", labelEn: "Proactive support in live breakout sessions" },
+    { id: "introduction", label: "30-minütige Einführungspräsentation am ersten Wettbewerbstag", labelEn: "30-minute introductory presentation on the first competition day" },
     {
         id: "matchmaking",
         label: "Gebrandete Match-making Platform",
-        description:
-            "Magischer Link, Profile und automatische, internationale Teamzusammenstellung.",
+        labelEn: "Branded matchmaking platform",
+        description: "Magischer Link, Profile und automatische, internationale Teamzusammenstellung.",
+        descriptionEn: "Magic link, profiles, and automatic international team formation.",
     },
     {
         id: "whiteboard",
         label: "Gebrandetes kollaboratives Whiteboard",
+        labelEn: "Branded collaborative whiteboard",
         description: "Gemeinsamer Raum für Projektideen während des Hackathons.",
+        descriptionEn: "Shared space for project ideas during the hackathon.",
     },
     {
         id: "timetable",
         label: "Gebrandete Time Table View",
+        labelEn: "Branded timetable view",
         description: "Klarer Ablauf und Orientierung für alle Teilnehmenden.",
+        descriptionEn: "Clear agenda and orientation for all participants.",
     },
     {
         id: "pitch-voting",
         label: "Gebrandetes Pitch & Voting System",
+        labelEn: "Branded pitch & voting system",
         description: "Screen-Recording-Upload, Pitch-Vorbereitung und Abstimmung.",
+        descriptionEn: "Screen-recording upload, pitch preparation, and voting.",
     },
     {
         id: "winner-posters",
         label: "Siegerposter",
+        labelEn: "Winning posters",
         description: "Poster zur Auszeichnung der Gewinnerteams.",
+        descriptionEn: "Posters to recognize the winning teams.",
     },
-    { id: "winner-trophies", label: "Siegerpokale", description: "Pokale für die Gewinnerteams." },
+    {
+        id: "winner-trophies",
+        label: "Siegerpokale",
+        labelEn: "Winning trophies",
+        description: "Pokale für die Gewinnerteams.",
+        descriptionEn: "Trophies for the winning teams.",
+    },
 ];
 
 export interface OfferConfiguration {

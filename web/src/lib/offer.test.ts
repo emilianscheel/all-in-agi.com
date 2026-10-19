@@ -22,6 +22,7 @@ describe("offer configuration", () => {
         expect(selectedOfferServices(config)).toContainEqual({
             id: "preparation",
             label: "4 Tage Vorbereitungstage Konzeption",
+            labelEn: "4 days of preparation (concepting)",
         });
     });
 

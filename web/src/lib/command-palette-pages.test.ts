@@ -30,15 +30,15 @@ function collectStaticPagePaths(dir = ROUTES_DIR, prefix = ''): string[] {
 }
 
 describe('command palette pages', () => {
-	test('excludes offer routes', () => {
+	test('includes the offer page and excludes the dynamic token route', () => {
 		const paths = commandPalettePagePaths();
 		for (const excluded of COMMAND_PALETTE_EXCLUDED_PATHS) {
 			expect(paths).not.toContain(excluded);
 		}
-		expect(paths.some((path) => path.startsWith('/offer'))).toBe(false);
+		expect(paths).toContain('/offer');
 	});
 
-	test('includes every static page except offer', () => {
+	test('includes every static page except excluded routes', () => {
 		const catalog = new Set(commandPalettePagePaths());
 		const excluded = new Set<string>(COMMAND_PALETTE_EXCLUDED_PATHS);
 		const staticPaths = collectStaticPagePaths().filter((path) => !excluded.has(path));

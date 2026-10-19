@@ -10,6 +10,14 @@ describe('offer PDF', () => {
 		expect(bytes.length).toBeGreaterThan(10_000);
 	});
 
+	test('creates a Leistungsbeschreibung with the same page count', async () => {
+		const config = { ...defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z')), netTotal: 6000 };
+		const offer = await createOfferPdf(config);
+		const scope = await createOfferPdf(config, { mode: 'scope' });
+		expect((await PDFDocument.load(scope)).getPageCount()).toBe(2);
+		expect(scope).not.toEqual(offer);
+	});
+
 	test('renders the selected client-logo behavior', async () => {
 		const config = defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z'));
 		const withHitachi = await createOfferPdf(config);

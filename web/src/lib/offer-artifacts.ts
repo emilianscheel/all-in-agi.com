@@ -144,47 +144,6 @@ const NEXT_STEPS_EN = [
 	{ label: "Joint alignment on scope, agenda, and prerequisites", icon: "listChecks" },
 ] as const satisfies readonly { label: string; icon: LucideIconName }[];
 
-const OFFER_SERVICES_EN = {
-	facilitators: { label: "Two facilitators" },
-	preparation: { label: "4 days of preparation (concepting)" },
-	"challenge-design": { label: "Challenge Design" },
-	"demo-follow-up": { label: "Demo session" },
-	"on-site": { label: "We accompany the event from Berlin or on-site at your location" },
-	"date-range": { label: "January or February 2026" },
-	duration: { label: "2.5 days total, 1 day at 10 h" },
-	"project-work": { label: "2 days of project work" },
-	"pitch-preparation": { label: "0.5 day for pitch and project pitches" },
-	participants: { label: "Up to 100 participants" },
-	"remote-teams": { label: "Fully online via Microsoft Teams" },
-	availability: { label: "Reachable at all times during the competition period" },
-	"breakout-sessions": { label: "Proactive support in live breakout sessions" },
-	introduction: { label: "30-minute introductory presentation on the first competition day" },
-	matchmaking: {
-		label: "Branded matchmaking platform",
-		description: "Magic link, profiles, and automatic international team formation.",
-	},
-	whiteboard: {
-		label: "Branded collaborative whiteboard",
-		description: "Shared space for project ideas during the hackathon.",
-	},
-	timetable: {
-		label: "Branded timetable view",
-		description: "Clear agenda and orientation for all participants.",
-	},
-	"pitch-voting": {
-		label: "Branded pitch & voting system",
-		description: "Screen-recording upload, pitch preparation, and voting.",
-	},
-	"winner-posters": {
-		label: "Winning posters",
-		description: "Posters to recognize the winning teams.",
-	},
-	"winner-trophies": {
-		label: "Winning trophies",
-		description: "Trophies for the winning teams.",
-	},
-} satisfies Record<OfferServiceId, { label: string; description?: string }>;
-
 const lucideIconPdfs = new Map<LucideIconName, Promise<Uint8Array>>();
 const iconForService = {
     facilitators: "users",
@@ -304,7 +263,8 @@ async function drawOfferPageContent({
 	ink,
 	muted,
 	surface,
-	offerTitleFallback,
+	documentTitle,
+	companyFallback,
 	hasPrice,
 	priceNetText,
 	priceVatText,
@@ -324,7 +284,8 @@ async function drawOfferPageContent({
 	ink: Color;
 	muted: Color;
 	surface: Color;
-	offerTitleFallback: string;
+	documentTitle: string;
+	companyFallback: string;
 	hasPrice: boolean;
 	priceNetText: string;
 	priceVatText: string;
@@ -334,14 +295,14 @@ async function drawOfferPageContent({
 }) {
 	await drawClientLogo(config, pdf, page);
 
-	page.drawText(safeText(config.offerTitle || offerTitleFallback), {
+	page.drawText(safeText(documentTitle), {
 		x: LEFT,
 		y: 737,
 		font: brandFont,
 		size: 26,
 		color: ink,
 	});
-	drawWrapped(page, config.companyName || "Ihr Unternehmen", LEFT, 705, 300, bold, 11.5, ink, 1);
+	drawWrapped(page, config.companyName || companyFallback, LEFT, 705, 300, bold, 11.5, ink, 1);
 	drawWrapped(
 		page,
 		[config.contactName, config.contactEmail].filter(Boolean).join(" · "),
@@ -522,22 +483,42 @@ async function drawOfferPageContent({
 	}
 }
 
-export async function createOfferPdf(config: OfferConfiguration) {
+export type OfferPdfMode = "offer" | "scope";
+
+function documentTitleFor(title: string, fallback: string, replacements: readonly (readonly [string, string])[] = []) {
+	const trimmed = title.trim();
+	if (!trimmed) return fallback;
+	for (const [from, to] of replacements) {
+		const pattern = new RegExp(`^${from}\\b`);
+		if (pattern.test(trimmed)) return trimmed.replace(pattern, to);
+	}
+	return trimmed;
+}
+
+export async function createOfferPdf(config: OfferConfiguration, options: { mode?: OfferPdfMode } = {}) {
     const context = await createBrandPdf();
+	const mode = options.mode ?? "offer";
+	const scope = mode === "scope";
 	const { pdf, page: germanPage, regular, bold, brandFont, colors } = context;
     const { ink, muted, surface } = colors;
 	const englishPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
 	const servicesDe = selectedOfferServices(config);
-	const servicesEn = servicesDe.map((service) => ({ id: service.id, ...OFFER_SERVICES_EN[service.id] }));
+	const servicesEn = servicesDe.map((service) => ({
+		id: service.id,
+		label: service.labelEn,
+		...(service.descriptionEn ? { description: service.descriptionEn } : {}),
+	}));
 
 	const amount = grossTotal(config);
 	const netTotal = config.netTotal;
 	const hasPrice = netTotal !== null && netTotal > 0;
 	const netTotalValue = netTotal ?? 0;
+	const germanDate = formatDate(config.issueDate, "de-DE");
+	const englishDate = formatDate(config.issueDate, "en-US");
 
 	// German page
-	drawBrandChrome(context, `Angebot vom ${formatDate(config.issueDate, "de-DE")}`);
+	drawBrandChrome(context, scope ? `Leistungsbeschreibung vom ${germanDate}` : `Angebot vom ${germanDate}`);
 	await drawOfferPageContent({
 		pdf,
 		page: germanPage,
@@ -551,7 +532,14 @@ export async function createOfferPdf(config: OfferConfiguration) {
 		ink,
 		muted,
 		surface,
-		offerTitleFallback: "Angebot",
+		documentTitle: documentTitleFor(
+			config.offerTitle,
+			scope ? "Leistungsbeschreibung" : "Angebot",
+			scope
+				? [["Angebot", "Leistungsbeschreibung"], ["Offer", "Leistungsbeschreibung"]]
+				: [["Offer", "Angebot"]],
+		),
+		companyFallback: "Ihr Unternehmen",
 		hasPrice,
 		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "de-DE")} netto` : "Preis nach Vereinbarung",
 		priceVatText: hasPrice
@@ -567,7 +555,7 @@ export async function createOfferPdf(config: OfferConfiguration) {
 
 	// English page
 	const englishContext = { ...context, page: englishPage };
-	drawBrandChrome(englishContext, `Offer dated ${formatDate(config.issueDate, "en-US")}`);
+	drawBrandChrome(englishContext, scope ? `Statement of work dated ${englishDate}` : `Offer dated ${englishDate}`);
 	await drawOfferPageContent({
 		pdf,
 		page: englishPage,
@@ -581,7 +569,14 @@ export async function createOfferPdf(config: OfferConfiguration) {
 		ink,
 		muted,
 		surface,
-		offerTitleFallback: "Offer",
+		documentTitle: documentTitleFor(
+			config.offerTitle,
+			scope ? "Statement of work" : "Offer",
+			scope
+				? [["Angebot", "Statement of work"], ["Offer", "Statement of work"], ["Leistungsbeschreibung", "Statement of work"]]
+				: [["Angebot", "Offer"]],
+		),
+		companyFallback: "Your company",
 		hasPrice,
 		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "en-US")} net` : "Price upon agreement",
 		priceVatText: hasPrice

@@ -3,7 +3,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { Building2, Check, Download, FileText, ReceiptEuro } from 'lucide-svelte';
 	import { OFFER_CLIENT_LOGOS, OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
-	import { createOfferPdf } from '$lib/offer-artifacts';
+	import { createOfferPdf, type OfferPdfMode } from '$lib/offer-artifacts';
 	import { page } from '$app/state';
 	import { localizedPath, switchLocalePath, type Locale } from '$lib/i18n';
 
@@ -15,6 +15,7 @@
 	let generating = $state(true);
 	let urlError = $state('');
 	let generatedBytes = $state<Uint8Array | undefined>();
+	let scopeDownloading = $state(false);
 	let mounted = false;
 	let pdfTimer: ReturnType<typeof setTimeout> | undefined;
 	let tokenTimer: ReturnType<typeof setTimeout> | undefined;
@@ -33,6 +34,17 @@
 			: [...config.services, id];
 	}
 
+	function pdfError(error: unknown) {
+		const detail = error instanceof Error ? error.message : '';
+		if (locale === 'en') return detail ? `The PDF could not be created: ${detail}` : 'The PDF could not be created.';
+		return detail ? `PDF konnte nicht erstellt werden: ${detail}` : 'PDF konnte nicht erstellt werden.';
+	}
+
+	function linkError(error: unknown) {
+		if (error instanceof Error && error.message) return error.message;
+		return locale === 'en' ? 'The offer link could not be created.' : 'Angebots-Link konnte nicht erstellt werden.';
+	}
+
 	async function renderPdf() {
 		generating = true;
 		try {
@@ -44,7 +56,7 @@
 			lastPreviewUrl = url;
 			urlError = '';
 		} catch (error) {
-			urlError = error instanceof Error ? `PDF konnte nicht erstellt werden: ${error.message}` : 'PDF konnte nicht erstellt werden.';
+			urlError = pdfError(error);
 		} finally {
 			generating = false;
 		}
@@ -61,23 +73,40 @@
 				signal: tokenAbort.signal
 			});
 			const result = await response.json() as { token?: string; message?: string };
-			if (!response.ok || !result.token) throw new Error(result.message ?? 'Angebots-Link konnte nicht erstellt werden.');
+			if (!response.ok || !result.token) throw new Error(result.message ?? linkError(undefined));
 			replaceState(localizedPath(locale, `/offer/${result.token}`), {});
 			urlError = '';
 		} catch (error) {
-			if ((error as Error).name !== 'AbortError') urlError = error instanceof Error ? error.message : 'Angebots-Link konnte nicht erstellt werden.';
+			if ((error as Error).name !== 'AbortError') urlError = linkError(error);
 		}
 	}
 
-	function downloadPdf() {
-		if (!generatedBytes) return;
+	function savePdf(bytes: Uint8Array, suffix: string) {
 		const link = document.createElement('a');
-		link.href = URL.createObjectURL(pdfBlob(generatedBytes));
-		link.download = `${(config.companyName || 'all-in-agi-angebot').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-angebot.pdf`;
+		link.href = URL.createObjectURL(pdfBlob(bytes));
+		const base = (config.companyName || 'all-in-agi').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'all-in-agi';
+		link.download = `${base}-${suffix}.pdf`;
 		document.body.append(link);
 		link.click();
 		link.remove();
 		setTimeout(() => URL.revokeObjectURL(link.href), 0);
+	}
+
+	async function downloadPdf(mode: OfferPdfMode = 'offer') {
+		if (mode === 'offer') {
+			if (!generatedBytes) return;
+			savePdf(generatedBytes, 'angebot');
+			return;
+		}
+		scopeDownloading = true;
+		try {
+			savePdf(await createOfferPdf(config, { mode: 'scope' }), 'leistungsbeschreibung');
+			urlError = '';
+		} catch (error) {
+			urlError = pdfError(error);
+		} finally {
+			scopeDownloading = false;
+		}
 	}
 
 	$effect(() => {
@@ -104,16 +133,16 @@
 </script>
 
 <div class="offer-builder">
-	<aside class="offer-sidebar" aria-label="Angebot konfigurieren">
+	<aside class="offer-sidebar" aria-label={locale === 'en' ? 'Configure offer' : 'Angebot konfigurieren'}>
 		<div class="offer-sidebar-scroll">
-			<div class="offer-top"><div class="offer-brand"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /><span>ALL IN AGI</span></div><div class="offer-language"><a class:active={locale === 'de'} href={switchLocalePath(page.url, 'de')}>DE</a><a class:active={locale === 'en'} href={switchLocalePath(page.url, 'en')}>EN</a></div></div>
+			<div class="offer-top"><div class="offer-language"><a class:active={locale === 'de'} href={switchLocalePath(page.url, 'de')}>DE</a><a class:active={locale === 'en'} href={switchLocalePath(page.url, 'en')}>EN</a></div></div>
 
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
 				<h2 id="recipient-heading"><Building2 size={16} />{locale === 'en' ? 'Recipient' : 'Empfänger'}</h2>
 				<label>{locale === 'en' ? 'Company' : 'Unternehmen'}<input bind:value={config.companyName} maxlength="200" /></label>
-				<label>{locale === 'en' ? 'Client logo' : 'Kundenlogo'}<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{logo.label}</option>{/each}</select></label>
+				<label>{locale === 'en' ? 'Client logo' : 'Kundenlogo'}<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{locale === 'en' ? logo.labelEn : logo.label}</option>{/each}</select></label>
 				<label>{locale === 'en' ? 'Contact person' : 'Ansprechperson'}<input bind:value={config.contactName} maxlength="200" /></label>
-				<label>E-Mail<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
+				<label>{locale === 'en' ? 'Email' : 'E-Mail'}<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
 			</section>
 
 			<section class="offer-form-section" aria-labelledby="offer-heading">
@@ -132,13 +161,18 @@
 			<section class="offer-form-section offer-services" aria-labelledby="services-heading">
 				<h2 id="services-heading"><Check size={16} />{locale === 'en' ? 'Services' : 'Leistungen'}</h2>
 				{#each OFFER_SERVICES as service}
-					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><span class="offer-service-label">{service.label}</span>{#if service.description}<small>{service.description}</small>{/if}</span></label>
+					{@const label = locale === 'en' ? service.labelEn : service.label}
+					{@const description = locale === 'en' ? service.descriptionEn : service.description}
+					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><span class="offer-service-label">{label}</span>{#if description}<small>{description}</small>{/if}</span></label>
 				{/each}
 			</section>
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
 		</div>
 
-		<div class="offer-download-wrap"><button type="button" class="offer-download" onclick={downloadPdf} disabled={!generatedBytes}><Download size={17} />{locale === 'en' ? (generating ? 'Updating PDF …' : 'Download PDF') : (generating ? 'PDF wird aktualisiert …' : 'PDF herunterladen')}</button></div>
+		<div class="offer-download-wrap">
+			<button type="button" class="offer-download" onclick={() => downloadPdf('offer')} disabled={!generatedBytes || scopeDownloading}><Download size={17} />{locale === 'en' ? (generating ? 'Updating PDF …' : 'Download PDF') : (generating ? 'PDF wird aktualisiert …' : 'PDF herunterladen')}</button>
+			<button type="button" class="offer-download offer-download-secondary" onclick={() => downloadPdf('scope')} disabled={!generatedBytes || scopeDownloading}><Download size={17} />{locale === 'en' ? (scopeDownloading ? 'Creating statement of work …' : 'Statement of work') : (scopeDownloading ? 'Leistungsbeschreibung wird erstellt …' : 'Leistungsbeschreibung')}</button>
+		</div>
 	</aside>
 
 	<section class="offer-preview" aria-label={locale === 'en' ? 'PDF preview' : 'PDF-Vorschau'}>
@@ -147,12 +181,10 @@
 </div>
 
 <style>
-	.offer-builder { min-height: 100svh; display: grid; grid-template-columns: minmax(330px, 398px) minmax(0, 1fr); background: #fff; color: #1d1d1f; }
-	.offer-sidebar { position: sticky; top: 0; height: 100svh; display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #f5f5f7; border-right: 1px solid #e4e4e8; }
-	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 118px; }
-	.offer-brand { display: inline-flex; align-items: center; gap: 7px; color: #2c2c30; font-family: 'Instrument Serif', Georgia, serif; font-size: 16px; letter-spacing: .06em; }
-	.offer-brand img { width: 28px; height: 28px; object-fit: contain; }
-	.offer-top { display: flex; align-items: center; justify-content: space-between; }
+	.offer-builder { min-height: calc(100svh - 44px); display: grid; grid-template-columns: minmax(330px, 398px) minmax(0, 1fr); background: #fff; color: #1d1d1f; }
+	.offer-sidebar { position: sticky; top: 44px; height: calc(100svh - 44px); display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #f5f5f7; border-right: 1px solid #e4e4e8; }
+	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 168px; }
+	.offer-top { display: flex; align-items: center; justify-content: flex-end; }
 	.offer-language { display: flex; gap: 9px; font-size: 11px; } .offer-language a { color: #4e4e53; opacity: .45; } .offer-language a.active { opacity: 1; font-weight: 700; }
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
@@ -173,12 +205,13 @@
 	.offer-service-label { display: block; color: #252529; font-size: 12px; font-weight: 400; line-height: 1.25; }
 	.offer-service small { display: block; margin-top: 3px; color: #74747a; font-size: 10px; line-height: 1.35; }
 	.offer-url-error { margin: 16px 0 0; color: #9a2c0d; font-size: 12px; line-height: 1.4; }
-	.offer-download-wrap { position: absolute; right: 0; bottom: 0; left: 0; padding: 16px 24px 22px; border-top: 1px solid #dedee3; background: rgba(245,245,247,.94); backdrop-filter: blur(12px); }
+	.offer-download-wrap { position: absolute; right: 0; bottom: 0; left: 0; display: grid; gap: 8px; padding: 16px 24px 22px; border-top: 1px solid #dedee3; background: rgba(245,245,247,.94); backdrop-filter: blur(12px); }
 	.offer-download { width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; border: 0; border-radius: 12px; background: #ff4f18; color: #fff; box-shadow: 0 7px 16px rgba(180,49,8,.2); font-size: 13px; font-weight: 700; }
+	.offer-download-secondary { background: #fff; color: #1d1d1f; box-shadow: none; border: 1px solid #d3d3d8; }
 	.offer-download:disabled { opacity: .55; cursor: not-allowed; }
-	.offer-preview { min-width: 0; min-height: 100svh; background: #fff; }
-	.offer-preview iframe { display: block; width: 100%; height: 100svh; border: 0; }
+	.offer-preview { min-width: 0; min-height: calc(100svh - 44px); background: #fff; }
+	.offer-preview iframe { display: block; width: 100%; height: calc(100svh - 44px); border: 0; }
 	.offer-preview-loading { display: grid; width: 100%; height: 100%; place-items: center; color: #6e6e73; font-size: 14px; }
-	@media (max-width: 820px) { .offer-builder { display: block; } .offer-sidebar { position: relative; height: auto; min-height: auto; border-right: 0; } .offer-sidebar-scroll { overflow: visible; padding-bottom: 92px; } .offer-download-wrap { position: sticky; } .offer-preview { min-height: auto; } .offer-preview iframe { height: min(130vw, 850px); min-height: 520px; } }
-	@media (max-width: 420px) { .offer-sidebar-scroll { padding: 20px 17px 90px; } .offer-price-grid { grid-template-columns: 1fr; gap: 0; } }
+	@media (max-width: 820px) { .offer-builder { display: block; } .offer-sidebar { position: relative; top: auto; height: auto; min-height: auto; border-right: 0; } .offer-sidebar-scroll { overflow: visible; padding-bottom: 148px; } .offer-download-wrap { position: sticky; } .offer-preview { min-height: auto; } .offer-preview iframe { height: min(130vw, 850px); min-height: 520px; } }
+	@media (max-width: 420px) { .offer-sidebar-scroll { padding: 20px 17px 148px; } .offer-price-grid { grid-template-columns: 1fr; gap: 0; } }
 </style>

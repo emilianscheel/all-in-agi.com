@@ -149,6 +149,17 @@ const CORE_PAGES: CorePage[] = [
 		keywords: { de: ['buchungen', 'bookings', 'admin'], en: ['bookings', 'buchungen', 'admin'] }
 	},
 	{
+		id: 'offer',
+		path: '/offer',
+		icon: FileText,
+		group: { de: 'Admin', en: 'Admin' },
+		title: { de: 'Angebot', en: 'Offer' },
+		keywords: {
+			de: ['angebot', 'offer', 'leistungsbeschreibung', 'admin'],
+			en: ['offer', 'quote', 'statement of work', 'admin']
+		}
+	},
+	{
 		id: 'timer',
 		path: '/timer',
 		icon: Timer,
@@ -167,7 +178,7 @@ const CORE_PAGES: CorePage[] = [
 ];
 
 /** Internal paths excluded from Cmd+K navigation. */
-export const COMMAND_PALETTE_EXCLUDED_PATHS = ['/offer', '/offer/[token]'] as const;
+export const COMMAND_PALETTE_EXCLUDED_PATHS = ['/offer/[token]'] as const;
 
 export function getCommandPalettePages(locale: Locale): CommandPalettePage[] {
 	const core = CORE_PAGES.map((page) => ({

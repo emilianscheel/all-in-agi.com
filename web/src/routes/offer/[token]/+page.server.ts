@@ -1,12 +1,12 @@
-import { OFFER_ACCESS_COOKIE, hasOfferAccess } from '$lib/server/offer-access';
+import { localizedPath } from '$lib/i18n';
 import { decryptOffer } from '$lib/server/offer-token';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 
-export async function load({ cookies, params }) {
-	if (!await hasOfferAccess(cookies.get(OFFER_ACCESS_COOKIE))) return { authorized: false };
+export async function load({ locals, params }) {
+	if (!locals.admin.authorized) redirect(303, localizedPath(locals.locale, '/dashboard'));
 	try {
-		return { authorized: true, config: await decryptOffer(params.token) };
+		return { config: await decryptOffer(params.token) };
 	} catch {
-		error(404, 'Angebot nicht gefunden');
+		error(404, locals.locale === 'en' ? 'Offer not found' : 'Angebot nicht gefunden');
 	}
 }

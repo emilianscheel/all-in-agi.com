@@ -21,12 +21,12 @@
     let presentationRoute = $derived(
         page.route.id === "/timer" || page.route.id === "/clock" || page.route.id === "/[id]/timer",
     );
-    let offerRoute = $derived(page.route.id === "/offer" || page.route.id === "/offer/[token]");
-    let adminRouteIds = ["/dashboard", "/buchungen", "/user"];
+    let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/offer", "/offer/[token]"];
     let adminNavigation = $derived(
         adminRouteIds.includes(page.route.id ?? "") ||
             (page.route.id === "/[id]" && data.admin.authorized),
     );
+    let offerRoute = $derived(page.route.id === "/offer" || page.route.id === "/offer/[token]");
     let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.route.id));
     let currentGtmSlug = $derived(gtmArticleRoute ? page.route.id?.slice(1) : undefined);
     let bookingsLabel = $derived(locale === "en" ? "Bookings" : "Buchungen");
@@ -34,6 +34,8 @@
     let dashboardHref = $derived(localizedPath(locale, "/dashboard"));
     let bookingsHref = $derived(localizedPath(locale, "/buchungen"));
     let userHref = $derived(localizedPath(locale, "/user"));
+    let offerHref = $derived(localizedPath(locale, "/offer"));
+    let offerLabel = $derived(locale === "en" ? "Offer" : "Angebot");
 
     onMount(() => {
         const removeHaptics = installGlobalHaptics();
@@ -63,7 +65,7 @@
     <meta name="robots" content={robotsDirective(page.url.pathname)} />
 </svelte:head>
 
-{#if !presentationRoute && !offerRoute}
+{#if !presentationRoute}
     <a class="skip-link" href="#main">{copy.skip}</a>
     <header class:admin-header={adminNavigation} class="site-header">
         {#if adminNavigation}
@@ -97,6 +99,7 @@
                     <a class:active={page.route.id === "/buchungen"} href={bookingsHref}
                         >{bookingsLabel}</a
                     >
+                    <a class:active={offerRoute} href={offerHref}>{offerLabel}</a>
                     <a
                         class="admin-nav-external"
                         href="/timer"
@@ -152,11 +155,11 @@
     </header>
 {/if}
 
-<main id="main" class:presentation-main={presentationRoute} class:offer-main={offerRoute}>
+<main id="main" class:presentation-main={presentationRoute}>
     {@render children()}
 </main>
 
-{#if !presentationRoute && !offerRoute}
+{#if !presentationRoute}
     {#if page.route.id === "/" || gtmArticleRoute}<GtmFooter
             currentSlug={currentGtmSlug}
             {locale}
@@ -178,6 +181,6 @@
     </footer>
 {/if}
 
-{#if !presentationRoute && !offerRoute && !adminNavigation}<CookieConsent {locale} />{/if}
+{#if !presentationRoute && !adminNavigation}<CookieConsent {locale} />{/if}
 
 <CommandPalette {locale} />
