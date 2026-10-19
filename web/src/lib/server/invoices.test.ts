@@ -164,6 +164,26 @@ describe('invoice persistence orchestration', () => {
 		expect(downPayment.snapshot.invoiceNumber).toBe('RE-HAA-AAA-AAA-AZ');
 	});
 
+	test('previews deposit and full invoice drafts for a non-binding request without freezing', async () => {
+		const current = { ...record(), status: 'prep_scheduled' as const, billingModel: 'deposit_30' as const, downPaymentInvoiceSnapshot: null };
+		let frozen = false;
+		const dependencies = {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2026-10-19T15:45:00.000Z'),
+			freeze: async () => { frozen = true; return null; },
+			freezeDownPayment: async () => { frozen = true; return null; }
+		};
+		const invoice = await previewInvoiceDraft(current.id, dependencies, 'de');
+		const deposit = await previewDownPaymentInvoiceDraft(current.id, dependencies, 'de');
+		expect(frozen).toBe(false);
+		expect(current.invoiceSnapshot).toBeNull();
+		expect(current.downPaymentInvoiceSnapshot).toBeNull();
+		expect(current.status).toBe('prep_scheduled');
+		expect(invoice.snapshot).toMatchObject({ version: 1, locale: 'de', invoiceNumber: 'RE-HAA-AAA-AAA', netTotalCents: 400000 });
+		expect(deposit.snapshot).toMatchObject({ version: 3, kind: 'down-payment', locale: 'de', invoiceNumber: 'RE-HAA-AAA-AAA-AZ', netTotalCents: 120000 });
+	});
+
 	test('previews deposit and full invoice drafts during the exit window without freezing', async () => {
 		const current = { ...record(), status: 'exit_window' as const, billingModel: 'deposit_30' as const };
 		let frozen = false;

@@ -1067,6 +1067,86 @@
                         ? "Download plan"
                         : "Plan herunterladen"}
                 </a>
+                {#if data.admin.authorized && invoiceDraftAvailable}
+                    {#if splitBilling}
+                        <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                                {#snippet child({ props })}
+                                    <button
+                                        {...props}
+                                        class="button-secondary action-button"
+                                        type="button"
+                                        disabled={invoiceDraftState === "loading" ||
+                                            depositDraftState === "loading"}
+                                    >
+                                        <Download size={18} aria-hidden="true" />
+                                        {locale === "en" ? "Invoice draft" : "Rechnungsentwurf"}
+                                    </button>
+                                {/snippet}
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content
+                                class="min-w-[280px]"
+                                align="end"
+                                sideOffset={6}
+                            >
+                                <DropdownMenu.Item
+                                    disabled={depositDraftState === "loading"}
+                                    onSelect={() => downloadDraft("deposit")}
+                                >
+                                    <Download size={16} aria-hidden="true" />
+                                    {depositDraftState === "loading"
+                                        ? locale === "en"
+                                            ? "Creating deposit draft …"
+                                            : "Anzahlungsentwurf wird erstellt …"
+                                        : depositDraftState === "error"
+                                          ? locale === "en"
+                                              ? "Try deposit draft again"
+                                              : "Anzahlungsentwurf erneut versuchen"
+                                          : locale === "en"
+                                            ? "Download deposit invoice draft"
+                                            : "Anzahlungsentwurf herunterladen"}
+                                </DropdownMenu.Item>
+                                <DropdownMenu.Item
+                                    disabled={invoiceDraftState === "loading"}
+                                    onSelect={() => downloadDraft("invoice")}
+                                >
+                                    <Download size={16} aria-hidden="true" />
+                                    {invoiceDraftState === "loading"
+                                        ? locale === "en"
+                                            ? "Creating invoice draft …"
+                                            : "Rechnungsentwurf wird erstellt …"
+                                        : invoiceDraftState === "error"
+                                          ? locale === "en"
+                                              ? "Try invoice draft again"
+                                              : "Rechnungsentwurf erneut versuchen"
+                                          : locale === "en"
+                                            ? "Download invoice draft"
+                                            : "Rechnungsentwurf herunterladen"}
+                                </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                        </DropdownMenu.Root>
+                    {:else}
+                        <button
+                            class="button-secondary action-button"
+                            type="button"
+                            onclick={() => downloadDraft("invoice")}
+                            disabled={invoiceDraftState === "loading"}
+                        >
+                            <Download size={18} aria-hidden="true" />
+                            {invoiceDraftState === "loading"
+                                ? locale === "en"
+                                    ? "Creating invoice draft …"
+                                    : "Rechnungsentwurf wird erstellt …"
+                                : invoiceDraftState === "error"
+                                  ? locale === "en"
+                                      ? "Try invoice draft again"
+                                      : "Rechnungsentwurf erneut versuchen"
+                                  : locale === "en"
+                                    ? "Invoice draft"
+                                    : "Rechnungsentwurf"}
+                        </button>
+                    {/if}
+                {/if}
                 {#if !readOnly}
                     <a
                         class="button-secondary action-button"
@@ -1133,86 +1213,6 @@
                     class="admin-detail-actions"
                     aria-label={locale === "en" ? "Admin actions" : "Admin-Aktionen"}
                 >
-                    {#if invoiceDraftAvailable}
-                        {#if splitBilling}
-                            <DropdownMenu.Root>
-                                <DropdownMenu.Trigger>
-                                    {#snippet child({ props })}
-                                        <button
-                                            {...props}
-                                            class="button-secondary action-button"
-                                            type="button"
-                                            disabled={invoiceDraftState === "loading" ||
-                                                depositDraftState === "loading"}
-                                        >
-                                            <Download size={18} aria-hidden="true" />
-                                            {locale === "en" ? "Invoice draft" : "Rechnungsentwurf"}
-                                        </button>
-                                    {/snippet}
-                                </DropdownMenu.Trigger>
-                                <DropdownMenu.Content
-                                    class="min-w-[280px]"
-                                    align="end"
-                                    sideOffset={6}
-                                >
-                                    <DropdownMenu.Item
-                                        disabled={depositDraftState === "loading"}
-                                        onSelect={() => downloadDraft("deposit")}
-                                    >
-                                        <Download size={16} aria-hidden="true" />
-                                        {depositDraftState === "loading"
-                                            ? locale === "en"
-                                                ? "Creating deposit draft …"
-                                                : "Anzahlungsentwurf wird erstellt …"
-                                            : depositDraftState === "error"
-                                              ? locale === "en"
-                                                  ? "Try deposit draft again"
-                                                  : "Anzahlungsentwurf erneut versuchen"
-                                              : locale === "en"
-                                                ? "Download deposit invoice draft"
-                                                : "Anzahlungsentwurf herunterladen"}
-                                    </DropdownMenu.Item>
-                                    <DropdownMenu.Item
-                                        disabled={invoiceDraftState === "loading"}
-                                        onSelect={() => downloadDraft("invoice")}
-                                    >
-                                        <Download size={16} aria-hidden="true" />
-                                        {invoiceDraftState === "loading"
-                                            ? locale === "en"
-                                                ? "Creating invoice draft …"
-                                                : "Rechnungsentwurf wird erstellt …"
-                                            : invoiceDraftState === "error"
-                                              ? locale === "en"
-                                                  ? "Try invoice draft again"
-                                                  : "Rechnungsentwurf erneut versuchen"
-                                              : locale === "en"
-                                                ? "Download invoice draft"
-                                                : "Rechnungsentwurf herunterladen"}
-                                    </DropdownMenu.Item>
-                                </DropdownMenu.Content>
-                            </DropdownMenu.Root>
-                        {:else}
-                            <button
-                                class="button-secondary action-button"
-                                type="button"
-                                onclick={() => downloadDraft("invoice")}
-                                disabled={invoiceDraftState === "loading"}
-                            >
-                                <Download size={18} aria-hidden="true" />
-                                {invoiceDraftState === "loading"
-                                    ? locale === "en"
-                                        ? "Creating invoice draft …"
-                                        : "Rechnungsentwurf wird erstellt …"
-                                    : invoiceDraftState === "error"
-                                      ? locale === "en"
-                                          ? "Try invoice draft again"
-                                          : "Rechnungsentwurf erneut versuchen"
-                                      : locale === "en"
-                                        ? "Invoice draft"
-                                        : "Rechnungsentwurf"}
-                            </button>
-                        {/if}
-                    {/if}
                     {#if hackathon.status === "prep_scheduled"}
                         {#if !billingComplete}<p class="admin-action-message">
                                 {locale === "en"
