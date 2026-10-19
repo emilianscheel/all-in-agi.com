@@ -3,9 +3,12 @@ import { formatPrice } from '$lib/booking';
 import { emailSignatureHtml, emailSignatureText } from '$lib/email-signature';
 import { LEGAL_MODULES } from '$lib/legal';
 import { createLegalPdf, type LegalPdfInput } from '$lib/legal-pdf';
+import { createOfferPdf } from '$lib/offer-artifacts';
+import type { OfferConfiguration } from '$lib/offer';
 import { addBerlinBusinessDays } from './legal-contracts';
 import type { HackathonRecord } from './hackathons';
-import { sendEmailMessage, type EmailTransportDependencies } from './email-transport';
+import { getOffer } from './offers';
+import { sendEmailMessage, type EmailAttachment, type EmailTransportDependencies } from './email-transport';
 
 function bytesToBase64(bytes: Uint8Array) {
 	if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
@@ -104,6 +107,13 @@ export interface SendContractConfirmationOptions {
 
 export interface ContractConfirmationDependencies extends EmailTransportDependencies {
 	createPdf?: (input: LegalPdfInput) => Promise<Uint8Array>;
+	loadOffer?: (id: string) => Promise<OfferConfiguration | null>;
+	createScopePdf?: (config: OfferConfiguration) => Promise<Uint8Array>;
+}
+
+function scopeFilename(config: OfferConfiguration) {
+	const base = (config.companyName || 'all-in-agi').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'all-in-agi';
+	return `${base}-leistungsbeschreibung.pdf`;
 }
 
 export async function sendContractConfirmationEmail(
@@ -117,6 +127,23 @@ export async function sendContractConfirmationEmail(
 		version: record.legalSnapshot!.version,
 		hackathonId: record.id
 	});
+	const attachments: EmailAttachment[] = [{
+		content: bytesToBase64(pdf),
+		filename: `AGB-${record.legalSnapshot!.version}-${record.id}.pdf`,
+		type: 'application/pdf',
+		disposition: 'attachment'
+	}];
+	if (record.offerId) {
+		const config = await (dependencies.loadOffer ?? (async (id: string) => (await getOffer(id))?.config ?? null))(record.offerId);
+		if (!config) throw new Error('Die verknüpfte Leistungsbeschreibung wurde nicht gefunden.');
+		const scopePdf = await (dependencies.createScopePdf ?? ((offer: OfferConfiguration) => createOfferPdf(offer, { mode: 'scope', locale: 'de' })))(config);
+		attachments.push({
+			content: bytesToBase64(scopePdf),
+			filename: scopeFilename(config),
+			type: 'application/pdf',
+			disposition: 'attachment'
+		});
+	}
 	const subjectBase = `Vertragsbestätigung Hackathon ${record.id}`;
 	return sendEmailMessage({
 		to: options.to ?? { address: record.contactEmail, name: record.contactName },
@@ -124,12 +151,7 @@ export async function sendContractConfirmationEmail(
 		text: summary,
 		html: contractConfirmationHtml(record, options.overrides),
 		headers: { 'X-Booking-ID': record.id, 'X-Legal-Version': record.legalVersion ?? '' },
-		attachments: [{
-			content: bytesToBase64(pdf),
-			filename: `AGB-${record.legalSnapshot!.version}-${record.id}.pdf`,
-			type: 'application/pdf',
-			disposition: 'attachment'
-		}]
+		attachments
 	}, dependencies);
 }
 

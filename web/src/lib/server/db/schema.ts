@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { BillingDetails, CodingTool, DeviceProvision, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
+import type { OfferConfiguration } from '$lib/offer';
 import type { InvoiceSnapshot } from '$lib/invoice';
 import type { LegalDocumentSnapshot, LegalModule } from '$lib/legal';
 import type { CancellationChargeSnapshot } from '$lib/cancellation';
@@ -22,8 +23,18 @@ export const hackathonStatus = pgEnum('hackathon_status', [
 	'completed'
 ]);
 
+export const offers = pgTable('offers', {
+	id: text('id').primaryKey(),
+	config: jsonb('config').$type<OfferConfiguration>().notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+}, (table) => [
+	check('offers_id_format_check', sql`${table.id} ~ '^O[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`)
+]);
+
 export const hackathons = pgTable('hackathons', {
 	id: text('id').primaryKey(),
+	offerId: text('offer_id').references(() => offers.id, { onDelete: 'set null' }),
 	status: hackathonStatus('status').notNull().default('pending'),
 	customerLocale: text('customer_locale').$type<Locale>().notNull().default('de'),
 	companyName: text('company_name').notNull(),
@@ -106,7 +117,8 @@ export const hackathons = pgTable('hackathons', {
 	check('hackathons_device_provision_check', sql`${table.deviceProvision} in ('existing', 'needed')`),
 	check('hackathons_device_count_check', sql`(${table.deviceProvision} = 'existing' and ${table.deviceCount} = 0) or (${table.deviceProvision} = 'needed' and ${table.deviceCount} between 1 and ${table.capacity})`),
 	check('hackathons_event_time_pair_check', sql`(${table.eventStart} is null and ${table.eventEnd} is null) or (${table.eventStart} is not null and ${table.eventEnd} is not null and ${table.eventEnd} > ${table.eventStart})`),
-	check('hackathons_devices_adjustment_check', sql`${table.devicesAdjustment} = case when ${table.deviceProvision} = 'needed' then ${table.deviceCount} * 150 else 0 end`)
+	check('hackathons_devices_adjustment_check', sql`${table.devicesAdjustment} = case when ${table.deviceProvision} = 'needed' then ${table.deviceCount} * 150 else 0 end`),
+	uniqueIndex('hackathons_offer_id_unique').on(table.offerId).where(sql`${table.offerId} is not null`)
 ]);
 
 export const legalDocumentVersions = pgTable('legal_document_versions', {

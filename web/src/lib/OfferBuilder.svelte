@@ -1,28 +1,48 @@
 <script lang="ts">
-	import { replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { Building2, Check, Download, FileText, ReceiptEuro } from 'lucide-svelte';
 	import { OFFER_CLIENT_LOGOS, OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
 	import { createOfferPdf, type OfferPdfMode } from '$lib/offer-artifacts';
-	import { page } from '$app/state';
-	import { localizedPath, switchLocalePath, type Locale } from '$lib/i18n';
+	import { localizedPath, type Locale } from '$lib/i18n';
+	import type { AttachableBooking, OfferSummary } from '$lib/server/offers';
 
-	let { initialConfig, locale = 'de' }: { initialConfig: OfferConfiguration; locale?: Locale } = $props();
+	let {
+		offerId,
+		initialConfig,
+		offers,
+		bookings,
+		hackathonId = null,
+		locale = 'de'
+	}: {
+		offerId: string;
+		initialConfig: OfferConfiguration;
+		offers: OfferSummary[];
+		bookings: AttachableBooking[];
+		hackathonId?: string | null;
+		locale?: Locale;
+	} = $props();
 	// The parent only supplies the initial draft; the editor intentionally owns later changes.
 	// svelte-ignore state_referenced_locally
 	let config = $state<OfferConfiguration>(structuredClone(initialConfig));
+	// svelte-ignore state_referenced_locally
+	let attachedBookingId = $state(hackathonId ?? '');
 	let previewUrl = $state('');
 	let generating = $state(true);
 	let urlError = $state('');
 	let generatedBytes = $state<Uint8Array | undefined>();
 	let scopeDownloading = $state(false);
+	let savingBooking = $state(false);
 	let mounted = false;
 	let pdfTimer: ReturnType<typeof setTimeout> | undefined;
-	let tokenTimer: ReturnType<typeof setTimeout> | undefined;
-	let tokenAbort: AbortController | undefined;
+	let saveTimer: ReturnType<typeof setTimeout> | undefined;
+	let saveAbort: AbortController | undefined;
 	let lastPreviewUrl = '';
+	// svelte-ignore state_referenced_locally
+	let savedSnapshot = JSON.stringify(initialConfig);
 	let serialisedConfig = $derived(JSON.stringify(config));
 	let gross = $derived(grossTotal(config));
+
 	function pdfBlob(bytes: Uint8Array) {
 		const copy = new Uint8Array(bytes);
 		return new Blob([copy.buffer as ArrayBuffer], { type: 'application/pdf' });
@@ -40,15 +60,25 @@
 		return detail ? `PDF konnte nicht erstellt werden: ${detail}` : 'PDF konnte nicht erstellt werden.';
 	}
 
-	function linkError(error: unknown) {
+	function saveError(error: unknown) {
 		if (error instanceof Error && error.message) return error.message;
-		return locale === 'en' ? 'The offer link could not be created.' : 'Angebots-Link konnte nicht erstellt werden.';
+		return locale === 'en' ? 'The offer could not be saved.' : 'Das Angebot konnte nicht gespeichert werden.';
+	}
+
+	function choiceLabel(choice: OfferSummary) {
+		const source = choice.id === offerId ? config : choice;
+		const company = source.companyName.trim();
+		const title = source.offerTitle.trim();
+		if (company && title) return `${company} — ${title}`;
+		if (company) return company;
+		if (title) return title;
+		return locale === 'en' ? 'New offer' : 'Neues Angebot';
 	}
 
 	async function renderPdf() {
 		generating = true;
 		try {
-			const bytes = await createOfferPdf(config);
+			const bytes = await createOfferPdf(config, { locale });
 			generatedBytes = bytes;
 			const url = URL.createObjectURL(pdfBlob(bytes));
 			previewUrl = url;
@@ -62,22 +92,75 @@
 		}
 	}
 
-	async function updateShareUrl() {
-		tokenAbort?.abort();
-		tokenAbort = new AbortController();
+	async function saveConfig() {
+		const snapshot = serialisedConfig;
+		if (snapshot === savedSnapshot) return;
+		saveAbort?.abort();
+		saveAbort = new AbortController();
 		try {
-			const response = await fetch('/offer/token', {
-				method: 'POST',
+			const response = await fetch(`/offer/${offerId}`, {
+				method: 'PATCH',
 				headers: { 'content-type': 'application/json' },
-				body: serialisedConfig,
-				signal: tokenAbort.signal
+				body: snapshot,
+				signal: saveAbort.signal
 			});
-			const result = await response.json() as { token?: string; message?: string };
-			if (!response.ok || !result.token) throw new Error(result.message ?? linkError(undefined));
-			replaceState(localizedPath(locale, `/offer/${result.token}`), {});
+			const result = await response.json() as { message?: string };
+			if (!response.ok) throw new Error(result.message ?? saveError(undefined));
+			savedSnapshot = snapshot;
 			urlError = '';
 		} catch (error) {
-			if ((error as Error).name !== 'AbortError') urlError = linkError(error);
+			if ((error as Error).name !== 'AbortError') urlError = saveError(error);
+		}
+	}
+
+	async function flushSave() {
+		if (saveTimer) clearTimeout(saveTimer);
+		await saveConfig();
+		return serialisedConfig === savedSnapshot;
+	}
+
+	async function chooseOffer(event: Event) {
+		const value = (event.currentTarget as HTMLSelectElement).value;
+		if (value === '__new__') {
+			(event.currentTarget as HTMLSelectElement).value = offerId;
+			if (!await flushSave()) return;
+			try {
+				const response = await fetch('/offer', { method: 'POST' });
+				const result = await response.json() as { id?: string; message?: string };
+				if (!response.ok || !result.id) throw new Error(result.message ?? saveError(undefined));
+				await goto(localizedPath(locale, `/offer/${result.id}`));
+			} catch (error) {
+				urlError = saveError(error);
+			}
+			return;
+		}
+		if (value === offerId) return;
+		if (!await flushSave()) {
+			(event.currentTarget as HTMLSelectElement).value = offerId;
+			return;
+		}
+		await goto(localizedPath(locale, `/offer/${value}`));
+	}
+
+	async function chooseBooking(event: Event) {
+		const value = (event.currentTarget as HTMLSelectElement).value;
+		const next = value || null;
+		savingBooking = true;
+		try {
+			const response = await fetch(`/offer/${offerId}`, {
+				method: 'PATCH',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ hackathonId: next })
+			});
+			const result = await response.json() as { message?: string };
+			if (!response.ok) throw new Error(result.message ?? (locale === 'en' ? 'The booking could not be attached.' : 'Die Buchung konnte nicht verknüpft werden.'));
+			attachedBookingId = value;
+			urlError = '';
+		} catch (error) {
+			(event.currentTarget as HTMLSelectElement).value = attachedBookingId;
+			urlError = error instanceof Error ? error.message : (locale === 'en' ? 'The booking could not be attached.' : 'Die Buchung konnte nicht verknüpft werden.');
+		} finally {
+			savingBooking = false;
 		}
 	}
 
@@ -95,12 +178,12 @@
 	async function downloadPdf(mode: OfferPdfMode = 'offer') {
 		if (mode === 'offer') {
 			if (!generatedBytes) return;
-			savePdf(generatedBytes, 'angebot');
+			savePdf(generatedBytes, locale === 'en' ? 'offer' : 'angebot');
 			return;
 		}
 		scopeDownloading = true;
 		try {
-			savePdf(await createOfferPdf(config, { mode: 'scope' }), 'leistungsbeschreibung');
+			savePdf(await createOfferPdf(config, { mode: 'scope', locale }), 'leistungsbeschreibung');
 			urlError = '';
 		} catch (error) {
 			urlError = pdfError(error);
@@ -111,23 +194,23 @@
 
 	$effect(() => {
 		serialisedConfig;
+		locale;
 		if (!mounted) return;
 		if (pdfTimer) clearTimeout(pdfTimer);
-		if (tokenTimer) clearTimeout(tokenTimer);
+		if (saveTimer) clearTimeout(saveTimer);
 		pdfTimer = setTimeout(() => void renderPdf(), 120);
-		tokenTimer = setTimeout(() => void updateShareUrl(), 380);
+		if (serialisedConfig !== savedSnapshot) saveTimer = setTimeout(() => void saveConfig(), 400);
 	});
 
 	onMount(() => {
 		mounted = true;
 		void renderPdf();
-		void updateShareUrl();
 	});
 
 	onDestroy(() => {
 		if (pdfTimer) clearTimeout(pdfTimer);
-		if (tokenTimer) clearTimeout(tokenTimer);
-		tokenAbort?.abort();
+		if (saveTimer) clearTimeout(saveTimer);
+		saveAbort?.abort();
 		if (lastPreviewUrl) URL.revokeObjectURL(lastPreviewUrl);
 	});
 </script>
@@ -135,7 +218,24 @@
 <div class="offer-builder">
 	<aside class="offer-sidebar" aria-label={locale === 'en' ? 'Configure offer' : 'Angebot konfigurieren'}>
 		<div class="offer-sidebar-scroll">
-			<div class="offer-top"><div class="offer-language"><a class:active={locale === 'de'} href={switchLocalePath(page.url, 'de')}>DE</a><a class:active={locale === 'en'} href={switchLocalePath(page.url, 'en')}>EN</a></div></div>
+			<div class="offer-switchers">
+				<label>{locale === 'en' ? 'Document' : 'Dokument'}
+					<select value={offerId} onchange={chooseOffer}>
+						{#each offers as offer (offer.id)}
+							<option value={offer.id}>{choiceLabel(offer)}</option>
+						{/each}
+						<option value="__new__">{locale === 'en' ? 'Create new offer' : 'Neues Angebot erstellen'}</option>
+					</select>
+				</label>
+				<label>{locale === 'en' ? 'Booking' : 'Buchung'}
+					<select value={attachedBookingId} onchange={chooseBooking} disabled={savingBooking}>
+						<option value="">{locale === 'en' ? 'No booking' : 'Keine Buchung'}</option>
+						{#each bookings as booking (booking.id)}
+							<option value={booking.id}>{booking.id} · {booking.companyName}</option>
+						{/each}
+					</select>
+				</label>
+			</div>
 
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
 				<h2 id="recipient-heading"><Building2 size={16} />{locale === 'en' ? 'Recipient' : 'Empfänger'}</h2>
@@ -184,8 +284,10 @@
 	.offer-builder { min-height: calc(100svh - 44px); display: grid; grid-template-columns: minmax(330px, 398px) minmax(0, 1fr); background: #fff; color: #1d1d1f; }
 	.offer-sidebar { position: sticky; top: 44px; height: calc(100svh - 44px); display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #f5f5f7; border-right: 1px solid #e4e4e8; }
 	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 168px; }
-	.offer-top { display: flex; align-items: center; justify-content: flex-end; }
-	.offer-language { display: flex; gap: 9px; font-size: 11px; } .offer-language a { color: #4e4e53; opacity: .45; } .offer-language a.active { opacity: 1; font-weight: 700; }
+	.offer-switchers { display: grid; gap: 12px; padding-bottom: 8px; }
+	.offer-switchers label { display: grid; gap: 6px; color: #4e4e53; font-size: 11px; font-weight: 650; }
+	.offer-switchers select { width: 100%; border: 1px solid #d3d3d8; border-radius: 9px; padding: 9px 10px; background: #fff; color: #1d1d1f; font-size: 13px; font-weight: 400; outline: none; }
+	.offer-switchers select:focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
 	.offer-form-section h2 :global(svg) { color: #ff4f18; }

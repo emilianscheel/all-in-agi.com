@@ -6,8 +6,6 @@ import {
 } from "$lib/offer";
 import {
     LEFT,
-	PAGE_WIDTH,
-    PAGE_HEIGHT,
     RIGHT,
     createBrandPdf,
     drawBrandChrome,
@@ -495,100 +493,92 @@ function documentTitleFor(title: string, fallback: string, replacements: readonl
 	return trimmed;
 }
 
-export async function createOfferPdf(config: OfferConfiguration, options: { mode?: OfferPdfMode } = {}) {
-    const context = await createBrandPdf();
+export async function createOfferPdf(config: OfferConfiguration, options: { mode?: OfferPdfMode; locale?: "de" | "en" } = {}) {
+	const context = await createBrandPdf();
 	const mode = options.mode ?? "offer";
 	const scope = mode === "scope";
-	const { pdf, page: germanPage, regular, bold, brandFont, colors } = context;
-    const { ink, muted, surface } = colors;
-	const englishPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-
+	const locale = options.locale ?? config.locale ?? "de";
+	const { pdf, page, regular, bold, brandFont, colors } = context;
+	const { ink, muted, surface } = colors;
 	const servicesDe = selectedOfferServices(config);
-	const servicesEn = servicesDe.map((service) => ({
-		id: service.id,
-		label: service.labelEn,
-		...(service.descriptionEn ? { description: service.descriptionEn } : {}),
-	}));
-
+	const services = locale === "en"
+		? servicesDe.map((service) => ({
+			id: service.id,
+			label: service.labelEn,
+			...(service.descriptionEn ? { description: service.descriptionEn } : {}),
+		}))
+		: servicesDe;
 	const amount = grossTotal(config);
 	const netTotal = config.netTotal;
 	const hasPrice = netTotal !== null && netTotal > 0;
 	const netTotalValue = netTotal ?? 0;
-	const germanDate = formatDate(config.issueDate, "de-DE");
-	const englishDate = formatDate(config.issueDate, "en-US");
+	const issued = formatDate(config.issueDate, locale === "en" ? "en-US" : "de-DE");
 
-	// German page
-	drawBrandChrome(context, scope ? `Leistungsbeschreibung vom ${germanDate}` : `Angebot vom ${germanDate}`);
-	await drawOfferPageContent({
-		pdf,
-		page: germanPage,
-		config,
-		services: servicesDe,
-		clientRequirements: CLIENT_REQUIREMENTS,
-		nextSteps: NEXT_STEPS,
-		brandFont,
-		regular,
-		bold,
-		ink,
-		muted,
-		surface,
-		documentTitle: documentTitleFor(
-			config.offerTitle,
-			scope ? "Leistungsbeschreibung" : "Angebot",
-			scope
-				? [["Angebot", "Leistungsbeschreibung"], ["Offer", "Leistungsbeschreibung"]]
-				: [["Offer", "Angebot"]],
-		),
-		companyFallback: "Ihr Unternehmen",
-		hasPrice,
-		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "de-DE")} netto` : "Preis nach Vereinbarung",
-		priceVatText: hasPrice
-			? `zzgl. ${formatMoney(amount - netTotalValue, "de-DE")} USt. (${config.vatRate}%) · ${formatMoney(
-					amount,
-					"de-DE",
-				)} brutto zahlbar`
-			: "",
-		sectionOfferHeading: "Was wir anbieten",
-		sectionNeedsHeading: "Was wir noch von Ihnen brauchen",
-		sectionNextHeading: "Wie es weiter geht",
-	});
-
-	// English page
-	const englishContext = { ...context, page: englishPage };
-	drawBrandChrome(englishContext, scope ? `Statement of work dated ${englishDate}` : `Offer dated ${englishDate}`);
-	await drawOfferPageContent({
-		pdf,
-		page: englishPage,
-		config,
-		services: servicesEn,
-		clientRequirements: CLIENT_REQUIREMENTS_EN,
-		nextSteps: NEXT_STEPS_EN,
-		brandFont,
-		regular,
-		bold,
-		ink,
-		muted,
-		surface,
-		documentTitle: documentTitleFor(
-			config.offerTitle,
-			scope ? "Statement of work" : "Offer",
-			scope
-				? [["Angebot", "Statement of work"], ["Offer", "Statement of work"], ["Leistungsbeschreibung", "Statement of work"]]
-				: [["Angebot", "Offer"]],
-		),
-		companyFallback: "Your company",
-		hasPrice,
-		priceNetText: hasPrice ? `${formatMoney(netTotalValue, "en-US")} net` : "Price upon agreement",
-		priceVatText: hasPrice
-			? `+ VAT ${formatMoney(amount - netTotalValue, "en-US")} (${config.vatRate}%) · ${formatMoney(
-					amount,
-					"en-US",
-				)} gross payable`
-			: "",
-		sectionOfferHeading: "What we offer",
-		sectionNeedsHeading: "What we still need from you",
-		sectionNextHeading: "Next steps",
-	});
+	if (locale === "en") {
+		drawBrandChrome(context, scope ? `Statement of work dated ${issued}` : `Offer dated ${issued}`);
+		await drawOfferPageContent({
+			pdf,
+			page,
+			config,
+			services,
+			clientRequirements: CLIENT_REQUIREMENTS_EN,
+			nextSteps: NEXT_STEPS_EN,
+			brandFont,
+			regular,
+			bold,
+			ink,
+			muted,
+			surface,
+			documentTitle: documentTitleFor(
+				config.offerTitle,
+				scope ? "Statement of work" : "Offer",
+				scope
+					? [["Angebot", "Statement of work"], ["Offer", "Statement of work"], ["Leistungsbeschreibung", "Statement of work"]]
+					: [["Angebot", "Offer"]],
+			),
+			companyFallback: "Your company",
+			hasPrice,
+			priceNetText: hasPrice ? `${formatMoney(netTotalValue, "en-US")} net` : "Price upon agreement",
+			priceVatText: hasPrice
+				? `+ VAT ${formatMoney(amount - netTotalValue, "en-US")} (${config.vatRate}%) · ${formatMoney(amount, "en-US")} gross payable`
+				: "",
+			sectionOfferHeading: "What we offer",
+			sectionNeedsHeading: "What we still need from you",
+			sectionNextHeading: "Next steps",
+		});
+	} else {
+		drawBrandChrome(context, scope ? `Leistungsbeschreibung vom ${issued}` : `Angebot vom ${issued}`);
+		await drawOfferPageContent({
+			pdf,
+			page,
+			config,
+			services,
+			clientRequirements: CLIENT_REQUIREMENTS,
+			nextSteps: NEXT_STEPS,
+			brandFont,
+			regular,
+			bold,
+			ink,
+			muted,
+			surface,
+			documentTitle: documentTitleFor(
+				config.offerTitle,
+				scope ? "Leistungsbeschreibung" : "Angebot",
+				scope
+					? [["Angebot", "Leistungsbeschreibung"], ["Offer", "Leistungsbeschreibung"]]
+					: [["Offer", "Angebot"]],
+			),
+			companyFallback: "Ihr Unternehmen",
+			hasPrice,
+			priceNetText: hasPrice ? `${formatMoney(netTotalValue, "de-DE")} netto` : "Preis nach Vereinbarung",
+			priceVatText: hasPrice
+				? `zzgl. ${formatMoney(amount - netTotalValue, "de-DE")} USt. (${config.vatRate}%) · ${formatMoney(amount, "de-DE")} brutto zahlbar`
+				: "",
+			sectionOfferHeading: "Was wir anbieten",
+			sectionNeedsHeading: "Was wir noch von Ihnen brauchen",
+			sectionNextHeading: "Wie es weiter geht",
+		});
+	}
 
 	return pdf.save();
 }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { legalDocumentPlainText } from '$lib/legal';
+import { defaultOfferConfiguration } from '$lib/offer';
 import type { HackathonRecord } from './hackathons';
 import {
 	contractConfirmationHtml,
@@ -90,5 +91,40 @@ describe('contract confirmation email', () => {
 		]);
 		expect(submissions[0].html).toContain('<strong>Hackathon:</strong> H23-1D9-GX2');
 		expect(submissions[0].from).toEqual({ address: 'go@all-in-agi.com', name: 'Emilian von ALL IN AGI' });
+	});
+
+	test('attaches the linked offer as a German Leistungsbeschreibung', async () => {
+		const config = { ...defaultOfferConfiguration(), companyName: 'Hitachi Rail' };
+		let scopeConfig: typeof config | undefined;
+		const submissions: any[] = [];
+		await sendContractConfirmationEmail({ ...record, offerId: 'OAA-AAA-AAA' }, {
+			username: 'owner@icloud.com',
+			password: 'test-password',
+			createPdf: async () => new TextEncoder().encode('%PDF-agb'),
+			loadOffer: async () => config,
+			createScopePdf: async (offer) => {
+				scopeConfig = offer;
+				return new TextEncoder().encode('%PDF-scope');
+			},
+			sendMail: async (options) => {
+				submissions.push(options);
+				return { accepted: ['ada@example.com'], messageId: '<contract@icloud.com>' };
+			}
+		});
+		expect(scopeConfig).toEqual(config);
+		expect(submissions[0].attachments.map((attachment: { filename: string }) => attachment.filename)).toEqual([
+			'AGB-2026-10-19.1-H23-1D9-GX2.pdf',
+			'hitachi-rail-leistungsbeschreibung.pdf'
+		]);
+	});
+
+	test('fails when the linked offer is missing', async () => {
+		await expect(sendContractConfirmationEmail({ ...record, offerId: 'OAA-AAA-AAA' }, {
+			username: 'owner@icloud.com',
+			password: 'test-password',
+			createPdf: async () => new TextEncoder().encode('%PDF-agb'),
+			loadOffer: async () => null,
+			sendMail: async () => ({ accepted: ['ada@example.com'], messageId: '<contract@icloud.com>' })
+		})).rejects.toThrow('Die verknüpfte Leistungsbeschreibung wurde nicht gefunden.');
 	});
 });

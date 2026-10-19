@@ -78,6 +78,13 @@
       "when": 1788599133688,
       "tag": "0010_little_valeria_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792436325716,
+      "tag": "0011_offers",
+      "breakpoints": true
     }
   ]
 }

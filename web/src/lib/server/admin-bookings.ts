@@ -1,4 +1,4 @@
-import { desc, inArray, sql } from 'drizzle-orm';
+import { desc, inArray, notInArray, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import { hackathons, type hackathonStatus } from './db/schema';
 import { finalizeDueContracts } from './legal-contracts';
@@ -7,6 +7,15 @@ export type CustomerBookingStatus = Exclude<(typeof hackathonStatus.enumValues)[
 export type AdminBooking = typeof hackathons.$inferSelect;
 
 const CUSTOMER_STATUSES: CustomerBookingStatus[] = ['requested', 'prep_scheduled', 'exit_window', 'contracted', 'withdrawn', 'declined', 'confirmed', 'cancellation_pending', 'cancelled', 'completed'];
+
+const CLOSED_BOOKING_STATUSES = ['cancelled', 'declined', 'withdrawn'] as const;
+
+export async function listAttachableBookings() {
+	const db = await getDb();
+	return db.select({ id: hackathons.id, companyName: hackathons.companyName }).from(hackathons)
+		.where(notInArray(hackathons.status, [...CLOSED_BOOKING_STATUSES]))
+		.orderBy(desc(hackathons.createdAt));
+}
 
 export async function listCustomerBookings() {
 	const db = await getDb();

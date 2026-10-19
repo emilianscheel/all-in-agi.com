@@ -5,4 +5,13 @@
 	let locale = $derived((data.locale ?? 'de') as Locale);
 </script>
 
-<OfferBuilder initialConfig={data.config} {locale} />
+{#key data.offerId}
+	<OfferBuilder
+		offerId={data.offerId}
+		initialConfig={data.config}
+		offers={data.offers}
+		bookings={data.bookings}
+		hackathonId={data.hackathonId}
+		{locale}
+	/>
+{/key}

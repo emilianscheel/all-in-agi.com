@@ -3,6 +3,7 @@ import {
 	generatePublicId,
 	generateUniquePublicId,
 	isHackathonId,
+	isOfferId,
 	isPublicId,
 	PUBLIC_ID_PATTERN
 } from './public-id';
@@ -21,6 +22,8 @@ describe('public IDs', () => {
 		expect(isHackathonId('HF7-ZJI-BLW')).toBe(true);
 		expect(isHackathonId('hf7-zji-blw')).toBe(false);
 		expect(isHackathonId('H12-ABC-45')).toBe(false);
+		expect(isOfferId('OAA-AAA-AAA')).toBe(true);
+		expect(isOfferId('HAA-AAA-AAA')).toBe(false);
 	});
 
 	test('rejects invalid prefixes', () => {

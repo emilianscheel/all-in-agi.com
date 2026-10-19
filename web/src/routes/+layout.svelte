@@ -35,7 +35,7 @@
     let bookingsHref = $derived(localizedPath(locale, "/buchungen"));
     let userHref = $derived(localizedPath(locale, "/user"));
     let offerHref = $derived(localizedPath(locale, "/offer"));
-    let offerLabel = $derived(locale === "en" ? "Offer" : "Angebot");
+    let offerLabel = "Offers";
 
     onMount(() => {
         const removeHaptics = installGlobalHaptics();
