@@ -3,6 +3,7 @@
 	import { Accordion } from 'bits-ui';
 	import { ArrowUp } from 'lucide-svelte';
 	import { reveal } from '$lib/motion';
+	import { askFaqQuestion } from '$lib/faq-ask-client';
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
 	import type { Locale } from '$lib/i18n';
 
@@ -196,45 +197,16 @@
 
 		try {
 			const history = userFaqs.slice(-MAX_HISTORY);
-			const response = await fetch('/api/faq-ask', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ question, history, locale })
-			});
-
-			if (!response.ok || !response.body) {
-				const payload = await response.json().catch(() => null);
-				throw new Error(
-					typeof payload?.error === 'string'
-						? payload.error
-						: locale === 'en'
-							? 'Could not generate an answer. Please try again.'
-							: 'Antwort konnte nicht erzeugt werden. Bitte erneut versuchen.'
-				);
-			}
-
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
-			let full = '';
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				full += decoder.decode(value, { stream: true });
-				if (pending) {
-					pending = { ...pending, fullAnswer: full };
+			await askFaqQuestion({
+				question,
+				history,
+				locale,
+				onChunk: (full) => {
+					if (pending) {
+						pending = { ...pending, fullAnswer: full };
+					}
 				}
-			}
-			full += decoder.decode();
-			if (pending) {
-				pending = { ...pending, fullAnswer: full.trim() || pending.fullAnswer };
-			}
-			if (pending && !pending.fullAnswer) {
-				throw new Error(
-					locale === 'en'
-						? 'Received an empty answer. Please try again.'
-						: 'Leere Antwort erhalten. Bitte erneut versuchen.'
-				);
-			}
+			});
 		} catch (error) {
 			stopTypewriter();
 			pending = null;

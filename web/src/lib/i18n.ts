@@ -153,13 +153,35 @@ export const ui = {
 		agenda: 'Agenda', price: 'Preis', contact: 'Kontakt', plan: 'Hackathon planen',
 		legalNotice: 'Impressum', terms: 'Allgemeine Geschäftsbedingungen', privacy: 'Datenschutz', manage: 'Buchung verwalten',
 		cookieLabel: 'Cookie-Einstellungen', cookieText: 'Wir verwenden optionale Analyse-Cookies, um unsere Website und den Buchungsprozess zu verbessern.',
-		rejectCookies: 'Alle ablehnen', acceptCookies: 'Alle Cookies erlauben', closingTitle: 'Was shippt Ihr Team\nan einem Tag?'
+		rejectCookies: 'Alle ablehnen', acceptCookies: 'Alle Cookies erlauben', closingTitle: 'Was shippt Ihr Team\nan einem Tag?',
+		cmdkLabel: 'Seitensuche',
+		cmdkPlaceholder: 'Seite suchen oder Frage stellen…',
+		cmdkAskAi: 'Mit KI fragen',
+		cmdkAskAiHint: 'Antwort aus dem ALL IN AGI Wissen',
+		cmdkEmpty: 'Keine Seiten gefunden',
+		cmdkAskAbout: 'KI fragen zu',
+		cmdkBack: 'Zurück zur Suche',
+		cmdkThinking: 'Denkt nach…',
+		cmdkError: 'Etwas ist schiefgelaufen.',
+		cmdkActions: 'Aktionen',
+		cmdkPages: 'Seiten'
 	},
 	en: {
 		skip: 'Skip to content', navLabel: 'Main navigation', homeLabel: 'ALL IN AGI home',
 		agenda: 'Agenda', price: 'Pricing', contact: 'Contact', plan: 'Plan a hackathon',
 		legalNotice: 'Legal notice', terms: 'Terms and Conditions', privacy: 'Privacy', manage: 'Manage booking',
 		cookieLabel: 'Cookie settings', cookieText: 'We use optional analytics cookies to improve our website and booking experience.',
-		rejectCookies: 'Reject all', acceptCookies: 'Allow all cookies', closingTitle: 'What will your team\nship in one day?'
+		rejectCookies: 'Reject all', acceptCookies: 'Allow all cookies', closingTitle: 'What will your team\nship in one day?',
+		cmdkLabel: 'Page search',
+		cmdkPlaceholder: 'Search pages or ask a question…',
+		cmdkAskAi: 'Ask AI',
+		cmdkAskAiHint: 'Answer from ALL IN AGI knowledge',
+		cmdkEmpty: 'No pages found',
+		cmdkAskAbout: 'Ask AI about',
+		cmdkBack: 'Back to search',
+		cmdkThinking: 'Thinking…',
+		cmdkError: 'Something went wrong.',
+		cmdkActions: 'Actions',
+		cmdkPages: 'Pages'
 	}
 } as const;

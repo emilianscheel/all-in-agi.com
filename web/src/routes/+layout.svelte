@@ -7,6 +7,7 @@
 	import GtmFooter from '$lib/GtmFooter.svelte';
 	import { gtmPaths } from '$lib/gtm-pages';
 	import CookieConsent from '$lib/CookieConsent.svelte';
+	import CommandPalette from '$lib/CommandPalette.svelte';
 	import { activateAnalyticsForPath, installBookingCtaTracking } from '$lib/analytics';
 	import { localizedPath, switchLocalePath, ui, type Locale } from '$lib/i18n';
 	import '@fontsource/instrument-serif';
@@ -109,3 +110,5 @@
 {/if}
 
 {#if !presentationRoute && !offerRoute && !adminNavigation}<CookieConsent {locale} />{/if}
+
+<CommandPalette {locale} />
