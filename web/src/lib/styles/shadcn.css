@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* Skip Tailwind Preflight — it resets heading font-weight and breaks marketing titles. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
 @import "tw-animate-css";
 @import "shadcn-svelte/tailwind.css";
 
