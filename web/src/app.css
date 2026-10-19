@@ -969,59 +969,15 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 }
 .cmdk-empty {
 	padding: 28px 16px;
-	display: grid;
-	gap: 14px;
-	justify-items: center;
 	text-align: center;
 	color: var(--muted);
 	font-size: 14px;
 }
 .cmdk-empty p { margin: 0; }
-.cmdk-empty-ai {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	max-width: 100%;
-	padding: 10px 14px;
-	border: 1px solid var(--soft-line);
-	border-radius: 999px;
-	background: var(--surface);
-	color: var(--ink);
-	cursor: pointer;
-	font: inherit;
-	font-size: 13px;
-	font-weight: 600;
-}
-.cmdk-empty-ai span {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.cmdk-ai { padding: 14px 16px 18px; display: grid; gap: 12px; }
-.cmdk-ai-back {
-	justify-self: start;
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: var(--muted);
-	cursor: pointer;
-	font: inherit;
-	font-size: 13px;
-	font-weight: 600;
-}
-.cmdk-ai-back:hover, .cmdk-ai-back:focus-visible { color: var(--ink); }
-.cmdk-ai-question {
-	margin: 0;
-	font-size: 17px;
-	font-weight: 650;
-	letter-spacing: -0.02em;
-	line-height: 1.3;
-}
+.cmdk-answer { padding: 8px 8px 12px; }
 .cmdk-ai-status, .cmdk-ai-error {
 	margin: 0;
+	padding: 8px 4px;
 	color: var(--muted);
 	font-size: 14px;
 	line-height: 1.5;
@@ -1029,11 +985,10 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 .cmdk-ai-error { color: var(--error-ink, #b42318); }
 .cmdk-ai-answer {
 	margin: 0;
+	padding: 4px;
 	color: var(--secondary-ink);
 	font-size: 14px;
 	line-height: 1.55;
-	max-height: min(48vh, 360px);
-	overflow-y: auto;
 }
 .cmdk-ai-caret {
 	display: inline-block;

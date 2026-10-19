@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { Command, Dialog } from 'bits-ui';
 	import { animate, type AnimationPlaybackControls } from 'motion';
-	import { ArrowLeft, Sparkles } from 'lucide-svelte';
+	import { Sparkles } from 'lucide-svelte';
 	import { askFaqQuestion } from '$lib/faq-ask-client';
 	import { getCommandPalettePages } from '$lib/command-palette-pages';
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
@@ -17,19 +17,23 @@
 	let open = $state(false);
 	let closing = $state(false);
 	let query = $state('');
-	let mode = $state<'search' | 'ai'>('search');
-	let aiQuestion = $state('');
-	let aiAnswer = $state('');
+	let filteredCount = $state(0);
+	let aiFullAnswer = $state('');
+	let aiDisplayedAnswer = $state('');
 	let aiLoading = $state(false);
 	let aiError = $state<string | null>(null);
 	let overlayEl = $state<HTMLElement | null>(null);
 	let panelEl = $state<HTMLElement | null>(null);
 	let abortController: AbortController | null = null;
+	let typewriterTimer: ReturnType<typeof setInterval> | null = null;
 	let overlayAnimation: AnimationPlaybackControls | undefined;
 	let panelAnimation: AnimationPlaybackControls | undefined;
 
 	let copy = $derived(ui[locale]);
 	let pages = $derived(getCommandPalettePages(locale));
+	let showingAnswer = $derived(
+		aiLoading || aiDisplayedAnswer.length > 0 || aiFullAnswer.length > 0 || !!aiError
+	);
 	let aiKeywords = $derived(
 		locale === 'en'
 			? ['ask', 'ai', 'faq', 'question', 'help', 'search']
@@ -47,18 +51,42 @@
 		panelAnimation = undefined;
 	}
 
+	function stopTypewriter() {
+		if (typewriterTimer) {
+			clearInterval(typewriterTimer);
+			typewriterTimer = null;
+		}
+	}
+
+	function startTypewriter() {
+		stopTypewriter();
+		if (reducedMotion()) {
+			aiDisplayedAnswer = aiFullAnswer;
+			return;
+		}
+		typewriterTimer = setInterval(() => {
+			if (aiDisplayedAnswer.length >= aiFullAnswer.length) {
+				if (!aiLoading) stopTypewriter();
+				return;
+			}
+			const step = Math.min(2, aiFullAnswer.length - aiDisplayedAnswer.length);
+			aiDisplayedAnswer = aiFullAnswer.slice(0, aiDisplayedAnswer.length + step);
+		}, 18);
+	}
+
 	function resetAi() {
 		abortController?.abort();
 		abortController = null;
-		mode = 'search';
-		aiQuestion = '';
-		aiAnswer = '';
+		stopTypewriter();
+		aiFullAnswer = '';
+		aiDisplayedAnswer = '';
 		aiLoading = false;
 		aiError = null;
 	}
 
 	function resetPalette() {
 		query = '';
+		filteredCount = 0;
 		resetAi();
 	}
 
@@ -130,24 +158,16 @@
 
 	async function startAi(questionText?: string) {
 		const question = (questionText ?? query).trim();
-		if (!question) {
-			mode = 'ai';
-			aiQuestion = '';
-			aiAnswer = '';
-			aiError =
-				locale === 'en'
-					? 'Type a question first, then ask AI.'
-					: 'Bitte zuerst eine Frage eingeben.';
-			return;
-		}
+		if (!question || aiLoading) return;
 
-		mode = 'ai';
-		aiQuestion = question;
-		aiAnswer = '';
-		aiError = null;
-		aiLoading = true;
 		abortController?.abort();
 		abortController = new AbortController();
+		stopTypewriter();
+		aiFullAnswer = '';
+		aiDisplayedAnswer = '';
+		aiError = null;
+		aiLoading = true;
+		startTypewriter();
 
 		try {
 			await askFaqQuestion({
@@ -156,24 +176,35 @@
 				history: [],
 				signal: abortController.signal,
 				onChunk: (full) => {
-					aiAnswer = full;
+					aiFullAnswer = full;
 				}
 			});
 		} catch (error) {
 			if (error instanceof DOMException && error.name === 'AbortError') return;
+			stopTypewriter();
+			aiFullAnswer = '';
+			aiDisplayedAnswer = '';
 			aiError = error instanceof Error ? error.message : copy.cmdkError;
 		} finally {
 			aiLoading = false;
+			if (aiDisplayedAnswer.length >= aiFullAnswer.length) {
+				stopTypewriter();
+			}
 		}
 	}
 
-	function backToSearch() {
-		abortController?.abort();
-		abortController = null;
-		mode = 'search';
-		aiAnswer = '';
-		aiError = null;
-		aiLoading = false;
+	function onQueryInput() {
+		if (showingAnswer) resetAi();
+	}
+
+	function onInputKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter') return;
+		if (showingAnswer && !aiLoading) return;
+		if (filteredCount > 0) return;
+		if (!query.trim()) return;
+		event.preventDefault();
+		event.stopPropagation();
+		void startAi(query);
 	}
 
 	onMount(() => {
@@ -187,6 +218,7 @@
 		return () => {
 			window.removeEventListener('keydown', onKeydown);
 			abortController?.abort();
+			stopTypewriter();
 			stopAnimations();
 		};
 	});
@@ -195,65 +227,51 @@
 <Dialog.Root {open} onOpenChange={onOpenChange}>
 	<Dialog.Portal>
 		<Dialog.Overlay bind:ref={overlayEl} class="cmdk-overlay" />
-		<Dialog.Content
-			class="cmdk-panel"
-			onOpenAutoFocus={(event) => {
-				if (mode === 'ai') event.preventDefault();
-			}}
-		>
+		<Dialog.Content class="cmdk-panel">
 			<div class="cmdk-panel-inner" bind:this={panelEl}>
 				<Dialog.Title class="cmdk-sr-only">{copy.cmdkLabel}</Dialog.Title>
 				<Dialog.Description class="cmdk-sr-only">{copy.cmdkPlaceholder}</Dialog.Description>
 
-				{#if mode === 'ai'}
-					<div class="cmdk-ai">
-						<button class="cmdk-ai-back" type="button" onclick={backToSearch}>
-							<ArrowLeft size={16} strokeWidth={1.8} aria-hidden="true" />
-							{copy.cmdkBack}
-						</button>
-						{#if aiQuestion}
-							<p class="cmdk-ai-question">{aiQuestion}</p>
-						{/if}
-						{#if aiLoading && !aiAnswer}
-							<p class="cmdk-ai-status">{copy.cmdkThinking}</p>
-						{:else if aiError}
-							<p class="cmdk-ai-error">{aiError}</p>
-						{:else if aiAnswer}
-							<div class="cmdk-ai-answer faq-answer-body">
-								{@html linkifyFaqAnswer(aiAnswer)}
-							</div>
-							{#if aiLoading}
-								<span class="cmdk-ai-caret" aria-hidden="true"></span>
-							{/if}
-						{/if}
+				<Command.Root
+					class="cmdk-root"
+					label={copy.cmdkLabel}
+					loop
+					shouldFilter={!showingAnswer}
+					onStateChange={(state) => {
+						filteredCount = state.filtered.count;
+					}}
+				>
+					<div class="cmdk-input-row">
+						<Command.Input
+							class="cmdk-input"
+							placeholder={copy.cmdkPlaceholder}
+							bind:value={query}
+							oninput={onQueryInput}
+							onkeydown={onInputKeydown}
+						/>
+						<kbd class="cmdk-kbd">esc</kbd>
 					</div>
-				{:else}
-					<Command.Root class="cmdk-root" label={copy.cmdkLabel} loop>
-						<div class="cmdk-input-row">
-							<Command.Input
-								class="cmdk-input"
-								placeholder={copy.cmdkPlaceholder}
-								bind:value={query}
-							/>
-							<kbd class="cmdk-kbd">esc</kbd>
-						</div>
-						<Command.List class="cmdk-list">
-							<Command.Viewport class="cmdk-viewport">
+					<Command.List class="cmdk-list">
+						<Command.Viewport class="cmdk-viewport">
+							{#if showingAnswer}
+								<div class="cmdk-answer">
+									{#if aiError}
+										<p class="cmdk-ai-error">{aiError}</p>
+									{:else if aiLoading && !aiDisplayedAnswer}
+										<p class="cmdk-ai-status">{copy.cmdkThinking}</p>
+									{:else}
+										<div class="cmdk-ai-answer faq-answer-body">
+											{@html linkifyFaqAnswer(aiDisplayedAnswer)}{#if aiLoading || aiDisplayedAnswer.length < aiFullAnswer.length}<span
+													class="cmdk-ai-caret"
+													aria-hidden="true"
+												></span
+												>{/if}
+										</div>
+									{/if}
+								</div>
+							{:else}
 								<Command.Empty class="cmdk-empty">
 									<p>{copy.cmdkEmpty}</p>
-									{#if query.trim()}
-										<button
-											class="cmdk-empty-ai"
-											type="button"
-											onclick={() => void startAi(query)}
-										>
-											<Sparkles size={16} strokeWidth={1.8} aria-hidden="true" />
-											<span
-												>{copy.cmdkAskAbout}
-												“{query.trim()}”</span
-											>
-										</button>
-									{/if}
 								</Command.Empty>
 
 								<Command.Item
@@ -282,10 +300,10 @@
 										<span class="cmdk-item-title">{page.title}</span>
 									</Command.Item>
 								{/each}
-							</Command.Viewport>
-						</Command.List>
-					</Command.Root>
-				{/if}
+							{/if}
+						</Command.Viewport>
+					</Command.List>
+				</Command.Root>
 			</div>
 		</Dialog.Content>
 	</Dialog.Portal>
