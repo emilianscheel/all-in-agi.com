@@ -255,6 +255,31 @@ export function validateConfiguration(config: BookingConfiguration, dates: Confi
 	return errors;
 }
 
+export function effectiveBillingDetails(source: {
+	billing?: BillingDetails | null;
+	companyName: string;
+	contactName: string;
+	email?: string;
+	contactEmail?: string;
+	address: Pick<EventAddress, 'street' | 'postalCode' | 'city'>;
+}): BillingDetails {
+	if (source.billing) return source.billing;
+	return {
+		companyName: source.companyName,
+		legalForm: '',
+		contactName: source.contactName,
+		email: source.email || source.contactEmail || '',
+		vatId: '',
+		purchaseOrder: '',
+		address: {
+			street: source.address.street,
+			postalCode: source.address.postalCode,
+			city: source.address.city,
+			country: 'Deutschland'
+		}
+	};
+}
+
 export function validateBillingDetails(billing: BillingDetails | null | undefined, locale: Locale = 'de') {
 	const errors: string[] = [];
 	const en = locale === 'en';

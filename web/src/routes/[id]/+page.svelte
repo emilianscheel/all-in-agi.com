@@ -39,7 +39,7 @@
 	import MiniContactCards from '$lib/MiniContactCards.svelte';
 	import SharePlanButton from '$lib/SharePlanButton.svelte';
 	import { eventDateBounds } from '$lib/event-date';
-	import { configurationDateChecks, formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
+	import { configurationDateChecks, effectiveBillingDetails, formatPrice, selectedCodingToolLabels, validateBillingDetails, validateConfiguration, type BillingDetails, type BookingConfiguration } from '$lib/booking';
 	import { bookingOverviewRows, type BookingOverviewRowId } from '$lib/booking-overview';
 	import type { HackathonUpdate } from '$lib/hackathon-edit';
 	import { isStandardOfferLegalVersion } from '$lib/legal';
@@ -126,7 +126,14 @@
 	let invoiceIsFinal = $derived(splitBilling && (invoiceKind === 'final' || !invoiceIssued));
 	let finalInvoiceAvailable = $derived(Boolean(hackathon.eventEnd) && (!splitBilling || (Boolean(downPaymentPaidAt) && new Date() >= new Date(hackathon.eventEnd!))));
 	let standardOffer = $derived(isStandardOfferLegalVersion(hackathon.legalVersion));
-	let billingComplete = $derived(validateBillingDetails(hackathon.billing, locale).length === 0);
+	let billingForContract = $derived(effectiveBillingDetails({
+		billing: hackathon.billing,
+		companyName: hackathon.companyName,
+		contactName: hackathon.contactName,
+		email: hackathon.email,
+		address: hackathon.address
+	}));
+	let billingComplete = $derived(validateBillingDetails(billingForContract, locale).length === 0);
 
 	function billingDraft(value: typeof data.hackathon): BillingDetails {
 		return value.billing ?? {
@@ -727,7 +734,7 @@
 				<EditableSummaryRow icon={Contact} label={locale === 'en' ? 'Contact' : 'Kontakt'} value={hackathon.contactName} secondaryValues={[hackathon.email, hackathon.phone]} status={locale === 'en' ? 'Saved' : 'Gespeichert'} active={activeSection === 'contact'} {saving} error={activeSection === 'contact' ? editError : ''} onedit={() => openEditor('contact')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}<ContactFields companyName={draft.companyName} contactName={draft.contactName} email={draft.email} phone={draft.phone} showCompany={false} idPrefix="detail-contact" {locale} onchange={(patch) => (draft = { ...draft, ...patch })} />{/snippet}
 				</EditableSummaryRow>
-				<EditableSummaryRow icon={ReceiptEuro} label={locale === 'en' ? 'Billing details' : 'Rechnungsdaten'} value={hackathon.billing ? `${hackathon.billing.companyName}${hackathon.billing.legalForm ? ` ${hackathon.billing.legalForm}` : ''}` : (locale === 'en' ? 'Not provided yet' : 'Noch nicht hinterlegt')} secondaryValues={hackathon.billing ? [hackathon.billing.email] : []} status={billingComplete ? (locale === 'en' ? 'Complete' : 'Vollständig') : (locale === 'en' ? 'Required before contract' : 'Vor Vertragsschluss erforderlich')} active={activeSection === 'billing'} {saving} error={activeSection === 'billing' ? editError : ''} onedit={() => openEditor('billing')} onsave={saveEditor} oncancel={cancelEditor}>
+				<EditableSummaryRow icon={ReceiptEuro} label={locale === 'en' ? 'Billing details' : 'Rechnungsdaten'} value={hackathon.billing ? `${hackathon.billing.companyName}${hackathon.billing.legalForm ? ` ${hackathon.billing.legalForm}` : ''}` : billingComplete ? billingForContract.companyName : (locale === 'en' ? 'Not provided yet' : 'Noch nicht hinterlegt')} secondaryValues={hackathon.billing ? [hackathon.billing.email] : billingComplete ? [billingForContract.email] : []} status={billingComplete ? (locale === 'en' ? 'Complete' : 'Vollständig') : (locale === 'en' ? 'Required before contract' : 'Vor Vertragsschluss erforderlich')} active={activeSection === 'billing'} {saving} error={activeSection === 'billing' ? editError : ''} onedit={() => openEditor('billing')} onsave={saveEditor} oncancel={cancelEditor}>
 					{#snippet editor()}
 						<div class="field-grid billing-fields">
 							<div class="field"><label for="detail-billing-company">{locale === 'en' ? 'Company' : 'Firma'}</label><input id="detail-billing-company" autocomplete="organization" value={draft.billing!.companyName} oninput={(event) => updateDraftBilling({ companyName: event.currentTarget.value })} /></div>

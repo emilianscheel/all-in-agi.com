@@ -13,6 +13,11 @@ export type BookingTableRow = {
 	createdAt: string;
 	cancellationEmailSentAt: string | null;
 	billing?: BillingDetails | null;
+	address: {
+		street: string;
+		postalCode: string;
+		city: string;
+	};
 };
 
 export type UserTableRow = {

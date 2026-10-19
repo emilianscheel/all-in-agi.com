@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { and, eq, inArray, lte, sql } from 'drizzle-orm';
-import type { BookingConfiguration } from '$lib/booking';
+import type { BillingDetails, BookingConfiguration } from '$lib/booking';
 import {
 	LEGAL_DOCUMENT_STATUS,
 	legalVersion,
@@ -103,14 +103,15 @@ export async function recordBillingDetailsUpdated(id: string, actor: 'admin' | '
 	await appendContractEvent(id, 'billing_details_updated', actor, {}, now.toISOString());
 }
 
-export async function recordOralAgreement(id: string, customerName: string, organizerName: string, agreedAt = new Date()) {
+export async function recordOralAgreement(id: string, customerName: string, organizerName: string, agreedAt = new Date(), billing?: BillingDetails) {
 	const at = agreedAt.toISOString();
 	const exitDeadline = addBerlinBusinessDays(agreedAt, 2).toISOString();
 	const db = await getDb();
 	const [record] = await db.update(hackathons).set({
 		status: 'exit_window', customerAgreementName: customerName.trim(), organizerAgreementName: organizerName.trim(),
 		oralAgreementAt: at, exitDeadline, legalAcknowledgedAt: at,
-		businessCustomerConfirmed: true, authorityConfirmed: true, updatedAt: at
+		businessCustomerConfirmed: true, authorityConfirmed: true, updatedAt: at,
+		...(billing ? { billing } : {})
 	}).where(and(eq(hackathons.id, id), inArray(hackathons.status, ['requested', 'prep_scheduled']))).returning();
 	if (!record) return null;
 	await appendContractEvent(id, 'oral_agreement_recorded', organizerName, {

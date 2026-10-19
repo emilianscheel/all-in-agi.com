@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { bookingMetadata, getPrice, hackathonCalendarLocation, validateBillingDetails, validateConfiguration, validateInquiryConfiguration, type BookingConfiguration } from './booking';
+import { bookingMetadata, effectiveBillingDetails, getPrice, hackathonCalendarLocation, validateBillingDetails, validateConfiguration, validateInquiryConfiguration, type BookingConfiguration } from './booking';
 
 const validConfiguration: BookingConfiguration = {
 	capacity: 15,
@@ -77,6 +77,18 @@ describe('booking validation', () => {
 		const { billing: _billing, businessCustomerConfirmed: _business, authorityConfirmed: _authority, ...inquiry } = validConfiguration;
 		expect(validateInquiryConfiguration(inquiry)).toEqual([]);
 		expect(validateBillingDetails(undefined)).not.toEqual([]);
+	});
+
+	test('uses the booking contact for an agreement when no billing record or VAT ID is stored', () => {
+		const billing = effectiveBillingDetails({
+			companyName: validConfiguration.companyName,
+			contactName: validConfiguration.contactName,
+			email: validConfiguration.email,
+			address: validConfiguration.address
+		});
+		expect(billing.vatId).toBe('');
+		expect(validateBillingDetails(billing)).toEqual([]);
+		expect(effectiveBillingDetails({ ...validConfiguration, billing: validConfiguration.billing }).email).toBe('rechnung@example.com');
 	});
 
 	test('rejects removed offerings in new inquiries while retaining legacy validation', () => {

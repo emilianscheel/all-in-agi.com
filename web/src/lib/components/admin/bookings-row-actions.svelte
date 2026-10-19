@@ -11,7 +11,7 @@
 		RotateCcw,
 		Share
 	} from 'lucide-svelte';
-	import { validateBillingDetails } from '$lib/booking';
+	import { effectiveBillingDetails, validateBillingDetails } from '$lib/booking';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import type { Locale } from '$lib/i18n';
@@ -54,7 +54,13 @@
 	let canTimerClock = $derived(booking.status === 'contracted' || booking.status === 'confirmed');
 	let isEditable = $derived(booking.status === 'prep_scheduled' || booking.status === 'confirmed');
 	let canContractFlow = $derived(booking.status === 'prep_scheduled');
-	let billingComplete = $derived(validateBillingDetails(booking.billing, locale).length === 0);
+	let billingComplete = $derived(validateBillingDetails(effectiveBillingDetails({
+		billing: booking.billing,
+		companyName: booking.companyName,
+		contactName: booking.contactName,
+		contactEmail: booking.contactEmail,
+		address: booking.address
+	}), locale).length === 0);
 	let canEarlyCancel = $derived(
 		['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(booking.status) &&
 			!booking.cancellationEmailSentAt

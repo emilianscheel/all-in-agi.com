@@ -2,7 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import BookingsDataTable from '$lib/components/admin/bookings-data-table.svelte';
 	import type { BookingTableRow } from '$lib/components/admin/booking-types';
-	import { formatPrice, validateBillingDetails } from '$lib/booking';
+	import { effectiveBillingDetails, formatPrice, validateBillingDetails } from '$lib/booking';
 	import { localizedPath, type Locale } from '$lib/i18n';
 	import { trackAnalyticsEvent } from '$lib/analytics';
 	import { AlertDialog } from 'bits-ui';
@@ -27,7 +27,13 @@
 	let seedName = $derived(data.seedAdminName || 'ALL IN AGI Admin');
 
 	let agreementBillingComplete = $derived(
-		agreementTarget ? validateBillingDetails(agreementTarget.billing, locale).length === 0 : false
+		agreementTarget ? validateBillingDetails(effectiveBillingDetails({
+			billing: agreementTarget.billing,
+			companyName: agreementTarget.companyName,
+			contactName: agreementTarget.contactName,
+			contactEmail: agreementTarget.contactEmail,
+			address: agreementTarget.address
+		}), locale).length === 0 : false
 	);
 
 	function openDetails(id: string) {
