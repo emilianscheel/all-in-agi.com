@@ -12,34 +12,50 @@
 
 	let { locale }: { locale: Locale } = $props();
 
+	type ChatMessage = {
+		id: string;
+		role: 'user' | 'assistant';
+		content: string;
+		displayed: string;
+		error?: boolean;
+		visible?: boolean;
+	};
+
 	const AI_VALUE = 'action:ask-ai';
 	const EASE = [0.22, 1, 0.36, 1] as const;
+	const MAX_HISTORY = 16;
 
 	let open = $state(false);
 	let closing = $state(false);
 	let query = $state('');
 	let filteredCount = $state(0);
-	let aiFullAnswer = $state('');
-	let aiDisplayedAnswer = $state('');
+	let messages = $state<ChatMessage[]>([]);
 	let aiLoading = $state(false);
-	let aiError = $state<string | null>(null);
 	let overlayEl = $state<HTMLElement | null>(null);
 	let panelEl = $state<HTMLElement | null>(null);
+	let inputEl = $state<HTMLElement | null>(null);
+	let chatEl = $state<HTMLElement | null>(null);
+	let flyEl = $state<HTMLElement | null>(null);
+	let fly = $state<{ text: string; left: number; top: number; width: number } | null>(null);
 	let abortController: AbortController | null = null;
 	let typewriterTimer: ReturnType<typeof setInterval> | null = null;
 	let overlayAnimation: AnimationPlaybackControls | undefined;
 	let panelAnimation: AnimationPlaybackControls | undefined;
+	let messageId = 0;
 
 	let copy = $derived(ui[locale]);
 	let pages = $derived(getCommandPalettePages(locale));
-	let showingAnswer = $derived(
-		aiLoading || aiDisplayedAnswer.length > 0 || aiFullAnswer.length > 0 || !!aiError
-	);
+	let chatMode = $derived(messages.length > 0);
 	let aiKeywords = $derived(
 		locale === 'en'
-			? ['ask', 'ai', 'faq', 'question', 'help', 'search']
-			: ['frage', 'ki', 'faq', 'ai', 'hilfe', 'suchen', 'ask']
+			? ['ask', 'ai', 'faq', 'question', 'help', 'search', 'anything']
+			: ['frage', 'ki', 'faq', 'ai', 'hilfe', 'suchen', 'ask', 'alles']
 	);
+
+	function nextId(prefix: string) {
+		messageId += 1;
+		return `${prefix}-${messageId}`;
+	}
 
 	function reducedMotion() {
 		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -59,36 +75,72 @@
 		}
 	}
 
-	function startTypewriter() {
+	function patchMessage(id: string, patch: Partial<ChatMessage>) {
+		messages = messages.map((message) => (message.id === id ? { ...message, ...patch } : message));
+	}
+
+	function startTypewriter(assistantId: string) {
 		stopTypewriter();
-		if (reducedMotion()) {
-			aiDisplayedAnswer = aiFullAnswer;
-			return;
-		}
 		typewriterTimer = setInterval(() => {
-			if (aiDisplayedAnswer.length >= aiFullAnswer.length) {
+			const message = messages.find((entry) => entry.id === assistantId);
+			if (!message) {
+				stopTypewriter();
+				return;
+			}
+			if (reducedMotion()) {
+				if (message.displayed !== message.content) {
+					patchMessage(assistantId, { displayed: message.content });
+					void scrollChatToBottom();
+				}
+				if (!aiLoading && message.displayed.length >= message.content.length) {
+					stopTypewriter();
+				}
+				return;
+			}
+			if (message.displayed.length >= message.content.length) {
 				if (!aiLoading) stopTypewriter();
 				return;
 			}
-			const step = Math.min(2, aiFullAnswer.length - aiDisplayedAnswer.length);
-			aiDisplayedAnswer = aiFullAnswer.slice(0, aiDisplayedAnswer.length + step);
+			const step = Math.min(2, message.content.length - message.displayed.length);
+			patchMessage(assistantId, {
+				displayed: message.content.slice(0, message.displayed.length + step)
+			});
+			void scrollChatToBottom();
 		}, 18);
 	}
 
-	function resetAi() {
+	function historyForRequest(excludeAssistantId?: string) {
+		const pairs: { question: string; answer: string }[] = [];
+		for (let index = 0; index < messages.length; index += 1) {
+			const current = messages[index];
+			const next = messages[index + 1];
+			if (current?.role !== 'user' || next?.role !== 'assistant') continue;
+			if (next.id === excludeAssistantId) continue;
+			if (!current.content.trim() || !next.content.trim() || next.error) continue;
+			pairs.push({ question: current.content, answer: next.content });
+		}
+		return pairs.slice(-MAX_HISTORY);
+	}
+
+	function resetChat() {
 		abortController?.abort();
 		abortController = null;
 		stopTypewriter();
-		aiFullAnswer = '';
-		aiDisplayedAnswer = '';
+		messages = [];
 		aiLoading = false;
-		aiError = null;
+		fly = null;
 	}
 
 	function resetPalette() {
 		query = '';
 		filteredCount = 0;
-		resetAi();
+		resetChat();
+	}
+
+	async function scrollChatToBottom() {
+		await tick();
+		if (!chatEl) return;
+		chatEl.scrollTop = chatEl.scrollHeight;
 	}
 
 	async function playOpen() {
@@ -157,50 +209,126 @@
 		await goto(href);
 	}
 
+	async function flyQuestionToMessage(text: string, origin: DOMRect, messageIdValue: string) {
+		if (reducedMotion()) {
+			patchMessage(messageIdValue, { visible: true });
+			return;
+		}
+
+		fly = {
+			text,
+			left: origin.left,
+			top: origin.top,
+			width: Math.max(origin.width, 120)
+		};
+		await tick();
+		const destEl = chatEl?.querySelector(`[data-msg-id="${messageIdValue}"]`);
+		if (!(destEl instanceof HTMLElement) || !flyEl) {
+			fly = null;
+			patchMessage(messageIdValue, { visible: true });
+			return;
+		}
+
+		const dest = destEl.getBoundingClientRect();
+		const flyRect = flyEl.getBoundingClientRect();
+		const targetLeft = dest.right - flyRect.width;
+		const targetTop = dest.top;
+
+		await animate(
+			flyEl,
+			{
+				left: [origin.left, targetLeft],
+				top: [origin.top, targetTop],
+				fontSize: ['16px', '14px']
+			},
+			{ duration: 0.34, ease: EASE }
+		).finished;
+
+		fly = null;
+		patchMessage(messageIdValue, { visible: true });
+	}
+
 	async function startAi(questionText?: string) {
 		const question = (questionText ?? query).trim();
 		if (!question || aiLoading) return;
 
+		const origin = (inputEl ?? document.activeElement) instanceof HTMLElement
+			? (inputEl ?? (document.activeElement as HTMLElement)).getBoundingClientRect()
+			: new DOMRect(0, 0, 0, 0);
+
+		query = '';
 		abortController?.abort();
 		abortController = new AbortController();
 		stopTypewriter();
-		aiFullAnswer = '';
-		aiDisplayedAnswer = '';
-		aiError = null;
+
+		const userId = nextId('user');
+		const assistantId = nextId('assistant');
+		messages = [
+			...messages,
+			{
+				id: userId,
+				role: 'user',
+				content: question,
+				displayed: question,
+				visible: false
+			},
+			{
+				id: assistantId,
+				role: 'assistant',
+				content: '',
+				displayed: '',
+				visible: true
+			}
+		];
 		aiLoading = true;
-		startTypewriter();
+		await tick();
+		await scrollChatToBottom();
+		await flyQuestionToMessage(question, origin, userId);
+		startTypewriter(assistantId);
+		await scrollChatToBottom();
 
 		try {
 			await askFaqQuestion({
 				question,
 				locale,
-				history: [],
+				history: historyForRequest(assistantId),
 				signal: abortController.signal,
 				onChunk: (full) => {
-					aiFullAnswer = full;
+					patchMessage(assistantId, { content: full });
 				}
 			});
 		} catch (error) {
 			if (error instanceof DOMException && error.name === 'AbortError') return;
 			stopTypewriter();
-			aiFullAnswer = '';
-			aiDisplayedAnswer = '';
-			aiError = error instanceof Error ? error.message : copy.cmdkError;
+			patchMessage(assistantId, {
+				content: '',
+				displayed: error instanceof Error ? error.message : copy.cmdkError,
+				error: true
+			});
 		} finally {
 			aiLoading = false;
-			if (aiDisplayedAnswer.length >= aiFullAnswer.length) {
+			const assistant = messages.find((message) => message.id === assistantId);
+			if (assistant && assistant.displayed.length >= assistant.content.length) {
 				stopTypewriter();
 			}
+			await scrollChatToBottom();
+			queueMicrotask(() => inputEl?.focus());
 		}
-	}
-
-	function onQueryInput() {
-		if (showingAnswer) resetAi();
 	}
 
 	function onInputKeydown(event: KeyboardEvent) {
 		if (event.key !== 'Enter') return;
-		if (showingAnswer && !aiLoading) return;
+		if (aiLoading) {
+			event.preventDefault();
+			return;
+		}
+		if (chatMode) {
+			if (!query.trim()) return;
+			event.preventDefault();
+			event.stopPropagation();
+			void startAi(query);
+			return;
+		}
 		if (filteredCount > 0) return;
 		if (!query.trim()) return;
 		event.preventDefault();
@@ -238,40 +366,57 @@
 						class="cmdk-root"
 						label={copy.cmdkLabel}
 						loop
-						shouldFilter={!showingAnswer}
+						shouldFilter={!chatMode}
 						onStateChange={(state) => {
 							filteredCount = state.filtered.count;
 						}}
 					>
 						<div class="cmdk-input-row">
 							<Command.Input
+								bind:ref={inputEl}
 								class="cmdk-input"
-								placeholder={copy.cmdkPlaceholder}
+								placeholder={chatMode ? copy.cmdkContinue : copy.cmdkPlaceholder}
 								bind:value={query}
-								oninput={onQueryInput}
 								onkeydown={onInputKeydown}
 							/>
 							<kbd class="cmdk-kbd">esc</kbd>
 						</div>
 						<Command.List class="cmdk-list">
-							<Command.Viewport class="cmdk-viewport">
-								{#if showingAnswer}
-									<div class="cmdk-answer">
-										{#if aiError}
-											<p class="cmdk-ai-error">{aiError}</p>
-										{:else if aiLoading && !aiDisplayedAnswer}
-											<p class="cmdk-ai-status">{copy.cmdkThinking}</p>
+							{#if chatMode}
+								<div class="cmdk-chat" bind:this={chatEl}>
+									{#each messages as message (message.id)}
+										{#if message.role === 'user'}
+											<p
+												class="cmdk-chat-user"
+												class:cmdk-chat-pending={!message.visible}
+												data-msg-id={message.id}
+											>
+												{message.content}
+											</p>
+										{:else if message.error}
+											<p class="cmdk-chat-assistant cmdk-ai-error" data-msg-id={message.id}>
+												{message.displayed}
+											</p>
+										{:else if aiLoading && message.displayed.length === 0 && message.content.length === 0}
+											<p class="cmdk-chat-assistant cmdk-ai-status" data-msg-id={message.id}>
+												{copy.cmdkThinking}
+											</p>
 										{:else}
-											<div class="cmdk-ai-answer faq-answer-body">
-												{@html linkifyFaqAnswer(aiDisplayedAnswer)}{#if aiLoading || aiDisplayedAnswer.length < aiFullAnswer.length}<span
+											<div
+												class="cmdk-chat-assistant faq-answer-body"
+												data-msg-id={message.id}
+											>
+												{@html linkifyFaqAnswer(message.displayed)}{#if message.displayed.length < message.content.length || (aiLoading && message.id === messages[messages.length - 1]?.id)}<span
 														class="cmdk-ai-caret"
 														aria-hidden="true"
 													></span
 													>{/if}
 											</div>
 										{/if}
-									</div>
-								{:else}
+									{/each}
+								</div>
+							{:else}
+								<Command.Viewport class="cmdk-viewport">
 									<Command.Empty class="cmdk-empty">
 										<p>
 											{#if copy.cmdkEmptyBefore}{copy.cmdkEmptyBefore}{' '}{/if}<kbd
@@ -306,8 +451,8 @@
 											<span class="cmdk-item-title">{page.title}</span>
 										</Command.Item>
 									{/each}
-								{/if}
-							</Command.Viewport>
+								</Command.Viewport>
+							{/if}
 						</Command.List>
 					</Command.Root>
 				</div>
@@ -315,3 +460,13 @@
 		</Dialog.Content>
 	</Dialog.Portal>
 </Dialog.Root>
+
+{#if fly}
+	<p
+		bind:this={flyEl}
+		class="cmdk-fly"
+		style={`left:${fly.left}px;top:${fly.top}px;width:${fly.width}px`}
+	>
+		{fly.text}
+	</p>
+{/if}
