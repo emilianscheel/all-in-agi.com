@@ -3,7 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
 	import { formatPrice } from '$lib/booking';
-	import { localizedPath, type Locale } from '$lib/i18n';
+	import type { Locale } from '$lib/i18n';
 	import { animate } from 'motion';
 	import { LogIn } from 'lucide-svelte';
 	import type { PageData } from './$types';
@@ -100,10 +100,6 @@
 
 {#if data.admin.authorized && data.summary}
 	<div class="dashboard-page">
-		<header class="dashboard-heading">
-			<h1>Dashboard</h1>
-		</header>
-
 		<section class="dashboard-stats dashboard-stats-wide" aria-label={locale === 'en' ? 'Metrics' : 'Kennzahlen'}>
 			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Confirmed bookings' : 'Bestätigte Buchungen'}</span>
@@ -114,27 +110,13 @@
 				<strong>{formatPrice(data.summary.totalRevenue)}</strong>
 			</article>
 			<article class="dashboard-stat-card">
-				<span>{locale === 'en' ? 'Users' : 'Benutzer'}</span>
+				<span>{locale === 'en' ? 'Users' : 'Nutzer'}</span>
 				<strong>{data.summary.userCount}</strong>
 			</article>
 			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Passkey ready' : 'Passkey bereit'}</span>
 				<strong>{data.summary.passkeyReadyCount}</strong>
 			</article>
-		</section>
-
-		<section class="dashboard-list-card dashboard-overview-links" aria-label={locale === 'en' ? 'Quick links' : 'Schnellzugriff'}>
-			<div class="dashboard-list-heading">
-				<div>
-					<h2>{locale === 'en' ? 'Go to' : 'Weiter zu'}</h2>
-				</div>
-			</div>
-			<div class="dashboard-overview-actions">
-				<a class="button-secondary dashboard-export" href={localizedPath(locale, '/buchungen')}>
-					{locale === 'en' ? 'Bookings' : 'Buchungen'}
-				</a>
-				<a class="button-secondary dashboard-export" href={localizedPath(locale, '/user')}>Users</a>
-			</div>
 		</section>
 	</div>
 {:else}

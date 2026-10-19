@@ -137,8 +137,8 @@ const CORE_PAGES: CorePage[] = [
 		path: '/user',
 		icon: Users,
 		group: { de: 'Admin', en: 'Admin' },
-		title: { de: 'Users', en: 'Users' },
-		keywords: { de: ['user', 'users', 'benutzer', 'admin'], en: ['user', 'users', 'admin'] }
+		title: { de: 'Nutzer', en: 'Users' },
+		keywords: { de: ['user', 'users', 'nutzer', 'benutzer', 'admin'], en: ['user', 'users', 'admin'] }
 	},
 	{
 		id: 'buchungen',

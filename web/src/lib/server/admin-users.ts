@@ -96,6 +96,21 @@ export async function createAdminUser(input: { name: string; email: string }) {
 	return { id, email, name, initialPassword };
 }
 
+export async function deleteAdminUser(id: string, actorId: string) {
+	if (!id) throw new Error('User id is required.');
+	if (id === actorId) throw new Error('You cannot delete your own account.');
+
+	const db = await getDb();
+	const [target] = await db.select({ id: user.id }).from(user).where(eq(user.id, id)).limit(1);
+	if (!target) throw new Error('User not found.');
+
+	const users = await listAdminUsers();
+	if (users.length <= 1) throw new Error('The last admin user cannot be deleted.');
+
+	await db.delete(user).where(eq(user.id, id));
+	return { id };
+}
+
 export async function getDashboardCombinedSummary() {
 	const [bookingSummary, userSummary] = await Promise.all([getDashboardSummary(), getAdminUserSummary()]);
 	return { ...bookingSummary, ...userSummary };

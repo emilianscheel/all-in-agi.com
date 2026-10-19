@@ -25,6 +25,7 @@
 	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.route.id));
 	let currentGtmSlug = $derived(gtmArticleRoute ? page.route.id?.slice(1) : undefined);
 	let bookingsLabel = $derived(locale === 'en' ? 'Bookings' : 'Buchungen');
+	let usersLabel = $derived(locale === 'en' ? 'Users' : 'Nutzer');
 	let dashboardHref = $derived(localizedPath(locale, '/dashboard'));
 	let bookingsHref = $derived(localizedPath(locale, '/buchungen'));
 	let userHref = $derived(localizedPath(locale, '/user'));
@@ -70,7 +71,7 @@
 			</a>
 			<div class="admin-nav-links">
 				<a class:active={page.route.id === '/dashboard'} href={dashboardHref}>Dashboard</a>
-				<a class:active={page.route.id === '/user'} href={userHref}>Users</a>
+				<a class:active={page.route.id === '/user'} href={userHref}>{usersLabel}</a>
 				<a class:active={page.route.id === '/buchungen'} href={bookingsHref}>{bookingsLabel}</a>
 				<a class="admin-nav-external" href="/timer" target="_blank" rel="noopener noreferrer">
 					Timer <ExternalLink size={12} strokeWidth={2.25} aria-hidden="true" />

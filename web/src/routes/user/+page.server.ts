@@ -7,5 +7,5 @@ export async function load({ locals }) {
 		redirect(303, localizedPath(locals.locale, '/dashboard'));
 	}
 	const [users, summary] = await Promise.all([listAdminUsers(), getAdminUserSummary()]);
-	return { users, summary };
+	return { users, summary, currentUserId: locals.user!.id };
 }

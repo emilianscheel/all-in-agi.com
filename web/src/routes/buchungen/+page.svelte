@@ -117,7 +117,6 @@
 								<th>{locale === 'en' ? 'Event' : 'Termin'}</th>
 								<th>Team</th>
 								<th>{locale === 'en' ? 'Net' : 'Netto'}</th>
-								<th>E-Mail</th>
 								<th>{locale === 'en' ? 'Requested on' : 'Angefragt am'}</th>
 								<th><span class="visually-hidden">{locale === 'en' ? 'Actions' : 'Aktionen'}</span></th>
 							</tr>
@@ -130,12 +129,12 @@
 										<a class="booking-primary-link" href={`/${booking.id}`} target="_blank" rel="noopener noreferrer">
 											<strong>{booking.companyName}</strong>
 											<small>{booking.id} · {booking.contactName}</small>
+											<small>{booking.contactEmail}</small>
 										</a>
 									</td>
 									<td>{formatDate(booking.eventStart)}</td>
 									<td>{locale === 'en' ? `Up to ${booking.capacity}` : `Bis ${booking.capacity}`}</td>
 									<td>{formatPrice(booking.totalPrice)}</td>
-									<td>{booking.contactEmail}</td>
 									<td>{formatDate(booking.createdAt)}</td>
 									<td class="dashboard-actions-cell">
 										<DropdownMenu.Root>
