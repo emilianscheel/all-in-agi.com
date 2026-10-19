@@ -885,7 +885,9 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	box-shadow: var(--floating-shadow);
 	color: var(--ink);
 	transform-origin: center top;
+	will-change: height;
 }
+.cmdk-panel-content { min-height: 0; }
 .cmdk-sr-only {
 	position: absolute;
 	width: 1px;

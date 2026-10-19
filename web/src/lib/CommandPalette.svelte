@@ -4,6 +4,7 @@
 	import { Command, Dialog } from 'bits-ui';
 	import { animate, type AnimationPlaybackControls } from 'motion';
 	import { Sparkles } from 'lucide-svelte';
+	import { animateContentHeight } from '$lib/animateContentHeight';
 	import { askFaqQuestion } from '$lib/faq-ask-client';
 	import { getCommandPalettePages } from '$lib/command-palette-pages';
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
@@ -228,82 +229,84 @@
 	<Dialog.Portal>
 		<Dialog.Overlay bind:ref={overlayEl} class="cmdk-overlay" />
 		<Dialog.Content class="cmdk-panel">
-			<div class="cmdk-panel-inner" bind:this={panelEl}>
-				<Dialog.Title class="cmdk-sr-only">{copy.cmdkLabel}</Dialog.Title>
-				<Dialog.Description class="cmdk-sr-only">{copy.cmdkPlaceholder}</Dialog.Description>
+			<div class="cmdk-panel-inner" bind:this={panelEl} use:animateContentHeight>
+				<div class="cmdk-panel-content">
+					<Dialog.Title class="cmdk-sr-only">{copy.cmdkLabel}</Dialog.Title>
+					<Dialog.Description class="cmdk-sr-only">{copy.cmdkPlaceholder}</Dialog.Description>
 
-				<Command.Root
-					class="cmdk-root"
-					label={copy.cmdkLabel}
-					loop
-					shouldFilter={!showingAnswer}
-					onStateChange={(state) => {
-						filteredCount = state.filtered.count;
-					}}
-				>
-					<div class="cmdk-input-row">
-						<Command.Input
-							class="cmdk-input"
-							placeholder={copy.cmdkPlaceholder}
-							bind:value={query}
-							oninput={onQueryInput}
-							onkeydown={onInputKeydown}
-						/>
-						<kbd class="cmdk-kbd">esc</kbd>
-					</div>
-					<Command.List class="cmdk-list">
-						<Command.Viewport class="cmdk-viewport">
-							{#if showingAnswer}
-								<div class="cmdk-answer">
-									{#if aiError}
-										<p class="cmdk-ai-error">{aiError}</p>
-									{:else if aiLoading && !aiDisplayedAnswer}
-										<p class="cmdk-ai-status">{copy.cmdkThinking}</p>
-									{:else}
-										<div class="cmdk-ai-answer faq-answer-body">
-											{@html linkifyFaqAnswer(aiDisplayedAnswer)}{#if aiLoading || aiDisplayedAnswer.length < aiFullAnswer.length}<span
-													class="cmdk-ai-caret"
-													aria-hidden="true"
-												></span
-												>{/if}
-										</div>
-									{/if}
-								</div>
-							{:else}
-								<Command.Empty class="cmdk-empty">
-									<p>{copy.cmdkEmpty}</p>
-								</Command.Empty>
+					<Command.Root
+						class="cmdk-root"
+						label={copy.cmdkLabel}
+						loop
+						shouldFilter={!showingAnswer}
+						onStateChange={(state) => {
+							filteredCount = state.filtered.count;
+						}}
+					>
+						<div class="cmdk-input-row">
+							<Command.Input
+								class="cmdk-input"
+								placeholder={copy.cmdkPlaceholder}
+								bind:value={query}
+								oninput={onQueryInput}
+								onkeydown={onInputKeydown}
+							/>
+							<kbd class="cmdk-kbd">esc</kbd>
+						</div>
+						<Command.List class="cmdk-list">
+							<Command.Viewport class="cmdk-viewport">
+								{#if showingAnswer}
+									<div class="cmdk-answer">
+										{#if aiError}
+											<p class="cmdk-ai-error">{aiError}</p>
+										{:else if aiLoading && !aiDisplayedAnswer}
+											<p class="cmdk-ai-status">{copy.cmdkThinking}</p>
+										{:else}
+											<div class="cmdk-ai-answer faq-answer-body">
+												{@html linkifyFaqAnswer(aiDisplayedAnswer)}{#if aiLoading || aiDisplayedAnswer.length < aiFullAnswer.length}<span
+														class="cmdk-ai-caret"
+														aria-hidden="true"
+													></span
+													>{/if}
+											</div>
+										{/if}
+									</div>
+								{:else}
+									<Command.Empty class="cmdk-empty">
+										<p>{copy.cmdkEmpty}</p>
+									</Command.Empty>
 
-								<Command.Item
-									class="cmdk-item"
-									value={AI_VALUE}
-									keywords={aiKeywords}
-									onSelect={() => void startAi()}
-								>
-									<span class="cmdk-item-icon" aria-hidden="true">
-										<Sparkles size={16} strokeWidth={1.8} />
-									</span>
-									<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
-								</Command.Item>
-
-								{#each pages as page (page.id)}
-									{@const Icon = page.icon}
 									<Command.Item
 										class="cmdk-item"
-										value={page.id}
-										keywords={[page.title, page.path, ...page.keywords]}
-										onSelect={() => void navigateTo(page.href)}
+										value={AI_VALUE}
+										keywords={aiKeywords}
+										onSelect={() => void startAi()}
 									>
 										<span class="cmdk-item-icon" aria-hidden="true">
-											<Icon size={16} strokeWidth={1.8} />
+											<Sparkles size={16} strokeWidth={1.8} />
 										</span>
-										<span class="cmdk-item-title">{page.title}</span>
+										<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
 									</Command.Item>
-								{/each}
-							{/if}
-						</Command.Viewport>
-					</Command.List>
-				</Command.Root>
+
+									{#each pages as page (page.id)}
+										{@const Icon = page.icon}
+										<Command.Item
+											class="cmdk-item"
+											value={page.id}
+											keywords={[page.title, page.path, ...page.keywords]}
+											onSelect={() => void navigateTo(page.href)}
+										>
+											<span class="cmdk-item-icon" aria-hidden="true">
+												<Icon size={16} strokeWidth={1.8} />
+											</span>
+											<span class="cmdk-item-title">{page.title}</span>
+										</Command.Item>
+									{/each}
+								{/if}
+							</Command.Viewport>
+						</Command.List>
+					</Command.Root>
+				</div>
 			</div>
 		</Dialog.Content>
 	</Dialog.Portal>
