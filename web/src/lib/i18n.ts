@@ -157,14 +157,11 @@ export const ui = {
 		cmdkLabel: 'Seitensuche',
 		cmdkPlaceholder: 'Seite suchen oder Frage stellen…',
 		cmdkAskAi: 'Mit KI fragen',
-		cmdkAskAiHint: 'Antwort aus dem ALL IN AGI Wissen',
 		cmdkEmpty: 'Keine Seiten gefunden',
 		cmdkAskAbout: 'KI fragen zu',
 		cmdkBack: 'Zurück zur Suche',
 		cmdkThinking: 'Denkt nach…',
-		cmdkError: 'Etwas ist schiefgelaufen.',
-		cmdkActions: 'Aktionen',
-		cmdkPages: 'Seiten'
+		cmdkError: 'Etwas ist schiefgelaufen.'
 	},
 	en: {
 		skip: 'Skip to content', navLabel: 'Main navigation', homeLabel: 'ALL IN AGI home',
@@ -175,13 +172,10 @@ export const ui = {
 		cmdkLabel: 'Page search',
 		cmdkPlaceholder: 'Search pages or ask a question…',
 		cmdkAskAi: 'Ask AI',
-		cmdkAskAiHint: 'Answer from ALL IN AGI knowledge',
 		cmdkEmpty: 'No pages found',
 		cmdkAskAbout: 'Ask AI about',
 		cmdkBack: 'Back to search',
 		cmdkThinking: 'Thinking…',
-		cmdkError: 'Something went wrong.',
-		cmdkActions: 'Actions',
-		cmdkPages: 'Pages'
+		cmdkError: 'Something went wrong.'
 	}
 } as const;

@@ -5,7 +5,7 @@
 	import { animate, type AnimationPlaybackControls } from 'motion';
 	import { ArrowLeft, Sparkles } from 'lucide-svelte';
 	import { askFaqQuestion } from '$lib/faq-ask-client';
-	import { getCommandPalettePages, type CommandPalettePage } from '$lib/command-palette-pages';
+	import { getCommandPalettePages } from '$lib/command-palette-pages';
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
 	import { ui, type Locale } from '$lib/i18n';
 
@@ -30,12 +30,6 @@
 
 	let copy = $derived(ui[locale]);
 	let pages = $derived(getCommandPalettePages(locale));
-	let pagesByGroup = $derived(
-		pages.reduce<Record<string, CommandPalettePage[]>>((acc, page) => {
-			(acc[page.group] ??= []).push(page);
-			return acc;
-		}, {})
-	);
 	let aiKeywords = $derived(
 		locale === 'en'
 			? ['ask', 'ai', 'faq', 'question', 'help', 'search']
@@ -262,53 +256,31 @@
 									{/if}
 								</Command.Empty>
 
-								<Command.Group value="actions" class="cmdk-group">
-									<Command.GroupHeading class="cmdk-group-heading"
-										>{copy.cmdkActions}</Command.GroupHeading
-									>
-									<Command.GroupItems>
-										<Command.Item
-											class="cmdk-item"
-											value={AI_VALUE}
-											keywords={aiKeywords}
-											onSelect={() => void startAi()}
-										>
-											<span class="cmdk-item-icon" aria-hidden="true">
-												<Sparkles size={16} strokeWidth={1.8} />
-											</span>
-											<span class="cmdk-item-copy">
-												<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
-												<span class="cmdk-item-hint">{copy.cmdkAskAiHint}</span>
-											</span>
-										</Command.Item>
-									</Command.GroupItems>
-								</Command.Group>
+								<Command.Item
+									class="cmdk-item"
+									value={AI_VALUE}
+									keywords={aiKeywords}
+									onSelect={() => void startAi()}
+								>
+									<span class="cmdk-item-icon" aria-hidden="true">
+										<Sparkles size={16} strokeWidth={1.8} />
+									</span>
+									<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
+								</Command.Item>
 
-								{#each Object.entries(pagesByGroup) as [group, groupPages] (group)}
-									<Command.Group value={group} class="cmdk-group">
-										<Command.GroupHeading class="cmdk-group-heading"
-											>{group}</Command.GroupHeading
-										>
-										<Command.GroupItems>
-											{#each groupPages as page (page.id)}
-												{@const Icon = page.icon}
-												<Command.Item
-													class="cmdk-item"
-													value={page.id}
-													keywords={[page.title, page.path, ...page.keywords]}
-													onSelect={() => void navigateTo(page.href)}
-												>
-													<span class="cmdk-item-icon" aria-hidden="true">
-														<Icon size={16} strokeWidth={1.8} />
-													</span>
-													<span class="cmdk-item-copy">
-														<span class="cmdk-item-title">{page.title}</span>
-														<span class="cmdk-item-hint">{page.path}</span>
-													</span>
-												</Command.Item>
-											{/each}
-										</Command.GroupItems>
-									</Command.Group>
+								{#each pages as page (page.id)}
+									{@const Icon = page.icon}
+									<Command.Item
+										class="cmdk-item"
+										value={page.id}
+										keywords={[page.title, page.path, ...page.keywords]}
+										onSelect={() => void navigateTo(page.href)}
+									>
+										<span class="cmdk-item-icon" aria-hidden="true">
+											<Icon size={16} strokeWidth={1.8} />
+										</span>
+										<span class="cmdk-item-title">{page.title}</span>
+									</Command.Item>
 								{/each}
 							</Command.Viewport>
 						</Command.List>
