@@ -45,6 +45,7 @@
     import { localizedPath, type Locale } from "$lib/i18n";
 
     let locale = $derived((page.data.locale ?? "de") as Locale);
+    let priceDuration = $derived(locale === "en" ? "1 full day" : "1 ganzer Tag");
 
     const carouselTools = CODING_TOOLS.filter((tool) => tool.icon);
     const carouselRepeats = [0, 1, 2, 3];
@@ -570,6 +571,7 @@
                 <strong>4.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
+                    <li><CalendarClock size={17} />{priceDuration}</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
@@ -586,6 +588,7 @@
                 <strong>5.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
+                    <li><CalendarClock size={17} />{priceDuration}</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
@@ -601,6 +604,7 @@
                 <strong>6.000 €</strong><span>{locale === "en" ? "net" : "netto"}</span>
                 <ul>
                     <li><Users size={17} />2 Facilitators</li>
+                    <li><CalendarClock size={17} />{priceDuration}</li>
                     <li><Lightbulb size={17} />Challenge Design</li>
                     <li><Presentation size={17} />Demo Session & Follow-up</li>
                     <li><Pizza size={17} />Pizza & Cookies</li>
@@ -609,6 +613,21 @@
                             ? "On site at your premises"
                             : "Vor Ort in Ihren Räumen"}
                     </li>
+                </ul>
+            </article>
+            <article class="price-card price-card-custom">
+                <h3>{locale === "en" ? "Whatever you need" : "Was Sie brauchen"}</h3>
+                <strong class="price-contact"
+                    ><a href="#contact">{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a></strong
+                >
+                <span class="price-net-spacer" aria-hidden="true">{locale === "en" ? "net" : "netto"}</span>
+                <ul>
+                    <li><UsersRound size={17} />{locale === "en" ? "Your team size" : "Ihre Teamgröße"}</li>
+                    <li><CalendarDays size={17} />{locale === "en" ? "Your schedule" : "Ihr Zeitplan"}</li>
+                    <li><Lightbulb size={17} />{locale === "en" ? "Your challenges" : "Ihre Challenges"}</li>
+                    <li><Presentation size={17} />{locale === "en" ? "Your sessions" : "Ihre Sessions"}</li>
+                    <li><MapPin size={17} />{locale === "en" ? "Your location" : "Ihr Standort"}</li>
+                    <li><PenTool size={17} />{locale === "en" ? "Your extras" : "Ihre Extras"}</li>
                 </ul>
             </article>
         </div>
