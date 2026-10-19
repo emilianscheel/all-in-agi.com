@@ -568,7 +568,7 @@
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
 					{#if hackathon.status === 'prep_scheduled'}
 						{#if !billingComplete}<p class="admin-action-message">Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.</p>{/if}
-						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>Beiderseitige Zustimmung dokumentieren</button>
+						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}</button>
 					{:else if hackathon.status === 'exit_window'}
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>Rücktritt ALL IN AGI erfassen</button>
@@ -640,20 +640,26 @@
 					<AlertDialog.Portal>
 						<AlertDialog.Overlay class="confirmation-overlay" />
 						<AlertDialog.Content class="confirmation-dialog agreement-dialog">
-							<AlertDialog.Title>{agreementModalMode === 'test' ? 'Test-Vertrags-E-Mail senden' : 'Beiderseitige Zustimmung dokumentieren'}</AlertDialog.Title>
+							<AlertDialog.Title>
+								{agreementModalMode === 'test'
+									? (locale === 'en' ? 'Send test contract email' : 'Test-Vertrags-E-Mail senden')
+									: (locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren')}
+							</AlertDialog.Title>
 							<AlertDialog.Description>
 								{agreementModalMode === 'test'
-									? 'Die E-Mail wird nur an go@all-in-agi.com mit dem Betreffpräfix [TEST] gesendet. Der Buchungsstatus bleibt unverändert.'
-									: 'Nach dem Speichern wird der Vertrag geschlossen und die Vertragsbestätigung an den Kunden gesendet.'}
+									? (locale === 'en' ? 'The email is only sent to go@all-in-agi.com with a [TEST] subject prefix. The booking status stays unchanged.' : 'Die E-Mail wird nur an go@all-in-agi.com mit dem Betreffpräfix [TEST] gesendet. Der Buchungsstatus bleibt unverändert.')
+									: (locale === 'en' ? 'Saving closes the contract and sends the contract confirmation to the customer.' : 'Nach dem Speichern wird der Vertrag geschlossen und die Vertragsbestätigung an den Kunden gesendet.')}
 							</AlertDialog.Description>
 							<div class="contract-admin-form agreement-dialog-fields">
-								<div class="field"><label for="agreement-customer">Zustimmende Person Kunde</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
-								<div class="field"><label for="agreement-organizer">Zustimmende Person ALL IN AGI</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
+								<div class="field"><label for="agreement-customer">{locale === 'en' ? 'Agreeing person (customer)' : 'Zustimmende Person Kunde'}</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
+								<div class="field"><label for="agreement-organizer">{locale === 'en' ? 'Agreeing person (ALL IN AGI)' : 'Zustimmende Person ALL IN AGI'}</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
 							</div>
 							<div class="confirmation-dialog-actions">
-								<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
+								<AlertDialog.Cancel class="button-secondary">{locale === 'en' ? 'Cancel' : 'Abbrechen'}</AlertDialog.Cancel>
 								<button class="button-primary" type="button" onclick={submitAgreementModal} disabled={contractBusy || !agreementCustomerName.trim() || !agreementOrganizerName.trim() || (agreementModalMode === 'record' && !billingComplete)}>
-									{agreementModalMode === 'test' ? (contractBusy ? 'Wird gesendet …' : 'Test senden') : (contractBusy ? 'Wird gespeichert …' : 'Zustimmung speichern')}
+									{agreementModalMode === 'test'
+										? (contractBusy ? (locale === 'en' ? 'Sending …' : 'Wird gesendet …') : (locale === 'en' ? 'Send test' : 'Test senden'))
+										: (contractBusy ? (locale === 'en' ? 'Saving …' : 'Wird gespeichert …') : (locale === 'en' ? 'Save agreement' : 'Zustimmung speichern'))}
 								</button>
 							</div>
 						</AlertDialog.Content>
