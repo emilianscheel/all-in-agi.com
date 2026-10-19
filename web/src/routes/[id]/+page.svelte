@@ -64,6 +64,8 @@
 	let editError = $state('');
 	let confirmationEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceDownloadState = $state<'idle' | 'loading' | 'error'>('idle');
+	let invoiceDraftState = $state<'idle' | 'loading' | 'error'>('idle');
+	let depositDraftState = $state<'idle' | 'loading' | 'error'>('idle');
 	let invoiceEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceTestState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let invoiceIssued = $state(Boolean(initialInvoice?.issued));
@@ -121,6 +123,7 @@
 	let readOnly = $derived(!['prep_scheduled', 'confirmed'].includes(hackathon.status));
 	let canScheduleDeferredEvent = $derived(!hackathon.eventStart && ['prep_scheduled', 'exit_window', 'contracted', 'confirmed'].includes(hackathon.status));
 	let invoiceEligible = $derived(['contracted', 'confirmed', 'completed'].includes(hackathon.status));
+	let invoiceDraftAvailable = $derived(['prep_scheduled', 'exit_window', 'contracted', 'confirmed', 'completed'].includes(hackathon.status));
 	let cancellableContract = $derived(['contracted', 'confirmed'].includes(hackathon.status));
 	let billingModel = $state(initialInvoice?.billingModel ?? null);
 	let invoiceKind = $state(initialInvoice?.kind ?? null);
@@ -382,6 +385,36 @@
 		}
 	}
 
+	async function downloadDraft(kind: 'invoice' | 'deposit') {
+		const loading = kind === 'invoice' ? invoiceDraftState : depositDraftState;
+		if (loading === 'loading') return;
+		if (kind === 'invoice') invoiceDraftState = 'loading';
+		else depositDraftState = 'loading';
+		invoiceMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/${kind === 'invoice' ? 'invoice-draft.pdf' : 'down-payment-draft.pdf'}`, { method: 'POST' });
+			if (!response.ok) {
+				const result = await response.json().catch(() => ({}));
+				throw new Error(result.message ?? (locale === 'en' ? 'The invoice draft could not be downloaded.' : 'Der Rechnungsentwurf konnte nicht heruntergeladen werden.'));
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = kind === 'invoice' ? `all-in-agi-rechnungsentwurf-${hackathon.id}.pdf` : `all-in-agi-anzahlungsentwurf-${hackathon.id}.pdf`;
+			document.body.append(link);
+			link.click();
+			link.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 0);
+			if (kind === 'invoice') invoiceDraftState = 'idle';
+			else depositDraftState = 'idle';
+		} catch (error) {
+			if (kind === 'invoice') invoiceDraftState = 'error';
+			else depositDraftState = 'error';
+			invoiceMessage = error instanceof Error ? error.message : (locale === 'en' ? 'The invoice draft could not be downloaded.' : 'Der Rechnungsentwurf konnte nicht heruntergeladen werden.');
+		}
+	}
+
 	async function downloadInvoice() {
 		if (invoiceDownloadState === 'loading') return;
 		invoiceDownloadState = 'loading';
@@ -632,6 +665,35 @@
 
 			{#if data.admin.authorized}
 				<div class="admin-detail-actions" aria-label={locale === 'en' ? 'Admin actions' : 'Admin-Aktionen'}>
+					{#if invoiceDraftAvailable}
+						{#if splitBilling}
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger>
+									{#snippet child({ props })}
+										<button {...props} class="button-secondary action-button" type="button" disabled={invoiceDraftState === 'loading' || depositDraftState === 'loading'}>
+											<Download size={18} aria-hidden="true" />
+											{locale === 'en' ? 'Invoice draft' : 'Rechnungsentwurf'}
+										</button>
+									{/snippet}
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content class="min-w-[280px]" align="end" sideOffset={6}>
+									<DropdownMenu.Item disabled={depositDraftState === 'loading'} onSelect={() => downloadDraft('deposit')}>
+										<Download size={16} aria-hidden="true" />
+										{depositDraftState === 'loading' ? (locale === 'en' ? 'Creating deposit draft …' : 'Anzahlungsentwurf wird erstellt …') : depositDraftState === 'error' ? (locale === 'en' ? 'Try deposit draft again' : 'Anzahlungsentwurf erneut versuchen') : (locale === 'en' ? 'Download deposit invoice draft' : 'Anzahlungsentwurf herunterladen')}
+									</DropdownMenu.Item>
+									<DropdownMenu.Item disabled={invoiceDraftState === 'loading'} onSelect={() => downloadDraft('invoice')}>
+										<Download size={16} aria-hidden="true" />
+										{invoiceDraftState === 'loading' ? (locale === 'en' ? 'Creating invoice draft …' : 'Rechnungsentwurf wird erstellt …') : invoiceDraftState === 'error' ? (locale === 'en' ? 'Try invoice draft again' : 'Rechnungsentwurf erneut versuchen') : (locale === 'en' ? 'Download invoice draft' : 'Rechnungsentwurf herunterladen')}
+									</DropdownMenu.Item>
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
+						{:else}
+							<button class="button-secondary action-button" type="button" onclick={() => downloadDraft('invoice')} disabled={invoiceDraftState === 'loading'}>
+								<Download size={18} aria-hidden="true" />
+								{invoiceDraftState === 'loading' ? (locale === 'en' ? 'Creating invoice draft …' : 'Rechnungsentwurf wird erstellt …') : invoiceDraftState === 'error' ? (locale === 'en' ? 'Try invoice draft again' : 'Rechnungsentwurf erneut versuchen') : (locale === 'en' ? 'Invoice draft' : 'Rechnungsentwurf')}
+							</button>
+						{/if}
+					{/if}
 					{#if hackathon.status === 'prep_scheduled'}
 						{#if !billingComplete}<p class="admin-action-message">{locale === 'en' ? 'Billing details must be complete before recording the agreement.' : 'Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.'}</p>{/if}
 						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}</button>

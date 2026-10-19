@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { InvoiceLegalConfiguration } from '$lib/invoice';
-import { getOrCreateDownPaymentInvoice, getOrCreateInvoice, InvoiceNotIssuableError, previewDownPaymentInvoice, previewInvoice } from './invoices';
+import { getOrCreateDownPaymentInvoice, getOrCreateInvoice, InvoiceNotIssuableError, previewDownPaymentInvoice, previewDownPaymentInvoiceDraft, previewInvoice, previewInvoiceDraft } from './invoices';
 import type { HackathonRecord } from './hackathons';
 
 const legal: InvoiceLegalConfiguration = {
@@ -162,6 +162,28 @@ describe('invoice persistence orchestration', () => {
 		});
 		expect(frozen).toBe(false);
 		expect(downPayment.snapshot.invoiceNumber).toBe('RE-HAA-AAA-AAA-AZ');
+	});
+
+	test('previews deposit and full invoice drafts during the exit window without freezing', async () => {
+		const current = { ...record(), status: 'exit_window' as const, billingModel: 'deposit_30' as const };
+		let frozen = false;
+		const dependencies = {
+			getRecord: async () => current,
+			getConfiguration: () => legal,
+			now: () => new Date('2026-10-19T15:45:00.000Z'),
+			freeze: async () => { frozen = true; return null; },
+			freezeDownPayment: async () => { frozen = true; return null; }
+		};
+		const invoice = await previewInvoiceDraft(current.id, dependencies, 'en');
+		const deposit = await previewDownPaymentInvoiceDraft(current.id, dependencies, 'en');
+		expect(frozen).toBe(false);
+		expect(current.invoiceSnapshot).toBeNull();
+		expect(invoice.snapshot).toMatchObject({ version: 1, locale: 'en', invoiceNumber: 'RE-HAA-AAA-AAA', netTotalCents: 400000 });
+		expect(deposit.snapshot).toMatchObject({ version: 3, kind: 'down-payment', locale: 'en', invoiceNumber: 'RE-HAA-AAA-AAA-AZ', netTotalCents: 120000 });
+		await expect(previewDownPaymentInvoiceDraft(current.id, {
+			getRecord: async () => ({ ...current, billingModel: 'legacy_full' as const }),
+			getConfiguration: () => legal
+		})).rejects.toBeInstanceOf(InvoiceNotIssuableError);
 	});
 
 	test('does not issue a deposit invoice for a single-invoice booking', async () => {

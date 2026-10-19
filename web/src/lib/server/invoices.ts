@@ -175,6 +175,54 @@ export async function previewDownPaymentInvoice(
 	};
 }
 
+const draftStatuses = ['prep_scheduled', 'exit_window', 'contracted', 'confirmed', 'completed'];
+
+export async function previewInvoiceDraft(
+	id: string,
+	dependencies: InvoicePersistenceDependencies = {},
+	locale?: 'de' | 'en'
+): Promise<IssuedInvoice> {
+	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
+	const current = await getRecord(id);
+	if (!current) throw new InvoiceNotFoundError();
+	if (current.invoiceSnapshot) return { record: current, snapshot: current.invoiceSnapshot };
+	if (!draftStatuses.includes(current.status) || !current.eventStart) throw new InvoiceNotIssuableError();
+	const now = dependencies.now?.() ?? new Date();
+	return {
+		record: current,
+		snapshot: createInvoiceSnapshot(
+			{ ...current, locale: locale ?? current.customerLocale },
+			(dependencies.getConfiguration ?? getInvoiceLegalConfiguration)(),
+			now,
+			`RE-${current.id}`
+		)
+	};
+}
+
+export async function previewDownPaymentInvoiceDraft(
+	id: string,
+	dependencies: InvoicePersistenceDependencies = {},
+	locale?: 'de' | 'en'
+): Promise<IssuedInvoice> {
+	const getRecord = dependencies.getRecord ?? getCustomerHackathonRecord;
+	if (!dependencies.getRecord) await finalizeDueContracts();
+	const current = await getRecord(id);
+	if (!current) throw new InvoiceNotFoundError();
+	if (current.downPaymentInvoiceSnapshot) return { record: current, snapshot: current.downPaymentInvoiceSnapshot };
+	if (current.billingModel !== 'deposit_30' || !draftStatuses.includes(current.status)) throw new InvoiceNotIssuableError();
+	const now = dependencies.now?.() ?? new Date();
+	return {
+		record: current,
+		snapshot: createDownPaymentInvoiceSnapshot(
+			{ ...current, locale: locale ?? current.customerLocale },
+			(dependencies.getConfiguration ?? getInvoiceLegalConfiguration)(),
+			now,
+			`RE-${current.id}-AZ`
+		)
+	};
+}
+
 export async function getExistingInvoice(
 	id: string,
 	dependencies: Pick<InvoicePersistenceDependencies, 'getRecord'> = {}
