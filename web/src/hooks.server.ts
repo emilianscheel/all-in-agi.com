@@ -6,6 +6,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { redirect, type Handle } from '@sveltejs/kit';
 import {
 	canonicalPublicPath,
+	internalPathForPublic,
 	localeFromPath,
 	localizedPathFromPublic,
 	preferredLocale,
@@ -17,19 +18,22 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const explicitLocale = localeFromPath(event.url.pathname);
 	const stripped = stripLocale(event.url.pathname);
 	if (explicitLocale) {
-		const canonical = publicPathForInternal(stripped.pathname);
+		const internal = internalPathForPublic(stripped.pathname);
+		const canonical = internal
+			? publicPathForInternal(internal, explicitLocale)
+			: publicPathForInternal(stripped.pathname, explicitLocale);
 		if (canonical && canonical !== stripped.pathname) {
 			redirect(308, `${localizedPathFromPublic(explicitLocale, canonical)}${event.url.search}`);
 		}
 	}
 
 	if (!explicitLocale && (event.request.method === 'GET' || event.request.method === 'HEAD')) {
-		const canonical = canonicalPublicPath(event.url.pathname);
+		const locale = preferredLocale(
+			event.request.headers.get('x-vercel-ip-country'),
+			event.request.headers.get('accept-language')
+		);
+		const canonical = canonicalPublicPath(event.url.pathname, locale);
 		if (canonical) {
-			const locale = preferredLocale(
-				event.request.headers.get('x-vercel-ip-country'),
-				event.request.headers.get('accept-language')
-			);
 			redirect(307, `${localizedPathFromPublic(locale, canonical)}${event.url.search}`);
 		}
 	}

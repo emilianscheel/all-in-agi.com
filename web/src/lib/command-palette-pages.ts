@@ -133,6 +133,22 @@ const CORE_PAGES: CorePage[] = [
 		keywords: { de: ['dashboard', 'admin'], en: ['dashboard', 'admin'] }
 	},
 	{
+		id: 'user',
+		path: '/user',
+		icon: Users,
+		group: { de: 'Admin', en: 'Admin' },
+		title: { de: 'Users', en: 'Users' },
+		keywords: { de: ['user', 'users', 'benutzer', 'admin'], en: ['user', 'users', 'admin'] }
+	},
+	{
+		id: 'buchungen',
+		path: '/buchungen',
+		icon: ClipboardList,
+		group: { de: 'Admin', en: 'Admin' },
+		title: { de: 'Buchungen', en: 'Bookings' },
+		keywords: { de: ['buchungen', 'bookings', 'admin'], en: ['bookings', 'buchungen', 'admin'] }
+	},
+	{
 		id: 'timer',
 		path: '/timer',
 		icon: Timer,

@@ -36,7 +36,7 @@ function secretEquals(candidate: unknown, expected: string) {
 	return timingSafeEqual(candidateDigest, expectedDigest);
 }
 
-function rejectSeedLogin() {
+function rejectLogin() {
 	throw new APIError('UNAUTHORIZED', { message: 'Die Anmeldedaten sind ungültig.' });
 }
 
@@ -59,25 +59,17 @@ export const auth = betterAuth({
 			const email = String(ctx.body?.email ?? '').trim().toLowerCase();
 			const seedEmail = normalizedSeedEmail();
 			const seedPassword = String(env.SEED_ADMIN_PASSWORD ?? '');
-			if (!seedEmail || email !== seedEmail || !secretEquals(ctx.body?.password, seedPassword)) {
-				rejectSeedLogin();
-			}
 
-			if (ctx.path === '/sign-in/email') {
-				const user = await ctx.context.adapter.findOne<{ id: string }>({
+			if (ctx.path === '/sign-up/email') {
+				// Public sign-up is only allowed for the seed bootstrap account.
+				if (!seedEmail || email !== seedEmail || !secretEquals(ctx.body?.password, seedPassword)) {
+					rejectLogin();
+				}
+				const existing = await ctx.context.adapter.findOne<{ id: string }>({
 					model: 'user',
 					where: [{ field: 'email', value: seedEmail }]
 				});
-				if (user) {
-					const registeredPasskey = await ctx.context.adapter.findOne({
-						model: 'passkey',
-						where: [{ field: 'userId', value: user.id }]
-					});
-					if (registeredPasskey) rejectSeedLogin();
-				}
-			}
-
-			if (ctx.path === '/sign-up/email') {
+				if (existing) rejectLogin();
 				return {
 					context: {
 						...ctx,
@@ -85,6 +77,26 @@ export const auth = betterAuth({
 					}
 				};
 			}
+
+			// sign-in/email: any existing user without a passkey may use password once.
+			const existingUser = await ctx.context.adapter.findOne<{ id: string }>({
+				model: 'user',
+				where: [{ field: 'email', value: email }]
+			});
+			if (!existingUser) {
+				// Seed bootstrap path before account exists should use sign-up, not sign-in.
+				if (seedEmail && email === seedEmail && secretEquals(ctx.body?.password, seedPassword)) {
+					return;
+				}
+				rejectLogin();
+				return;
+			}
+
+			const registeredPasskey = await ctx.context.adapter.findOne({
+				model: 'passkey',
+				where: [{ field: 'userId', value: existingUser.id }]
+			});
+			if (registeredPasskey) rejectLogin();
 		})
 	},
 	plugins: [

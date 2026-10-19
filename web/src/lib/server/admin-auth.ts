@@ -34,8 +34,8 @@ export async function userHasPasskey(userId: string) {
 }
 
 export async function adminAccessFor(userIdentity: SessionUserIdentity | null | undefined): Promise<AdminAccessState> {
-	if (!userIdentity || !isSeedAdminEmail(userIdentity.email)) {
-		return { authenticated: Boolean(userIdentity), authorized: false, needsPasskey: false };
+	if (!userIdentity) {
+		return { authenticated: false, authorized: false, needsPasskey: false };
 	}
 	const hasPasskey = await userHasPasskey(userIdentity.id);
 	return { authenticated: true, authorized: hasPasskey, needsPasskey: !hasPasskey };
@@ -43,13 +43,18 @@ export async function adminAccessFor(userIdentity: SessionUserIdentity | null | 
 
 export async function getAdminLoginState(rawEmail: unknown) {
 	const email = normalizeEmail(rawEmail);
-	if (!isSeedAdminEmail(email)) return null;
+	if (!email) return null;
 	const db = await getDb();
 	const [adminUser] = await db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1);
-	if (!adminUser) return { method: 'seed' as const, accountExists: false };
-	return await userHasPasskey(adminUser.id)
-		? { method: 'passkey' as const, accountExists: true }
-		: { method: 'seed' as const, accountExists: true };
+	if (adminUser) {
+		return await userHasPasskey(adminUser.id)
+			? { method: 'passkey' as const, accountExists: true }
+			: { method: 'password' as const, accountExists: true };
+	}
+	if (isSeedAdminEmail(email)) {
+		return { method: 'seed' as const, accountExists: false };
+	}
+	return null;
 }
 
 export function requireAdmin(locals: App.Locals) {

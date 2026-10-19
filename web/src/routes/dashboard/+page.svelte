@@ -1,76 +1,25 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
 	import { formatPrice } from '$lib/booking';
-	import { AlertDialog, DropdownMenu } from 'bits-ui';
+	import { localizedPath, type Locale } from '$lib/i18n';
 	import { animate } from 'motion';
-	import { Ban, Download, Ellipsis, ExternalLink, Eye, LogIn, RotateCcw } from 'lucide-svelte';
+	import { LogIn } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let locale = $derived((data.locale ?? 'de') as Locale);
 	let email = $state('');
 	let password = $state('');
 	let accountExists = $state(false);
 	let showPassword = $state(false);
 	let busy = $state(false);
 	let errorMessage = $state('');
-	let cancellationTarget = $state<PageData['bookings'][number] | null>(null);
-	let cancellationBusyId = $state<string | null>(null);
-	let cancellationMessage = $state('');
-	let cancelDialogOpen = $state(false);
 
 	onMount(() => {
 		if (data.admin.needsPasskey) void registerPasskey();
 	});
-
-	function formatDate(value: string | null) {
-		if (!value) return 'Später festlegen';
-		return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(value));
-	}
-
-	function statusLabel(status: string) {
-		if (status === 'requested') return 'Angefragt';
-		if (status === 'prep_scheduled') return 'Preparation Call geplant';
-		if (status === 'exit_window') return 'Lösungsfrist';
-		if (status === 'contracted' || status === 'confirmed') return 'Vertraglich';
-		if (status === 'completed') return 'Durchgeführt';
-		if (status === 'withdrawn') return 'Zurückgetreten';
-		if (status === 'declined') return 'Abgelehnt';
-		if (status === 'cancellation_pending') return 'Stornierung offen';
-		return 'Storniert';
-	}
-
-	function openTimer(id: string) {
-		window.open(`/${id}/timer`, '_blank', 'noopener,noreferrer');
-	}
-
-	function confirmCancellation(booking: PageData['bookings'][number]) {
-		cancellationTarget = booking;
-		cancellationMessage = '';
-		cancelDialogOpen = true;
-	}
-
-	async function cancelBooking(booking: PageData['bookings'][number] | null) {
-		if (!booking || cancellationBusyId) return;
-		cancellationBusyId = booking.id;
-		cancellationMessage = '';
-		try {
-			const response = await fetch(`/api/hackathons/${booking.id}/cancel`, { method: 'POST' });
-			const result = await response.json();
-			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Stornierung konnte nicht gestartet werden.');
-			cancellationMessage = result.complete
-				? 'Die Buchung wurde storniert und der Kunde benachrichtigt.'
-				: result.message ?? 'Die Stornierung ist noch nicht vollständig. Bitte versuchen Sie es erneut.';
-			cancelDialogOpen = false;
-			cancellationTarget = null;
-			await invalidateAll();
-		} catch (error) {
-			cancellationMessage = error instanceof Error ? error.message : 'Die Stornierung konnte nicht gestartet werden.';
-		} finally {
-			cancellationBusyId = null;
-		}
-	}
 
 	function expandPassword(node: HTMLElement) {
 		queueMicrotask(() => node.querySelector<HTMLInputElement>('input')?.focus());
@@ -112,7 +61,7 @@
 		}
 	}
 
-	async function submitSeed(event: SubmitEvent) {
+	async function submitPassword(event: SubmitEvent) {
 		event.preventDefault();
 		busy = true;
 		errorMessage = '';
@@ -152,102 +101,47 @@
 {#if data.admin.authorized && data.summary}
 	<div class="dashboard-page">
 		<header class="dashboard-heading">
-			<h1>Buchungen</h1>
-			<a class="button-secondary dashboard-export" href="/dashboard/bookings.csv">
-				<Download size={17} aria-hidden="true" /> CSV exportieren
-			</a>
+			<h1>Dashboard</h1>
 		</header>
 
-		<section class="dashboard-stats" aria-label="Kennzahlen">
+		<section class="dashboard-stats dashboard-stats-wide" aria-label={locale === 'en' ? 'Metrics' : 'Kennzahlen'}>
 			<article class="dashboard-stat-card">
-				<span>Bestätigte Buchungen</span>
+				<span>{locale === 'en' ? 'Confirmed bookings' : 'Bestätigte Buchungen'}</span>
 				<strong>{data.summary.bookingCount}</strong>
 			</article>
 			<article class="dashboard-stat-card">
-				<span>Gebuchter Nettoumsatz</span>
+				<span>{locale === 'en' ? 'Booked net revenue' : 'Gebuchter Nettoumsatz'}</span>
 				<strong>{formatPrice(data.summary.totalRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Users' : 'Benutzer'}</span>
+				<strong>{data.summary.userCount}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Passkey ready' : 'Passkey bereit'}</span>
+				<strong>{data.summary.passkeyReadyCount}</strong>
 			</article>
 		</section>
 
-		<section class="dashboard-list-card" aria-labelledby="booking-list-title">
+		<section class="dashboard-list-card dashboard-overview-links" aria-label={locale === 'en' ? 'Quick links' : 'Schnellzugriff'}>
 			<div class="dashboard-list-heading">
 				<div>
-					<h2 id="booking-list-title">Alle Buchungen</h2>
-					{#if cancellationMessage}<p class="dashboard-action-message" role="status">{cancellationMessage}</p>{/if}
+					<h2>{locale === 'en' ? 'Go to' : 'Weiter zu'}</h2>
 				</div>
-				<span>{data.bookings.length} Einträge</span>
 			</div>
-			{#if data.bookings.length}
-				<div class="dashboard-table-wrap">
-					<table class="dashboard-table">
-						<thead><tr><th>Status</th><th>Hackathon</th><th>Termin</th><th>Team</th><th>Netto</th><th>Gebucht</th><th><span class="visually-hidden">Aktionen</span></th></tr></thead>
-						<tbody>
-							{#each data.bookings as booking}
-								<tr>
-									<td><span class={`booking-status ${booking.status}`}>{statusLabel(booking.status)}</span></td>
-									<td><a class="booking-primary-link" href={`/${booking.id}`}><strong>{booking.companyName}</strong><small>{booking.id} · {booking.contactName}</small></a></td>
-									<td>{formatDate(booking.eventStart)}</td>
-									<td>Bis {booking.capacity}</td>
-									<td>{formatPrice(booking.totalPrice)}</td>
-									<td>{formatDate(booking.createdAt)}</td>
-									<td class="dashboard-actions-cell">
-										<DropdownMenu.Root>
-											<DropdownMenu.Trigger class="dashboard-action-trigger" aria-label={`Aktionen für ${booking.companyName}`}>
-												<Ellipsis size={19} aria-hidden="true" />
-											</DropdownMenu.Trigger>
-											<DropdownMenu.Portal>
-												<DropdownMenu.Content class="dashboard-actions-menu" sideOffset={6} align="end" loop>
-													<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => goto(`/${booking.id}`)}>
-														<Eye size={16} aria-hidden="true" />Details öffnen
-													</DropdownMenu.Item>
-											{#if (booking.status === 'contracted' || booking.status === 'confirmed') && booking.eventStart && booking.eventEnd}
-														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => openTimer(booking.id)}>
-															<ExternalLink size={16} aria-hidden="true" />Timer öffnen
-														</DropdownMenu.Item>
-														<DropdownMenu.Separator class="dashboard-actions-separator" />
-														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => confirmCancellation(booking)} disabled={cancellationBusyId !== null}>
-															<Ban size={16} aria-hidden="true" />Buchung stornieren
-														</DropdownMenu.Item>
-											{:else if ['requested', 'prep_scheduled', 'cancellation_pending', 'cancelled'].includes(booking.status) && !booking.cancellationEmailSentAt}
-														<DropdownMenu.Separator class="dashboard-actions-separator" />
-														<DropdownMenu.Item class="dashboard-actions-item" onSelect={() => cancelBooking(booking)} disabled={cancellationBusyId !== null}>
-													<RotateCcw size={16} aria-hidden="true" />{cancellationBusyId === booking.id ? 'Wird bearbeitet …' : booking.status === 'cancelled' ? 'E-Mail erneut senden' : booking.status === 'cancellation_pending' ? 'Stornierung fortsetzen' : 'Buchung stornieren'}
-														</DropdownMenu.Item>
-													{/if}
-												</DropdownMenu.Content>
-											</DropdownMenu.Portal>
-										</DropdownMenu.Root>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{:else}
-				<p class="dashboard-empty">Noch keine Kundenbuchungen vorhanden.</p>
-			{/if}
+			<div class="dashboard-overview-actions">
+				<a class="button-secondary dashboard-export" href={localizedPath(locale, '/buchungen')}>
+					{locale === 'en' ? 'Bookings' : 'Buchungen'}
+				</a>
+				<a class="button-secondary dashboard-export" href={localizedPath(locale, '/user')}>Users</a>
+			</div>
 		</section>
-
-		<AlertDialog.Root bind:open={cancelDialogOpen}>
-			<AlertDialog.Portal>
-				<AlertDialog.Overlay class="confirmation-overlay" />
-				<AlertDialog.Content class="confirmation-dialog">
-					<div class="confirmation-dialog-icon"><Ban size={24} aria-hidden="true" /></div>
-					<AlertDialog.Title>Booking wirklich stornieren?</AlertDialog.Title>
-					<AlertDialog.Description>Der Hackathontag und der Preparation Call werden bei Cal.com storniert. Anschließend erhält {cancellationTarget?.contactName ?? 'der Kunde'} eine Stornierungs-E-Mail.</AlertDialog.Description>
-					<div class="confirmation-dialog-actions">
-						<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
-						<AlertDialog.Action class="button-primary" onclick={() => cancelBooking(cancellationTarget)} disabled={cancellationBusyId !== null}>Buchung stornieren</AlertDialog.Action>
-					</div>
-				</AlertDialog.Content>
-			</AlertDialog.Portal>
-		</AlertDialog.Root>
 	</div>
 {:else}
 	<div class="dashboard-login-page">
 		<section class="dashboard-login-card" aria-label="Admin-Anmeldung">
 			{#if !data.admin.needsPasskey}
-				<form onsubmit={showPassword ? submitSeed : continueWithEmail}>
+				<form onsubmit={showPassword ? submitPassword : continueWithEmail}>
 					<div class="field dashboard-login-field">
 						<label for="admin-email">E-Mail</label>
 						<input id="admin-email" type="email" bind:value={email} autocomplete="username webauthn" required disabled={busy || showPassword} />

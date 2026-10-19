@@ -27,6 +27,19 @@ describe('localized routes', () => {
 		expect(stripLocale('/en/company-hackathon-berlin')).toEqual({ locale: 'en', pathname: '/company-hackathon-berlin' });
 		expect(localizedPath('de', '/buchen')).toBe('/de/go');
 	});
+
+	test('uses locale-specific admin booking slugs', () => {
+		expect(localizedPath('de', '/buchungen')).toBe('/de/buchungen');
+		expect(localizedPath('en', '/buchungen')).toBe('/en/bookings');
+		expect(internalPathForPublic('/bookings')).toBe('/buchungen');
+		expect(internalPathForPublic('/buchungen')).toBe('/buchungen');
+		expect(reroutePath('/en/bookings')).toBe('/buchungen');
+		expect(reroutePath('/de/buchungen')).toBe('/buchungen');
+		expect(canonicalPublicPath('/bookings', 'de')).toBe('/buchungen');
+		expect(canonicalPublicPath('/buchungen', 'en')).toBe('/bookings');
+		expect(switchLocalePath(new URL('https://all-in-agi.com/de/buchungen'), 'en')).toBe('/en/bookings');
+		expect(switchLocalePath(new URL('https://all-in-agi.com/en/bookings'), 'de')).toBe('/de/buchungen');
+	});
 });
 
 describe('locale selection', () => {

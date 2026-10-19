@@ -21,6 +21,8 @@ export const PUBLIC_ROUTE_ENTRIES = [
 	['/buchen/erfolg', '/go/success'],
 	['/verwalten', '/manage'],
 	['/offer', '/offer'],
+	['/dashboard', '/dashboard'],
+	['/user', '/user'],
 	['/hackathon-unternehmen-berlin', '/company-hackathon-berlin'],
 	['/hackathon-unternehmen-hamburg', '/company-hackathon-hamburg'],
 	['/hackathon-unternehmen-muenchen', '/company-hackathon-munich'],
@@ -63,8 +65,19 @@ export const PUBLIC_ROUTE_ENTRIES = [
 	['/ki-hackathon-ruhrgebiet', '/ai-hackathon-ruhr-region']
 ] as const;
 
+/** Admin paths whose public slug differs by locale (DE vs EN). */
+export const LOCALE_PUBLIC_ROUTE_ENTRIES = [
+	{ internal: '/buchungen', de: '/buchungen', en: '/bookings' },
+	{ internal: '/buchungen/bookings.csv', de: '/buchungen/bookings.csv', en: '/bookings/bookings.csv' }
+] as const;
+
 const internalToPublic = new Map<string, string>(PUBLIC_ROUTE_ENTRIES);
 const publicToInternal = new Map<string, string>(PUBLIC_ROUTE_ENTRIES.map(([internal, publicPath]) => [publicPath, internal]));
+
+for (const entry of LOCALE_PUBLIC_ROUTE_ENTRIES) {
+	publicToInternal.set(entry.de, entry.internal);
+	publicToInternal.set(entry.en, entry.internal);
+}
 
 export function isLocale(value: string | null | undefined): value is Locale {
 	return value === 'de' || value === 'en';
@@ -100,12 +113,14 @@ export function internalPathForPublic(publicPath: string) {
 	return publicToInternal.get(publicPath) ?? dynamicInternalPath(publicPath);
 }
 
-export function publicPathForInternal(internalPath: string) {
+export function publicPathForInternal(internalPath: string, locale: Locale = 'de') {
+	const localized = LOCALE_PUBLIC_ROUTE_ENTRIES.find((entry) => entry.internal === internalPath);
+	if (localized) return localized[locale];
 	return internalToPublic.get(internalPath) ?? dynamicPublicPath(internalPath);
 }
 
 export function localizedPath(locale: Locale, internalPath: string) {
-	const publicPath = publicPathForInternal(internalPath) ?? internalPath;
+	const publicPath = publicPathForInternal(internalPath, locale) ?? internalPath;
 	return publicPath === '/' ? `/${locale}` : `/${locale}${publicPath}`;
 }
 
@@ -121,15 +136,21 @@ export function reroutePath(pathname: string) {
 }
 
 /** Returns the canonical public path for either a legacy internal or new public path. */
-export function canonicalPublicPath(pathname: string) {
-	return publicPathForInternal(pathname) ?? (internalPathForPublic(pathname) ? pathname : null);
+export function canonicalPublicPath(pathname: string, locale: Locale = 'de') {
+	const fromInternal = publicPathForInternal(pathname, locale);
+	if (fromInternal) return fromInternal;
+	const internal = internalPathForPublic(pathname);
+	if (internal) return publicPathForInternal(internal, locale) ?? pathname;
+	return null;
 }
 
 export function switchLocalePath(url: URL, locale: Locale) {
 	const current = stripLocale(url.pathname);
-	const publicPath = current.locale
-		? canonicalPublicPath(current.pathname) ?? current.pathname
-		: canonicalPublicPath(url.pathname) ?? url.pathname;
+	const sourcePath = current.locale ? current.pathname : url.pathname;
+	const internal = internalPathForPublic(sourcePath) ?? (publicPathForInternal(sourcePath, current.locale ?? 'de') ? sourcePath : null);
+	const publicPath = internal
+		? publicPathForInternal(internal, locale) ?? sourcePath
+		: canonicalPublicPath(sourcePath, locale) ?? sourcePath;
 	return `${localizedPathFromPublic(locale, publicPath)}${url.search}${url.hash}`;
 }
 

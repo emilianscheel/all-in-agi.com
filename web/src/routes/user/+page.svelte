@@ -1,0 +1,182 @@
+<script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { Dialog } from 'bits-ui';
+	import { Copy, Plus, UserRound } from 'lucide-svelte';
+	import type { Locale } from '$lib/i18n';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	let locale = $derived((data.locale ?? 'de') as Locale);
+	let createOpen = $state(false);
+	let name = $state('');
+	let email = $state('');
+	let busy = $state(false);
+	let errorMessage = $state('');
+	let createdPassword = $state<string | null>(null);
+	let copyState = $state<'idle' | 'copied'>('idle');
+
+	function formatDate(value: string | Date) {
+		return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'de-DE', {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+			timeZone: 'Europe/Berlin'
+		}).format(new Date(value));
+	}
+
+	function openCreate() {
+		name = '';
+		email = '';
+		errorMessage = '';
+		createdPassword = null;
+		copyState = 'idle';
+		createOpen = true;
+	}
+
+	async function createUser(event: SubmitEvent) {
+		event.preventDefault();
+		if (busy) return;
+		busy = true;
+		errorMessage = '';
+		try {
+			const response = await fetch('/api/admin/users', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ name, email })
+			});
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message ?? 'Der Benutzer konnte nicht erstellt werden.');
+			createdPassword = result.initialPassword;
+			await invalidateAll();
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Der Benutzer konnte nicht erstellt werden.';
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function copyPassword() {
+		if (!createdPassword) return;
+		await navigator.clipboard.writeText(createdPassword);
+		copyState = 'copied';
+		setTimeout(() => (copyState = 'idle'), 1800);
+	}
+</script>
+
+<svelte:head><title>Users — ALL IN AGI</title></svelte:head>
+
+<div class="dashboard-page">
+	<header class="dashboard-heading">
+		<h1>Users</h1>
+		<button class="button-secondary dashboard-export" type="button" onclick={openCreate}>
+			<Plus size={17} aria-hidden="true" /> {locale === 'en' ? 'Create user' : 'Create user'}
+		</button>
+	</header>
+
+	<section class="dashboard-stats" aria-label={locale === 'en' ? 'Metrics' : 'Kennzahlen'}>
+		<article class="dashboard-stat-card">
+			<span>{locale === 'en' ? 'Users' : 'Benutzer'}</span>
+			<strong>{data.summary.userCount}</strong>
+		</article>
+		<article class="dashboard-stat-card">
+			<span>{locale === 'en' ? 'Passkey ready' : 'Passkey bereit'}</span>
+			<strong>{data.summary.passkeyReadyCount}</strong>
+		</article>
+	</section>
+
+	<section class="dashboard-list-card" aria-labelledby="user-list-title">
+		<div class="dashboard-list-heading">
+			<div>
+				<h2 id="user-list-title">{locale === 'en' ? 'All users' : 'Alle Benutzer'}</h2>
+			</div>
+			<span>{data.users.length} {locale === 'en' ? 'entries' : 'Einträge'}</span>
+		</div>
+		{#if data.users.length}
+			<div class="dashboard-table-wrap">
+				<table class="dashboard-table">
+					<thead>
+						<tr>
+							<th>{locale === 'en' ? 'Name' : 'Name'}</th>
+							<th>E-Mail</th>
+							<th>Passkey</th>
+							<th>{locale === 'en' ? 'Created' : 'Erstellt'}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.users as adminUser}
+							<tr>
+								<td>
+									<div class="booking-primary-link">
+										<strong>{adminUser.name}</strong>
+										<small>{adminUser.id}</small>
+									</div>
+								</td>
+								<td>{adminUser.email}</td>
+								<td>
+									<span class={`booking-status ${adminUser.hasPasskey ? '' : 'prep_scheduled'}`}>
+										{adminUser.hasPasskey ? (locale === 'en' ? 'Ready' : 'Bereit') : (locale === 'en' ? 'Pending' : 'Ausstehend')}
+									</span>
+								</td>
+								<td>{formatDate(adminUser.createdAt)}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{:else}
+			<p class="dashboard-empty">{locale === 'en' ? 'No users yet.' : 'Noch keine Benutzer vorhanden.'}</p>
+		{/if}
+	</section>
+</div>
+
+<Dialog.Root bind:open={createOpen}>
+	<Dialog.Portal>
+		<Dialog.Overlay class="confirmation-overlay" />
+		<Dialog.Content class="confirmation-dialog agreement-dialog">
+			{#if createdPassword}
+				<div class="confirmation-dialog-icon" style="background: var(--surface); color: var(--ink);">
+					<UserRound size={24} aria-hidden="true" />
+				</div>
+				<Dialog.Title>{locale === 'en' ? 'User created' : 'Benutzer erstellt'}</Dialog.Title>
+				<Dialog.Description>
+					{locale === 'en'
+						? 'Share this initial password once. After the first login the user must register a passkey; the password will not be shown again.'
+						: 'Teilen Sie dieses Initialpasswort einmalig. Nach dem ersten Login muss der Benutzer einen Passkey registrieren; das Passwort wird nicht erneut angezeigt.'}
+				</Dialog.Description>
+				<div class="field agreement-dialog-fields" style="display:grid;gap:10px;margin-top:20px;">
+					<label for="created-password">{locale === 'en' ? 'Initial password' : 'Initialpasswort'}</label>
+					<div style="display:flex;gap:8px;align-items:center;">
+						<input id="created-password" readonly value={createdPassword} />
+						<button class="button-secondary" type="button" onclick={copyPassword}>
+							<Copy size={16} aria-hidden="true" /> {copyState === 'copied' ? (locale === 'en' ? 'Copied' : 'Kopiert') : (locale === 'en' ? 'Copy' : 'Kopieren')}
+						</button>
+					</div>
+				</div>
+				<div class="confirmation-dialog-actions">
+					<Dialog.Close class="button-primary">{locale === 'en' ? 'Done' : 'Fertig'}</Dialog.Close>
+				</div>
+			{:else}
+				<Dialog.Title>{locale === 'en' ? 'Create user' : 'Create user'}</Dialog.Title>
+				<Dialog.Description>
+					{locale === 'en'
+						? 'The user receives a generated initial password and must register a passkey on first login.'
+						: 'Der Benutzer erhält ein generiertes Initialpasswort und muss beim ersten Login einen Passkey registrieren.'}
+				</Dialog.Description>
+				<form class="agreement-dialog-fields" style="display:grid;gap:14px;" onsubmit={createUser}>
+					<div class="field">
+						<label for="new-user-name">Name</label>
+						<input id="new-user-name" bind:value={name} required autocomplete="name" />
+					</div>
+					<div class="field">
+						<label for="new-user-email">E-Mail</label>
+						<input id="new-user-email" type="email" bind:value={email} required autocomplete="email" />
+					</div>
+					{#if errorMessage}<p class="dashboard-login-error" role="alert">{errorMessage}</p>{/if}
+					<div class="confirmation-dialog-actions">
+						<Dialog.Close class="button-secondary" type="button">{locale === 'en' ? 'Cancel' : 'Abbrechen'}</Dialog.Close>
+						<button class="button-primary" type="submit" disabled={busy}>{busy ? (locale === 'en' ? 'Creating …' : 'Wird erstellt …') : (locale === 'en' ? 'Create user' : 'Create user')}</button>
+					</div>
+				</form>
+			{/if}
+		</Dialog.Content>
+	</Dialog.Portal>
+</Dialog.Root>

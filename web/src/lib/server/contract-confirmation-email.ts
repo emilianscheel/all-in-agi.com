@@ -1,4 +1,6 @@
+import { CONTACT_EMAIL } from '$lib/contact';
 import { formatPrice } from '$lib/booking';
+import { addBerlinBusinessDays } from './legal-contracts';
 import type { HackathonRecord } from './hackathons';
 import { sendEmailMessage, type EmailTransportDependencies } from './email-transport';
 
@@ -12,17 +14,28 @@ function berlinDateTime(value: string) {
 	}).format(new Date(value));
 }
 
-export function contractConfirmationText(record: HackathonRecord) {
-	if (!record.oralAgreementAt || !record.exitDeadline || !record.legalSnapshot) throw new Error('Vertragsdaten sind unvollständig.');
+export interface ContractConfirmationOverrides {
+	customerAgreementName?: string | null;
+	organizerAgreementName?: string | null;
+	oralAgreementAt?: string | null;
+	exitDeadline?: string | null;
+}
+
+export function contractConfirmationText(record: HackathonRecord, overrides: ContractConfirmationOverrides = {}) {
+	const oralAgreementAt = overrides.oralAgreementAt ?? record.oralAgreementAt;
+	const exitDeadline = overrides.exitDeadline ?? record.exitDeadline;
+	const customerAgreementName = overrides.customerAgreementName ?? record.customerAgreementName;
+	const organizerAgreementName = overrides.organizerAgreementName ?? record.organizerAgreementName;
+	if (!oralAgreementAt || !exitDeadline || !record.legalSnapshot) throw new Error('Vertragsdaten sind unvollständig.');
 	return [
 		`Hallo ${record.contactName},`, '',
 		'vielen Dank für die beiderseitige Zustimmung im Preparation Call. Der B2B-Vertrag ist mit der mündlichen Zustimmung zustande gekommen.',
-		`Beide Parteien können sich bis ${berlinDateTime(record.exitDeadline)} durch eine formlose E-Mail kostenfrei vom Vertrag lösen.`, '',
+		`Beide Parteien können sich bis ${berlinDateTime(exitDeadline)} durch eine formlose E-Mail kostenfrei vom Vertrag lösen.`, '',
 		`Hackathon-ID: ${record.id}`,
 		`Kunde: ${record.billing?.companyName ?? record.companyName}`,
-		`Zustimmung Kunde: ${record.customerAgreementName}`,
-		`Zustimmung ALL IN AGI: ${record.organizerAgreementName}`,
-		`Zeitpunkt: ${berlinDateTime(record.oralAgreementAt)}`,
+		`Zustimmung Kunde: ${customerAgreementName}`,
+		`Zustimmung ALL IN AGI: ${organizerAgreementName}`,
+		`Zeitpunkt: ${berlinDateTime(oralAgreementAt)}`,
 		`Event: ${record.eventStart ? berlinDateTime(record.eventStart) : 'Termin wird noch gemeinsam vereinbart'}`,
 		`Teilnehmendenpaket: bis ${record.capacity} Personen`,
 		`Nettoentgelt: ${formatPrice(record.totalPrice)}`,
@@ -37,11 +50,22 @@ export function contractConfirmationText(record: HackathonRecord) {
 	].join('\n');
 }
 
-export async function sendContractConfirmationEmail(record: HackathonRecord, dependencies: EmailTransportDependencies = {}) {
-	const summary = contractConfirmationText(record);
+export interface SendContractConfirmationOptions {
+	to?: { address: string; name: string };
+	subjectPrefix?: string;
+	overrides?: ContractConfirmationOverrides;
+}
+
+export async function sendContractConfirmationEmail(
+	record: HackathonRecord,
+	dependencies: EmailTransportDependencies = {},
+	options: SendContractConfirmationOptions = {}
+) {
+	const summary = contractConfirmationText(record, options.overrides);
+	const subjectBase = `Vertragsbestätigung Hackathon ${record.id}`;
 	return sendEmailMessage({
-		to: { address: record.contactEmail, name: record.contactName },
-		subject: `Vertragsbestätigung Hackathon ${record.id}`,
+		to: options.to ?? { address: record.contactEmail, name: record.contactName },
+		subject: options.subjectPrefix ? `${options.subjectPrefix}${subjectBase}` : subjectBase,
 		text: summary,
 		headers: { 'X-Booking-ID': record.id, 'X-Legal-Version': record.legalVersion ?? '' },
 		attachments: [
@@ -49,4 +73,26 @@ export async function sendContractConfirmationEmail(record: HackathonRecord, dep
 			{ content: bytesToBase64(record.legalSnapshot!.content), filename: `B2B-AGB-${record.legalSnapshot!.version}.txt`, type: 'text/plain; charset=utf-8', disposition: 'attachment' }
 		]
 	}, dependencies);
+}
+
+export async function sendContractConfirmationTestEmail(
+	record: HackathonRecord,
+	customerName: string,
+	organizerName: string,
+	dependencies: EmailTransportDependencies = {},
+	agreedAt = new Date()
+) {
+	if (!record.legalSnapshot) throw new Error('Vertragsdaten sind unvollständig.');
+	const oralAgreementAt = agreedAt.toISOString();
+	const exitDeadline = addBerlinBusinessDays(agreedAt, 2).toISOString();
+	return sendContractConfirmationEmail(record, dependencies, {
+		to: { address: CONTACT_EMAIL, name: 'ALL IN AGI' },
+		subjectPrefix: '[TEST] ',
+		overrides: {
+			customerAgreementName: customerName.trim(),
+			organizerAgreementName: organizerName.trim(),
+			oralAgreementAt,
+			exitDeadline
+		}
+	});
 }

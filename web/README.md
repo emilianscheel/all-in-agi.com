@@ -51,11 +51,13 @@ Gebuchte Hackathons werden dauerhaft in PostgreSQL gespeichert und erhalten eine
 
 ## Admin-Dashboard
 
-Das Admin-Dashboard liegt unter `/dashboard`. Beim ersten Aufruf wird ausschließlich die in `SEED_ADMIN_EMAIL` konfigurierte Adresse akzeptiert. Nach der Anmeldung mit `SEED_ADMIN_PASSWORD` muss unmittelbar ein Passkey registriert werden; Buchungsdaten und Admin-Endpunkte bleiben bis dahin gesperrt. Sobald ein Passkey vorhanden ist, weist der Server alle Passwort-Anmeldungen zurück und akzeptiert nur noch WebAuthn/Passkey.
+Das Admin-Dashboard liegt unter `/de/dashboard` bzw. `/en/dashboard`. Die Buchungsliste liegt unter `/de/buchungen` und `/en/bookings`; die Benutzerverwaltung unter `/de/user` bzw. `/en/user`.
 
-Passkeys benötigen im Live-Betrieb HTTPS und einen `BETTER_AUTH_URL`-Origin, der exakt zur aufgerufenen Domain passt. `localhost` funktioniert für die lokale Entwicklung. Das Dashboard zeigt bestätigte und stornierte Kundenbuchungen, bietet einen CSV-Export und ergänzt die öffentliche Hackathon-Detailseite für angemeldete Admins um Timer- und Stornierungsaktionen.
+Der erste Admin wird über `SEED_ADMIN_EMAIL` und `SEED_ADMIN_PASSWORD` eingerichtet. Nach der Anmeldung mit dem Seed-Passwort muss unmittelbar ein Passkey registriert werden; Buchungsdaten und Admin-Endpunkte bleiben bis dahin gesperrt. Weitere Admins werden unter **User → Create user** angelegt und erhalten ein generiertes Initialpasswort. Beim ersten Login müssen auch sie einen Passkey registrieren. Sobald ein Passkey vorhanden ist, weist der Server Passwort-Anmeldungen für diesen Benutzer zurück und akzeptiert nur noch WebAuthn/Passkey. Es gibt kein Rollensystem: jeder Benutzer mit Passkey ist voller Admin.
 
-Wenn alle Passkeys verloren gehen, gibt es bewusst keinen Seed-Bypass. Für die manuelle Wiederherstellung müssen in der Datenbank zunächst alle Sessions des Seed-Benutzers widerrufen und dessen Einträge aus `passkey` entfernt werden. Danach darf das Seed-Passwort erneut zur Passkey-Einrichtung verwendet werden. Vor diesem Eingriff sollte ein Datenbank-Backup erstellt werden.
+Passkeys benötigen im Live-Betrieb HTTPS und einen `BETTER_AUTH_URL`-Origin, der exakt zur aufgerufenen Domain passt. `localhost` funktioniert für die lokale Entwicklung. Das Dashboard zeigt Kennzahlen zu Buchungen und Benutzern; die Buchungsseite bietet CSV-Export und Aktionsmenüs. Die öffentliche Hackathon-Detailseite ergänzt für angemeldete Admins Timer-, Vertrags- und Stornierungsaktionen.
+
+Wenn alle Passkeys eines Kontos verloren gehen, müssen in der Datenbank zunächst die Sessions dieses Benutzers widerrufen und dessen Einträge aus `passkey` entfernt werden. Für den Seed-Admin darf danach erneut das Seed-Passwort zur Passkey-Einrichtung verwendet werden; für andere Admins muss ein neues Initialpasswort gesetzt werden. Vor diesem Eingriff sollte ein Datenbank-Backup erstellt werden.
 
 Das Drizzle-Schema liegt unter `src/lib/server/db/schema.ts`; generierte und geprüfte SQL-Migrationen werden im Ordner `drizzle/` versioniert. Schemaänderungen werden mit `bun run db:generate` erzeugt und mit `bun run db:migrate` angewendet.
 

@@ -10,6 +10,7 @@
 	import CommandPalette from '$lib/CommandPalette.svelte';
 	import { activateAnalyticsForPath, installBookingCtaTracking } from '$lib/analytics';
 	import { localizedPath, switchLocalePath, ui, type Locale } from '$lib/i18n';
+	import { ExternalLink } from 'lucide-svelte';
 	import '@fontsource/instrument-serif';
 	import '../app.css';
 	let { children, data } = $props();
@@ -17,9 +18,16 @@
 	let copy = $derived(ui[locale]);
 	let presentationRoute = $derived(page.route.id === '/timer' || page.route.id === '/clock' || page.route.id === '/[id]/timer');
 	let offerRoute = $derived(page.route.id === '/offer' || page.route.id === '/offer/[token]');
-	let adminNavigation = $derived(page.route.id === '/dashboard' || (page.route.id === '/[id]' && data.admin.authorized));
+	let adminRouteIds = ['/dashboard', '/buchungen', '/user'];
+	let adminNavigation = $derived(
+		adminRouteIds.includes(page.route.id ?? '') || (page.route.id === '/[id]' && data.admin.authorized)
+	);
 	let gtmArticleRoute = $derived(gtmPaths.some((path) => path === page.route.id));
 	let currentGtmSlug = $derived(gtmArticleRoute ? page.route.id?.slice(1) : undefined);
+	let bookingsLabel = $derived(locale === 'en' ? 'Bookings' : 'Buchungen');
+	let dashboardHref = $derived(localizedPath(locale, '/dashboard'));
+	let bookingsHref = $derived(localizedPath(locale, '/buchungen'));
+	let userHref = $derived(localizedPath(locale, '/user'));
 
 	onMount(() => {
 		const removeHaptics = installGlobalHaptics();
@@ -36,7 +44,7 @@
 		const { authClient } = await import('$lib/auth-client');
 		await authClient.signOut();
 		await invalidateAll();
-		await goto('/dashboard');
+		await goto(localizedPath(locale, '/dashboard'));
 	}
 </script>
 
@@ -52,7 +60,7 @@
 	<header class:admin-header={adminNavigation} class="site-header">
 	{#if adminNavigation}
 		<nav class="nav-inner admin-nav-inner" aria-label="Admin-Navigation">
-			<a class="brand-mark admin-brand-mark" href="/dashboard" aria-label="ALL IN AGI Dashboard">
+			<a class="brand-mark admin-brand-mark" href={dashboardHref} aria-label="ALL IN AGI Dashboard">
 				<span class="brand-icon" aria-hidden="true"><img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" /></span>
 				<span class="brand-wordmark" aria-hidden="true">
 					{#each [...'ALL IN AGI'] as character, index}
@@ -61,9 +69,15 @@
 				</span>
 			</a>
 			<div class="admin-nav-links">
-				<a class:active={page.route.id === '/dashboard'} href="/dashboard">Dashboard</a>
-				<a href="/timer">Timer</a>
-				<a href="/clock">Clock</a>
+				<a class:active={page.route.id === '/dashboard'} href={dashboardHref}>Dashboard</a>
+				<a class:active={page.route.id === '/user'} href={userHref}>Users</a>
+				<a class:active={page.route.id === '/buchungen'} href={bookingsHref}>{bookingsLabel}</a>
+				<a class="admin-nav-external" href="/timer" target="_blank" rel="noopener noreferrer">
+					Timer <ExternalLink size={12} strokeWidth={2.25} aria-hidden="true" />
+				</a>
+				<a class="admin-nav-external" href="/clock" target="_blank" rel="noopener noreferrer">
+					Clock <ExternalLink size={12} strokeWidth={2.25} aria-hidden="true" />
+				</a>
 			</div>
 			<div class="admin-nav-action">
 				{#if data.admin.authenticated}<button class="nav-cta admin-logout" type="button" onclick={logout}>Logout</button>{/if}

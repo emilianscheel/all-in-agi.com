@@ -77,6 +77,9 @@
 	let contractMessage = $state('');
 	let agreementCustomerName = $state(initialHackathon.contactName);
 	let agreementOrganizerName = $state('Emilian Scheel');
+	let agreementModalOpen = $state(false);
+	let agreementModalMode = $state<'record' | 'test'>('record');
+	let contractTestEmailState = $state<'idle' | 'loading' | 'sent' | 'error'>('idle');
 	let cancelDialogOpen = $state(false);
 	let prepCallMode = $state<'quick' | 'custom'>('quick');
 	let customPrepCallDate = $state('');
@@ -157,6 +160,20 @@
 		};
 	}
 
+	function openAgreementModal(mode: 'record' | 'test') {
+		agreementModalMode = mode;
+		agreementModalOpen = true;
+		contractMessage = '';
+	}
+
+	async function submitAgreementModal() {
+		if (agreementModalMode === 'test') {
+			await sendContractTestEmail();
+			return;
+		}
+		await recordAgreement();
+	}
+
 	async function recordAgreement() {
 		if (contractBusy) return;
 		contractBusy = true;
@@ -170,9 +187,33 @@
 			if (!response.ok && response.status !== 202) throw new Error(result.message ?? 'Die Zustimmung konnte nicht gespeichert werden.');
 			hackathon = { ...hackathon, status: result.status, exitDeadline: result.exitDeadline };
 			contractMessage = result.emailSent ? 'Zustimmung gespeichert und Vertragsbestätigung versandt.' : result.message;
+			agreementModalOpen = false;
 			await invalidateAll();
 		} catch (error) { contractMessage = error instanceof Error ? error.message : 'Die Zustimmung konnte nicht gespeichert werden.'; }
 		finally { contractBusy = false; }
+	}
+
+	async function sendContractTestEmail() {
+		if (contractBusy || contractTestEmailState === 'loading') return;
+		contractBusy = true;
+		contractTestEmailState = 'loading';
+		contractMessage = '';
+		try {
+			const response = await fetch(`/api/hackathons/${hackathon.id}/contract-email-test`, {
+				method: 'POST', headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ customerName: agreementCustomerName, organizerName: agreementOrganizerName })
+			});
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message ?? 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.');
+			contractTestEmailState = 'sent';
+			contractMessage = 'Test-Vertrags-E-Mail an go@all-in-agi.com gesendet.';
+			agreementModalOpen = false;
+		} catch (error) {
+			contractTestEmailState = 'error';
+			contractMessage = error instanceof Error ? error.message : 'Die Test-Vertrags-E-Mail konnte nicht gesendet werden.';
+		} finally {
+			contractBusy = false;
+		}
 	}
 
 	async function withdrawDuringExitWindow(by: 'customer' | 'organizer') {
@@ -483,7 +524,11 @@
 			{:else if hackathon.status === 'cancellation_pending'}
 				<div class="booking-state-banner pending" role="status"><RotateCcw size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Cancellation in progress' : 'Stornierung in Bearbeitung'}</strong>{locale === 'en' ? 'At least one step still needs to be completed.' : 'Mindestens ein Schritt muss noch abgeschlossen werden.'}</span></div>
 			{:else if hackathon.status === 'prep_scheduled'}
-				<div class="booking-state-banner pending request-pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Preparation Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Preparation Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</span></div>
+				<div class="booking-state-banner request-pending" role="status">
+					<Clock3 size={28} strokeWidth={1.7} aria-hidden="true" />
+					<strong>{locale === 'en' ? 'Non-binding request' : 'Unverbindliche Anfrage'}</strong>
+					<p>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Preparation Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Preparation Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</p>
+				</div>
 			{:else if hackathon.status === 'exit_window'}
 				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>Vertrag geschlossen · Lösungsfrist läuft</strong>Kostenfreier Rücktritt bis {hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.</span></div>
 			{:else if hackathon.status === 'contracted'}
@@ -511,18 +556,19 @@
 							<Mail size={18} aria-hidden="true" />{locale === 'en' ? (confirmationEmailState === 'loading' ? 'Sending email …' : confirmationEmailState === 'error' ? 'Try sending again' : 'Send confirmation email') : (confirmationEmailState === 'loading' ? 'E-Mail wird gesendet …' : confirmationEmailState === 'error' ? 'Senden erneut versuchen' : 'Bestätigungs-E-Mail senden')}
 						{/if}
 					</button>
+					{#if data.admin.authorized && hackathon.status === 'prep_scheduled'}
+						<button class="button-secondary action-button" type="button" onclick={() => openAgreementModal('test')} disabled={contractBusy || contractTestEmailState === 'loading'} aria-live="polite">
+							<Mail size={18} aria-hidden="true" />{contractTestEmailState === 'loading' ? 'Test-E-Mail wird gesendet …' : contractTestEmailState === 'error' ? 'Test erneut versuchen' : contractTestEmailState === 'sent' ? 'Test-Vertrags-E-Mail gesendet' : 'Vertrags-E-Mail als Test an mich senden'}
+						</button>
+					{/if}
 				{/if}
 			</div>
 
 			{#if data.admin.authorized}
 				<div class="admin-detail-actions" aria-label="Admin-Aktionen">
 					{#if hackathon.status === 'prep_scheduled'}
-						<div class="contract-admin-form">
-							<div class="field"><label for="agreement-customer">Zustimmende Person Kunde</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
-							<div class="field"><label for="agreement-organizer">Zustimmende Person ALL IN AGI</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
-							{#if !billingComplete}<p class="admin-action-message">Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.</p>{/if}
-							<button class="button-primary action-button" type="button" onclick={recordAgreement} disabled={contractBusy || !billingComplete}>Beiderseitige Zustimmung und B2B-Vertretungsbefugnis dokumentieren</button>
-						</div>
+						{#if !billingComplete}<p class="admin-action-message">Vor der Zustimmung müssen die Rechnungsdaten vollständig hinterlegt werden.</p>{/if}
+						<button class="button-primary action-button" type="button" onclick={() => openAgreementModal('record')} disabled={contractBusy || !billingComplete}>Beiderseitige Zustimmung dokumentieren</button>
 					{:else if hackathon.status === 'exit_window'}
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('customer')} disabled={contractBusy}>Rücktritt Kunde erfassen</button>
 						<button class="button-secondary action-button" type="button" onclick={() => withdrawDuringExitWindow('organizer')} disabled={contractBusy}>Rücktritt ALL IN AGI erfassen</button>
@@ -589,6 +635,30 @@
 					{#if contractMessage}<p class="admin-action-message" role="status">{contractMessage}</p>{/if}
 					{#if cancellationMessage}<p class="admin-action-message" role="status">{cancellationMessage}</p>{/if}
 				</div>
+
+				<AlertDialog.Root bind:open={agreementModalOpen}>
+					<AlertDialog.Portal>
+						<AlertDialog.Overlay class="confirmation-overlay" />
+						<AlertDialog.Content class="confirmation-dialog agreement-dialog">
+							<AlertDialog.Title>{agreementModalMode === 'test' ? 'Test-Vertrags-E-Mail senden' : 'Beiderseitige Zustimmung dokumentieren'}</AlertDialog.Title>
+							<AlertDialog.Description>
+								{agreementModalMode === 'test'
+									? 'Die E-Mail wird nur an go@all-in-agi.com mit dem Betreffpräfix [TEST] gesendet. Der Buchungsstatus bleibt unverändert.'
+									: 'Nach dem Speichern wird der Vertrag geschlossen und die Vertragsbestätigung an den Kunden gesendet.'}
+							</AlertDialog.Description>
+							<div class="contract-admin-form agreement-dialog-fields">
+								<div class="field"><label for="agreement-customer">Zustimmende Person Kunde</label><input id="agreement-customer" bind:value={agreementCustomerName} /></div>
+								<div class="field"><label for="agreement-organizer">Zustimmende Person ALL IN AGI</label><input id="agreement-organizer" bind:value={agreementOrganizerName} /></div>
+							</div>
+							<div class="confirmation-dialog-actions">
+								<AlertDialog.Cancel class="button-secondary">Abbrechen</AlertDialog.Cancel>
+								<button class="button-primary" type="button" onclick={submitAgreementModal} disabled={contractBusy || !agreementCustomerName.trim() || !agreementOrganizerName.trim() || (agreementModalMode === 'record' && !billingComplete)}>
+									{agreementModalMode === 'test' ? (contractBusy ? 'Wird gesendet …' : 'Test senden') : (contractBusy ? 'Wird gespeichert …' : 'Zustimmung speichern')}
+								</button>
+							</div>
+						</AlertDialog.Content>
+					</AlertDialog.Portal>
+				</AlertDialog.Root>
 			{/if}
 
 			<div class="summary-box overview-box detail-overview">
