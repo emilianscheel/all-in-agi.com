@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { Command, Dialog } from 'bits-ui';
+	import { Command, Dialog, computeCommandScore } from 'bits-ui';
 	import { animate, type AnimationPlaybackControls } from 'motion';
 	import { Sparkles } from 'lucide-svelte';
 	import { animateContentHeight } from '$lib/animateContentHeight';
+	import { createListReorderAnimator } from '$lib/animateListReorder';
 	import { askFaqQuestion } from '$lib/faq-ask-client';
-	import { getCommandPalettePages } from '$lib/command-palette-pages';
+	import { getCommandPalettePages, type CommandPalettePage } from '$lib/command-palette-pages';
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
 	import { ui, type Locale } from '$lib/i18n';
 
@@ -21,19 +22,24 @@
 		visible?: boolean;
 	};
 
+	type RankedItem =
+		| { kind: 'ai'; id: string; score: number }
+		| { kind: 'page'; id: string; score: number; page: CommandPalettePage };
+
 	const AI_VALUE = 'action:ask-ai';
 	const EASE = [0.22, 1, 0.36, 1] as const;
 	const MAX_HISTORY = 16;
+	const listAnimator = createListReorderAnimator();
 
 	let open = $state(false);
 	let closing = $state(false);
 	let query = $state('');
-	let filteredCount = $state(0);
 	let messages = $state<ChatMessage[]>([]);
 	let aiLoading = $state(false);
 	let overlayEl = $state<HTMLElement | null>(null);
 	let panelEl = $state<HTMLElement | null>(null);
 	let inputEl = $state<HTMLElement | null>(null);
+	let resultsEl = $state<HTMLElement | null>(null);
 	let chatEl = $state<HTMLElement | null>(null);
 	let flyEl = $state<HTMLElement | null>(null);
 	let fly = $state<{ text: string; left: number; top: number; width: number } | null>(null);
@@ -51,6 +57,26 @@
 			? ['ask', 'ai', 'faq', 'question', 'help', 'search', 'anything']
 			: ['frage', 'ki', 'faq', 'ai', 'hilfe', 'suchen', 'ask', 'alles']
 	);
+	let rankedItems = $derived.by((): RankedItem[] => {
+		const needle = query.trim();
+		const aiScore = needle
+			? computeCommandScore(copy.cmdkAskAi, needle, aiKeywords)
+			: 1;
+		const items: RankedItem[] = [
+			{ kind: 'ai', id: AI_VALUE, score: aiScore },
+			...pages.map((page) => ({
+				kind: 'page' as const,
+				id: page.id,
+				score: needle
+					? computeCommandScore(page.title, needle, [page.path, ...page.keywords])
+					: 1,
+				page
+			}))
+		];
+		if (!needle) return items;
+		return items.filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
+	});
+	let filteredCount = $derived(rankedItems.length);
 
 	function nextId(prefix: string) {
 		messageId += 1;
@@ -133,7 +159,6 @@
 
 	function resetPalette() {
 		query = '';
-		filteredCount = 0;
 		resetChat();
 	}
 
@@ -336,6 +361,23 @@
 		void startAi(query);
 	}
 
+	$effect(() => {
+		listAnimator.attach(resultsEl);
+		return () => listAnimator.destroy();
+	});
+
+	$effect.pre(() => {
+		void rankedItems;
+		if (chatMode) return;
+		listAnimator.capture();
+	});
+
+	$effect(() => {
+		void rankedItems;
+		if (chatMode) return;
+		void tick().then(() => listAnimator.play());
+	});
+
 	onMount(() => {
 		const onKeydown = (event: KeyboardEvent) => {
 			if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
@@ -349,6 +391,7 @@
 			abortController?.abort();
 			stopTypewriter();
 			stopAnimations();
+			listAnimator.destroy();
 		};
 	});
 </script>
@@ -366,10 +409,7 @@
 						class="cmdk-root"
 						label={copy.cmdkLabel}
 						loop
-						shouldFilter={!chatMode}
-						onStateChange={(state) => {
-							filteredCount = state.filtered.count;
-						}}
+						shouldFilter={false}
 					>
 						<div class="cmdk-input-row">
 							<Command.Input
@@ -417,40 +457,50 @@
 								</div>
 							{:else}
 								<Command.Viewport class="cmdk-viewport">
-									<Command.Empty class="cmdk-empty">
-										<p>
-											{#if copy.cmdkEmptyBefore}{copy.cmdkEmptyBefore}{' '}{/if}<kbd
-												class="cmdk-kbd">{copy.cmdkEmptyKey}</kbd
-											>{#if copy.cmdkEmptyAfter}{' '}{copy.cmdkEmptyAfter}{/if}
-										</p>
-									</Command.Empty>
-
-									<Command.Item
-										class="cmdk-item"
-										value={AI_VALUE}
-										keywords={aiKeywords}
-										onSelect={() => void startAi()}
-									>
-										<span class="cmdk-item-icon" aria-hidden="true">
-											<Sparkles size={16} strokeWidth={1.8} />
-										</span>
-										<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
-									</Command.Item>
-
-									{#each pages as page (page.id)}
-										{@const Icon = page.icon}
-										<Command.Item
-											class="cmdk-item"
-											value={page.id}
-											keywords={[page.title, page.path, ...page.keywords]}
-											onSelect={() => void navigateTo(page.href)}
-										>
-											<span class="cmdk-item-icon" aria-hidden="true">
-												<Icon size={16} strokeWidth={1.8} />
-											</span>
-											<span class="cmdk-item-title">{page.title}</span>
-										</Command.Item>
-									{/each}
+									<div class="cmdk-results" bind:this={resultsEl}>
+										{#if rankedItems.length === 0}
+											<div class="cmdk-empty" data-flip-ignore>
+												<p>
+													{#if copy.cmdkEmptyBefore}{copy.cmdkEmptyBefore}{' '}{/if}<kbd
+														class="cmdk-kbd">{copy.cmdkEmptyKey}</kbd
+													>{#if copy.cmdkEmptyAfter}{' '}{copy.cmdkEmptyAfter}{/if}
+												</p>
+											</div>
+										{:else}
+											{#each rankedItems as item (item.id)}
+												{#if item.kind === 'ai'}
+													<Command.Item
+														class="cmdk-item"
+														value={AI_VALUE}
+														keywords={aiKeywords}
+														onSelect={() => void startAi()}
+													>
+														<span class="cmdk-item-icon" aria-hidden="true">
+															<Sparkles size={16} strokeWidth={1.8} />
+														</span>
+														<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
+													</Command.Item>
+												{:else}
+													{@const Icon = item.page.icon}
+													<Command.Item
+														class="cmdk-item"
+														value={item.page.id}
+														keywords={[
+															item.page.title,
+															item.page.path,
+															...item.page.keywords
+														]}
+														onSelect={() => void navigateTo(item.page.href)}
+													>
+														<span class="cmdk-item-icon" aria-hidden="true">
+															<Icon size={16} strokeWidth={1.8} />
+														</span>
+														<span class="cmdk-item-title">{item.page.title}</span>
+													</Command.Item>
+												{/if}
+											{/each}
+										{/if}
+									</div>
 								</Command.Viewport>
 							{/if}
 						</Command.List>

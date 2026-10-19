@@ -991,6 +991,7 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	padding: 8px;
 	scrollbar-width: thin;
 }
+.cmdk-results { display: flex; flex-direction: column; }
 .cmdk-chat {
 	display: flex;
 	flex-direction: column;
@@ -1048,6 +1049,7 @@ a.event-detail:focus-visible { outline: 2px solid color-mix(in srgb, var(--orang
 	cursor: pointer;
 	text-align: left;
 	font: inherit;
+	will-change: transform, opacity;
 }
 .cmdk-item[data-selected] { background: var(--surface); }
 .cmdk-item-icon {
