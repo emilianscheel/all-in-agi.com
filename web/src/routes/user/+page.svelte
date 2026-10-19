@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { AlertDialog, Dialog, DropdownMenu } from 'bits-ui';
-	import { Copy, Ellipsis, Plus, Trash2, UserRound } from 'lucide-svelte';
+	import type { UserTableRow } from '$lib/components/admin/booking-types';
+	import UsersDataTable from '$lib/components/admin/users-data-table.svelte';
+	import { AlertDialog, Dialog } from 'bits-ui';
+	import { Copy, Plus, Trash2, UserRound } from 'lucide-svelte';
 	import type { Locale } from '$lib/i18n';
 	import type { PageData } from './$types';
 
@@ -15,18 +17,10 @@
 	let errorMessage = $state('');
 	let createdPassword = $state<string | null>(null);
 	let copyState = $state<'idle' | 'copied'>('idle');
-	let deleteTarget = $state<PageData['users'][number] | null>(null);
+	let deleteTarget = $state<UserTableRow | null>(null);
 	let deleteDialogOpen = $state(false);
 	let deleteBusyId = $state<string | null>(null);
 	let actionMessage = $state('');
-
-	function formatDate(value: string | Date) {
-		return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'de-DE', {
-			dateStyle: 'medium',
-			timeStyle: 'short',
-			timeZone: 'Europe/Berlin'
-		}).format(new Date(value));
-	}
 
 	function openCreate() {
 		name = '';
@@ -37,7 +31,7 @@
 		createOpen = true;
 	}
 
-	function confirmDelete(adminUser: PageData['users'][number]) {
+	function confirmDelete(adminUser: UserTableRow) {
 		deleteTarget = adminUser;
 		actionMessage = '';
 		deleteDialogOpen = true;
@@ -65,7 +59,7 @@
 		}
 	}
 
-	async function deleteUser(adminUser: PageData['users'][number] | null) {
+	async function deleteUser(adminUser: UserTableRow | null) {
 		if (!adminUser || deleteBusyId) return;
 		deleteBusyId = adminUser.id;
 		actionMessage = '';
@@ -113,69 +107,17 @@
 		</article>
 	</section>
 
-	<section class="dashboard-list-card" aria-labelledby="user-list-title">
-		<div class="dashboard-list-heading">
-			<div>
-				<h2 id="user-list-title">{locale === 'en' ? 'All users' : 'Alle Nutzer'}</h2>
-				{#if actionMessage}<p class="dashboard-action-message" role="status">{actionMessage}</p>{/if}
-			</div>
-			<span>{data.users.length} {locale === 'en' ? 'entries' : 'Einträge'}</span>
-		</div>
-		{#if data.users.length}
-			<div class="dashboard-table-wrap">
-				<table class="dashboard-table">
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>E-Mail</th>
-							<th>Passkey</th>
-							<th>{locale === 'en' ? 'Created' : 'Erstellt'}</th>
-							<th><span class="visually-hidden">{locale === 'en' ? 'Actions' : 'Aktionen'}</span></th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each data.users as adminUser}
-							<tr>
-								<td>
-									<div class="booking-primary-link">
-										<strong>{adminUser.name}</strong>
-										<small>{adminUser.id}</small>
-									</div>
-								</td>
-								<td>{adminUser.email}</td>
-								<td>
-									<span class={`booking-status ${adminUser.hasPasskey ? '' : 'prep_scheduled'}`}>
-										{adminUser.hasPasskey ? (locale === 'en' ? 'Ready' : 'Bereit') : (locale === 'en' ? 'Pending' : 'Ausstehend')}
-									</span>
-								</td>
-								<td>{formatDate(adminUser.createdAt)}</td>
-								<td class="dashboard-actions-cell">
-									<DropdownMenu.Root>
-										<DropdownMenu.Trigger class="dashboard-action-trigger" aria-label={`${locale === 'en' ? 'Actions for' : 'Aktionen für'} ${adminUser.name}`}>
-											<Ellipsis size={19} aria-hidden="true" />
-										</DropdownMenu.Trigger>
-										<DropdownMenu.Portal>
-											<DropdownMenu.Content class="dashboard-actions-menu" sideOffset={6} align="end" loop>
-												<DropdownMenu.Item
-													class="dashboard-actions-item"
-													onSelect={() => confirmDelete(adminUser)}
-													disabled={deleteBusyId !== null || adminUser.id === data.currentUserId || data.users.length <= 1}
-												>
-													<Trash2 size={16} aria-hidden="true" />{locale === 'en' ? 'Delete user' : 'Nutzer löschen'}
-												</DropdownMenu.Item>
-											</DropdownMenu.Content>
-										</DropdownMenu.Portal>
-									</DropdownMenu.Root>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else}
-			<p class="dashboard-empty">{locale === 'en' ? 'No users yet.' : 'Noch keine Nutzer vorhanden.'}</p>
-		{/if}
-	</section>
+	{#if actionMessage}
+		<p class="dashboard-action-message" role="status">{actionMessage}</p>
+	{/if}
+
+	<UsersDataTable
+		users={data.users}
+		{locale}
+		currentUserId={data.currentUserId}
+		{deleteBusyId}
+		onConfirmDelete={confirmDelete}
+	/>
 
 	<AlertDialog.Root bind:open={deleteDialogOpen}>
 		<AlertDialog.Portal>

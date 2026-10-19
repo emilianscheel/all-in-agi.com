@@ -13,6 +13,7 @@
     import { ExternalLink } from "lucide-svelte";
     import "@fontsource/instrument-serif";
     import "../app.css";
+    import "$lib/styles/shadcn.css";
     import { ArrowUpRight } from "lucide-svelte";
     let { children, data } = $props();
     let locale = $derived(data.locale as Locale);
