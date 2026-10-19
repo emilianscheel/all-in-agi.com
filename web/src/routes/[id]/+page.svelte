@@ -589,7 +589,11 @@
 					<p>{hackathon.eventStart ? (locale === 'en' ? 'The preparation call and hackathon day are reserved. No contract has been concluded yet.' : 'Preparation Call und Hackathontag sind reserviert. Ein Vertrag ist noch nicht geschlossen.') : (locale === 'en' ? 'The preparation call is reserved. The hackathon date will be selected later.' : 'Der Preparation Call ist reserviert. Der Hackathon-Termin wird später festgelegt.')}</p>
 				</div>
 			{:else if hackathon.status === 'exit_window'}
-				<div class="booking-state-banner pending" role="status"><Clock3 size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Contract concluded · Exit window open' : 'Vertrag geschlossen · Lösungsfrist läuft'}</strong>{locale === 'en' ? `Free withdrawal until ${hackathon.exitDeadline ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'deadline being calculated'}.` : `Kostenfreier Rücktritt bis ${hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.`}</span></div>
+				<div class="booking-state-banner request-pending" role="status">
+					<Clock3 size={28} strokeWidth={1.7} aria-hidden="true" />
+					<strong>{locale === 'en' ? 'Contract concluded · Exit window open' : 'Vertrag geschlossen · Lösungsfrist läuft'}</strong>
+					<p>{locale === 'en' ? `Free withdrawal until ${hackathon.exitDeadline ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'deadline being calculated'}.` : `Kostenfreier Rücktritt bis ${hackathon.exitDeadline ? new Intl.DateTimeFormat('de-DE', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Berlin' }).format(new Date(hackathon.exitDeadline)) : 'Fristende wird berechnet'}.`}</p>
+				</div>
 			{:else if hackathon.status === 'contracted'}
 				<div class="booking-state-banner" role="status"><Check size={18} aria-hidden="true" /><span><strong>{locale === 'en' ? 'Contract binding' : 'Vertrag verbindlich'}</strong>{locale === 'en' ? 'The free mutual exit window has ended.' : 'Die kostenlose beiderseitige Lösungsfrist ist abgelaufen.'}</span></div>
 			{:else if hackathon.status === 'withdrawn'}
