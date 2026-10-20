@@ -235,7 +235,7 @@ const CORE_PAGES: CorePage[] = [
 		path: '/offer',
 		icon: FileText,
 		group: { de: 'Admin', en: 'Admin' },
-		title: { de: 'Offers', en: 'Offers' },
+		title: { de: 'Angebote', en: 'Offers' },
 		keywords: {
 			de: ['angebot', 'offer', 'leistungsbeschreibung', 'admin'],
 			en: ['offer', 'quote', 'statement of work', 'admin']
