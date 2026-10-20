@@ -308,7 +308,7 @@ img { display: block; max-width: 100%; }
 }
 .contact-form-dialog-body {
 	min-height: 0;
-	padding: 30px 30px 44px;
+	padding: 30px 30px 36px;
 }
 .contact-form-fields { display: grid; gap: 22px; }
 .contact-form-fields textarea { width: 100%; min-height: 120px; resize: vertical; }
