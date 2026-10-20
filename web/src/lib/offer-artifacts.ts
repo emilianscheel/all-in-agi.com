@@ -1,6 +1,8 @@
 import {
     grossTotal,
+    OFFER_SERVICE_ICONS,
     selectedOfferServices,
+    type OfferCatalogService,
     type OfferConfiguration,
     type OfferServiceId,
 } from "$lib/offer";
@@ -104,13 +106,32 @@ async function loadHitachiRailLogo() {
 	return new Uint8Array(await response.arrayBuffer());
 }
 
-async function drawClientLogo(config: OfferConfiguration, pdf: PDFDocument, page: PDFPage) {
-    if (config.clientLogo !== "hitachi") return;
-	hitachiRailLogoBytes ??= loadHitachiRailLogo();
-	const logo = await pdf.embedPng(await hitachiRailLogoBytes);
-	const width = 84.24;
-    const height = width * (logo.height / logo.width);
-    page.drawImage(logo, { x: RIGHT - width, y: 792 - height / 2, width, height });
+async function drawClientLogo(config: OfferConfiguration, pdf: PDFDocument, page: PDFPage, logoSvg?: string) {
+    if (config.clientLogo === "none") return;
+    if (config.clientLogo === "hitachi" || !logoSvg) {
+        if (config.clientLogo !== "hitachi") return;
+        hitachiRailLogoBytes ??= loadHitachiRailLogo();
+        const logo = await pdf.embedPng(await hitachiRailLogoBytes);
+        const width = 84.24;
+        const height = width * (logo.height / logo.width);
+        page.drawImage(logo, { x: RIGHT - width, y: 792 - height / 2, width, height });
+        return;
+    }
+    const source = svgSize(logoSvg);
+    const width = 84.24;
+    const height = width * (source.height / source.width);
+    const bytes = cachedVectorPdf(logoSvg, () => renderVectorPdf(logoSvg, source.width, source.height));
+    const [logo] = await pdf.embedPdf(await bytes);
+    page.drawPage(logo, { x: RIGHT - width, y: 792 - height / 2, width, height });
+}
+
+function svgSize(svg: string) {
+    const viewBox = svg.match(/viewBox\s*=\s*["']([^"']+)["']/i)?.[1].trim().split(/[\s,]+/).map(Number);
+    if (viewBox?.length === 4 && viewBox[2] > 0 && viewBox[3] > 0) return { width: viewBox[2], height: viewBox[3] };
+    const width = Number(svg.match(/\bwidth\s*=\s*["']([\d.]+)/i)?.[1]);
+    const height = Number(svg.match(/\bheight\s*=\s*["']([\d.]+)/i)?.[1]);
+    if (width > 0 && height > 0) return { width, height };
+    return { width: 84.24, height: 24 };
 }
 
 const CLIENT_REQUIREMENTS = [
@@ -142,35 +163,24 @@ const NEXT_STEPS_EN = [
 	{ label: "Joint alignment on scope, agenda, and prerequisites", icon: "listChecks" },
 ] as const satisfies readonly { label: string; icon: LucideIconName }[];
 
-const lucideIconPdfs = new Map<LucideIconName, Promise<Uint8Array>>();
-const iconForService = {
-    facilitators: "users",
-	preparation: "listChecks",
-    participants: "users",
-    "challenge-design": "lightbulb",
-    "demo-follow-up": "presentation",
-    "on-site": "mapPin",
-    "date-range": "calendar",
-    duration: "clock",
-    "project-work": "code",
-    "pitch-preparation": "monitor",
-    "remote-teams": "video",
-    availability: "badge",
-    "breakout-sessions": "message",
-    introduction: "presentation",
-    matchmaking: "sparkles",
-    whiteboard: "panels",
-    timetable: "calendarClock",
-    "pitch-voting": "vote",
-    "winner-posters": "award",
-    "winner-trophies": "trophy",
-} as const satisfies Record<OfferServiceId, LucideIconName>;
+const vectorPdfs = new Map<string, Promise<Uint8Array>>();
 
-function graySvg(name: LucideIconName) {
-    return LUCIDE_SVGS[name].replace('stroke="currentColor"', 'stroke="#85858b"');
+function graySvg(svg: string) {
+    return svg.replaceAll("currentColor", "#85858b");
 }
 
-async function renderLucideVectorPdf(name: LucideIconName) {
+function cachedVectorPdf(key: string, render: () => Promise<Uint8Array>) {
+    const cached = vectorPdfs.get(key);
+    if (cached) return cached;
+    const pending = render().catch((error: unknown) => {
+        vectorPdfs.delete(key);
+        throw error;
+    });
+    vectorPdfs.set(key, pending);
+    return pending;
+}
+
+async function renderVectorPdf(svg: string, width: number, height: number) {
     // These browser-compatible libraries are loaded only when an offer PDF is rendered.
     const [
         { default: PDFKitDocument },
@@ -183,7 +193,7 @@ async function renderLucideVectorPdf(name: LucideIconName) {
     ]);
     return new Promise<Uint8Array>((resolve, reject) => {
         const document = new PDFKitDocument({
-            size: [24, 24],
+            size: [width, height],
             margin: 0,
             autoFirstPage: true,
             font: googleSansRegular,
@@ -201,21 +211,27 @@ async function renderLucideVectorPdf(name: LucideIconName) {
             }
             resolve(bytes);
         });
-        SVGtoPDF(document, graySvg(name), 0, 0, { width: 24, height: 24, assumePt: true });
+        SVGtoPDF(document, svg, 0, 0, { width, height, assumePt: true });
         document.end();
     });
+}
+
+async function iconSvg(name: string) {
+    if (name in LUCIDE_SVGS) return graySvg(LUCIDE_SVGS[name as LucideIconName]);
+    const { lucideIconSvg } = await import("$lib/lucide-icons");
+    const svg = await lucideIconSvg(name);
+    if (!svg) throw new Error(`Unknown icon: ${name}`);
+    return graySvg(svg);
 }
 
 async function drawFeatureIcon(
     pdf: PDFDocument,
     page: PDFPage,
-    name: LucideIconName,
+    name: string,
     x: number,
     y: number,
 ) {
-    const bytes =
-        lucideIconPdfs.get(name) ??
-        (lucideIconPdfs.set(name, renderLucideVectorPdf(name)), lucideIconPdfs.get(name)!);
+    const bytes = cachedVectorPdf(`icon:${name}`, async () => renderVectorPdf(await iconSvg(name), 24, 24));
     const [icon] = await pdf.embedPdf(await bytes);
     page.drawPage(icon, { x: x - 6, y: y - 6, width: 12, height: 12 });
 }
@@ -224,7 +240,7 @@ async function drawListItem(
     pdf: PDFDocument,
     page: PDFPage,
     label: string,
-    icon: LucideIconName,
+    icon: string,
     x: number,
     y: number,
     width: number,
@@ -253,6 +269,7 @@ async function drawOfferPageContent({
 	page,
 	config,
 	services,
+	logoSvg,
 	clientRequirements,
 	nextSteps,
 	brandFont,
@@ -273,7 +290,8 @@ async function drawOfferPageContent({
 	pdf: PDFDocument;
 	page: PDFPage;
 	config: OfferConfiguration;
-	services: readonly { id: OfferServiceId; label: string; description?: string }[];
+	services: readonly { id: string; label: string; description?: string; icon: string }[];
+	logoSvg?: string;
 	clientRequirements: readonly { label: string; icon: LucideIconName }[];
 	nextSteps: readonly { label: string; icon: LucideIconName }[];
 	brandFont: PDFFont;
@@ -291,7 +309,7 @@ async function drawOfferPageContent({
 	sectionNeedsHeading: string;
 	sectionNextHeading: string;
 }) {
-	await drawClientLogo(config, pdf, page);
+	await drawClientLogo(config, pdf, page, logoSvg);
 
 	page.drawText(safeText(documentTitle), {
 		x: LEFT,
@@ -343,7 +361,7 @@ async function drawOfferPageContent({
 	const columnWidth = (RIGHT - LEFT - 18) / 2;
 	const conciseServices = services.filter((service) => !service.description);
 	const detailedServices = services.filter(
-		(service): service is { id: OfferServiceId; label: string; description: string } => Boolean(service.description),
+		(service): service is { id: string; label: string; description: string; icon: string } => Boolean(service.description),
 	);
 	const rows = Math.max(1, Math.ceil(conciseServices.length / 2));
 	for (let row = 0; row < rows; row += 1) {
@@ -355,7 +373,7 @@ async function drawOfferPageContent({
 				pdf,
 				page,
 				leftService.label,
-				iconForService[leftService.id],
+				leftService.icon,
 				LEFT,
 				y,
 				columnWidth,
@@ -367,7 +385,7 @@ async function drawOfferPageContent({
 				pdf,
 				page,
 				rightService.label,
-				iconForService[rightService.id],
+				rightService.icon,
 				LEFT + columnWidth + 18,
 				y,
 				columnWidth,
@@ -385,7 +403,7 @@ async function drawOfferPageContent({
 				pdf,
 				page,
 				`${leftService.label}: ${leftService.description}`,
-				iconForService[leftService.id],
+				leftService.icon,
 				LEFT,
 				y,
 				columnWidth,
@@ -397,7 +415,7 @@ async function drawOfferPageContent({
 				pdf,
 				page,
 				`${rightService.label}: ${rightService.description}`,
-				iconForService[rightService.id],
+				rightService.icon,
 				LEFT + columnWidth + 18,
 				y,
 				columnWidth,
@@ -493,21 +511,37 @@ function documentTitleFor(title: string, fallback: string, replacements: readonl
 	return trimmed;
 }
 
-export async function createOfferPdf(config: OfferConfiguration, options: { mode?: OfferPdfMode; locale?: "de" | "en" } = {}) {
+export async function createOfferPdf(
+	config: OfferConfiguration,
+	options: { mode?: OfferPdfMode; locale?: "de" | "en"; services?: readonly OfferCatalogService[]; logoSvg?: string } = {},
+) {
 	const context = await createBrandPdf();
 	const mode = options.mode ?? "offer";
 	const scope = mode === "scope";
 	const locale = options.locale ?? config.locale ?? "de";
 	const { pdf, page, regular, bold, brandFont, colors } = context;
 	const { ink, muted, surface } = colors;
-	const servicesDe = selectedOfferServices(config);
+	const servicesDe = selectedOfferServices(config, options.services).map((service) => ({
+		id: service.id,
+		label: service.label,
+		labelEn: service.labelEn,
+		description: service.description || undefined,
+		descriptionEn: service.descriptionEn || undefined,
+		icon: ("icon" in service && service.icon) || OFFER_SERVICE_ICONS[service.id as OfferServiceId] || "sparkles",
+	}));
 	const services = locale === "en"
 		? servicesDe.map((service) => ({
 			id: service.id,
 			label: service.labelEn,
+			icon: service.icon,
 			...(service.descriptionEn ? { description: service.descriptionEn } : {}),
 		}))
-		: servicesDe;
+		: servicesDe.map((service) => ({
+			id: service.id,
+			label: service.label,
+			icon: service.icon,
+			...(service.description ? { description: service.description } : {}),
+		}));
 	const amount = grossTotal(config);
 	const netTotal = config.netTotal;
 	const hasPrice = netTotal !== null && netTotal > 0;
@@ -521,6 +555,7 @@ export async function createOfferPdf(config: OfferConfiguration, options: { mode
 			page,
 			config,
 			services,
+			logoSvg: options.logoSvg,
 			clientRequirements: CLIENT_REQUIREMENTS_EN,
 			nextSteps: NEXT_STEPS_EN,
 			brandFont,
@@ -553,6 +588,7 @@ export async function createOfferPdf(config: OfferConfiguration, options: { mode
 			page,
 			config,
 			services,
+			logoSvg: options.logoSvg,
 			clientRequirements: CLIENT_REQUIREMENTS,
 			nextSteps: NEXT_STEPS,
 			brandFont,

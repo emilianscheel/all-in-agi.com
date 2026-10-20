@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	generatePublicId,
 	generateUniquePublicId,
+	isClientLogoId,
 	isHackathonId,
 	isOfferId,
 	isPublicId,
@@ -24,6 +25,8 @@ describe('public IDs', () => {
 		expect(isHackathonId('H12-ABC-45')).toBe(false);
 		expect(isOfferId('OAA-AAA-AAA')).toBe(true);
 		expect(isOfferId('HAA-AAA-AAA')).toBe(false);
+		expect(isClientLogoId('LAA-AAA-AAA')).toBe(true);
+		expect(isClientLogoId('OAA-AAA-AAA')).toBe(false);
 	});
 
 	test('rejects invalid prefixes', () => {

@@ -12,6 +12,8 @@
 		offers={data.offers}
 		bookings={data.bookings}
 		hackathonId={data.hackathonId}
+		logos={data.logos}
+		services={data.services}
 		{locale}
 	/>
 {/key}

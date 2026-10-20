@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { BillingDetails, CodingTool, DeviceProvision, Equipment, EventAddress, Lunch, ToolProvision } from '$lib/booking';
 import type { OfferConfiguration } from '$lib/offer';
 import type { InvoiceSnapshot } from '$lib/invoice';
@@ -23,6 +23,28 @@ export const hackathonStatus = pgEnum('hackathon_status', [
 	'completed'
 ]);
 
+export const clientLogos = pgTable('client_logos', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	svg: text('svg').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+}, (table) => [
+	check('client_logos_id_format_check', sql`${table.id} ~ '^L[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`)
+]);
+
+export const offerServices = pgTable('offer_services', {
+	id: text('id').primaryKey(),
+	label: text('label').notNull(),
+	labelEn: text('label_en').notNull(),
+	description: text('description'),
+	descriptionEn: text('description_en'),
+	icon: text('icon').notNull(),
+	sortOrder: integer('sort_order').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+});
+
 export const offers = pgTable('offers', {
 	id: text('id').primaryKey(),
 	config: jsonb('config').$type<OfferConfiguration>().notNull(),
@@ -30,6 +52,15 @@ export const offers = pgTable('offers', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
 }, (table) => [
 	check('offers_id_format_check', sql`${table.id} ~ '^O[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$'`)
+]);
+
+export const offerServiceLinks = pgTable('offer_service_links', {
+	offerId: text('offer_id').notNull().references(() => offers.id, { onDelete: 'cascade' }),
+	serviceId: text('service_id').notNull().references(() => offerServices.id, { onDelete: 'restrict' }),
+	position: integer('position').notNull()
+}, (table) => [
+	primaryKey({ columns: [table.offerId, table.serviceId] }),
+	uniqueIndex('offer_service_links_offer_position_unique').on(table.offerId, table.position)
 ]);
 
 export const hackathons = pgTable('hackathons', {

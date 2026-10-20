@@ -92,6 +92,13 @@
       "when": 1792484031197,
       "tag": "0012_opposite_fantastic_four",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792486392137,
+      "tag": "0013_offer_catalog",
+      "breakpoints": true
     }
   ]
 }

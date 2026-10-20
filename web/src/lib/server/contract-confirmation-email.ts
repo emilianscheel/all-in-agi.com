@@ -7,6 +7,7 @@ import { createOfferPdf } from '$lib/offer-artifacts';
 import type { OfferConfiguration } from '$lib/offer';
 import { addBerlinBusinessDays } from './legal-contracts';
 import type { HackathonRecord } from './hackathons';
+import { getClientLogo, listOfferServices } from './offer-catalog';
 import { getOffer } from './offers';
 import { sendEmailMessage, type EmailAttachment, type EmailTransportDependencies } from './email-transport';
 
@@ -116,6 +117,14 @@ function scopeFilename(config: OfferConfiguration) {
 	return `${base}-leistungsbeschreibung.pdf`;
 }
 
+async function createScopePdf(config: OfferConfiguration) {
+	const [services, logo] = await Promise.all([
+		listOfferServices(),
+		config.clientLogo !== 'none' && config.clientLogo !== 'hitachi' ? getClientLogo(config.clientLogo) : Promise.resolve(null)
+	]);
+	return createOfferPdf(config, { mode: 'scope', locale: 'de', services, logoSvg: logo?.svg });
+}
+
 export async function sendContractConfirmationEmail(
 	record: HackathonRecord,
 	dependencies: ContractConfirmationDependencies = {},
@@ -136,7 +145,7 @@ export async function sendContractConfirmationEmail(
 	if (record.offerId) {
 		const config = await (dependencies.loadOffer ?? (async (id: string) => (await getOffer(id))?.config ?? null))(record.offerId);
 		if (!config) throw new Error('Die verknüpfte Leistungsbeschreibung wurde nicht gefunden.');
-		const scopePdf = await (dependencies.createScopePdf ?? ((offer: OfferConfiguration) => createOfferPdf(offer, { mode: 'scope', locale: 'de' })))(config);
+		const scopePdf = await (dependencies.createScopePdf ?? createScopePdf)(config);
 		attachments.push({
 			content: bytesToBase64(scopePdf),
 			filename: scopeFilename(config),

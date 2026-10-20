@@ -1,3 +1,5 @@
+import { isClientLogoId } from '$lib/public-id';
+
 export const OFFER_SERVICE_IDS = [
     "facilitators",
     "preparation",
@@ -29,6 +31,8 @@ export const OFFER_CLIENT_LOGOS = [
 ] as const;
 
 export type OfferClientLogoId = (typeof OFFER_CLIENT_LOGOS)[number]["id"];
+
+const OFFER_SERVICE_ID_PATTERN = /^[A-Za-z0-9-]{1,40}$/;
 
 export interface OfferService {
     id: OfferServiceId;
@@ -97,6 +101,45 @@ export const OFFER_SERVICES: readonly OfferService[] = [
     },
 ];
 
+export const OFFER_SERVICE_ICONS = {
+	facilitators: "users",
+	preparation: "list-checks",
+	participants: "users",
+	"challenge-design": "lightbulb",
+	"demo-follow-up": "presentation",
+	"on-site": "map-pin",
+	"date-range": "calendar-days",
+	duration: "clock-3",
+	"project-work": "code-2",
+	"pitch-preparation": "monitor-play",
+	"remote-teams": "video",
+	availability: "badge-check",
+	"breakout-sessions": "message-square-more",
+	introduction: "presentation",
+	matchmaking: "sparkles",
+	whiteboard: "panels-top-left",
+	timetable: "calendar-clock",
+	"pitch-voting": "vote",
+	"winner-posters": "award",
+	"winner-trophies": "trophy",
+} as const satisfies Record<OfferServiceId, string>;
+
+export interface ClientLogoRecord {
+	id: string;
+	name: string;
+	svg: string;
+}
+
+export interface OfferCatalogService {
+	id: string;
+	label: string;
+	labelEn: string;
+	description?: string;
+	descriptionEn?: string;
+	icon: string;
+	sortOrder: number;
+}
+
 export interface OfferConfiguration {
 	locale?: 'de' | 'en';
     v: 1;
@@ -109,8 +152,8 @@ export interface OfferConfiguration {
     netTotal: number | null;
     vatRate: number;
     notes: string;
-    services: OfferServiceId[];
-    clientLogo: OfferClientLogoId;
+    services: string[];
+    clientLogo: string;
 }
 
 function isoDate(date: Date) {
@@ -143,9 +186,25 @@ export function grossTotal(config: Pick<OfferConfiguration, "netTotal" | "vatRat
     );
 }
 
-export function selectedOfferServices(config: Pick<OfferConfiguration, "services">) {
-    const selected = new Set(config.services);
-    return OFFER_SERVICES.filter((service) => selected.has(service.id));
+export function selectedOfferServices(
+	config: Pick<OfferConfiguration, "services">,
+	catalog: readonly OfferCatalogService[] = [],
+) {
+	const byId = new Map<string, OfferService | OfferCatalogService>(OFFER_SERVICES.map((service) => [service.id, service]));
+	for (const service of catalog) byId.set(service.id, service);
+	const staticOrder = new Map(OFFER_SERVICES.map((service, index) => [service.id, index]));
+	return config.services.flatMap((id) => {
+		const service = byId.get(id);
+		return service ? [service] : [];
+	}).sort((a, b) => {
+		const aOrder = "sortOrder" in a ? a.sortOrder : staticOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+		const bOrder = "sortOrder" in b ? b.sortOrder : staticOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+		return aOrder - bOrder;
+	});
+}
+
+export function isClientLogoChoice(value: unknown): value is string {
+	return value === "none" || value === "hitachi" || (typeof value === "string" && isClientLogoId(value));
 }
 
 export function isOfferConfiguration(value: unknown): value is OfferConfiguration {
@@ -177,11 +236,9 @@ export function isOfferConfiguration(value: unknown): value is OfferConfiguratio
         config.vatRate >= 0 &&
         config.vatRate <= 100 &&
         Array.isArray(config.services) &&
-        config.services.every(
-            (service) =>
-                OFFER_SERVICE_IDS.includes(service as OfferServiceId) || service === "catering",
-        ) &&
-        OFFER_CLIENT_LOGOS.some((logo) => logo.id === config.clientLogo)
+        config.services.length <= 100 &&
+        config.services.every((service) => typeof service === "string" && OFFER_SERVICE_ID_PATTERN.test(service)) &&
+        isClientLogoChoice(config.clientLogo)
     );
 }
 

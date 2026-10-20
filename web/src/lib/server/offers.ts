@@ -4,6 +4,7 @@ import { defaultOfferConfiguration, isOfferConfiguration, normalizeOfferConfigur
 import { generateUniquePublicId, isHackathonId } from '$lib/public-id';
 import { getDb } from './db';
 import { hackathons, offers } from './db/schema';
+import { replaceOfferServiceLinks } from './offer-catalog';
 
 const CLOSED_BOOKING_STATUSES = new Set<string>(['cancelled', 'declined', 'withdrawn']);
 
@@ -62,7 +63,11 @@ export async function createOffer(locale: Locale) {
 		return Boolean(existing);
 	});
 	const config = draftConfig(locale);
-	const [row] = await db.insert(offers).values({ id, config }).returning();
+	const row = await db.transaction(async (tx) => {
+		const [created] = await tx.insert(offers).values({ id, config }).returning();
+		await replaceOfferServiceLinks(tx, id, config.services);
+		return created;
+	});
 	return { ...row, config };
 }
 
@@ -70,10 +75,15 @@ export async function updateOfferConfig(id: string, value: unknown) {
 	const config = isOfferConfiguration(value) ? value : null;
 	if (!config) return null;
 	const db = await getDb();
-	const [row] = await db.update(offers).set({
-		config,
-		updatedAt: new Date().toISOString()
-	}).where(eq(offers.id, id)).returning();
+	const row = await db.transaction(async (tx) => {
+		const [updated] = await tx.update(offers).set({
+			config,
+			updatedAt: new Date().toISOString()
+		}).where(eq(offers.id, id)).returning();
+		if (!updated) return null;
+		await replaceOfferServiceLinks(tx, id, config.services);
+		return updated;
+	});
 	return row ?? null;
 }
 

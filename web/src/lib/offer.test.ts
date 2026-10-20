@@ -19,6 +19,12 @@ describe("offer configuration", () => {
         expect(config.validUntil).toBe("");
         expect(config.netTotal).toBe(14_500);
         expect(selectedOfferServices(config)).toHaveLength(20);
+        expect(isOfferConfiguration({
+            ...config,
+            clientLogo: "LAA-AAA-AAA",
+            services: ["facilitators", "SAA-AAA-AAA"],
+        })).toBe(true);
+        expect(isOfferConfiguration({ ...config, clientLogo: "uploaded" })).toBe(false);
         expect(selectedOfferServices(config)).toContainEqual({
             id: "preparation",
             label: "4 Tage Vorbereitungstage Konzeption",

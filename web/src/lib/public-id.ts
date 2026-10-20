@@ -1,6 +1,8 @@
 export const PUBLIC_ID_PATTERN = /^[A-Z][A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]{3}$/;
 export const HACKATHON_ID_PREFIX = 'H';
 export const OFFER_ID_PREFIX = 'O';
+export const LOGO_ID_PREFIX = 'L';
+export const SERVICE_ID_PREFIX = 'S';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
@@ -31,6 +33,10 @@ export function isHackathonId(value: string) {
 
 export function isOfferId(value: string) {
 	return value.startsWith(OFFER_ID_PREFIX) && isPublicId(value);
+}
+
+export function isClientLogoId(value: string) {
+	return value.startsWith(LOGO_ID_PREFIX) && isPublicId(value);
 }
 
 export async function generateUniquePublicId(

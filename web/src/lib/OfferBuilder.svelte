@@ -2,7 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { onDestroy, onMount } from 'svelte';
 	import { Building2, Check, Download, FileText, ReceiptEuro } from 'lucide-svelte';
-	import { OFFER_CLIENT_LOGOS, OFFER_SERVICES, grossTotal, type OfferConfiguration, type OfferServiceId } from '$lib/offer';
+	import LucideMark from '$lib/LucideMark.svelte';
+	import { LUCIDE_ICON_NAMES } from '$lib/lucide-icons';
+	import { grossTotal, type ClientLogoRecord, type OfferCatalogService, type OfferConfiguration } from '$lib/offer';
 	import { createOfferPdf, type OfferPdfMode } from '$lib/offer-artifacts';
 	import { localizedPath, type Locale } from '$lib/i18n';
 	import type { AttachableBooking, OfferSummary } from '$lib/server/offers';
@@ -13,6 +15,8 @@
 		offers,
 		bookings,
 		hackathonId = null,
+		logos,
+		services,
 		locale = 'de'
 	}: {
 		offerId: string;
@@ -20,6 +24,8 @@
 		offers: OfferSummary[];
 		bookings: AttachableBooking[];
 		hackathonId?: string | null;
+		logos: ClientLogoRecord[];
+		services: OfferCatalogService[];
 		locale?: Locale;
 	} = $props();
 	// The parent only supplies the initial draft; the editor intentionally owns later changes.
@@ -33,6 +39,15 @@
 	let generatedBytes = $state<Uint8Array | undefined>();
 	let generatedMode = $state<OfferPdfMode>('offer');
 	let savingBooking = $state(false);
+	let uploadingLogo = $state(false);
+	let addingService = $state(false);
+	let serviceQuery = $state('');
+	let newServiceLabel = $state('');
+	let newServiceIcon = $state('sparkles');
+	let iconQuery = $state('');
+	let iconPickerOpen = $state(false);
+	let extraLogos = $state<ClientLogoRecord[]>([]);
+	let extraServices = $state<OfferCatalogService[]>([]);
 	let mounted = false;
 	let pdfTimer: ReturnType<typeof setTimeout> | undefined;
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
@@ -43,13 +58,27 @@
 	let savedSnapshot = JSON.stringify(initialConfig);
 	let serialisedConfig = $derived(JSON.stringify(config));
 	let gross = $derived(grossTotal(config));
+	let logoCatalog = $derived.by(() => {
+		const seen = new Set(logos.map((logo) => logo.id));
+		return [...logos, ...extraLogos.filter((logo) => !seen.has(logo.id))];
+	});
+	let serviceCatalog = $derived.by(() => {
+		const byId = new Map(services.map((service) => [service.id, service]));
+		for (const service of extraServices) byId.set(service.id, service);
+		return [...byId.values()].sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+	});
+	let visibleServices = $derived(serviceCatalog.filter((service) => {
+		const label = locale === 'en' ? service.labelEn : service.label;
+		return label.toLowerCase().includes(serviceQuery.trim().toLowerCase());
+	}));
+	let iconMatches = $derived(LUCIDE_ICON_NAMES.filter((name) => name.includes(iconQuery.trim().toLowerCase())).slice(0, 48));
 
 	function pdfBlob(bytes: Uint8Array) {
 		const copy = new Uint8Array(bytes);
 		return new Blob([copy.buffer as ArrayBuffer], { type: 'application/pdf' });
 	}
 
-	function toggleService(id: OfferServiceId) {
+	function toggleService(id: string) {
 		config.services = config.services.includes(id)
 			? config.services.filter((service) => service !== id)
 			: [...config.services, id];
@@ -80,7 +109,8 @@
 		const generation = ++renderGeneration;
 		const mode = previewMode;
 		try {
-			const bytes = await createOfferPdf(config, { mode, locale });
+			const logo = logoCatalog.find((item) => item.id === config.clientLogo);
+			const bytes = await createOfferPdf(config, { mode, locale, services: serviceCatalog, logoSvg: logo?.svg });
 			if (generation !== renderGeneration) return;
 			generatedBytes = bytes;
 			generatedMode = mode;
@@ -107,6 +137,61 @@
 		link.click();
 		link.remove();
 		setTimeout(() => URL.revokeObjectURL(link.href), 0);
+	}
+
+	async function uploadLogo(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		if (!file.name.toLowerCase().endsWith('.svg') && file.type !== 'image/svg+xml') {
+			urlError = locale === 'en' ? 'Only SVG logos can be uploaded.' : 'Es können nur SVG-Logos hochgeladen werden.';
+			return;
+		}
+		uploadingLogo = true;
+		try {
+			const response = await fetch('/offer/logos', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					name: file.name.replace(/\.svg$/i, '').replace(/[_-]+/g, ' ').trim() || 'Logo',
+					svg: await file.text()
+				})
+			});
+			const result = await response.json() as ClientLogoRecord & { message?: string };
+			if (!response.ok) throw new Error(result.message || (locale === 'en' ? 'The logo could not be uploaded.' : 'Das Logo konnte nicht hochgeladen werden.'));
+			extraLogos = [...extraLogos, { id: result.id, name: result.name, svg: result.svg }];
+			config.clientLogo = result.id;
+			urlError = '';
+		} catch (error) {
+			urlError = error instanceof Error && error.message ? error.message : (locale === 'en' ? 'The logo could not be uploaded.' : 'Das Logo konnte nicht hochgeladen werden.');
+		} finally {
+			uploadingLogo = false;
+		}
+	}
+
+	async function addService() {
+		const label = newServiceLabel.trim();
+		if (!label || addingService) return;
+		addingService = true;
+		try {
+			const response = await fetch('/offer/services', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ label, icon: newServiceIcon })
+			});
+			const result = await response.json() as OfferCatalogService & { message?: string };
+			if (!response.ok) throw new Error(result.message || (locale === 'en' ? 'The service could not be added.' : 'Die Leistung konnte nicht hinzugefügt werden.'));
+			extraServices = [...extraServices, result];
+			if (!config.services.includes(result.id)) config.services = [...config.services, result.id];
+			newServiceLabel = '';
+			iconPickerOpen = false;
+			urlError = '';
+		} catch (error) {
+			urlError = error instanceof Error && error.message ? error.message : (locale === 'en' ? 'The service could not be added.' : 'Die Leistung konnte nicht hinzugefügt werden.');
+		} finally {
+			addingService = false;
+		}
 	}
 
 	async function saveConfig() {
@@ -192,6 +277,8 @@
 		serialisedConfig;
 		locale;
 		previewMode;
+		logoCatalog;
+		serviceCatalog;
 		if (!mounted) return;
 		if (pdfTimer) clearTimeout(pdfTimer);
 		pdfTimer = setTimeout(() => void renderPdf(), 120);
@@ -241,7 +328,21 @@
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
 				<h2 id="recipient-heading"><Building2 size={16} />{locale === 'en' ? 'Recipient' : 'Empfänger'}</h2>
 				<label>{locale === 'en' ? 'Company' : 'Unternehmen'}<input bind:value={config.companyName} maxlength="200" /></label>
-				<label>{locale === 'en' ? 'Client logo' : 'Kundenlogo'}<select bind:value={config.clientLogo}>{#each OFFER_CLIENT_LOGOS as logo}<option value={logo.id}>{locale === 'en' ? logo.labelEn : logo.label}</option>{/each}</select></label>
+				<div class="offer-logo-field">
+					<label>{locale === 'en' ? 'Client logo' : 'Kundenlogo'}
+						<select bind:value={config.clientLogo}>
+							<option value="none">{locale === 'en' ? 'No client logo' : 'Kein Kundenlogo'}</option>
+							<option value="hitachi">Hitachi Rail</option>
+							{#each logoCatalog as logo (logo.id)}
+								<option value={logo.id}>{logo.name}</option>
+							{/each}
+						</select>
+					</label>
+					<label class="offer-logo-upload">
+						{uploadingLogo ? '…' : (locale === 'en' ? 'Upload SVG' : 'SVG hochladen')}
+						<input type="file" accept=".svg,image/svg+xml" onchange={uploadLogo} disabled={uploadingLogo} />
+					</label>
+				</div>
 				<label>{locale === 'en' ? 'Contact person' : 'Ansprechperson'}<input bind:value={config.contactName} maxlength="200" /></label>
 				<label>{locale === 'en' ? 'Email' : 'E-Mail'}<input type="email" bind:value={config.contactEmail} maxlength="200" /></label>
 			</section>
@@ -261,11 +362,27 @@
 
 			<section class="offer-form-section offer-services" aria-labelledby="services-heading">
 				<h2 id="services-heading"><Check size={16} />{locale === 'en' ? 'Services' : 'Leistungen'}</h2>
-				{#each OFFER_SERVICES as service}
+				<label class="offer-service-search">{locale === 'en' ? 'Search' : 'Suche'}<input type="search" bind:value={serviceQuery} /></label>
+				{#each visibleServices as service (service.id)}
 					{@const label = locale === 'en' ? service.labelEn : service.label}
 					{@const description = locale === 'en' ? service.descriptionEn : service.description}
-					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><span><span class="offer-service-label">{label}</span>{#if description}<small>{description}</small>{/if}</span></label>
+					<label class:checked={config.services.includes(service.id)} class="offer-service"><input type="checkbox" checked={config.services.includes(service.id)} onchange={() => toggleService(service.id)} /><span class="offer-service-check" aria-hidden="true"><Check size={16} strokeWidth={3} /></span><LucideMark name={service.icon} size={14} /><span><span class="offer-service-label">{label}</span>{#if description}<small>{description}</small>{/if}</span></label>
+				{:else}
+					<p class="offer-service-empty">{locale === 'en' ? 'No matching services' : 'Keine passenden Leistungen'}</p>
 				{/each}
+				<div class="offer-service-create">
+					<input bind:value={newServiceLabel} maxlength="200" placeholder={locale === 'en' ? 'New service' : 'Neue Leistung'} />
+					<button type="button" class="offer-icon-trigger" aria-expanded={iconPickerOpen} aria-label={locale === 'en' ? 'Choose icon' : 'Icon wählen'} onclick={() => iconPickerOpen = !iconPickerOpen}><LucideMark name={newServiceIcon} /></button>
+					<button type="button" class="offer-service-add" onclick={addService} disabled={addingService || !newServiceLabel.trim()}>{locale === 'en' ? 'Add' : 'Hinzufügen'}</button>
+				</div>
+				{#if iconPickerOpen}
+					<label class="offer-service-search">{locale === 'en' ? 'Icon' : 'Icon'}<input type="search" bind:value={iconQuery} placeholder={locale === 'en' ? 'Search icons' : 'Icons suchen'} /></label>
+					<div class="offer-icon-grid">
+						{#each iconMatches as name (name)}
+							<button type="button" class:selected={newServiceIcon === name} aria-label={name} onclick={() => newServiceIcon = name}><LucideMark {name} /></button>
+						{/each}
+					</div>
+				{/if}
 			</section>
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
 		</div>
@@ -289,7 +406,7 @@
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
 	.offer-form-section h2 :global(svg) { color: #ff4f18; }
-	.offer-form-section > label, .offer-price-grid > label { display: grid; gap: 6px; margin-top: 11px; color: #4e4e53; font-size: 11px; font-weight: 650; }
+	.offer-form-section > label, .offer-price-grid > label, .offer-logo-field > label, .offer-service-search { display: grid; gap: 6px; margin-top: 11px; color: #4e4e53; font-size: 11px; font-weight: 650; }
 	.offer-sidebar :is(input, select, textarea):not([type='checkbox']) { width: 100%; box-sizing: border-box; border: 1px solid #d3d3d8; border-radius: 9px; background-color: #fff; color: #1d1d1f; font: inherit; font-size: 13px; font-weight: 400; line-height: 20px; outline: none; }
 	.offer-sidebar :is(input, select):not([type='checkbox']) { height: 40px; padding: 0 10px; }
 	.offer-sidebar select:not([type='checkbox']) { appearance: none; padding: 0 30px 0 10px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; }
@@ -299,13 +416,25 @@
 	.gross-total { display: flex; justify-content: space-between; margin: 13px 0 0; padding: 10px 11px; border-radius: 9px; background: #f5f5f7; color: #606066; font-size: 12px; }
 	.gross-total strong { color: #1d1d1f; }
 	.offer-services { padding-bottom: 7px; }
-	.offer-service { position: relative; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 7px; padding: 6px 0; cursor: pointer; }
+	.offer-service { position: relative; display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 7px; padding: 6px 0; cursor: pointer; }
 	.offer-service input { position: absolute; opacity: 0; pointer-events: none; }
 	.offer-service-check { width: 20px; height: 20px; display: grid; place-items: center; border: 2px solid #ff4f18; border-radius: 6px; color: transparent; transition: background-color .15s ease, color .15s ease; }
 	.offer-service.checked .offer-service-check { background: #ff4f18; color: #fff; }
 	.offer-service:has(input:focus-visible) .offer-service-check { outline: 3px solid rgba(255,79,24,.22); outline-offset: 2px; }
 	.offer-service-label { display: block; color: #252529; font-size: 12px; font-weight: 400; line-height: 1.25; }
 	.offer-service small { display: block; margin-top: 3px; color: #74747a; font-size: 10px; line-height: 1.35; }
+	.offer-logo-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+	.offer-logo-upload { position: relative; display: grid; place-items: center; height: 40px; padding: 0 12px; border: 1px solid #d3d3d8; border-radius: 9px; background: #fff; color: #1d1d1f; font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+	.offer-logo-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+	.offer-service-empty { margin: 8px 0 0; color: #74747a; font-size: 12px; }
+	.offer-service-create { display: grid; grid-template-columns: minmax(0, 1fr) 40px auto; gap: 8px; margin-top: 12px; }
+	.offer-icon-trigger, .offer-service-add { height: 40px; border: 1px solid #d3d3d8; border-radius: 9px; background: #fff; color: #1d1d1f; cursor: pointer; }
+	.offer-icon-trigger { display: grid; place-items: center; padding: 0; }
+	.offer-service-add { padding: 0 12px; font: inherit; font-size: 12px; font-weight: 650; }
+	.offer-service-add:disabled { opacity: .45; cursor: default; }
+	.offer-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 4px; margin-top: 8px; }
+	.offer-icon-grid button { height: 32px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 7px; background: #fff; color: #3a3a3e; cursor: pointer; }
+	.offer-icon-grid button.selected, .offer-icon-trigger[aria-expanded='true'] { border-color: #ff4f18; color: #ff4f18; }
 	.offer-url-error { margin: 16px 0 0; color: #9a2c0d; font-size: 12px; line-height: 1.4; }
 	.offer-download-wrap { padding: 8px 24px 22px; }
 	.offer-download { width: 100%; gap: 8px; }

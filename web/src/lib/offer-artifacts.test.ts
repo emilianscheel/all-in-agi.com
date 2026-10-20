@@ -26,6 +26,18 @@ describe('offer PDF', () => {
 		const config = defaultOfferConfiguration(new Date('2026-08-27T12:00:00.000Z'));
 		const withHitachi = await createOfferPdf(config);
 		const withoutClientLogo = await createOfferPdf({ ...config, clientLogo: 'none' });
+		const services = [{ id: 'star-service', label: 'Stern', labelEn: 'Star', icon: 'star', sortOrder: 1 }];
+		const custom = { ...config, services: ['star-service'] };
+		const withoutUploadedLogo = await createOfferPdf({ ...custom, clientLogo: 'none' }, { services });
+		const uploaded = await createOfferPdf(
+			{ ...custom, clientLogo: 'LAA-AAA-AAA' },
+			{
+				logoSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><rect width="100" height="40"/></svg>',
+				services
+			}
+		);
 		expect(withHitachi.length).toBeGreaterThan(withoutClientLogo.length);
+		expect((await PDFDocument.load(uploaded)).getPageCount()).toBe(1);
+		expect(uploaded.length).toBeGreaterThan(withoutUploadedLogo.length);
 	});
 });
