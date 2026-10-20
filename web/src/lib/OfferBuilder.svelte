@@ -286,15 +286,15 @@
 	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 168px; }
 	.offer-switchers { display: grid; gap: 12px; padding-bottom: 8px; }
 	.offer-switchers label { display: grid; gap: 6px; color: #4e4e53; font-size: 11px; font-weight: 650; }
-	.offer-switchers select { width: 100%; border: 1px solid #d3d3d8; border-radius: 9px; padding: 9px 10px; background: #fff; color: #1d1d1f; font-size: 13px; font-weight: 400; outline: none; }
-	.offer-switchers select:focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
 	.offer-form-section h2 { display: flex; align-items: center; gap: 7px; margin: 0 0 13px; font-size: 14px; letter-spacing: -.02em; }
 	.offer-form-section h2 :global(svg) { color: #ff4f18; }
 	.offer-form-section > label, .offer-price-grid > label { display: grid; gap: 6px; margin-top: 11px; color: #4e4e53; font-size: 11px; font-weight: 650; }
-	.offer-form-section input, .offer-form-section textarea, .offer-form-section select { width: 100%; border: 1px solid #d3d3d8; border-radius: 9px; padding: 9px 10px; background: #fff; color: #1d1d1f; font-size: 13px; font-weight: 400; outline: none; }
-	.offer-form-section input:focus, .offer-form-section textarea:focus, .offer-form-section select:focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
-	.offer-form-section textarea { resize: vertical; }
+	.offer-sidebar :is(input, select, textarea):not([type='checkbox']) { width: 100%; box-sizing: border-box; border: 1px solid #d3d3d8; border-radius: 9px; background-color: #fff; color: #1d1d1f; font: inherit; font-size: 13px; font-weight: 400; line-height: 20px; outline: none; }
+	.offer-sidebar :is(input, select):not([type='checkbox']) { height: 40px; padding: 0 10px; }
+	.offer-sidebar select:not([type='checkbox']) { appearance: none; padding: 0 30px 0 10px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; }
+	.offer-sidebar textarea { height: auto; padding: 9px 10px; resize: vertical; }
+	.offer-sidebar :is(input, select, textarea):not([type='checkbox']):focus { border-color: #ff4f18; box-shadow: 0 0 0 3px rgba(255,79,24,.13); }
 	.offer-price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 	.gross-total { display: flex; justify-content: space-between; margin: 13px 0 0; padding: 10px 11px; border-radius: 9px; background: #f5f5f7; color: #606066; font-size: 12px; }
 	.gross-total strong { color: #1d1d1f; }
