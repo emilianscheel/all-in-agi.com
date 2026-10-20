@@ -208,6 +208,19 @@ export const passkey = pgTable('passkey', {
 	index('passkey_credentialID_idx').on(table.credentialID)
 ]);
 
+export const contactInquiries = pgTable('contact_inquiries', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	email: text('email').notNull(),
+	subject: text('subject').notNull(),
+	message: text('message').notNull(),
+	locale: text('locale').$type<Locale>().notNull().default('de'),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+}, (table) => [
+	index('contact_inquiries_created_at_idx').on(table.createdAt),
+	index('contact_inquiries_email_idx').on(table.email)
+]);
+
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
 	accounts: many(account),

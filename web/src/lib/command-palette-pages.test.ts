@@ -68,4 +68,25 @@ describe('command palette pages', () => {
 		expect(berlin?.icon).toBeDefined();
 		expect(berlin?.href.startsWith('/de/')).toBe(true);
 	});
+
+	test('includes landing section hash links', () => {
+		const de = getCommandPalettePages('de');
+		const en = getCommandPalettePages('en');
+		const expected = [
+			{ id: 'landing-custom-formats', hash: '#custom-formats', titleDe: 'Wie Sie es brauchen' },
+			{ id: 'landing-format', hash: '#format', titleDe: 'Ablaufplan' },
+			{ id: 'landing-pricing', hash: '#pricing', titleDe: 'Preis' },
+			{ id: 'landing-contact', hash: '#contact', titleDe: 'Kontakt' },
+			{ id: 'landing-faq', hash: '#faq', titleDe: 'Häufige Fragen' },
+			{ id: 'landing-closing', hash: '#closing', titleDe: 'Was shippt Ihr Team an einem Tag?' }
+		] as const;
+
+		for (const entry of expected) {
+			const pageDe = de.find((page) => page.id === entry.id);
+			const pageEn = en.find((page) => page.id === entry.id);
+			expect(pageDe?.href).toBe(`/de${entry.hash}`);
+			expect(pageEn?.href).toBe(`/en${entry.hash}`);
+			expect(pageDe?.title).toBe(entry.titleDe);
+		}
+	});
 });

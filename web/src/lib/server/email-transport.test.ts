@@ -39,6 +39,24 @@ describe('iCloud SMTP transport', () => {
 		}]);
 	});
 
+	test('uses an explicit replyTo when provided', async () => {
+		let submitted: any;
+		await sendEmailMessage(
+			{
+				...message,
+				replyTo: { address: 'visitor@example.com', name: 'Visitor' }
+			},
+			{
+				...credentials,
+				sendMail: async (options) => {
+					submitted = options;
+					return { accepted: ['ada@example.com'], messageId: '<mail-replyto@icloud.com>' };
+				}
+			}
+		);
+		expect(submitted.replyTo).toEqual({ address: 'visitor@example.com', name: 'Visitor' });
+	});
+
 	test('requires credentials before sending', async () => {
 		let called = false;
 		await expect(sendEmailMessage(message, {

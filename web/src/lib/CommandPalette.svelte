@@ -3,7 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { Command, Dialog, computeCommandScore } from 'bits-ui';
 	import { animate, type AnimationPlaybackControls } from 'motion';
-	import { Sparkles } from 'lucide-svelte';
 	import { animateContentHeight } from '$lib/animateContentHeight';
 	import { createListReorderAnimator } from '$lib/animateListReorder';
 	import { askFaqQuestion } from '$lib/faq-ask-client';
@@ -22,11 +21,8 @@
 		visible?: boolean;
 	};
 
-	type RankedItem =
-		| { kind: 'ai'; id: string; score: number }
-		| { kind: 'page'; id: string; score: number; page: CommandPalettePage };
+	type RankedItem = { id: string; score: number; page: CommandPalettePage };
 
-	const AI_VALUE = 'action:ask-ai';
 	const EASE = [0.22, 1, 0.36, 1] as const;
 	const MAX_HISTORY = 16;
 	const listAnimator = createListReorderAnimator();
@@ -52,27 +48,15 @@
 	let copy = $derived(ui[locale]);
 	let pages = $derived(getCommandPalettePages(locale));
 	let chatMode = $derived(messages.length > 0);
-	let aiKeywords = $derived(
-		locale === 'en'
-			? ['ask', 'ai', 'faq', 'question', 'help', 'search', 'anything']
-			: ['frage', 'ki', 'faq', 'ai', 'hilfe', 'suchen', 'ask', 'alles']
-	);
 	let rankedItems = $derived.by((): RankedItem[] => {
 		const needle = query.trim();
-		const aiScore = needle
-			? computeCommandScore(copy.cmdkAskAi, needle, aiKeywords)
-			: 1;
-		const items: RankedItem[] = [
-			{ kind: 'ai', id: AI_VALUE, score: aiScore },
-			...pages.map((page) => ({
-				kind: 'page' as const,
-				id: page.id,
-				score: needle
-					? computeCommandScore(page.title, needle, [page.path, ...page.keywords])
-					: 1,
-				page
-			}))
-		];
+		const items = pages.map((page) => ({
+			id: page.id,
+			score: needle
+				? computeCommandScore(page.title, needle, [page.path, page.href, ...page.keywords])
+				: 1,
+			page
+		}));
 		if (!needle) return items;
 		return items.filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
 	});
@@ -468,36 +452,23 @@
 											</div>
 										{:else}
 											{#each rankedItems as item (item.id)}
-												{#if item.kind === 'ai'}
-													<Command.Item
-														class="cmdk-item"
-														value={AI_VALUE}
-														keywords={aiKeywords}
-														onSelect={() => void startAi()}
-													>
-														<span class="cmdk-item-icon" aria-hidden="true">
-															<Sparkles size={16} strokeWidth={1.8} />
-														</span>
-														<span class="cmdk-item-title">{copy.cmdkAskAi}</span>
-													</Command.Item>
-												{:else}
-													{@const Icon = item.page.icon}
-													<Command.Item
-														class="cmdk-item"
-														value={item.page.id}
-														keywords={[
-															item.page.title,
-															item.page.path,
-															...item.page.keywords
-														]}
-														onSelect={() => void navigateTo(item.page.href)}
-													>
-														<span class="cmdk-item-icon" aria-hidden="true">
-															<Icon size={16} strokeWidth={1.8} />
-														</span>
-														<span class="cmdk-item-title">{item.page.title}</span>
-													</Command.Item>
-												{/if}
+												{@const Icon = item.page.icon}
+												<Command.Item
+													class="cmdk-item"
+													value={item.page.id}
+													keywords={[
+														item.page.title,
+														item.page.path,
+														item.page.href,
+														...item.page.keywords
+													]}
+													onSelect={() => void navigateTo(item.page.href)}
+												>
+													<span class="cmdk-item-icon" aria-hidden="true">
+														<Icon size={16} strokeWidth={1.8} />
+													</span>
+													<span class="cmdk-item-title">{item.page.title}</span>
+												</Command.Item>
 											{/each}
 										{/if}
 									</div>

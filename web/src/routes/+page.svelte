@@ -16,6 +16,7 @@
         Mail,
         MapPin,
         MessageCircle,
+        MessageSquare,
         MicVocal,
         Monitor,
         Network,
@@ -40,12 +41,14 @@
     import SeoHead from "$lib/SeoHead.svelte";
     import JsonLd from "$lib/JsonLd.svelte";
     import ClosingCta from "$lib/ClosingCta.svelte";
+    import ContactFormDialog from "$lib/ContactFormDialog.svelte";
     import FaqSection from "$lib/FaqSection.svelte";
     import { page } from "$app/state";
     import { localizedPath, type Locale } from "$lib/i18n";
 
     let locale = $derived((page.data.locale ?? "de") as Locale);
     let priceDuration = $derived(locale === "en" ? "1 full day" : "1 ganzer Tag");
+    let contactFormOpen = $state(false);
 
     const carouselTools = CODING_TOOLS.filter((tool) => tool.icon && tool.href);
     const carouselRepeats = [0, 1, 2, 3];
@@ -501,7 +504,7 @@
     </div>
 </section>
 
-<section class="custom-formats" aria-labelledby="custom-formats-title">
+<section id="custom-formats" class="custom-formats" aria-labelledby="custom-formats-title">
     <div class="section-wrap">
         <div use:reveal>
             <h2 id="custom-formats-title" class="section-title">
@@ -836,9 +839,28 @@
                     <span aria-hidden="true">›</span></a
                 >
             </article>
+            <article class="contact-card">
+                <MessageSquare size={46} strokeWidth={1.7} aria-hidden="true" />
+                <h3>{locale === "en" ? "Message" : "Nachricht"}</h3>
+                <p>
+                    {locale === "en"
+                        ? "Write us anytime. We reply by email."
+                        : "Schreiben Sie uns jederzeit. Wir antworten per E-Mail."}
+                </p>
+                <button
+                    class="contact-card-action"
+                    type="button"
+                    onclick={() => (contactFormOpen = true)}
+                >
+                    {locale === "en" ? "Send a message" : "Nachricht senden"}
+                    <span aria-hidden="true">›</span>
+                </button>
+            </article>
         </div>
     </div>
 </section>
+
+<ContactFormDialog {locale} bind:open={contactFormOpen} />
 
 {#if activeProfile}
     <button

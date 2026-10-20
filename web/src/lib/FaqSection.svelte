@@ -232,7 +232,7 @@
 	}
 </script>
 
-<section>
+<section id="faq">
 	<div class="section-wrap faq-wrap">
 		<div use:reveal>
 			<h2 class="section-title">{title}</h2>

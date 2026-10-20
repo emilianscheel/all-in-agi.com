@@ -33,6 +33,7 @@ export interface EmailAttachment {
 interface EmailMessageBase {
     to: { address: string; name: string };
     subject: string;
+    replyTo?: { address: string; name?: string };
     headers?: Record<string, string>;
     attachments?: EmailAttachment[];
 }
@@ -100,7 +101,12 @@ export async function sendEmailMessage(
         }
         options = {
             from: { address: CONTACT_EMAIL, name: CONTACT_SENDER_NAME },
-            replyTo: { address: CONTACT_EMAIL, name: CONTACT_SENDER_NAME },
+            replyTo: message.replyTo
+                ? {
+                        address: message.replyTo.address,
+                        name: message.replyTo.name?.trim() || undefined,
+                    }
+                : { address: CONTACT_EMAIL, name: CONTACT_SENDER_NAME },
             to: message.to,
             subject: message.subject,
             text: message.text,

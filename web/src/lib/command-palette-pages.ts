@@ -1,10 +1,16 @@
 import {
+	BadgeEuro,
 	CalendarCheck,
+	CircleHelp,
 	ClipboardList,
 	Clock,
 	FileText,
 	Home,
 	LayoutDashboard,
+	LayoutGrid,
+	ListOrdered,
+	Mail,
+	Rocket,
 	Scale,
 	Shield,
 	Timer,
@@ -29,6 +35,7 @@ export type CommandPalettePage = {
 type CorePage = {
 	id: string;
 	path: string;
+	hash?: string;
 	icon: CommandPaletteIcon;
 	group: { de: string; en: string };
 	title: { de: string; en: string };
@@ -45,6 +52,81 @@ const CORE_PAGES: CorePage[] = [
 		keywords: {
 			de: ['home', 'start', 'all in agi'],
 			en: ['home', 'start', 'all in agi']
+		}
+	},
+	{
+		id: 'landing-custom-formats',
+		path: '/',
+		hash: '#custom-formats',
+		icon: LayoutGrid,
+		group: { de: 'Startseite', en: 'Home' },
+		title: { de: 'Wie Sie es brauchen', en: 'Built around your needs' },
+		keywords: {
+			de: ['formate', 'custom', 'bedarf', 'anpassen'],
+			en: ['formats', 'custom', 'needs', 'built']
+		}
+	},
+	{
+		id: 'landing-format',
+		path: '/',
+		hash: '#format',
+		icon: ListOrdered,
+		group: { de: 'Startseite', en: 'Home' },
+		title: { de: 'Ablaufplan', en: 'Agenda' },
+		keywords: {
+			de: ['ablauf', 'agenda', 'format', 'tag'],
+			en: ['agenda', 'schedule', 'format', 'day']
+		}
+	},
+	{
+		id: 'landing-pricing',
+		path: '/',
+		hash: '#pricing',
+		icon: BadgeEuro,
+		group: { de: 'Startseite', en: 'Home' },
+		title: { de: 'Preis', en: 'Pricing' },
+		keywords: {
+			de: ['preis', 'preise', 'kosten', 'pricing'],
+			en: ['price', 'pricing', 'cost', 'preis']
+		}
+	},
+	{
+		id: 'landing-contact',
+		path: '/',
+		hash: '#contact',
+		icon: Mail,
+		group: { de: 'Startseite', en: 'Home' },
+		title: { de: 'Kontakt', en: 'Contact' },
+		keywords: {
+			de: ['kontakt', 'email', 'telefon', 'anruf'],
+			en: ['contact', 'email', 'phone', 'call']
+		}
+	},
+	{
+		id: 'landing-faq',
+		path: '/',
+		hash: '#faq',
+		icon: CircleHelp,
+		group: { de: 'Startseite', en: 'Home' },
+		title: { de: 'Häufige Fragen', en: 'Frequently asked questions' },
+		keywords: {
+			de: ['faq', 'fragen', 'häufig', 'hilfe'],
+			en: ['faq', 'questions', 'help', 'answers']
+		}
+	},
+	{
+		id: 'landing-closing',
+		path: '/',
+		hash: '#closing',
+		icon: Rocket,
+		group: { de: 'Startseite', en: 'Home' },
+		title: {
+			de: 'Was shippt Ihr Team an einem Tag?',
+			en: 'What will your team ship in one day?'
+		},
+		keywords: {
+			de: ['shippt', 'cta', 'abschluss', 'buchen'],
+			en: ['ship', 'cta', 'closing', 'book']
 		}
 	},
 	{
@@ -184,7 +266,7 @@ export function getCommandPalettePages(locale: Locale): CommandPalettePage[] {
 	const core = CORE_PAGES.map((page) => ({
 		id: page.id,
 		path: page.path,
-		href: localizedPath(locale, page.path),
+		href: `${localizedPath(locale, page.path)}${page.hash ?? ''}`,
 		title: page.title[locale],
 		group: page.group[locale],
 		keywords: page.keywords[locale],
