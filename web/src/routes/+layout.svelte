@@ -159,7 +159,7 @@
     {@render children()}
 </main>
 
-{#if !presentationRoute}
+{#if !presentationRoute && !offerRoute}
     {#if page.route.id === "/" || gtmArticleRoute}<GtmFooter
             currentSlug={currentGtmSlug}
             {locale}

@@ -12,6 +12,7 @@
         Contact,
         Cookie,
         Download,
+        Handshake,
         MapPin,
         MapPinned,
         Laptop,
@@ -1224,7 +1225,7 @@
                             type="button"
                             onclick={() => openAgreementModal("record")}
                             disabled={contractBusy || !billingComplete}
-                            >{locale === "en"
+                            ><Handshake size={18} aria-hidden="true" />{locale === "en"
                                 ? "Document mutual agreement"
                                 : "Beiderseitige Zustimmung dokumentieren"}</button
                         >

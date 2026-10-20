@@ -28,16 +28,17 @@
 	// svelte-ignore state_referenced_locally
 	let attachedBookingId = $state(hackathonId ?? '');
 	let previewUrl = $state('');
-	let generating = $state(true);
 	let urlError = $state('');
+	let previewMode = $state<OfferPdfMode>('offer');
 	let generatedBytes = $state<Uint8Array | undefined>();
-	let scopeDownloading = $state(false);
+	let generatedMode = $state<OfferPdfMode>('offer');
 	let savingBooking = $state(false);
 	let mounted = false;
 	let pdfTimer: ReturnType<typeof setTimeout> | undefined;
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 	let saveAbort: AbortController | undefined;
 	let lastPreviewUrl = '';
+	let renderGeneration = 0;
 	// svelte-ignore state_referenced_locally
 	let savedSnapshot = JSON.stringify(initialConfig);
 	let serialisedConfig = $derived(JSON.stringify(config));
@@ -76,20 +77,36 @@
 	}
 
 	async function renderPdf() {
-		generating = true;
+		const generation = ++renderGeneration;
+		const mode = previewMode;
 		try {
-			const bytes = await createOfferPdf(config, { locale });
+			const bytes = await createOfferPdf(config, { mode, locale });
+			if (generation !== renderGeneration) return;
 			generatedBytes = bytes;
+			generatedMode = mode;
 			const url = URL.createObjectURL(pdfBlob(bytes));
 			previewUrl = url;
 			if (lastPreviewUrl) URL.revokeObjectURL(lastPreviewUrl);
 			lastPreviewUrl = url;
 			urlError = '';
 		} catch (error) {
+			if (generation !== renderGeneration) return;
+			generatedBytes = undefined;
 			urlError = pdfError(error);
-		} finally {
-			generating = false;
 		}
+	}
+
+	function downloadPdf() {
+		if (!generatedBytes) return;
+		const suffix = generatedMode === 'scope' ? 'leistungsbeschreibung' : (locale === 'en' ? 'offer' : 'angebot');
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(pdfBlob(generatedBytes));
+		const base = (config.companyName || 'all-in-agi').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'all-in-agi';
+		link.download = `${base}-${suffix}.pdf`;
+		document.body.append(link);
+		link.click();
+		link.remove();
+		setTimeout(() => URL.revokeObjectURL(link.href), 0);
 	}
 
 	async function saveConfig() {
@@ -164,42 +181,20 @@
 		}
 	}
 
-	function savePdf(bytes: Uint8Array, suffix: string) {
-		const link = document.createElement('a');
-		link.href = URL.createObjectURL(pdfBlob(bytes));
-		const base = (config.companyName || 'all-in-agi').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'all-in-agi';
-		link.download = `${base}-${suffix}.pdf`;
-		document.body.append(link);
-		link.click();
-		link.remove();
-		setTimeout(() => URL.revokeObjectURL(link.href), 0);
-	}
-
-	async function downloadPdf(mode: OfferPdfMode = 'offer') {
-		if (mode === 'offer') {
-			if (!generatedBytes) return;
-			savePdf(generatedBytes, locale === 'en' ? 'offer' : 'angebot');
-			return;
-		}
-		scopeDownloading = true;
-		try {
-			savePdf(await createOfferPdf(config, { mode: 'scope', locale }), 'leistungsbeschreibung');
-			urlError = '';
-		} catch (error) {
-			urlError = pdfError(error);
-		} finally {
-			scopeDownloading = false;
-		}
-	}
+	$effect(() => {
+		serialisedConfig;
+		if (!mounted) return;
+		if (saveTimer) clearTimeout(saveTimer);
+		if (serialisedConfig !== savedSnapshot) saveTimer = setTimeout(() => void saveConfig(), 400);
+	});
 
 	$effect(() => {
 		serialisedConfig;
 		locale;
+		previewMode;
 		if (!mounted) return;
 		if (pdfTimer) clearTimeout(pdfTimer);
-		if (saveTimer) clearTimeout(saveTimer);
 		pdfTimer = setTimeout(() => void renderPdf(), 120);
-		if (serialisedConfig !== savedSnapshot) saveTimer = setTimeout(() => void saveConfig(), 400);
 	});
 
 	onMount(() => {
@@ -235,6 +230,12 @@
 						{/each}
 					</select>
 				</label>
+				<label>{locale === 'en' ? 'Version' : 'Version'}
+					<select bind:value={previewMode}>
+						<option value="offer">{locale === 'en' ? 'Offer' : 'Angebot'}</option>
+						<option value="scope">{locale === 'en' ? 'Statement of work' : 'Leistungsbeschreibung'}</option>
+					</select>
+				</label>
 			</div>
 
 			<section class="offer-form-section" aria-labelledby="recipient-heading">
@@ -268,22 +269,21 @@
 			</section>
 			{#if urlError}<p class="offer-url-error" role="alert">{urlError}</p>{/if}
 		</div>
-
 		<div class="offer-download-wrap">
-			<button type="button" class="offer-download" onclick={() => downloadPdf('offer')} disabled={!generatedBytes || scopeDownloading}><Download size={17} />{locale === 'en' ? (generating ? 'Updating PDF …' : 'Download PDF') : (generating ? 'PDF wird aktualisiert …' : 'PDF herunterladen')}</button>
-			<button type="button" class="offer-download offer-download-secondary" onclick={() => downloadPdf('scope')} disabled={!generatedBytes || scopeDownloading}><Download size={17} />{locale === 'en' ? (scopeDownloading ? 'Creating statement of work …' : 'Statement of work') : (scopeDownloading ? 'Leistungsbeschreibung wird erstellt …' : 'Leistungsbeschreibung')}</button>
+			<button type="button" class="button-primary offer-download" onclick={downloadPdf} disabled={!generatedBytes}><Download size={18} aria-hidden="true" />{locale === 'en' ? 'Download PDF' : 'PDF herunterladen'}</button>
 		</div>
 	</aside>
 
-	<section class="offer-preview" aria-label={locale === 'en' ? 'PDF preview' : 'PDF-Vorschau'}>
-		{#if previewUrl}<iframe title={locale === 'en' ? 'Offer PDF preview' : 'Vorschau des Angebots als PDF'} src={previewUrl}></iframe>{:else}<div class="offer-preview-loading">{locale === 'en' ? 'Creating PDF …' : 'PDF wird erstellt …'}</div>{/if}
+	<section class="offer-preview" aria-label={previewMode === 'scope' ? (locale === 'en' ? 'Statement of work preview' : 'Vorschau der Leistungsbeschreibung') : (locale === 'en' ? 'Offer preview' : 'Angebotsvorschau')}>
+		{#if previewUrl}<iframe title={previewMode === 'scope' ? (locale === 'en' ? 'Statement of work PDF preview' : 'Vorschau der Leistungsbeschreibung als PDF') : (locale === 'en' ? 'Offer PDF preview' : 'Vorschau des Angebots als PDF')} src={previewUrl}></iframe>{:else}<div class="offer-preview-loading">{locale === 'en' ? 'Creating PDF …' : 'PDF wird erstellt …'}</div>{/if}
 	</section>
 </div>
 
 <style>
 	.offer-builder { min-height: calc(100svh - 44px); display: grid; grid-template-columns: minmax(330px, 398px) minmax(0, 1fr); background: #fff; color: #1d1d1f; }
-	.offer-sidebar { position: sticky; top: 44px; height: calc(100svh - 44px); display: grid; grid-template-rows: minmax(0, 1fr) auto; background: #f5f5f7; border-right: 1px solid #e4e4e8; }
-	.offer-sidebar-scroll { overflow: auto; padding: 24px 24px 168px; }
+	.offer-sidebar { position: sticky; top: 44px; height: calc(100svh - 44px); display: flex; flex-direction: column; background: #f5f5f7; border-right: 1px solid #e4e4e8; }
+	.offer-sidebar-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; padding: 24px; }
+	.offer-sidebar-scroll::-webkit-scrollbar { display: none; }
 	.offer-switchers { display: grid; gap: 12px; padding-bottom: 8px; }
 	.offer-switchers label { display: grid; gap: 6px; color: #4e4e53; font-size: 11px; font-weight: 650; }
 	.offer-form-section { padding: 20px 0; border-bottom: 1px solid #dfdfe4; }
@@ -307,13 +307,11 @@
 	.offer-service-label { display: block; color: #252529; font-size: 12px; font-weight: 400; line-height: 1.25; }
 	.offer-service small { display: block; margin-top: 3px; color: #74747a; font-size: 10px; line-height: 1.35; }
 	.offer-url-error { margin: 16px 0 0; color: #9a2c0d; font-size: 12px; line-height: 1.4; }
-	.offer-download-wrap { position: absolute; right: 0; bottom: 0; left: 0; display: grid; gap: 8px; padding: 16px 24px 22px; border-top: 1px solid #dedee3; background: rgba(245,245,247,.94); backdrop-filter: blur(12px); }
-	.offer-download { width: 100%; display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; border: 0; border-radius: 12px; background: #ff4f18; color: #fff; box-shadow: 0 7px 16px rgba(180,49,8,.2); font-size: 13px; font-weight: 700; }
-	.offer-download-secondary { background: #fff; color: #1d1d1f; box-shadow: none; border: 1px solid #d3d3d8; }
-	.offer-download:disabled { opacity: .55; cursor: not-allowed; }
+	.offer-download-wrap { padding: 8px 24px 22px; }
+	.offer-download { width: 100%; gap: 8px; }
 	.offer-preview { min-width: 0; min-height: calc(100svh - 44px); background: #fff; }
 	.offer-preview iframe { display: block; width: 100%; height: calc(100svh - 44px); border: 0; }
 	.offer-preview-loading { display: grid; width: 100%; height: 100%; place-items: center; color: #6e6e73; font-size: 14px; }
-	@media (max-width: 820px) { .offer-builder { display: block; } .offer-sidebar { position: relative; top: auto; height: auto; min-height: auto; border-right: 0; } .offer-sidebar-scroll { overflow: visible; padding-bottom: 148px; } .offer-download-wrap { position: sticky; } .offer-preview { min-height: auto; } .offer-preview iframe { height: min(130vw, 850px); min-height: 520px; } }
-	@media (max-width: 420px) { .offer-sidebar-scroll { padding: 20px 17px 148px; } .offer-price-grid { grid-template-columns: 1fr; gap: 0; } }
+	@media (max-width: 820px) { .offer-builder { display: block; } .offer-sidebar { position: relative; top: auto; height: auto; min-height: auto; border-right: 0; } .offer-sidebar-scroll { overflow: visible; flex: none; } .offer-preview { min-height: auto; } .offer-preview iframe { height: min(130vw, 850px); min-height: 520px; } }
+	@media (max-width: 420px) { .offer-sidebar-scroll { padding: 20px 17px; } .offer-price-grid { grid-template-columns: 1fr; gap: 0; } }
 </style>

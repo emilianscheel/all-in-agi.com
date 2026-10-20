@@ -106,6 +106,18 @@
 				<strong>{data.summary.bookingCount}</strong>
 			</article>
 			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Total net revenue' : 'Gesamter Nettoumsatz'}</span>
+				<strong>{formatPrice(data.summary.totalRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Pipeline net revenue' : 'Pipeline-Nettoumsatz'}</span>
+				<strong>{formatPrice(data.summary.pipelineRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
+				<span>{locale === 'en' ? 'Contracted net revenue' : 'Vertraglicher Nettoumsatz'}</span>
+				<strong>{formatPrice(data.summary.contractedRevenue)}</strong>
+			</article>
+			<article class="dashboard-stat-card">
 				<span>{locale === 'en' ? 'Booked net revenue' : 'Gebuchter Nettoumsatz'}</span>
 				<strong>{formatPrice(data.summary.contractedRevenue)}</strong>
 			</article>

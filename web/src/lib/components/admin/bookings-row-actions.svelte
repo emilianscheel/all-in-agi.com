@@ -7,6 +7,7 @@
 		Ellipsis,
 		ExternalLink,
 		Eye,
+		Handshake,
 		Mail,
 		RotateCcw,
 		Share
@@ -125,6 +126,7 @@
 				disabled={!billingComplete}
 				onSelect={() => onOpenAgreementRecord(booking)}
 			>
+				<Handshake size={16} aria-hidden="true" />
 				{locale === 'en' ? 'Document mutual agreement' : 'Beiderseitige Zustimmung dokumentieren'}
 			</DropdownMenu.Item>
 		{/if}
