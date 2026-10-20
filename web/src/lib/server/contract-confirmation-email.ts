@@ -112,9 +112,8 @@ export interface ContractConfirmationDependencies extends EmailTransportDependen
 	createScopePdf?: (config: OfferConfiguration) => Promise<Uint8Array>;
 }
 
-function scopeFilename(config: OfferConfiguration) {
-	const base = (config.companyName || 'all-in-agi').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'all-in-agi';
-	return `${base}-leistungsbeschreibung.pdf`;
+function scopeFilename() {
+	return 'Leistungsbeschreibung.pdf';
 }
 
 async function createScopePdf(config: OfferConfiguration) {
@@ -148,7 +147,7 @@ export async function sendContractConfirmationEmail(
 		const scopePdf = await (dependencies.createScopePdf ?? createScopePdf)(config);
 		attachments.push({
 			content: bytesToBase64(scopePdf),
-			filename: scopeFilename(config),
+			filename: scopeFilename(),
 			type: 'application/pdf',
 			disposition: 'attachment'
 		});

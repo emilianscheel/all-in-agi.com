@@ -114,7 +114,7 @@ describe('contract confirmation email', () => {
 		expect(scopeConfig).toEqual(config);
 		expect(submissions[0].attachments.map((attachment: { filename: string }) => attachment.filename)).toEqual([
 			'AGB-2026-10-19.1-H23-1D9-GX2.pdf',
-			'hitachi-rail-leistungsbeschreibung.pdf'
+			'Leistungsbeschreibung.pdf'
 		]);
 	});
 
