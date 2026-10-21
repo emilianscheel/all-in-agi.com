@@ -1,23 +1,39 @@
 <script lang="ts">
+	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
 	import { slides, type Slide } from '$lib/slides';
 
-	let selected = $state<number | null>(null);
-	let openSlide = $derived(selected === null ? null : slides[selected]);
+	let presenting = $state(false);
+	let index = $state(0);
+	let slide = $derived(slides[index]);
+	let last = slides.length - 1;
 
-	function open(index: number) {
-		selected = index;
+	function start(at = 0) {
+		index = at;
+		presenting = true;
 	}
 
 	function close() {
-		selected = null;
+		presenting = false;
+	}
+
+	function go(next: number) {
+		index = Math.min(last, Math.max(0, next));
 	}
 
 	function onKey(event: KeyboardEvent) {
+		if (!presenting) return;
 		if (event.key === 'Escape') close();
+		else if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'PageDown') {
+			event.preventDefault();
+			go(index + 1);
+		} else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+			event.preventDefault();
+			go(index - 1);
+		}
 	}
 
-	function titleOf(slide: Slide) {
-		return slide.title;
+	function titleOf(item: Slide) {
+		return item.title;
 	}
 </script>
 
@@ -30,21 +46,22 @@
 <div class="dashboard-page">
 	<div class="dashboard-heading">
 		<h1>Slides</h1>
+		<button class="button-primary" type="button" onclick={() => start(0)}>Präsentation starten</button>
 	</div>
 	<div class="slide-grid">
-		{#each slides as slide, index}
-			<button type="button" class="slide-card" onclick={() => open(index)} aria-label={titleOf(slide)}>
-				<span class="slide-number">{index + 1}</span>
-				{#if slide.kind === 'intro'}
+		{#each slides as item, itemIndex}
+			<button type="button" class="slide-card" onclick={() => start(itemIndex)} aria-label={titleOf(item)}>
+				<span class="slide-number">{itemIndex + 1}</span>
+				{#if item.kind === 'intro'}
 					<p class="kicker">ALL IN AGI</p>
-					<strong>{slide.title}</strong>
-					<em>{slide.lede}</em>
+					<strong>{item.title}</strong>
+					<em>{item.lede}</em>
 				{:else}
-					<p class="kicker">{slide.kicker}</p>
-					<strong>{slide.title}</strong>
+					<p class="kicker">{item.kicker}</p>
+					<strong>{item.title}</strong>
 					<ul>
-						{#each slide.points as point}
-							<li><b>{point.label}</b><span>{point.text}</span></li>
+						{#each item.points as point}
+							<li>{point}</li>
 						{/each}
 					</ul>
 				{/if}
@@ -53,37 +70,51 @@
 	</div>
 </div>
 
-{#if openSlide}
-	<button class="slide-backdrop" type="button" aria-label="Schließen" onclick={close}></button>
-	<div class="slide-open" role="dialog" aria-modal="true" aria-label={titleOf(openSlide)}>
-		<button class="slide-close" type="button" onclick={close}>Schließen</button>
-		{#if openSlide.kind === 'intro'}
-			<p class="open-kicker">ALL IN AGI</p>
-			<h2>{openSlide.title}</h2>
-			<p class="open-lede">{openSlide.lede}</p>
-		{:else}
-			<p class="open-kicker">{openSlide.kicker}</p>
-			<h2>{openSlide.title}</h2>
-			<ul>
-				{#each openSlide.points as point}
-					<li><b>{point.label}</b><span>{point.text}</span></li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
+{#if presenting}
+	<section class="deck" aria-label="Präsentation">
+		<header>
+			<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
+			<p>ALL IN AGI</p>
+			<span>{index + 1} / {slides.length}</span>
+		</header>
+		<div class="stage">
+			{#if slide.kind === 'intro'}
+				<p class="deck-kicker">ALL IN AGI</p>
+				<h2>{slide.title}</h2>
+				<p class="lede">{slide.lede}</p>
+			{:else}
+				<p class="deck-kicker">{slide.kicker}</p>
+				<h2>{slide.title}</h2>
+				<ul>
+					{#each slide.points as point}
+						<li>{point}</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+		<footer>
+			<button type="button" onclick={() => go(index - 1)} disabled={index === 0} aria-label="Vorherige Folie">
+				<ChevronLeft size={22} aria-hidden="true" />
+			</button>
+			<button class="deck-exit" type="button" onclick={close}>Beenden</button>
+			<button type="button" onclick={() => go(index + 1)} disabled={index === last} aria-label="Nächste Folie">
+				<ChevronRight size={22} aria-hidden="true" />
+			</button>
+		</footer>
+	</section>
 {/if}
 
 <style>
 	.slide-grid {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 16px;
 	}
 	.slide-card {
 		position: relative;
 		width: 100%;
-		aspect-ratio: 16 / 10;
-		padding: 18px 16px 14px;
+		min-height: 220px;
+		padding: 22px 20px 18px;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
@@ -98,129 +129,99 @@
 	.slide-card:hover { transform: translateY(-1px); }
 	.slide-number {
 		position: absolute;
-		top: 12px;
-		right: 14px;
+		top: 14px;
+		right: 16px;
 		color: #6f6c66;
 		font-size: 12px;
 		font-weight: 650;
 		font-variant-numeric: tabular-nums;
 	}
-	.kicker {
+	.kicker, .deck-kicker {
 		margin: 0;
 		color: #ff4f18;
-		font-size: 10px;
 		font-weight: 700;
 		letter-spacing: .12em;
 		text-transform: uppercase;
 	}
+	.kicker { font-size: 11px; }
 	.slide-card strong {
-		margin-top: 8px;
-		font-size: 18px;
+		margin-top: 10px;
+		max-width: 16ch;
+		font-size: 26px;
 		line-height: 1.05;
 		letter-spacing: -.03em;
 	}
 	.slide-card em {
-		margin-top: 8px;
+		margin-top: 10px;
 		font-style: normal;
-		font-size: 12px;
-		line-height: 1.3;
+		font-size: 15px;
+		line-height: 1.35;
 	}
-	.slide-card ul {
-		width: 100%;
-		margin: 10px 0 0;
+	.slide-card ul, .deck ul {
+		margin: 16px 0 0;
 		padding: 0;
 		list-style: none;
-		border-top: 1px solid color-mix(in srgb, #151515 12%, transparent);
 	}
-	.slide-card li {
-		display: grid;
-		grid-template-columns: 72px minmax(0, 1fr);
-		gap: 8px;
-		padding: 5px 0;
-		border-bottom: 1px solid color-mix(in srgb, #151515 12%, transparent);
-		font-size: 10px;
-		line-height: 1.25;
+	.slide-card li, .deck li {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
 	}
-	.slide-card li span {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	.slide-card li { margin-top: 8px; font-size: 13px; line-height: 1.35; }
+	.slide-card li::before, .deck li::before {
+		content: '';
+		flex: 0 0 auto;
+		width: 7px;
+		height: 7px;
+		margin-top: .45em;
+		border-radius: 50%;
+		background: #ff4f18;
 	}
-	.slide-backdrop {
+	.deck {
 		position: fixed;
 		inset: 0;
-		z-index: 40;
-		width: 100%;
-		height: 100%;
-		border: 0;
-		border-radius: 0;
-		background: color-mix(in srgb, #151515 45%, transparent);
-		cursor: pointer;
-	}
-	.slide-open {
-		position: fixed;
-		z-index: 41;
-		left: 50%;
-		top: 50%;
-		width: min(860px, calc(100vw - 32px));
-		max-height: calc(100svh - 48px);
-		overflow: auto;
-		padding: 36px 40px 32px;
-		transform: translate(-50%, -50%);
-		border-radius: 24px;
+		z-index: 50;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr) auto;
 		background: #f5f1e8;
 		color: #151515;
 	}
-	.slide-close {
-		position: absolute;
-		top: 16px;
-		right: 16px;
-		min-height: 34px;
-		padding: 6px 12px;
-		border: 1px solid color-mix(in srgb, #151515 16%, transparent);
-		border-radius: 999px;
+	.deck header, .deck footer {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: max(22px, env(safe-area-inset-top)) clamp(28px, 5vw, 88px) 18px;
+	}
+	.deck footer { justify-content: space-between; padding-bottom: max(22px, env(safe-area-inset-bottom)); }
+	.deck header img { width: 36px; height: 36px; object-fit: contain; }
+	.deck header p { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: .12em; }
+	.deck header span { margin-left: auto; color: #6f6c66; font-weight: 650; font-variant-numeric: tabular-nums; }
+	.stage { width: min(980px, 100%); margin: 0 auto; padding: clamp(28px, 6vh, 72px) clamp(28px, 5vw, 88px); display: flex; flex-direction: column; justify-content: center; }
+	.deck-kicker { font-size: 15px; }
+	.deck h2 {
+		margin: 16px 0 0;
+		max-width: 14ch;
+		font-size: clamp(48px, 6vw, 84px);
+		line-height: .96;
+		letter-spacing: -.045em;
+	}
+	.lede { margin: 24px 0 0; font-size: clamp(22px, 2.4vw, 32px); line-height: 1.3; }
+	.deck li { margin-top: 22px; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.35; letter-spacing: -.02em; }
+	.deck footer button {
+		width: 48px;
+		height: 48px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		border: 1px solid color-mix(in srgb, #151515 18%, transparent);
+		border-radius: 50%;
 		background: transparent;
 		color: inherit;
-		font: inherit;
-		font-size: 13px;
 		cursor: pointer;
 	}
-	.open-kicker {
-		margin: 0;
-		color: #ff4f18;
-		font-size: 13px;
-		font-weight: 700;
-		letter-spacing: .12em;
-		text-transform: uppercase;
-	}
-	.slide-open h2 {
-		margin: 12px 0 0;
-		max-width: 16ch;
-		font-size: clamp(36px, 5vw, 60px);
-		line-height: .96;
-		letter-spacing: -.04em;
-	}
-	.open-lede { margin: 18px 0 0; font-size: 22px; }
-	.slide-open ul {
-		margin: 28px 0 0;
-		padding: 0;
-		list-style: none;
-		border-top: 1px solid color-mix(in srgb, #151515 14%, transparent);
-	}
-	.slide-open li {
-		display: grid;
-		grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
-		gap: 18px;
-		padding: 14px 0;
-		border-bottom: 1px solid color-mix(in srgb, #151515 14%, transparent);
-		font-size: 16px;
-		line-height: 1.35;
-	}
-	@media (max-width: 900px) {
-		.slide-grid { grid-template-columns: 1fr 1fr; }
-	}
-	@media (max-width: 640px) {
+	.deck footer button:disabled { opacity: .35; cursor: not-allowed; }
+	.deck-exit { width: auto !important; min-width: 120px; padding: 0 18px !important; border-radius: 999px !important; font: inherit; font-size: 15px; font-weight: 650; }
+	@media (max-width: 800px) {
 		.slide-grid { grid-template-columns: 1fr; }
-		.slide-open li { grid-template-columns: 1fr; gap: 4px; }
 	}
 </style>
