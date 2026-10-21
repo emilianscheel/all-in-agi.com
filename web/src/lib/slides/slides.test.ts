@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { orderSlides, parseSlideDocument, slidesFromDocuments, visibleSlides } from './parse';
+import { editorSource, orderSlides, parseEditorDocument, parseSlideDocument, slidesFromDocuments, slidesWithSavedDocuments, visibleSlides, withSavedSources } from './parse';
 
 const directory = import.meta.dir;
 
@@ -34,6 +34,26 @@ describe('slide documents', () => {
 		});
 		expect(orderSlides(slides, ['02-b', '01-a']).map((slide) => slide.id)).toEqual(['02-b', '01-a', '03-c']);
 		expect(visibleSlides(slides, ['02-b', '01-a'], ['01-a']).map((slide) => slide.id)).toEqual(['02-b', '03-c']);
+	});
+
+	test('reads a title and sentences from the editor', () => {
+		const slides = slidesFromDocuments({ '01-a.txt': 'Kopf\nTitel\n- Eins.' });
+		expect(slides[0]?.source).toBe(editorSource({ title: 'Titel', points: ['Eins.'] }));
+		expect(parseEditorDocument('Neue Überschrift\n\n- Erster Satz\n- Zweiter Satz')).toEqual({
+			title: 'Neue Überschrift',
+			points: ['Erster Satz', 'Zweiter Satz']
+		});
+		expect(withSavedSources(slides, { '01-a': 'Geändert\n- Nur noch das.' })[0]).toMatchObject({
+			title: 'Geändert',
+			points: ['Nur noch das.'],
+			source: 'Geändert\n- Nur noch das.'
+		});
+		expect(withSavedSources(slides, { '01-a': 'ohne satz' })[0]?.title).toBe('Titel');
+		expect(slidesWithSavedDocuments(slides, [
+			{ id: 'slide-200', source: 'Neu\n- Ein Satz' },
+			{ id: 'slide-100', source: 'Früher\n- Alter Satz' },
+			{ id: '01-a', source: 'Geändert\n- Nur noch das.' }
+		]).map((slide) => slide.id)).toEqual(['01-a', 'slide-100', 'slide-200']);
 	});
 
 	test('rejects a document with more than six sentences', () => {

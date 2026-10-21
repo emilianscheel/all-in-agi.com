@@ -6,6 +6,7 @@ export type SlideDocument = {
 
 export type Slide = SlideDocument & {
 	id: string;
+	source: string;
 };
 
 /** Turns one slide text file into the slide shown on screen. */
@@ -25,6 +26,65 @@ export function parseSlideDocument(source: string, name = 'slide'): SlideDocumen
 		throw new Error(`${name}: eine Folie hat ein bis sechs Sätze.`);
 	}
 	return { kicker, title, points };
+}
+
+/** Textarea shape: the title, then one sentence per line starting with "- ". */
+export function editorSource(slide: Pick<SlideDocument, 'title' | 'points'>) {
+	return [slide.title, '', ...slide.points.map((point) => `- ${point}`)].join('\n');
+}
+
+export function parseEditorDocument(source: string, name = 'slide'): Pick<SlideDocument, 'title' | 'points'> {
+	const lines = source
+		.replace(/^\uFEFF/, '')
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0 && !line.startsWith('#'));
+	const [title, ...rest] = lines;
+	if (!title || title.startsWith('- ')) throw new Error(`${name}: die erste Zeile ist der Titel.`);
+	if (rest.some((line) => !line.startsWith('- '))) {
+		throw new Error(`${name}: jeder Satz beginnt mit "- ".`);
+	}
+	const points = rest.map((line) => line.slice(2).trim());
+	if (points.some((point) => point.length === 0) || points.length < 1 || points.length > 6) {
+		throw new Error(`${name}: eine Folie hat ein bis sechs Sätze.`);
+	}
+	return { title, points };
+}
+
+/** File slides, then slides that exist only as saved editor text. */
+export function slidesWithSavedDocuments(
+	fileSlides: readonly Slide[],
+	saved: readonly { id: string; source: string }[]
+): Slide[] {
+	const byId = Object.fromEntries(saved.map((row) => [row.id, row.source]));
+	const merged = withSavedSources(fileSlides, byId);
+	const known = new Set(merged.map((slide) => slide.id));
+	const extras = saved
+		.filter((row) => !known.has(row.id))
+		.sort((left, right) => left.id.localeCompare(right.id))
+		.flatMap((row) => {
+			try {
+				const parsed = parseEditorDocument(row.source, row.id);
+				return [{ id: row.id, kicker: '', title: parsed.title, points: parsed.points, source: row.source }];
+			} catch {
+				return [];
+			}
+		});
+	return [...merged, ...extras];
+}
+
+/** Saved editor text replaces the file copy. An unreadable save keeps the file copy. */
+export function withSavedSources(slides: readonly Slide[], saved: Readonly<Record<string, string>>): Slide[] {
+	return slides.map((slide) => {
+		const source = saved[slide.id];
+		if (source == null) return slide;
+		try {
+			const parsed = parseEditorDocument(source, slide.id);
+			return { ...slide, title: parsed.title, points: parsed.points, source };
+		} catch {
+			return slide;
+		}
+	});
 }
 
 export function slideId(path: string) {
@@ -58,5 +118,8 @@ export function orderSlides(slides: readonly Slide[], ids: readonly string[]): S
 export function slidesFromDocuments(sources: Record<string, string>): Slide[] {
 	return Object.entries(sources)
 		.sort(([left], [right]) => left.localeCompare(right, 'en'))
-		.map(([path, source]) => ({ ...parseSlideDocument(source, path), id: slideId(path) }));
+		.map(([path, source]) => {
+			const document = parseSlideDocument(source, path);
+			return { ...document, id: slideId(path), source: editorSource(document) };
+		});
 }
