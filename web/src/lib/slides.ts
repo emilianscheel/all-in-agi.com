@@ -1,65 +1,78 @@
-export type Slide = {
-	kicker: string;
-	title: string;
-	points: readonly string[];
+export type SlidePoint = {
+	label: string;
+	text: string;
 };
 
-/** Intro-call questions from script/action.md, written to present on screen. */
+export type IntroSlide = {
+	kind: 'intro';
+	title: string;
+	lede: string;
+};
+
+export type ContentSlide = {
+	kind: 'content';
+	kicker: string;
+	title: string;
+	points: readonly [SlidePoint, SlidePoint, SlidePoint];
+};
+
+export type Slide = IntroSlide | ContentSlide;
+
+/** Company deck: one title slide, then the same header-and-content layout. */
 export const slides = [
 	{
-		kicker: 'Erstgespräch',
-		title: 'Intro Call',
+		kind: 'intro',
+		title: 'Your Team Can Just Build Things',
+		lede: 'Agentic Engineering Hackathons.'
+	},
+	{
+		kind: 'content',
+		kicker: 'Wir',
+		title: 'Zwei Facilitators',
 		points: [
-			'Fragen, bevor wir den Hackathon bei Ihnen vor Ort bauen.',
-			'Ort, Verpflegung, Tools und Challenges.'
+			{ label: 'Emilian Scheel', text: 'emilian@all-in-agi.com' },
+			{ label: 'Maddox Sciuchetti', text: 'maddox@all-in-agi.com' },
+			{ label: 'Vor Ort', text: 'Wir kommen zu Ihrem Team und moderieren den Tag in Deutschland.' }
 		]
 	},
 	{
-		kicker: 'Allgemein',
-		title: 'Ziel des Hackathons',
+		kind: 'content',
+		kicker: 'Was wir machen',
+		title: 'Kein Training. Ein Hackathon.',
 		points: [
-			'Wo steht KI in Ihrer Organisation?',
-			'Was wollen Sie mit dem Hackathon erreichen?',
-			'Wobei können wir dabei helfen?'
+			{ label: 'Ein Tag', text: 'Ihr Team baut einen funktionierenden Prototyp, nicht eine Folie.' },
+			{ label: 'Coding Agents', text: 'Aktuelle AI Developer Tools, Hands-on, an echten Aufgaben.' },
+			{ label: 'Ihre Cases', text: 'Die Challenges kommen aus Ihrem Unternehmen, nicht aus einem Lehrbuch.' }
 		]
 	},
 	{
-		kicker: 'Ort',
-		title: 'Raum und Technik',
+		kind: 'content',
+		kicker: 'Der Tag',
+		title: 'Von Kickoff bis Demo',
 		points: [
-			'Gibt es einen Ort, und reicht der Platz für alle?',
-			'Gibt es einen Beamer oder ein digitales Whiteboard?',
-			'Können wir per HDMI oder Thunderbolt anschließen?',
-			'Sieht jeder den Bildschirm?',
-			'Ist der Raum vorbereitet, oder sollen wir das übernehmen? Dann sind wir gerne einen Tag vorher da.',
-			'Können Sie uns ein Foto des Raums schicken?'
+			{ label: '09:00 Kickoff', text: 'Live Demo, Tool Stack, Teams und Challenges.' },
+			{ label: '09:30 Build', text: 'Vom Problem zum Prototype, mit Pizza-Lunch um 13 Uhr.' },
+			{ label: '16:30 Demo', text: 'Problem, Lösung, wie es genutzt wird, und wie es gebaut wurde.' }
 		]
 	},
 	{
-		kicker: 'Verpflegung',
-		title: 'Mittagessen',
+		kind: 'content',
+		kicker: 'Der Rahmen',
+		title: 'Was wir mitbringen',
 		points: [
-			'Pizza und Cookies, oder etwas anderes?',
-			'Wann soll das Mittagessen sein?',
-			'Bei Start um 9 Uhr sind wir ab 8 Uhr im Gebäude.'
+			{ label: 'Challenge Design', text: 'Wir schneiden die Aufgaben so, dass an einem Tag etwas entsteht.' },
+			{ label: 'Demo und Follow-up', text: 'Der Tag endet mit einer Demo Session und einem nächsten Schritt.' },
+			{ label: 'Vor Ort', text: 'Pizza, Cookies, Event-Fotos und ein Siegerposter, in Ihren Räumen.' }
 		]
 	},
 	{
-		kicker: 'Tools',
-		title: 'Setup',
+		kind: 'content',
+		kicker: 'Kontakt',
+		title: 'ALL IN AGI',
 		points: [
-			'Gibt es schon agentic coding tools, oder sollen wir das übernehmen?',
-			'Kennen die Teilnehmenden die Tools?',
-			'Wie technisch ist die Gruppe ungefähr?',
-			'Haben die Leute Admin-Rechte, oder Zugang zu virtuellen Maschinen?'
-		]
-	},
-	{
-		kicker: 'Challenge',
-		title: 'Richtung',
-		points: [
-			'Sollen die Challenges in eine bestimmte Richtung gehen?',
-			'Oder bauen wir interessante Tracks?'
+			{ label: 'Mail', text: 'go@all-in-agi.com' },
+			{ label: 'Telefon', text: '0152 57257750' },
+			{ label: 'Website', text: 'all-in-agi.com' }
 		]
 	}
 ] as const satisfies readonly Slide[];
