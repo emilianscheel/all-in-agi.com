@@ -1,17 +1,37 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import type { Slide } from '$lib/slides/parse';
+	import { orderSlides, type Slide } from '$lib/slides/parse';
 	import type { PageData } from './$types';
 
+	const orderStorageKey = 'all-in-agi.slides.order';
+
 	let { data }: { data: PageData } = $props();
-	let slides = $derived(data.slides);
+	let savedOrder = $state<string[]>([]);
+	let slides = $derived(orderSlides(data.slides, savedOrder));
 
 	let presenting = $state(false);
 	let index = $state(0);
 	let slide = $derived(slides[index]);
 	let last = $derived(slides.length - 1);
+	let draggingId = $state<string | null>(null);
+	let dropTargetId = $state<string | null>(null);
+	let suppressClick = false;
+
+	onMount(() => {
+		try {
+			const stored = JSON.parse(localStorage.getItem(orderStorageKey) ?? '[]');
+			if (Array.isArray(stored)) savedOrder = stored.filter((id) => typeof id === 'string');
+		} catch { /* Keep the file order when storage is unreadable. */ }
+	});
+
+	function persist(ids: string[]) {
+		savedOrder = ids;
+		try { localStorage.setItem(orderStorageKey, JSON.stringify(ids)); } catch { /* The order still applies for this view. */ }
+	}
 
 	function start(at = 0) {
+		if (suppressClick) return;
 		index = at;
 		presenting = true;
 	}
@@ -22,6 +42,44 @@
 
 	function go(next: number) {
 		index = Math.min(last, Math.max(0, next));
+	}
+
+	function move(fromId: string, toId: string) {
+		if (fromId === toId) return;
+		const ids = slides.map((item) => item.id);
+		const from = ids.indexOf(fromId);
+		const to = ids.indexOf(toId);
+		if (from < 0 || to < 0) return;
+		const [moved] = ids.splice(from, 1);
+		ids.splice(to, 0, moved);
+		persist(ids);
+	}
+
+	function onDragStart(event: DragEvent, id: string) {
+		draggingId = id;
+		suppressClick = true;
+		event.dataTransfer?.setData('text/plain', id);
+		if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+	}
+
+	function onDragOver(event: DragEvent, id: string) {
+		event.preventDefault();
+		if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+		if (draggingId && draggingId !== id) dropTargetId = id;
+	}
+
+	function onDrop(event: DragEvent, id: string) {
+		event.preventDefault();
+		const fromId = event.dataTransfer?.getData('text/plain') || draggingId;
+		if (fromId) move(fromId, id);
+		draggingId = null;
+		dropTargetId = null;
+	}
+
+	function onDragEnd() {
+		draggingId = null;
+		dropTargetId = null;
+		window.setTimeout(() => { suppressClick = false; }, 0);
 	}
 
 	function onKey(event: KeyboardEvent) {
@@ -52,9 +110,21 @@
 		<h1>Slides</h1>
 		<button class="button-primary" type="button" onclick={() => start(0)}>Präsentation starten</button>
 	</div>
-	<div class="slide-grid">
-		{#each slides as item, itemIndex}
-			<button type="button" class="slide-card" onclick={() => start(itemIndex)} aria-label={titleOf(item)}>
+		<div class="slide-grid">
+		{#each slides as item, itemIndex (item.id)}
+			<button
+				type="button"
+				class="slide-card"
+				class:dragging={draggingId === item.id}
+				class:drop-target={dropTargetId === item.id}
+				draggable="true"
+				onclick={() => start(itemIndex)}
+				ondragstart={(event) => onDragStart(event, item.id)}
+				ondragover={(event) => onDragOver(event, item.id)}
+				ondrop={(event) => onDrop(event, item.id)}
+				ondragend={onDragEnd}
+				aria-label={`${titleOf(item)}. Ziehen, um die Reihenfolge zu ändern.`}
+			>
 				<span class="slide-number">{itemIndex + 1}</span>
 				<p class="kicker">{item.kicker}</p>
 				<strong>{item.title}</strong>
@@ -116,9 +186,11 @@
 		background: #f5f1e8;
 		color: #151515;
 		text-align: left;
-		cursor: pointer;
+		cursor: grab;
 	}
-	.slide-card:hover { transform: translateY(-1px); }
+	.slide-card:active, .slide-card.dragging { cursor: grabbing; }
+	.slide-card.dragging { opacity: .45; }
+	.slide-card.drop-target { outline: 2px solid #ff4f18; outline-offset: 3px; }
 	.slide-number {
 		position: absolute;
 		top: 14px;

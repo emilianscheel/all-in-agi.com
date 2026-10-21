@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseSlideDocument, slidesFromDocuments } from './parse';
+import { orderSlides, parseSlideDocument, slidesFromDocuments } from './parse';
 
 const directory = import.meta.dir;
 
@@ -14,6 +14,15 @@ describe('slide documents', () => {
 		expect(names).toEqual(['01-warum-ein-hackathon.txt', '02-warum-wir.txt', '03-ablauf.txt']);
 		expect(fromDisk.map((slide) => slide.title)).toEqual(['Warum ein Hackathon?', 'Warum wir?', 'Ablauf']);
 		for (const slide of fromDisk) expect(slide.points.length).toBeLessThanOrEqual(3);
+	});
+
+	test('applies a saved order and keeps new files', () => {
+		const slides = slidesFromDocuments({
+			'01-a.txt': 'A\nErste\n- Eins.',
+			'02-b.txt': 'B\nZweite\n- Zwei.',
+			'03-c.txt': 'C\nDritte\n- Drei.'
+		});
+		expect(orderSlides(slides, ['02-b', '01-a']).map((slide) => slide.id)).toEqual(['02-b', '01-a', '03-c']);
 	});
 
 	test('rejects a document with more than three sentences', () => {
