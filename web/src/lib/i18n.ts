@@ -23,6 +23,7 @@ export const PUBLIC_ROUTE_ENTRIES = [
 	['/offer', '/offer'],
 	['/dashboard', '/dashboard'],
 	['/user', '/user'],
+	['/slides', '/slides'],
 	['/hackathon-unternehmen-berlin', '/company-hackathon-berlin'],
 	['/hackathon-unternehmen-hamburg', '/company-hackathon-hamburg'],
 	['/hackathon-unternehmen-muenchen', '/company-hackathon-munich'],

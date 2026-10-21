@@ -1,226 +1,226 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-svelte';
-	import { slides } from '$lib/slides';
+	import { slides, type Slide } from '$lib/slides';
 
-	let index = $state(0);
-	let fullscreen = $state(false);
-	let slide = $derived(slides[index]);
-	let last = slides.length - 1;
+	let selected = $state<number | null>(null);
+	let openSlide = $derived(selected === null ? null : slides[selected]);
 
-	function go(next: number) {
-		index = Math.min(last, Math.max(0, next));
+	function open(index: number) {
+		selected = index;
 	}
 
-	async function toggleFullscreen() {
-		if (document.fullscreenElement) {
-			await document.exitFullscreen();
-			return;
-		}
-		await document.documentElement.requestFullscreen();
+	function close() {
+		selected = null;
 	}
 
-	onMount(() => {
-		function onKey(event: KeyboardEvent) {
-			const target = event.target;
-			if (target instanceof HTMLElement && target.closest("input, textarea, select, [contenteditable='true']")) return;
-			if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'PageDown') {
-				event.preventDefault();
-				go(index + 1);
-			} else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
-				event.preventDefault();
-				go(index - 1);
-			} else if (event.key === 'Home') {
-				event.preventDefault();
-				go(0);
-			} else if (event.key === 'End') {
-				event.preventDefault();
-				go(last);
-			} else if (event.key === 'f' || event.key === 'F') {
-				event.preventDefault();
-				void toggleFullscreen();
-			}
-		}
-		function onFullscreen() {
-			fullscreen = Boolean(document.fullscreenElement);
-		}
-		window.addEventListener('keydown', onKey);
-		document.addEventListener('fullscreenchange', onFullscreen);
-		return () => {
-			window.removeEventListener('keydown', onKey);
-			document.removeEventListener('fullscreenchange', onFullscreen);
-		};
-	});
+	function onKey(event: KeyboardEvent) {
+		if (event.key === 'Escape') close();
+	}
+
+	function titleOf(slide: Slide) {
+		return slide.title;
+	}
 </script>
 
 <svelte:head>
 	<title>Slides — ALL IN AGI</title>
-	<meta name="robots" content="noindex, nofollow, noarchive" />
 </svelte:head>
 
-<section class="slides" aria-label="Folien">
-	<p class="keyboard-hint">Pfeiltasten wechseln die Folie. F schaltet Vollbild.</p>
-	<header>
-		<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
-		<p>ALL IN AGI</p>
-		<span>{index + 1} / {slides.length}</span>
-	</header>
-	<div class="stage" aria-live="polite">
-		{#if slide.kind === 'intro'}
-			<div class="intro">
-				<p class="kicker">ALL IN AGI</p>
-				<h1>{slide.title}</h1>
-				<p class="lede">{slide.lede}</p>
-			</div>
+<svelte:window onkeydown={onKey} />
+
+<div class="dashboard-page">
+	<div class="dashboard-heading">
+		<h1>Slides</h1>
+	</div>
+	<div class="slide-grid">
+		{#each slides as slide, index}
+			<button type="button" class="slide-card" onclick={() => open(index)} aria-label={titleOf(slide)}>
+				<span class="slide-number">{index + 1}</span>
+				{#if slide.kind === 'intro'}
+					<p class="kicker">ALL IN AGI</p>
+					<strong>{slide.title}</strong>
+					<em>{slide.lede}</em>
+				{:else}
+					<p class="kicker">{slide.kicker}</p>
+					<strong>{slide.title}</strong>
+					<ul>
+						{#each slide.points as point}
+							<li><b>{point.label}</b><span>{point.text}</span></li>
+						{/each}
+					</ul>
+				{/if}
+			</button>
+		{/each}
+	</div>
+</div>
+
+{#if openSlide}
+	<button class="slide-backdrop" type="button" aria-label="Schließen" onclick={close}></button>
+	<div class="slide-open" role="dialog" aria-modal="true" aria-label={titleOf(openSlide)}>
+		<button class="slide-close" type="button" onclick={close}>Schließen</button>
+		{#if openSlide.kind === 'intro'}
+			<p class="open-kicker">ALL IN AGI</p>
+			<h2>{openSlide.title}</h2>
+			<p class="open-lede">{openSlide.lede}</p>
 		{:else}
-			<div class="content">
-				<p class="kicker">{slide.kicker}</p>
-				<h1>{slide.title}</h1>
-				<ul>
-					{#each slide.points as point}
-						<li>
-							<strong>{point.label}</strong>
-							<span>{point.text}</span>
-						</li>
-					{/each}
-				</ul>
-			</div>
+			<p class="open-kicker">{openSlide.kicker}</p>
+			<h2>{openSlide.title}</h2>
+			<ul>
+				{#each openSlide.points as point}
+					<li><b>{point.label}</b><span>{point.text}</span></li>
+				{/each}
+			</ul>
 		{/if}
 	</div>
-	<footer>
-		<button type="button" onclick={() => go(index - 1)} disabled={index === 0} aria-label="Vorherige Folie">
-			<ChevronLeft size={22} aria-hidden="true" />
-		</button>
-		<div class="dots" role="tablist" aria-label="Folien">
-			{#each slides as item, itemIndex}
-				<button
-					type="button"
-					role="tab"
-					aria-selected={itemIndex === index}
-					aria-label={item.title}
-					class:active={itemIndex === index}
-					onclick={() => go(itemIndex)}
-				></button>
-			{/each}
-		</div>
-		<div class="actions">
-			<button type="button" onclick={() => void toggleFullscreen()} aria-label={fullscreen ? 'Vollbild beenden' : 'Vollbild'}>
-				{#if fullscreen}<Minimize2 size={18} aria-hidden="true" />{:else}<Maximize2 size={18} aria-hidden="true" />{/if}
-			</button>
-			<button type="button" onclick={() => go(index + 1)} disabled={index === last} aria-label="Nächste Folie">
-				<ChevronRight size={22} aria-hidden="true" />
-			</button>
-		</div>
-	</footer>
-</section>
+{/if}
 
 <style>
-	.slides {
-		--slide-bg: #f5f1e8;
-		--slide-ink: #151515;
-		--slide-accent: #ff4f18;
-		--slide-muted: #6f6c66;
-		position: relative;
+	.slide-grid {
 		display: grid;
-		grid-template-rows: auto minmax(0, 1fr) auto;
-		width: 100%;
-		min-height: 100svh;
-		overflow: hidden;
-		background: var(--slide-bg);
-		color: var(--slide-ink);
-	}
-	.keyboard-hint {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
-	header, footer {
-		display: flex;
-		align-items: center;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 16px;
-		padding: max(22px, env(safe-area-inset-top)) clamp(28px, 5vw, 88px) 18px;
 	}
-	header { border-bottom: 1px solid color-mix(in srgb, var(--slide-ink) 12%, transparent); }
-	footer { justify-content: space-between; padding-top: 18px; padding-bottom: max(22px, env(safe-area-inset-bottom)); border-top: 1px solid color-mix(in srgb, var(--slide-ink) 12%, transparent); }
-	header img { width: 36px; height: 36px; object-fit: contain; }
-	header p { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: .12em; }
-	header span { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 650; color: var(--slide-muted); }
-	.stage {
-		width: min(1080px, 100%);
-		margin: 0 auto;
-		padding: clamp(36px, 7vh, 84px) clamp(28px, 5vw, 88px) 24px;
+	.slide-card {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 16 / 10;
+		padding: 18px 16px 14px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		overflow: hidden;
+		border: 1px solid color-mix(in srgb, #151515 10%, transparent);
+		border-radius: 18px;
+		background: #f5f1e8;
+		color: #151515;
+		text-align: left;
+		cursor: pointer;
 	}
-	.intro { min-height: 100%; display: flex; flex-direction: column; justify-content: center; }
-	.content { display: flex; flex-direction: column; }
+	.slide-card:hover { transform: translateY(-1px); }
+	.slide-number {
+		position: absolute;
+		top: 12px;
+		right: 14px;
+		color: #6f6c66;
+		font-size: 12px;
+		font-weight: 650;
+		font-variant-numeric: tabular-nums;
+	}
 	.kicker {
 		margin: 0;
-		color: var(--slide-accent);
-		font-size: 15px;
+		color: #ff4f18;
+		font-size: 10px;
 		font-weight: 700;
 		letter-spacing: .12em;
 		text-transform: uppercase;
 	}
-	h1 {
-		margin: 18px 0 0;
-		max-width: 16ch;
-		font-size: clamp(46px, 6vw, 84px);
-		font-weight: 700;
-		letter-spacing: -.045em;
-		line-height: .96;
+	.slide-card strong {
+		margin-top: 8px;
+		font-size: 18px;
+		line-height: 1.05;
+		letter-spacing: -.03em;
 	}
-	.lede {
-		margin: 28px 0 0;
-		max-width: 40rem;
-		font-size: clamp(22px, 2.4vw, 32px);
-		font-weight: 550;
-		letter-spacing: -.02em;
+	.slide-card em {
+		margin-top: 8px;
+		font-style: normal;
+		font-size: 12px;
 		line-height: 1.3;
 	}
-	ul {
-		margin: clamp(36px, 6vh, 64px) 0 0;
+	.slide-card ul {
+		width: 100%;
+		margin: 10px 0 0;
 		padding: 0;
 		list-style: none;
-		display: grid;
-		gap: 0;
-		border-top: 1px solid color-mix(in srgb, var(--slide-ink) 14%, transparent);
+		border-top: 1px solid color-mix(in srgb, #151515 12%, transparent);
 	}
-	li {
+	.slide-card li {
 		display: grid;
-		grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
-		gap: 24px;
-		align-items: baseline;
-		padding: 22px 0;
-		border-bottom: 1px solid color-mix(in srgb, var(--slide-ink) 14%, transparent);
+		grid-template-columns: 72px minmax(0, 1fr);
+		gap: 8px;
+		padding: 5px 0;
+		border-bottom: 1px solid color-mix(in srgb, #151515 12%, transparent);
+		font-size: 10px;
+		line-height: 1.25;
 	}
-	li strong { font-size: clamp(18px, 1.6vw, 22px); letter-spacing: -.02em; }
-	li span { font-size: clamp(18px, 1.7vw, 24px); line-height: 1.35; letter-spacing: -.02em; }
-	.dots { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
-	.actions { display: flex; align-items: center; gap: 8px; }
-	button {
-		width: 48px;
-		height: 48px;
-		padding: 0;
-		display: grid;
-		place-items: center;
-		border: 1px solid color-mix(in srgb, var(--slide-ink) 18%, transparent);
-		border-radius: 50%;
-		background: transparent;
-		color: inherit;
+	.slide-card li span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.slide-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 40;
+		width: 100%;
+		height: 100%;
+		border: 0;
+		border-radius: 0;
+		background: color-mix(in srgb, #151515 45%, transparent);
 		cursor: pointer;
 	}
-	button:hover:not(:disabled) { background: color-mix(in srgb, var(--slide-ink) 8%, transparent); }
-	button:disabled { opacity: .35; cursor: not-allowed; }
-	.dots button { width: 10px; height: 10px; border: 0; background: color-mix(in srgb, var(--slide-ink) 28%, transparent); }
-	.dots button.active { width: 32px; border-radius: 999px; background: var(--slide-accent); }
-	@media (max-width: 700px) {
-		h1 { font-size: clamp(38px, 11vw, 56px); }
-		li { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
-		.dots { display: none; }
+	.slide-open {
+		position: fixed;
+		z-index: 41;
+		left: 50%;
+		top: 50%;
+		width: min(860px, calc(100vw - 32px));
+		max-height: calc(100svh - 48px);
+		overflow: auto;
+		padding: 36px 40px 32px;
+		transform: translate(-50%, -50%);
+		border-radius: 24px;
+		background: #f5f1e8;
+		color: #151515;
+	}
+	.slide-close {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		min-height: 34px;
+		padding: 6px 12px;
+		border: 1px solid color-mix(in srgb, #151515 16%, transparent);
+		border-radius: 999px;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		font-size: 13px;
+		cursor: pointer;
+	}
+	.open-kicker {
+		margin: 0;
+		color: #ff4f18;
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+	}
+	.slide-open h2 {
+		margin: 12px 0 0;
+		max-width: 16ch;
+		font-size: clamp(36px, 5vw, 60px);
+		line-height: .96;
+		letter-spacing: -.04em;
+	}
+	.open-lede { margin: 18px 0 0; font-size: 22px; }
+	.slide-open ul {
+		margin: 28px 0 0;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid color-mix(in srgb, #151515 14%, transparent);
+	}
+	.slide-open li {
+		display: grid;
+		grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+		gap: 18px;
+		padding: 14px 0;
+		border-bottom: 1px solid color-mix(in srgb, #151515 14%, transparent);
+		font-size: 16px;
+		line-height: 1.35;
+	}
+	@media (max-width: 900px) {
+		.slide-grid { grid-template-columns: 1fr 1fr; }
+	}
+	@media (max-width: 640px) {
+		.slide-grid { grid-template-columns: 1fr; }
+		.slide-open li { grid-template-columns: 1fr; gap: 4px; }
 	}
 </style>

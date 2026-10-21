@@ -37,7 +37,7 @@ describe('command palette pages', () => {
 		}
 		expect(paths).toContain('/offer');
 		expect(paths).toContain('/slides');
-		expect(getCommandPalettePages('de').find((page) => page.id === 'slides')?.href).toBe('/slides');
+		expect(getCommandPalettePages('de').find((page) => page.id === 'slides')?.href).toBe('/de/slides');
 	});
 
 	test('includes every static page except excluded routes', () => {

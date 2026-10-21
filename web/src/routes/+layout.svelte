@@ -19,12 +19,9 @@
     let locale = $derived(data.locale as Locale);
     let copy = $derived(ui[locale]);
     let presentationRoute = $derived(
-        page.route.id === "/timer" ||
-            page.route.id === "/clock" ||
-            page.route.id === "/slides" ||
-            page.route.id === "/[id]/timer",
+        page.route.id === "/timer" || page.route.id === "/clock" || page.route.id === "/[id]/timer",
     );
-    let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/offer", "/offer/[token]"];
+    let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/slides", "/offer", "/offer/[token]"];
     let adminNavigation = $derived(
         adminRouteIds.includes(page.route.id ?? "") ||
             (page.route.id === "/[id]" && data.admin.authorized),
@@ -36,6 +33,7 @@
     let usersLabel = $derived(locale === "en" ? "Users" : "Nutzer");
     let dashboardHref = $derived(localizedPath(locale, "/dashboard"));
     let bookingsHref = $derived(localizedPath(locale, "/buchungen"));
+    let slidesHref = $derived(localizedPath(locale, "/slides"));
     let userHref = $derived(localizedPath(locale, "/user"));
     let offerHref = $derived(localizedPath(locale, "/offer"));
     let offerLabel = $derived(locale === "en" ? "Offers" : "Angebote");
@@ -102,6 +100,7 @@
                     <a class:active={page.route.id === "/buchungen"} href={bookingsHref}
                         >{bookingsLabel}</a
                     >
+                    <a class:active={page.route.id === "/slides"} href={slidesHref}>Slides</a>
                     <a class:active={offerRoute} href={offerHref}>{offerLabel}</a>
                     <a
                         class="admin-nav-external"
@@ -118,14 +117,6 @@
                         rel="noopener noreferrer"
                     >
                         Clock <ArrowUpRight size={12} strokeWidth={2.25} aria-hidden="true" />
-                    </a>
-                    <a
-                        class="admin-nav-external"
-                        href="/slides"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Slides <ArrowUpRight size={12} strokeWidth={2.25} aria-hidden="true" />
                     </a>
                 </div>
                 <div class="admin-nav-action">

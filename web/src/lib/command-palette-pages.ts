@@ -263,7 +263,6 @@ const CORE_PAGES: CorePage[] = [
 	{
 		id: 'slides',
 		path: '/slides',
-		bare: true,
 		icon: Presentation,
 		group: { de: 'Admin', en: 'Admin' },
 		title: { de: 'Folien', en: 'Slides' },
