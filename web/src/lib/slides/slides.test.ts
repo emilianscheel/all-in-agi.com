@@ -11,8 +11,18 @@ describe('slide documents', () => {
 		const fromDisk = slidesFromDocuments(
 			Object.fromEntries(names.map((name) => [name, readFileSync(join(directory, name), 'utf8')]))
 		);
-		expect(names).toEqual(['01-warum-ein-hackathon.txt', '02-warum-wir.txt', '03-ablauf.txt']);
-		expect(fromDisk.map((slide) => slide.title)).toEqual(['Warum ein Hackathon?', 'Warum wir?', 'Ablauf']);
+		expect(names).toEqual([
+			'01-warum-ein-hackathon.txt',
+			'02-warum-wir.txt',
+			'03-ablauf.txt',
+			'04-naechste-schritte.txt'
+		]);
+		expect(fromDisk.map((slide) => slide.title)).toEqual([
+			'Warum ein Hackathon?',
+			'Warum wir?',
+			'Ablauf',
+			'Nächste Schritte'
+		]);
 		for (const slide of fromDisk) expect(slide.points.length).toBeLessThanOrEqual(3);
 	});
 

@@ -1,0 +1,9 @@
+# Erste Zeile ist die kleine Überschrift, zweite Zeile der Titel.
+# Danach höchstens drei Sätze, jeder mit "- ".
+
+Danach
+Nächste Schritte
+
+- Wir nehmen Ihre Wünsche auf.
+- Wir stellen die Rückfragen, die für volle Klarheit fehlen.
+- Sie erhalten ein Angebot.
