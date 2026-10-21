@@ -126,7 +126,6 @@
 				aria-label={`${titleOf(item)}. Ziehen, um die Reihenfolge zu ändern.`}
 			>
 				<span class="slide-number">{itemIndex + 1}</span>
-				<p class="kicker">{item.kicker}</p>
 				<strong>{item.title}</strong>
 				<ul>
 					{#each item.points as point}
@@ -146,7 +145,6 @@
 			<span>{index + 1} / {slides.length}</span>
 		</header>
 		<div class="stage">
-			<p class="deck-kicker">{slide.kicker}</p>
 			<h2>{slide.title}</h2>
 			<ul>
 				{#each slide.points as point}
@@ -180,7 +178,6 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		overflow: hidden;
 		border: 1px solid color-mix(in srgb, #151515 10%, transparent);
 		border-radius: 18px;
 		background: #f5f1e8;
@@ -200,17 +197,8 @@
 		font-weight: 650;
 		font-variant-numeric: tabular-nums;
 	}
-	.kicker, .deck-kicker {
-		margin: 0;
-		color: #ff4f18;
-		font-weight: 700;
-		letter-spacing: .12em;
-		text-transform: uppercase;
-	}
-	.kicker { font-size: 11px; }
 	.slide-card strong {
-		margin-top: 10px;
-		max-width: 16ch;
+		max-width: 100%;
 		font-size: 26px;
 		line-height: 1.05;
 		letter-spacing: -.03em;
@@ -254,16 +242,31 @@
 	.deck header img { width: 36px; height: 36px; object-fit: contain; }
 	.deck header p { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: .12em; }
 	.deck header span { margin-left: auto; color: #6f6c66; font-weight: 650; font-variant-numeric: tabular-nums; }
-	.stage { width: min(980px, 100%); margin: 0 auto; padding: clamp(28px, 6vh, 72px) clamp(28px, 5vw, 88px); display: flex; flex-direction: column; justify-content: center; }
-	.deck-kicker { font-size: 15px; }
+	.stage {
+		width: 100%;
+		margin: 0;
+		padding: 12px clamp(28px, 5vw, 88px) 28px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+		overflow: auto;
+	}
 	.deck h2 {
-		margin: 16px 0 0;
-		max-width: 14ch;
-		font-size: clamp(48px, 6vw, 84px);
-		line-height: .96;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		width: 100%;
+		margin: 0;
+		padding-bottom: 8px;
+		max-width: none;
+		background: #f5f1e8;
+		font-size: clamp(40px, 4.4vw, 68px);
+		line-height: 1.02;
 		letter-spacing: -.045em;
 	}
-	.deck li { margin-top: 22px; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.35; letter-spacing: -.02em; }
+	.deck ul { width: 100%; max-width: none; }
+	.deck li { margin-top: 22px; max-width: none; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.35; letter-spacing: -.02em; }
 	.deck footer button {
 		width: 48px;
 		height: 48px;
