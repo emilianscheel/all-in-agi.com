@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import { slides, type Slide } from '$lib/slides';
+	import type { Slide } from '$lib/slides/parse';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	let slides = $derived(data.slides);
 
 	let presenting = $state(false);
 	let index = $state(0);
 	let slide = $derived(slides[index]);
-	let last = slides.length - 1;
+	let last = $derived(slides.length - 1);
 
 	function start(at = 0) {
 		index = at;
@@ -52,25 +56,19 @@
 		{#each slides as item, itemIndex}
 			<button type="button" class="slide-card" onclick={() => start(itemIndex)} aria-label={titleOf(item)}>
 				<span class="slide-number">{itemIndex + 1}</span>
-				{#if item.kind === 'intro'}
-					<p class="kicker">ALL IN AGI</p>
-					<strong>{item.title}</strong>
-					<em>{item.lede}</em>
-				{:else}
-					<p class="kicker">{item.kicker}</p>
-					<strong>{item.title}</strong>
-					<ul>
-						{#each item.points as point}
-							<li>{point}</li>
-						{/each}
-					</ul>
-				{/if}
+				<p class="kicker">{item.kicker}</p>
+				<strong>{item.title}</strong>
+				<ul>
+					{#each item.points as point}
+						<li>{point}</li>
+					{/each}
+				</ul>
 			</button>
 		{/each}
 	</div>
 </div>
 
-{#if presenting}
+{#if presenting && slide}
 	<section class="deck" aria-label="Präsentation">
 		<header>
 			<img src="/brand/all-in-agi-logo.png" alt="" width="512" height="512" />
@@ -78,19 +76,13 @@
 			<span>{index + 1} / {slides.length}</span>
 		</header>
 		<div class="stage">
-			{#if slide.kind === 'intro'}
-				<p class="deck-kicker">ALL IN AGI</p>
-				<h2>{slide.title}</h2>
-				<p class="lede">{slide.lede}</p>
-			{:else}
-				<p class="deck-kicker">{slide.kicker}</p>
-				<h2>{slide.title}</h2>
-				<ul>
-					{#each slide.points as point}
-						<li>{point}</li>
-					{/each}
-				</ul>
-			{/if}
+			<p class="deck-kicker">{slide.kicker}</p>
+			<h2>{slide.title}</h2>
+			<ul>
+				{#each slide.points as point}
+					<li>{point}</li>
+				{/each}
+			</ul>
 		</div>
 		<footer>
 			<button type="button" onclick={() => go(index - 1)} disabled={index === 0} aria-label="Vorherige Folie">
@@ -107,7 +99,7 @@
 <style>
 	.slide-grid {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 16px;
 	}
 	.slide-card {
@@ -150,12 +142,6 @@
 		font-size: 26px;
 		line-height: 1.05;
 		letter-spacing: -.03em;
-	}
-	.slide-card em {
-		margin-top: 10px;
-		font-style: normal;
-		font-size: 15px;
-		line-height: 1.35;
 	}
 	.slide-card ul, .deck ul {
 		margin: 16px 0 0;
@@ -205,7 +191,6 @@
 		line-height: .96;
 		letter-spacing: -.045em;
 	}
-	.lede { margin: 24px 0 0; font-size: clamp(22px, 2.4vw, 32px); line-height: 1.3; }
 	.deck li { margin-top: 22px; font-size: clamp(20px, 2.2vw, 28px); line-height: 1.35; letter-spacing: -.02em; }
 	.deck footer button {
 		width: 48px;

@@ -1,0 +1,9 @@
+# Erste Zeile ist die kleine Überschrift, zweite Zeile der Titel.
+# Danach höchstens drei Sätze, jeder mit "- ".
+
+Wir
+Warum wir?
+
+- Wir haben bereits mehrere Hackathons geplant und durchgeführt.
+- Wir haben an mehr als 30 Hackathons in Berlin, München und San Francisco teilgenommen.
+- Wir sind beide Softwareentwickler.
