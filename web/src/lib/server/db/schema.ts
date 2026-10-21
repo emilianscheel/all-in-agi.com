@@ -239,6 +239,12 @@ export const passkey = pgTable('passkey', {
 	index('passkey_credentialID_idx').on(table.credentialID)
 ]);
 
+export const slideDocuments = pgTable('slide_documents', {
+	id: text('id').primaryKey(),
+	source: text('source').notNull(),
+	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull().defaultNow()
+});
+
 export const contactInquiries = pgTable('contact_inquiries', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),

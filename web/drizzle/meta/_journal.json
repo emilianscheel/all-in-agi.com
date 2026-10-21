@@ -99,6 +99,13 @@
       "when": 1792486392137,
       "tag": "0013_offer_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792590455068,
+      "tag": "0014_slide_documents",
+      "breakpoints": true
     }
   ]
 }

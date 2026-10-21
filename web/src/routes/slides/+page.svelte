@@ -1,18 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { ChevronLeft, ChevronRight, X } from 'lucide-svelte';
-	import { orderSlides, visibleSlides, type Slide } from '$lib/slides/parse';
+	import { onMount, untrack } from 'svelte';
+	import { ArrowLeft, ChevronLeft, ChevronRight, Plus, X } from 'lucide-svelte';
+	import { orderSlides, parseEditorDocument, type Slide } from '$lib/slides/parse';
 	import type { PageData } from './$types';
 
 	const orderStorageKey = 'all-in-agi.slides.order';
-	const hiddenStorageKey = 'all-in-agi.slides.hidden';
 
 	let { data }: { data: PageData } = $props();
+	let catalog = $state<Slide[]>(untrack(() => data.slides.map((slide) => ({ ...slide, points: [...slide.points] }))));
 	let savedOrder = $state<string[]>([]);
-	let hiddenIds = $state<string[]>([]);
-	let ordered = $derived(orderSlides(data.slides, savedOrder));
-	let slides = $derived(visibleSlides(data.slides, savedOrder, hiddenIds));
-	let hiddenSlides = $derived(ordered.filter((slide) => hiddenIds.includes(slide.id)));
+	let slides = $derived(orderSlides(catalog, savedOrder));
 
 	let presenting = $state(false);
 	let index = $state(0);
@@ -21,6 +18,23 @@
 	let draggingId = $state<string | null>(null);
 	let dropTargetId = $state<string | null>(null);
 	let suppressClick = false;
+	let adding = $state(false);
+	let removingId = $state<string | null>(null);
+	let editingId = $state<string | null>(null);
+	let draft = $state('');
+	let lastValid = $state<{ title: string; points: string[] } | null>(null);
+	let draftError = $state('');
+	let saveState = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+	let saveTimer: ReturnType<typeof setTimeout> | undefined;
+	let editingSlide = $derived(catalog.find((item) => item.id === editingId) ?? null);
+	let draftPreview = $derived(lastValid);
+	let saveLabel = $derived(
+		draftError ? draftError
+		: saveState === 'saving' ? 'Speichert…'
+		: saveState === 'saved' ? 'Gespeichert'
+		: saveState === 'error' ? 'Speichern fehlgeschlagen'
+		: 'Erste Zeile ist der Titel. Jeder Satz beginnt mit „- “.'
+	);
 
 	function readIds(key: string) {
 		try {
@@ -32,7 +46,6 @@
 
 	onMount(() => {
 		savedOrder = readIds(orderStorageKey);
-		hiddenIds = readIds(hiddenStorageKey);
 	});
 
 	function persist(ids: string[]) {
@@ -40,20 +53,101 @@
 		try { localStorage.setItem(orderStorageKey, JSON.stringify(ids)); } catch { /* The order still applies for this view. */ }
 	}
 
-	function persistHidden(ids: string[]) {
-		hiddenIds = ids;
-		try { localStorage.setItem(hiddenStorageKey, JSON.stringify(ids)); } catch { /* The slide stays hidden for this view. */ }
-	}
-
-	function remove(id: string) {
+	async function remove(id: string) {
+		if (removingId) return;
 		suppressClick = true;
-		if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]);
-		if (presenting && slides.length <= 1) presenting = false;
-		window.setTimeout(() => { suppressClick = false; }, 0);
+		removingId = id;
+		try {
+			const response = await fetch(`/api/admin/slides/${encodeURIComponent(id)}`, { method: 'DELETE' });
+			if (!response.ok) return;
+			catalog = catalog.filter((slide) => slide.id !== id);
+			if (editingId === id) editingId = null;
+			if (presenting && slides.length === 0) presenting = false;
+		} finally {
+			removingId = null;
+			window.setTimeout(() => { suppressClick = false; }, 0);
+		}
 	}
 
-	function restore(id: string) {
-		persistHidden(hiddenIds.filter((item) => item !== id));
+	async function addSlide() {
+		if (adding) return;
+		adding = true;
+		try {
+			const response = await fetch('/api/admin/slides', { method: 'POST' });
+			if (!response.ok) return;
+			const created = await response.json() as Slide;
+			catalog = [...catalog, { ...created, points: [...created.points] }];
+			openEditor(created.id);
+		} finally {
+			adding = false;
+		}
+	}
+
+	function openEditor(id: string) {
+		if (suppressClick) return;
+		const item = catalog.find((slide) => slide.id === id);
+		if (!item) return;
+		window.clearTimeout(saveTimer);
+		editingId = id;
+		draft = item.source;
+		lastValid = { title: item.title, points: [...item.points] };
+		draftError = '';
+		saveState = 'idle';
+	}
+
+	function onDraftInput(event: Event) {
+		draft = (event.currentTarget as HTMLTextAreaElement).value;
+		if (!editingId) return;
+		try {
+			const parsed = parseEditorDocument(draft, editingId);
+			lastValid = { title: parsed.title, points: [...parsed.points] };
+			draftError = '';
+			saveState = 'saving';
+			window.clearTimeout(saveTimer);
+			saveTimer = window.setTimeout(() => { void saveDraft(); }, 500);
+		} catch (error) {
+			window.clearTimeout(saveTimer);
+			draftError = error instanceof Error ? error.message.replace(`${editingId}: `, '') : 'Der Text ist noch nicht gültig.';
+			saveState = 'idle';
+		}
+	}
+
+	async function saveDraft() {
+		const id = editingId;
+		const source = draft;
+		if (!id) return false;
+		let parsed: ReturnType<typeof parseEditorDocument>;
+		try {
+			parsed = parseEditorDocument(source, id);
+		} catch {
+			return false;
+		}
+		const response = await fetch(`/api/admin/slides/${encodeURIComponent(id)}`, {
+			method: 'PUT',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ source })
+		});
+		if (!response.ok) {
+			if (editingId === id && draft === source) saveState = 'error';
+			return false;
+		}
+		if (editingId === id && draft !== source) return true;
+		catalog = catalog.map((slide) => slide.id === id ? { ...slide, title: parsed.title, points: parsed.points, source } : slide);
+		if (editingId === id) saveState = 'saved';
+		return true;
+	}
+
+	async function back() {
+		window.clearTimeout(saveTimer);
+		if (!editingId) return;
+		try {
+			parseEditorDocument(draft, editingId);
+		} catch (error) {
+			draftError = error instanceof Error ? error.message.replace(`${editingId}: `, '') : 'Der Text ist noch nicht gültig.';
+			return;
+		}
+		const saved = await saveDraft();
+		if (saved) editingId = null;
 	}
 
 	function start(at = 0) {
@@ -72,7 +166,7 @@
 
 	function move(fromId: string, toId: string) {
 		if (fromId === toId) return;
-		const ids = ordered.map((item) => item.id);
+		const ids = slides.map((item) => item.id);
 		const from = ids.indexOf(fromId);
 		const to = ids.indexOf(toId);
 		if (from < 0 || to < 0) return;
@@ -137,13 +231,35 @@
 
 <div class="dashboard-page">
 	<div class="dashboard-heading">
-		<h1>Slides</h1>
+		<div class="heading-title">
+			{#if editingSlide}
+				<button class="editor-back" type="button" onclick={back} aria-label="Zurück">
+					<ArrowLeft size={20} aria-hidden="true" />
+				</button>
+			{/if}
+			<h1>Slides</h1>
+		</div>
 		<button class="button-primary" type="button" onclick={() => start(0)} disabled={slides.length === 0}>Präsentation starten</button>
 	</div>
+	{#if editingSlide && draftPreview}
+		<div class="editor">
+			<textarea id="slide-source" aria-label="Folientext" value={draft} oninput={onDraftInput} spellcheck="true"></textarea>
+			<div class="editor-slide" aria-label="Vorschau">
+				<h2>{draftPreview.title}</h2>
+				<ul>
+					{#each draftPreview.points as point}
+						<li>{point}</li>
+					{/each}
+				</ul>
+			</div>
+		</div>
+		<p class="editor-status" class:invalid={draftError !== '' || saveState === 'error'}>{saveLabel}</p>
+	{:else}
 		<div class="slide-grid">
 		{#each slides as item, itemIndex (item.id)}
 			<div
 				class="slide-card"
+				role="group"
 				class:dragging={draggingId === item.id}
 				class:drop-target={dropTargetId === item.id}
 				draggable="true"
@@ -155,8 +271,8 @@
 				<button
 					type="button"
 					class="slide-open"
-					onclick={() => start(itemIndex)}
-					aria-label={`${titleOf(item)}. Ziehen, um die Reihenfolge zu ändern.`}
+					onclick={() => openEditor(item.id)}
+					aria-label={`${titleOf(item)} bearbeiten. Ziehen, um die Reihenfolge zu ändern.`}
 				>
 					<span class="slide-number">{itemIndex + 1}</span>
 					<strong>{item.title}</strong>
@@ -169,21 +285,19 @@
 				<button
 					type="button"
 					class="slide-remove"
-					aria-label={`${titleOf(item)} entfernen`}
-					onclick={(event) => { event.stopPropagation(); remove(item.id); }}
+					aria-label={`${titleOf(item)} löschen`}
+					disabled={removingId === item.id}
+					onclick={(event) => { event.stopPropagation(); void remove(item.id); }}
 					ondragstart={(event) => { event.preventDefault(); event.stopPropagation(); }}
 				>
 					<X size={14} aria-hidden="true" />
 				</button>
 			</div>
 		{/each}
+			<button class="slide-add" type="button" onclick={addSlide} disabled={adding} aria-label="Folie hinzufügen">
+				<Plus size={28} aria-hidden="true" />
+			</button>
 	</div>
-	{#if hiddenSlides.length > 0}
-		<div class="restore-row">
-			{#each hiddenSlides as item (item.id)}
-				<button type="button" class="restore" onclick={() => restore(item.id)}>{item.title} wieder einblenden</button>
-			{/each}
-		</div>
 	{/if}
 </div>
 
@@ -218,12 +332,28 @@
 	.slide-grid {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-auto-rows: 1fr;
 		gap: 16px;
 	}
-	.slide-card { position: relative; }
+	.slide-card { position: relative; height: 100%; }
+	.slide-add {
+		width: 100%;
+		height: 100%;
+		min-height: 220px;
+		display: grid;
+		place-items: center;
+		border: 1px dashed color-mix(in srgb, #151515 28%, transparent);
+		border-radius: 18px;
+		background: transparent;
+		color: #151515;
+		cursor: pointer;
+	}
+	.slide-add:hover { background: color-mix(in srgb, #151515 4%, transparent); }
+	.slide-add:disabled { opacity: .45; cursor: wait; }
 	.slide-open {
 		position: relative;
 		width: 100%;
+		height: 100%;
 		min-height: 220px;
 		padding: 22px 20px 18px;
 		display: flex;
@@ -262,17 +392,7 @@
 	.slide-card:focus-within .slide-remove { opacity: 1; pointer-events: auto; }
 	.slide-card:hover .slide-number,
 	.slide-card:focus-within .slide-number { opacity: 0; }
-	.restore-row { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; }
-	.restore {
-		padding: 0;
-		border: 0;
-		background: transparent;
-		color: #6f6c66;
-		font: inherit;
-		font-size: 13px;
-		text-decoration: underline;
-		cursor: pointer;
-	}
+	.slide-remove:disabled { cursor: wait; }
 	.slide-number {
 		position: absolute;
 		top: 14px;
@@ -287,6 +407,88 @@
 		font-size: 26px;
 		line-height: 1.05;
 		letter-spacing: -.03em;
+	}
+	.heading-title { display: flex; align-items: center; gap: 16px; }
+	.editor-back {
+		width: 36px;
+		height: 36px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		border: 0;
+		border-radius: 50%;
+		background: transparent;
+		color: #151515;
+		cursor: pointer;
+	}
+	.editor-back:hover { background: color-mix(in srgb, #151515 8%, transparent); }
+	.dashboard-page:has(.editor) {
+		display: flex;
+		flex-direction: column;
+		height: calc(100dvh - 44px);
+		padding-bottom: 24px;
+		overflow: hidden;
+	}
+	.editor {
+		display: grid;
+		grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+		grid-template-rows: minmax(0, 1fr);
+		flex: 1;
+		min-height: 0;
+		gap: 20px;
+		align-items: stretch;
+	}
+	.editor textarea {
+		width: 100%;
+		height: 100%;
+		min-height: 0;
+		overflow: auto;
+		padding: 18px;
+		border: 1px solid color-mix(in srgb, #151515 16%, transparent);
+		border-radius: 18px;
+		background: white;
+		color: #151515;
+		font: inherit;
+		font-size: 16px;
+		line-height: 1.45;
+		resize: none;
+	}
+	.editor-status { margin: 10px 0 0; color: #6f6c66; font-size: 13px; }
+	.editor-status.invalid { color: #9a2600; }
+	.editor-slide {
+		min-width: 0;
+		height: 100%;
+		min-height: 0;
+		overflow: auto;
+		padding: 28px 32px;
+		border-radius: 18px;
+		background: #f5f1e8;
+		color: #151515;
+	}
+	.editor-slide h2 {
+		margin: 0;
+		font-size: clamp(36px, 4vw, 64px);
+		line-height: 1.02;
+		letter-spacing: -.045em;
+	}
+	.editor-slide ul { margin: 20px 0 0; padding: 0; list-style: none; }
+	.editor-slide li {
+		display: flex;
+		gap: 12px;
+		align-items: flex-start;
+		margin-top: 18px;
+		font-size: clamp(18px, 1.8vw, 26px);
+		line-height: 1.35;
+		letter-spacing: -.02em;
+	}
+	.editor-slide li::before {
+		content: '';
+		flex: 0 0 auto;
+		width: 7px;
+		height: 7px;
+		margin-top: .5em;
+		border-radius: 50%;
+		background: #ff4f18;
 	}
 	.slide-card ul, .deck ul {
 		margin: 16px 0 0;
@@ -367,7 +569,7 @@
 	.deck footer button:disabled { opacity: .35; cursor: not-allowed; }
 	.deck-exit { width: auto !important; min-width: 120px; padding: 0 18px !important; border-radius: 999px !important; font: inherit; font-size: 15px; font-weight: 650; }
 	@media (max-width: 800px) {
-		.slide-grid { grid-template-columns: 1fr; }
+		.slide-grid, .editor { grid-template-columns: 1fr; }
 	}
 	@media (hover: none) {
 		.slide-remove { opacity: 1; pointer-events: auto; }
