@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { slides } from '$lib/slides/documents';
-import { editorSource, parseEditorDocument, slidesWithSavedDocuments, type Slide } from '$lib/slides/parse';
+import { editorSource, parseEditorDocument, removedSlideSource, slidesWithSavedDocuments, type Slide } from '$lib/slides/parse';
 import { getDb } from './db';
 import { slideDocuments } from './db/schema';
 
@@ -19,6 +19,22 @@ export async function createSlide(): Promise<Slide> {
 	const db = await getDb();
 	await db.insert(slideDocuments).values({ id, source, updatedAt: new Date().toISOString() });
 	return { id, kicker: '', title: parsed.title, points: [...parsed.points], source };
+}
+
+export async function deleteSlide(id: string) {
+	const db = await getDb();
+	if (!slides.some((slide) => slide.id === id)) {
+		await db.delete(slideDocuments).where(eq(slideDocuments.id, id));
+		return;
+	}
+	const updatedAt = new Date().toISOString();
+	await db
+		.insert(slideDocuments)
+		.values({ id, source: removedSlideSource, updatedAt })
+		.onConflictDoUpdate({
+			target: slideDocuments.id,
+			set: { source: removedSlideSource, updatedAt }
+		});
 }
 
 export async function saveSlideSource(id: string, source: string) {

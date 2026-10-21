@@ -1,6 +1,6 @@
 import { dev } from '$app/environment';
 import { requireAdmin } from '$lib/server/admin-auth';
-import { saveSlideSource } from '$lib/server/slides';
+import { deleteSlide, saveSlideSource } from '$lib/server/slides';
 import { json } from '@sveltejs/kit';
 
 export async function PUT({ params, locals, request }) {
@@ -14,5 +14,16 @@ export async function PUT({ params, locals, request }) {
 		const message = error instanceof Error ? error.message : 'Speichern fehlgeschlagen.';
 		const status = message.includes('nicht gefunden') ? 404 : 400;
 		return json({ message }, { status });
+	}
+}
+
+export async function DELETE({ params, locals }) {
+	if (!dev) requireAdmin(locals);
+	try {
+		await deleteSlide(params.id);
+		return json({ ok: true });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : 'Löschen fehlgeschlagen.';
+		return json({ message }, { status: 400 });
 	}
 }
