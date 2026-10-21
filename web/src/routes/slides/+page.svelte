@@ -1,19 +1,15 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { ArrowLeft, ChevronLeft, ChevronRight, Plus, X } from 'lucide-svelte';
-	import { orderSlides, parseEditorDocument, visibleSlides, type Slide } from '$lib/slides/parse';
+	import { orderSlides, parseEditorDocument, type Slide } from '$lib/slides/parse';
 	import type { PageData } from './$types';
 
 	const orderStorageKey = 'all-in-agi.slides.order';
-	const hiddenStorageKey = 'all-in-agi.slides.hidden';
 
 	let { data }: { data: PageData } = $props();
 	let catalog = $state<Slide[]>(untrack(() => data.slides.map((slide) => ({ ...slide, points: [...slide.points] }))));
 	let savedOrder = $state<string[]>([]);
-	let hiddenIds = $state<string[]>([]);
-	let ordered = $derived(orderSlides(catalog, savedOrder));
-	let slides = $derived(visibleSlides(catalog, savedOrder, hiddenIds));
-	let hiddenSlides = $derived(ordered.filter((slide) => hiddenIds.includes(slide.id)));
+	let slides = $derived(orderSlides(catalog, savedOrder));
 
 	let presenting = $state(false);
 	let index = $state(0);
@@ -23,6 +19,7 @@
 	let dropTargetId = $state<string | null>(null);
 	let suppressClick = false;
 	let adding = $state(false);
+	let removingId = $state<string | null>(null);
 	let editingId = $state<string | null>(null);
 	let draft = $state('');
 	let lastValid = $state<{ title: string; points: string[] } | null>(null);
@@ -49,7 +46,6 @@
 
 	onMount(() => {
 		savedOrder = readIds(orderStorageKey);
-		hiddenIds = readIds(hiddenStorageKey);
 	});
 
 	function persist(ids: string[]) {
@@ -57,20 +53,20 @@
 		try { localStorage.setItem(orderStorageKey, JSON.stringify(ids)); } catch { /* The order still applies for this view. */ }
 	}
 
-	function persistHidden(ids: string[]) {
-		hiddenIds = ids;
-		try { localStorage.setItem(hiddenStorageKey, JSON.stringify(ids)); } catch { /* The slide stays hidden for this view. */ }
-	}
-
-	function remove(id: string) {
+	async function remove(id: string) {
+		if (removingId) return;
 		suppressClick = true;
-		if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]);
-		if (presenting && slides.length <= 1) presenting = false;
-		window.setTimeout(() => { suppressClick = false; }, 0);
-	}
-
-	function restore(id: string) {
-		persistHidden(hiddenIds.filter((item) => item !== id));
+		removingId = id;
+		try {
+			const response = await fetch(`/api/admin/slides/${encodeURIComponent(id)}`, { method: 'DELETE' });
+			if (!response.ok) return;
+			catalog = catalog.filter((slide) => slide.id !== id);
+			if (editingId === id) editingId = null;
+			if (presenting && slides.length === 0) presenting = false;
+		} finally {
+			removingId = null;
+			window.setTimeout(() => { suppressClick = false; }, 0);
+		}
 	}
 
 	async function addSlide() {
@@ -170,7 +166,7 @@
 
 	function move(fromId: string, toId: string) {
 		if (fromId === toId) return;
-		const ids = ordered.map((item) => item.id);
+		const ids = slides.map((item) => item.id);
 		const from = ids.indexOf(fromId);
 		const to = ids.indexOf(toId);
 		if (from < 0 || to < 0) return;
@@ -289,8 +285,9 @@
 				<button
 					type="button"
 					class="slide-remove"
-					aria-label={`${titleOf(item)} entfernen`}
-					onclick={(event) => { event.stopPropagation(); remove(item.id); }}
+					aria-label={`${titleOf(item)} löschen`}
+					disabled={removingId === item.id}
+					onclick={(event) => { event.stopPropagation(); void remove(item.id); }}
 					ondragstart={(event) => { event.preventDefault(); event.stopPropagation(); }}
 				>
 					<X size={14} aria-hidden="true" />
@@ -301,13 +298,6 @@
 				<Plus size={28} aria-hidden="true" />
 			</button>
 	</div>
-	{/if}
-	{#if !editingSlide && hiddenSlides.length > 0}
-		<div class="restore-row">
-			{#each hiddenSlides as item (item.id)}
-				<button type="button" class="restore" onclick={() => restore(item.id)}>{item.title} wieder einblenden</button>
-			{/each}
-		</div>
 	{/if}
 </div>
 
@@ -402,17 +392,7 @@
 	.slide-card:focus-within .slide-remove { opacity: 1; pointer-events: auto; }
 	.slide-card:hover .slide-number,
 	.slide-card:focus-within .slide-number { opacity: 0; }
-	.restore-row { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; }
-	.restore {
-		padding: 0;
-		border: 0;
-		background: transparent;
-		color: #6f6c66;
-		font: inherit;
-		font-size: 13px;
-		text-decoration: underline;
-		cursor: pointer;
-	}
+	.slide-remove:disabled { cursor: wait; }
 	.slide-number {
 		position: absolute;
 		top: 14px;
