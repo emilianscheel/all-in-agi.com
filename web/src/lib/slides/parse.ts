@@ -32,6 +32,12 @@ export function slideId(path: string) {
 	return name.replace(/\.txt$/, '');
 }
 
+/** File order, then any saved id list, without slides hidden in this browser. */
+export function visibleSlides(slides: readonly Slide[], ids: readonly string[], hidden: readonly string[] = []): Slide[] {
+	const hiddenIds = new Set(hidden);
+	return orderSlides(slides, ids).filter((slide) => !hiddenIds.has(slide.id));
+}
+
 /** File order, then any saved id list. Unknown files stay at the end. */
 export function orderSlides(slides: readonly Slide[], ids: readonly string[]): Slide[] {
 	const byId = new Map(slides.map((slide) => [slide.id, slide]));

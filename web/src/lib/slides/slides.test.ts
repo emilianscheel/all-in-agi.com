@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { orderSlides, parseSlideDocument, slidesFromDocuments } from './parse';
+import { orderSlides, parseSlideDocument, slidesFromDocuments, visibleSlides } from './parse';
 
 const directory = import.meta.dir;
 
@@ -33,6 +33,7 @@ describe('slide documents', () => {
 			'03-c.txt': 'C\nDritte\n- Drei.'
 		});
 		expect(orderSlides(slides, ['02-b', '01-a']).map((slide) => slide.id)).toEqual(['02-b', '01-a', '03-c']);
+		expect(visibleSlides(slides, ['02-b', '01-a'], ['01-a']).map((slide) => slide.id)).toEqual(['02-b', '03-c']);
 	});
 
 	test('rejects a document with more than six sentences', () => {

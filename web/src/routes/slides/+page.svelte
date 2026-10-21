@@ -1,14 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ChevronLeft, ChevronRight } from 'lucide-svelte';
-	import { orderSlides, type Slide } from '$lib/slides/parse';
+	import { ChevronLeft, ChevronRight, X } from 'lucide-svelte';
+	import { orderSlides, visibleSlides, type Slide } from '$lib/slides/parse';
 	import type { PageData } from './$types';
 
 	const orderStorageKey = 'all-in-agi.slides.order';
+	const hiddenStorageKey = 'all-in-agi.slides.hidden';
 
 	let { data }: { data: PageData } = $props();
 	let savedOrder = $state<string[]>([]);
-	let slides = $derived(orderSlides(data.slides, savedOrder));
+	let hiddenIds = $state<string[]>([]);
+	let ordered = $derived(orderSlides(data.slides, savedOrder));
+	let slides = $derived(visibleSlides(data.slides, savedOrder, hiddenIds));
+	let hiddenSlides = $derived(ordered.filter((slide) => hiddenIds.includes(slide.id)));
 
 	let presenting = $state(false);
 	let index = $state(0);
@@ -18,16 +22,38 @@
 	let dropTargetId = $state<string | null>(null);
 	let suppressClick = false;
 
-	onMount(() => {
+	function readIds(key: string) {
 		try {
-			const stored = JSON.parse(localStorage.getItem(orderStorageKey) ?? '[]');
-			if (Array.isArray(stored)) savedOrder = stored.filter((id) => typeof id === 'string');
+			const stored = JSON.parse(localStorage.getItem(key) ?? '[]');
+			if (Array.isArray(stored)) return stored.filter((id) => typeof id === 'string');
 		} catch { /* Keep the file order when storage is unreadable. */ }
+		return [];
+	}
+
+	onMount(() => {
+		savedOrder = readIds(orderStorageKey);
+		hiddenIds = readIds(hiddenStorageKey);
 	});
 
 	function persist(ids: string[]) {
 		savedOrder = ids;
 		try { localStorage.setItem(orderStorageKey, JSON.stringify(ids)); } catch { /* The order still applies for this view. */ }
+	}
+
+	function persistHidden(ids: string[]) {
+		hiddenIds = ids;
+		try { localStorage.setItem(hiddenStorageKey, JSON.stringify(ids)); } catch { /* The slide stays hidden for this view. */ }
+	}
+
+	function remove(id: string) {
+		suppressClick = true;
+		if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]);
+		if (presenting && slides.length <= 1) presenting = false;
+		window.setTimeout(() => { suppressClick = false; }, 0);
+	}
+
+	function restore(id: string) {
+		persistHidden(hiddenIds.filter((item) => item !== id));
 	}
 
 	function start(at = 0) {
@@ -46,7 +72,7 @@
 
 	function move(fromId: string, toId: string) {
 		if (fromId === toId) return;
-		const ids = slides.map((item) => item.id);
+		const ids = ordered.map((item) => item.id);
 		const from = ids.indexOf(fromId);
 		const to = ids.indexOf(toId);
 		if (from < 0 || to < 0) return;
@@ -56,6 +82,10 @@
 	}
 
 	function onDragStart(event: DragEvent, id: string) {
+		if (event.target instanceof Element && event.target.closest('.slide-remove')) {
+			event.preventDefault();
+			return;
+		}
 		draggingId = id;
 		suppressClick = true;
 		event.dataTransfer?.setData('text/plain', id);
@@ -108,33 +138,53 @@
 <div class="dashboard-page">
 	<div class="dashboard-heading">
 		<h1>Slides</h1>
-		<button class="button-primary" type="button" onclick={() => start(0)}>Präsentation starten</button>
+		<button class="button-primary" type="button" onclick={() => start(0)} disabled={slides.length === 0}>Präsentation starten</button>
 	</div>
 		<div class="slide-grid">
 		{#each slides as item, itemIndex (item.id)}
-			<button
-				type="button"
+			<div
 				class="slide-card"
 				class:dragging={draggingId === item.id}
 				class:drop-target={dropTargetId === item.id}
 				draggable="true"
-				onclick={() => start(itemIndex)}
 				ondragstart={(event) => onDragStart(event, item.id)}
 				ondragover={(event) => onDragOver(event, item.id)}
 				ondrop={(event) => onDrop(event, item.id)}
 				ondragend={onDragEnd}
-				aria-label={`${titleOf(item)}. Ziehen, um die Reihenfolge zu ändern.`}
 			>
-				<span class="slide-number">{itemIndex + 1}</span>
-				<strong>{item.title}</strong>
-				<ul>
-					{#each item.points as point}
-						<li>{point}</li>
-					{/each}
-				</ul>
-			</button>
+				<button
+					type="button"
+					class="slide-open"
+					onclick={() => start(itemIndex)}
+					aria-label={`${titleOf(item)}. Ziehen, um die Reihenfolge zu ändern.`}
+				>
+					<span class="slide-number">{itemIndex + 1}</span>
+					<strong>{item.title}</strong>
+					<ul>
+						{#each item.points as point}
+							<li>{point}</li>
+						{/each}
+					</ul>
+				</button>
+				<button
+					type="button"
+					class="slide-remove"
+					aria-label={`${titleOf(item)} entfernen`}
+					onclick={(event) => { event.stopPropagation(); remove(item.id); }}
+					ondragstart={(event) => { event.preventDefault(); event.stopPropagation(); }}
+				>
+					<X size={14} aria-hidden="true" />
+				</button>
+			</div>
 		{/each}
 	</div>
+	{#if hiddenSlides.length > 0}
+		<div class="restore-row">
+			{#each hiddenSlides as item (item.id)}
+				<button type="button" class="restore" onclick={() => restore(item.id)}>{item.title} wieder einblenden</button>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 {#if presenting && slide}
@@ -170,7 +220,8 @@
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 16px;
 	}
-	.slide-card {
+	.slide-card { position: relative; }
+	.slide-open {
 		position: relative;
 		width: 100%;
 		min-height: 220px;
@@ -182,12 +233,46 @@
 		border-radius: 18px;
 		background: #f5f1e8;
 		color: #151515;
+		font: inherit;
 		text-align: left;
 		cursor: grab;
 	}
-	.slide-card:active, .slide-card.dragging { cursor: grabbing; }
+	.slide-card:active .slide-open, .slide-card.dragging .slide-open { cursor: grabbing; }
 	.slide-card.dragging { opacity: .45; }
-	.slide-card.drop-target { outline: 2px solid #ff4f18; outline-offset: 3px; }
+	.slide-card.drop-target .slide-open { outline: 2px solid #ff4f18; outline-offset: 3px; }
+	.slide-remove {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		z-index: 1;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		display: grid;
+		place-items: center;
+		border: 0;
+		border-radius: 50%;
+		background: #151515;
+		color: #f5f1e8;
+		cursor: pointer;
+		opacity: 0;
+		pointer-events: none;
+	}
+	.slide-card:hover .slide-remove,
+	.slide-card:focus-within .slide-remove { opacity: 1; pointer-events: auto; }
+	.slide-card:hover .slide-number,
+	.slide-card:focus-within .slide-number { opacity: 0; }
+	.restore-row { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; }
+	.restore {
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: #6f6c66;
+		font: inherit;
+		font-size: 13px;
+		text-decoration: underline;
+		cursor: pointer;
+	}
 	.slide-number {
 		position: absolute;
 		top: 14px;
@@ -283,5 +368,9 @@
 	.deck-exit { width: auto !important; min-width: 120px; padding: 0 18px !important; border-radius: 999px !important; font: inherit; font-size: 15px; font-weight: 650; }
 	@media (max-width: 800px) {
 		.slide-grid { grid-template-columns: 1fr; }
+	}
+	@media (hover: none) {
+		.slide-remove { opacity: 1; pointer-events: auto; }
+		.slide-number { right: 46px; opacity: 1; }
 	}
 </style>
