@@ -23,7 +23,7 @@ describe('slide documents', () => {
 			'Ablauf',
 			'Nächste Schritte'
 		]);
-		for (const slide of fromDisk) expect(slide.points.length).toBeLessThanOrEqual(3);
+		for (const slide of fromDisk) expect(slide.points.length).toBeLessThanOrEqual(6);
 	});
 
 	test('applies a saved order and keeps new files', () => {
@@ -35,9 +35,9 @@ describe('slide documents', () => {
 		expect(orderSlides(slides, ['02-b', '01-a']).map((slide) => slide.id)).toEqual(['02-b', '01-a', '03-c']);
 	});
 
-	test('rejects a document with more than three sentences', () => {
+	test('rejects a document with more than six sentences', () => {
 		expect(() =>
-			parseSlideDocument(`Kopf\nTitel\n- Eins.\n- Zwei.\n- Drei.\n- Vier.`)
-		).toThrow(/ein bis drei/);
+			parseSlideDocument(`Kopf\nTitel\n- Eins.\n- Zwei.\n- Drei.\n- Vier.\n- Fünf.\n- Sechs.\n- Sieben.`)
+		).toThrow(/ein bis sechs/);
 	});
 });

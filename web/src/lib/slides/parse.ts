@@ -21,8 +21,8 @@ export function parseSlideDocument(source: string, name = 'slide'): SlideDocumen
 		throw new Error(`${name}: jeder Satz beginnt mit "- ".`);
 	}
 	const points = rest.map((line) => line.slice(2).trim());
-	if (points.length < 1 || points.length > 3) {
-		throw new Error(`${name}: eine Folie hat ein bis drei Sätze.`);
+	if (points.length < 1 || points.length > 6) {
+		throw new Error(`${name}: eine Folie hat ein bis sechs Sätze.`);
 	}
 	return { kicker, title, points };
 }

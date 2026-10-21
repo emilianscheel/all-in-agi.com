@@ -1,5 +1,5 @@
 # Erste Zeile ist die kleine Überschrift, zweite Zeile der Titel.
-# Danach höchstens drei Sätze, jeder mit "- ".
+# Danach höchstens sechs Sätze, jeder mit "- ".
 
 Der Tag
 Ablauf
