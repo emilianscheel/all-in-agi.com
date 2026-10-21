@@ -19,7 +19,10 @@
     let locale = $derived(data.locale as Locale);
     let copy = $derived(ui[locale]);
     let presentationRoute = $derived(
-        page.route.id === "/timer" || page.route.id === "/clock" || page.route.id === "/[id]/timer",
+        page.route.id === "/timer" ||
+            page.route.id === "/clock" ||
+            page.route.id === "/slides" ||
+            page.route.id === "/[id]/timer",
     );
     let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/offer", "/offer/[token]"];
     let adminNavigation = $derived(
@@ -115,6 +118,14 @@
                         rel="noopener noreferrer"
                     >
                         Clock <ArrowUpRight size={12} strokeWidth={2.25} aria-hidden="true" />
+                    </a>
+                    <a
+                        class="admin-nav-external"
+                        href="/slides"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Slides <ArrowUpRight size={12} strokeWidth={2.25} aria-hidden="true" />
                     </a>
                 </div>
                 <div class="admin-nav-action">

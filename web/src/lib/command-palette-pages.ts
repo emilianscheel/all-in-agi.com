@@ -5,6 +5,7 @@ import {
 	ClipboardList,
 	Clock,
 	FileText,
+	Presentation,
 	Home,
 	LayoutDashboard,
 	LayoutGrid,
@@ -36,6 +37,8 @@ type CorePage = {
 	id: string;
 	path: string;
 	hash?: string;
+	/** Served at the internal path, without a /de or /en prefix. */
+	bare?: boolean;
 	icon: CommandPaletteIcon;
 	group: { de: string; en: string };
 	title: { de: string; en: string };
@@ -256,6 +259,18 @@ const CORE_PAGES: CorePage[] = [
 		group: { de: 'Admin', en: 'Admin' },
 		title: { de: 'Clock', en: 'Clock' },
 		keywords: { de: ['clock', 'uhr'], en: ['clock', 'time'] }
+	},
+	{
+		id: 'slides',
+		path: '/slides',
+		bare: true,
+		icon: Presentation,
+		group: { de: 'Admin', en: 'Admin' },
+		title: { de: 'Folien', en: 'Slides' },
+		keywords: {
+			de: ['folien', 'slides', 'präsentation', 'erstgespräch', 'intro'],
+			en: ['slides', 'presentation', 'intro call']
+		}
 	}
 ];
 
@@ -266,7 +281,7 @@ export function getCommandPalettePages(locale: Locale): CommandPalettePage[] {
 	const core = CORE_PAGES.map((page) => ({
 		id: page.id,
 		path: page.path,
-		href: `${localizedPath(locale, page.path)}${page.hash ?? ''}`,
+		href: page.bare ? page.path : `${localizedPath(locale, page.path)}${page.hash ?? ''}`,
 		title: page.title[locale],
 		group: page.group[locale],
 		keywords: page.keywords[locale],

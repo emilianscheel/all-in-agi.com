@@ -1,7 +1,7 @@
 import { PUBLIC_ID_PATTERN } from './public-id';
 import { internalPathForPublic, stripLocale } from './i18n';
 
-const PRIVATE_PREFIXES = ['/dashboard', '/verwalten', '/timer', '/clock', '/api'];
+const PRIVATE_PREFIXES = ['/dashboard', '/verwalten', '/timer', '/clock', '/slides', '/api'];
 
 /** Routes that can safely contribute anonymous marketing analytics. */
 export function isAnalyticsPath(pathname: string) {

@@ -7,6 +7,7 @@ describe('analytics route privacy', () => {
 		expect(isAnalyticsPath('/HAA-ABC-123')).toBe(false);
 		expect(isAnalyticsPath('/dashboard')).toBe(false);
 		expect(isAnalyticsPath('/verwalten')).toBe(false);
+		expect(isAnalyticsPath('/slides')).toBe(false);
 		expect(isAnalyticsPath('/en/go/secret-plan-token')).toBe(false);
 		expect(isAnalyticsPath('/de/HAA-ABC-123')).toBe(false);
 	});
