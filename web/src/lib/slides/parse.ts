@@ -51,15 +51,20 @@ export function parseEditorDocument(source: string, name = 'slide'): Pick<SlideD
 	return { title, points };
 }
 
-/** File slides, then slides that exist only as saved editor text. */
+/** Empty saved text means the slide was deleted, including a slide that also exists as a file. */
+export const removedSlideSource = '';
+
+/** File slides, then slides that exist only as saved editor text. Deleted slides are left out. */
 export function slidesWithSavedDocuments(
 	fileSlides: readonly Slide[],
 	saved: readonly { id: string; source: string }[]
 ): Slide[] {
-	const byId = Object.fromEntries(saved.map((row) => [row.id, row.source]));
-	const merged = withSavedSources(fileSlides, byId);
-	const known = new Set(merged.map((slide) => slide.id));
-	const extras = saved
+	const removed = new Set(saved.filter((row) => row.source === removedSlideSource).map((row) => row.id));
+	const active = saved.filter((row) => row.source !== removedSlideSource);
+	const byId = Object.fromEntries(active.map((row) => [row.id, row.source]));
+	const merged = withSavedSources(fileSlides, byId).filter((slide) => !removed.has(slide.id));
+	const known = new Set(fileSlides.map((slide) => slide.id));
+	const extras = active
 		.filter((row) => !known.has(row.id))
 		.sort((left, right) => left.id.localeCompare(right.id))
 		.flatMap((row) => {

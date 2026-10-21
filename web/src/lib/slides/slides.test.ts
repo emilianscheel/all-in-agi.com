@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { editorSource, orderSlides, parseEditorDocument, parseSlideDocument, slidesFromDocuments, slidesWithSavedDocuments, visibleSlides, withSavedSources } from './parse';
+import { editorSource, orderSlides, parseEditorDocument, parseSlideDocument, removedSlideSource, slidesFromDocuments, slidesWithSavedDocuments, visibleSlides, withSavedSources } from './parse';
 
 const directory = import.meta.dir;
 
@@ -54,6 +54,10 @@ describe('slide documents', () => {
 			{ id: 'slide-100', source: 'Früher\n- Alter Satz' },
 			{ id: '01-a', source: 'Geändert\n- Nur noch das.' }
 		]).map((slide) => slide.id)).toEqual(['01-a', 'slide-100', 'slide-200']);
+		expect(slidesWithSavedDocuments(slides, [
+			{ id: '01-a', source: removedSlideSource },
+			{ id: 'slide-100', source: 'Bleibt\n- Ein Satz' }
+		]).map((slide) => slide.id)).toEqual(['slide-100']);
 	});
 
 	test('rejects a document with more than six sentences', () => {
