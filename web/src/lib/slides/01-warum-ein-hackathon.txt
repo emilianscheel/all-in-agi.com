@@ -1,0 +1,10 @@
+# Erste Zeile ist die kleine Überschrift, zweite Zeile der Titel.
+# Danach höchstens sechs Sätze, jeder mit "- ".
+
+Hackathon
+Warum ein Hackathon?
+
+- Nur 6 Prozent der Unternehmen sehen einen klaren finanziellen Nutzen aus KI (BCG AI Radar 2026)
+- Hackathon um zu zeigen was möglich ist
+- Schnelle Adoption ist wichtiger den je um Innovation zu sichern
+- Hackathon als start

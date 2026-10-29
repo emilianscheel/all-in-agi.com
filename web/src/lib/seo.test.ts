@@ -24,6 +24,7 @@ describe('SEO indexing policy', () => {
 		'/verwalten',
 		'/timer',
 		'/clock',
+		'/slides',
 		'/api/availability',
 		'/unknown',
 		'/impressum/'

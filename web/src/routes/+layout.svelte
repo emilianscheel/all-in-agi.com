@@ -21,7 +21,7 @@
     let presentationRoute = $derived(
         page.route.id === "/timer" || page.route.id === "/clock" || page.route.id === "/[id]/timer",
     );
-    let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/offer", "/offer/[token]"];
+    let adminRouteIds = ["/dashboard", "/buchungen", "/user", "/slides", "/offer", "/offer/[token]"];
     let adminNavigation = $derived(
         adminRouteIds.includes(page.route.id ?? "") ||
             (page.route.id === "/[id]" && data.admin.authorized),
@@ -33,6 +33,7 @@
     let usersLabel = $derived(locale === "en" ? "Users" : "Nutzer");
     let dashboardHref = $derived(localizedPath(locale, "/dashboard"));
     let bookingsHref = $derived(localizedPath(locale, "/buchungen"));
+    let slidesHref = $derived(localizedPath(locale, "/slides"));
     let userHref = $derived(localizedPath(locale, "/user"));
     let offerHref = $derived(localizedPath(locale, "/offer"));
     let offerLabel = $derived(locale === "en" ? "Offers" : "Angebote");
@@ -99,6 +100,7 @@
                     <a class:active={page.route.id === "/buchungen"} href={bookingsHref}
                         >{bookingsLabel}</a
                     >
+                    <a class:active={page.route.id === "/slides"} href={slidesHref}>Slides</a>
                     <a class:active={offerRoute} href={offerHref}>{offerLabel}</a>
                     <a
                         class="admin-nav-external"

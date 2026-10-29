@@ -1,0 +1,9 @@
+# Erste Zeile ist die kleine Überschrift, zweite Zeile der Titel.
+# Danach höchstens sechs Sätze, jeder mit "- ".
+
+Der Tag
+Ablauf
+
+- Um 9:00 Uhr starten wir mit Live Demo, Tool Stack, Teams und Challenges.
+- Ab 9:30 Uhr wird gebaut, um 13:00 Uhr gibt es Pizza, und danach folgt der zweite Sprint.
+- Um 16:30 Uhr zeigt jedes Team Problem, Lösung und wie es gebaut wurde.
