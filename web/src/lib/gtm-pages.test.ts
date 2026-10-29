@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
-import { GTM_HERO_IMAGES } from './gtm-images';
+import { germanHeroLabel, GTM_HERO_IMAGES, GTM_LABELED_CITIES } from './gtm-images';
 import { GTM_GROUPS, GTM_ICON_NAMES, GTM_PUBLICATION_DATE, getGtmPage, gtmPages, gtmPagesForGroup } from './gtm-pages';
 
 function contentWords(page: (typeof gtmPages)[number]) {
@@ -65,6 +65,38 @@ describe('GTM page catalog', () => {
 		expect(new Set(gtmPages.map((page) => page.heroImage))).toEqual(
 			new Set(Object.keys(GTM_HERO_IMAGES) as Array<keyof typeof GTM_HERO_IMAGES>)
 		);
+	});
+
+	test('names a city in the German hero label only when the article is about that city', () => {
+		for (const page of gtmPages) {
+			const label = germanHeroLabel(page);
+			const shown = `${label.alt} ${label.caption}`;
+			const pageText = `${page.slug} ${page.title} ${page.description} ${page.footerLabel}`;
+			for (const city of GTM_LABELED_CITIES) {
+				if (city.test(shown)) expect(pageText).toMatch(city);
+			}
+		}
+
+		expect(germanHeroLabel(getGtmPage('hackathon-unternehmen-hamburg')).caption).toBe(
+			GTM_HERO_IMAGES.hamburg.caption
+		);
+		expect(germanHeroLabel(getGtmPage('hackathon-unternehmen-muenchen')).caption).toBe(
+			GTM_HERO_IMAGES.munich.caption
+		);
+
+		const easternGermany = getGtmPage('ki-hackathon-ostdeutschland');
+		expect(easternGermany.heroImage).toBe('hamburg');
+		expect(germanHeroLabel(easternGermany)).toEqual({
+			alt: 'Abbildung zu Hightech Ostdeutschland.',
+			caption: 'Foto: Julia Solonina / Unsplash.'
+		});
+
+		const ruhr = getGtmPage('ki-hackathon-ruhrgebiet');
+		expect(ruhr.heroImage).toBe('munich');
+		expect(germanHeroLabel(ruhr)).toEqual({
+			alt: 'Abbildung zu Das Ruhrgebiet hat die nächste Schicht.',
+			caption: 'Foto: Jan Antonin Kolar / Unsplash.'
+		});
 	});
 
 	test('provides a local WebP placeholder for every hero image', () => {

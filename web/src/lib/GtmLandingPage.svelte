@@ -6,7 +6,7 @@
 	import ClosingCta from '$lib/ClosingCta.svelte';
 	import ProgressiveImage from '$lib/ProgressiveImage.svelte';
 	import { gtmArticleSchema } from '$lib/gtm-article';
-	import { GTM_HERO_IMAGES } from '$lib/gtm-images';
+	import { germanHeroLabel, GTM_HERO_IMAGES } from '$lib/gtm-images';
 	import { getGtmPage } from '$lib/gtm-pages';
 	import { SITE_ORIGIN } from '$lib/seo';
 	import { page as pageState } from '$app/state';
@@ -18,6 +18,11 @@
 	let path = $derived(`/${page.slug}`);
 	let canonicalUrl = $derived(`${SITE_ORIGIN}${localizedPath(locale, path)}`);
 	let hero = $derived(GTM_HERO_IMAGES[page.heroImage]);
+	let heroLabel = $derived(
+		locale === 'en'
+			? { alt: `Illustration for ${page.title}`, caption: `${page.title} — ALL IN AGI` }
+			: germanHeroLabel(page)
+	);
 	let seoTitle = $derived(page.kind === 'editorial' ? page.seoTitle : page.title);
 	let categoryLabel = $derived(locale === 'en' ? (page.kind === 'editorial' && page.blueprint ? 'Industry blueprint' : 'Insights') : (page.kind === 'editorial' && page.blueprint ? 'Branchen-Blueprint' : page.group));
 	let modifiedAt = $derived(page.kind === 'editorial' ? page.dateModified : undefined);
@@ -173,7 +178,7 @@
 	description={page.description}
 	{path}
 	imageUrl={`${SITE_ORIGIN}${hero.src}`}
-	imageAlt={locale === 'en' ? `Illustration for ${page.title}` : hero.alt}
+	imageAlt={heroLabel.alt}
 	imageWidth={hero.width}
 	imageHeight={hero.height}
 	ogType="article"
@@ -272,11 +277,11 @@
 			class="article-hero-image"
 			src={hero.src}
 			placeholderSrc={hero.placeholderSrc}
-			alt={locale === 'en' ? `Illustration for ${page.title}` : hero.alt}
+			alt={heroLabel.alt}
 			width={hero.width}
 			height={hero.height}
 		/>
-		<figcaption>{locale === 'en' ? `${page.title} — ALL IN AGI` : hero.caption}</figcaption>
+		<figcaption>{heroLabel.caption}</figcaption>
 	</figure>
 
 	<div class="article-body">

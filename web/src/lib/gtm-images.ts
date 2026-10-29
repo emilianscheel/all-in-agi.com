@@ -98,3 +98,37 @@ export const GTM_HERO_IMAGES = {
 } as const;
 
 export type GtmHeroKey = keyof typeof GTM_HERO_IMAGES;
+
+export const GTM_LABELED_CITIES = [
+	/berlin/i,
+	/hamburg/i,
+	/münchen|muenchen/i,
+	/frankfurt/i,
+	/stuttgart/i
+] as const;
+
+type HeroLabelPage = {
+	slug: string;
+	title: string;
+	description: string;
+	footerLabel: string;
+	heroImage: GtmHeroKey;
+};
+
+export function germanHeroLabel(page: HeroLabelPage) {
+	const hero = GTM_HERO_IMAGES[page.heroImage];
+	const label = `${hero.alt} ${hero.caption}`;
+	const pageText = `${page.slug} ${page.title} ${page.description} ${page.footerLabel}`;
+	const namesAnotherCity = GTM_LABELED_CITIES.some(
+		(city) => city.test(label) && !city.test(pageText)
+	);
+	if (!namesAnotherCity) return { alt: hero.alt, caption: hero.caption };
+
+	const credit = hero.caption.match(/Foto: [^.]+\./)?.[0];
+	if (!credit) throw new Error(`City hero caption is missing a photo credit: ${page.heroImage}`);
+
+	return {
+		alt: `Abbildung zu ${page.title}`,
+		caption: credit
+	};
+}
