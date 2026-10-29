@@ -94,6 +94,22 @@ export const GTM_HERO_IMAGES = {
 		height: 1600,
 		alt: 'Blick nach oben zwischen modernen Bürohochhäusern',
 		caption: 'Finanz- und Versicherungsunternehmen testen neue Workflows innerhalb klarer Kontrollpunkte. Foto: Kevin Matos / Unsplash.'
+	},
+	dresden: {
+		src: '/images/article-dresden.webp',
+		placeholderSrc: '/images/placeholders/article-dresden.webp',
+		width: 1024,
+		height: 575,
+		alt: 'Dresdner Altstadt mit Frauenkirche und Hofkirche im Abendlicht',
+		caption: 'Dresden steht in Ostdeutschland für Forschung, Mikroelektronik und gewachsene Industrie. Foto: Alexander Henke / Unsplash.'
+	},
+	rheinRuhr: {
+		src: '/images/article-rhein-ruhr.webp',
+		placeholderSrc: '/images/placeholders/article-rhein-ruhr.webp',
+		width: 1024,
+		height: 682,
+		alt: 'Kölner Dom und Hohenzollernbrücke über den Rhein im Abendlicht',
+		caption: 'Der Rhein-Ruhr-Raum verbindet Industrie, Logistik und digitale Plattformen. Foto: Eric Weber / Unsplash.'
 	}
 } as const;
 

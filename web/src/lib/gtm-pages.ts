@@ -1000,10 +1000,10 @@ const GTM_HERO_BY_SLUG: Record<string, GtmHeroKey> = {
 	'ki-hackathon-steuersoftware': 'berlin',
 	'ki-hackathon-digital-commerce': 'industry',
 	'ki-fuer-den-mittelstand': 'engineering',
-	'ki-hackathon-ostdeutschland': 'hamburg',
+	'ki-hackathon-ostdeutschland': 'dresden',
 	'ki-hackathon-ostwestfalen-lippe': 'machinery',
 	'ki-hackathon-nuernberg-franken': 'adoption',
-	'ki-hackathon-ruhrgebiet': 'munich'
+	'ki-hackathon-ruhrgebiet': 'rheinRuhr'
 };
 
 const offerPages: GtmOfferPage[] = gtmPageContent.map((page) => {

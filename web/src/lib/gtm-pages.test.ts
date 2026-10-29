@@ -85,17 +85,17 @@ describe('GTM page catalog', () => {
 		);
 
 		const easternGermany = getGtmPage('ki-hackathon-ostdeutschland');
-		expect(easternGermany.heroImage).toBe('hamburg');
+		expect(easternGermany.heroImage).toBe('dresden');
 		expect(germanHeroLabel(easternGermany)).toEqual({
-			alt: 'Abbildung zu Hightech Ostdeutschland.',
-			caption: 'Foto: Julia Solonina / Unsplash.'
+			alt: GTM_HERO_IMAGES.dresden.alt,
+			caption: GTM_HERO_IMAGES.dresden.caption
 		});
 
 		const ruhr = getGtmPage('ki-hackathon-ruhrgebiet');
-		expect(ruhr.heroImage).toBe('munich');
+		expect(ruhr.heroImage).toBe('rheinRuhr');
 		expect(germanHeroLabel(ruhr)).toEqual({
-			alt: 'Abbildung zu Das Ruhrgebiet hat die nächste Schicht.',
-			caption: 'Foto: Jan Antonin Kolar / Unsplash.'
+			alt: GTM_HERO_IMAGES.rheinRuhr.alt,
+			caption: GTM_HERO_IMAGES.rheinRuhr.caption
 		});
 	});
 
