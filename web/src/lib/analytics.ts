@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
-import { isAnalyticsPath, sanitizeAnalyticsPath } from '$lib/analytics-paths';
+import { analyticsPageLocation, isAnalyticsPath, sanitizeAnalyticsPath } from '$lib/analytics-paths';
 
 export type AnalyticsConsent = 'granted' | 'denied';
 
@@ -100,7 +100,7 @@ function gtag(...args: unknown[]) {
 }
 
 function safePageLocation(pathname: string) {
-	return `${location.origin}${sanitizeAnalyticsPath(pathname)}`;
+	return analyticsPageLocation(location.origin, pathname, location.search);
 }
 
 function loadGoogleAnalytics() {

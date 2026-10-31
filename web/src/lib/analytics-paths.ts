@@ -24,3 +24,14 @@ export function sanitizeAnalyticsPath(pathname: string) {
 	if (PUBLIC_ID_PATTERN.test(normalized.slice(1))) return `${prefix}/:booking`;
 	return pathname;
 }
+
+/** Keep campaign attribution while excluding arbitrary query data from Analytics. */
+export function analyticsPageLocation(origin: string, pathname: string, search: string) {
+	const url = new URL(sanitizeAnalyticsPath(pathname), origin);
+	const incoming = new URLSearchParams(search);
+	for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_id']) {
+		const value = incoming.get(key);
+		if (value && /^[a-zA-Z0-9_-]{1,80}$/.test(value)) url.searchParams.set(key, value);
+	}
+	return url.toString();
+}
