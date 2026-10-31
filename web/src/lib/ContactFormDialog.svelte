@@ -2,6 +2,7 @@
 	import { Dialog } from 'bits-ui';
 	import { animateContentHeight } from '$lib/animateContentHeight';
 	import { CONTACT_EMAIL } from '$lib/contact';
+	import { trackEvent } from '$lib/meta-pixel';
 	import type { Locale } from '$lib/i18n';
 
 	let {
@@ -68,6 +69,7 @@
 							: 'Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.'
 				);
 			}
+			trackEvent('Lead', { content_name: 'contact' });
 			sent = true;
 		} catch (error) {
 			errorMessage =

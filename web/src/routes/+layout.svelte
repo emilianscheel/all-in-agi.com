@@ -9,6 +9,7 @@
     import CookieConsent from "$lib/CookieConsent.svelte";
     import CommandPalette from "$lib/CommandPalette.svelte";
     import { activateAnalyticsForPath, installBookingCtaTracking } from "$lib/analytics";
+    import { activateMetaPixel, configureMetaPixel } from "$lib/meta-pixel";
     import { localizedPath, switchLocalePath, ui, type Locale } from "$lib/i18n";
     import { ExternalLink } from "lucide-svelte";
     import "@fontsource/instrument-serif";
@@ -41,10 +42,14 @@
     onMount(() => {
         const removeHaptics = installGlobalHaptics();
         const removeCtaTracking = installBookingCtaTracking();
+        configureMetaPixel(data.metaPixelId);
         void activateAnalyticsForPath(page.url.pathname);
-        afterNavigate(
-            ({ to }) => void activateAnalyticsForPath(to?.url.pathname ?? location.pathname),
-        );
+        activateMetaPixel(page.url.pathname);
+        afterNavigate(({ to }) => {
+            const pathname = to?.url.pathname ?? location.pathname;
+            void activateAnalyticsForPath(pathname);
+            activateMetaPixel(pathname);
+        });
         return () => {
             removeHaptics?.();
             removeCtaTracking();

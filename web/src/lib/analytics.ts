@@ -77,6 +77,7 @@ export function setAnalyticsConsent(value: AnalyticsConsent) {
 	if (value === 'denied') {
 		disableGoogleAnalytics();
 		deleteAnalyticsCookies();
+		clearMetaPixel();
 	}
 	emitConsentChange();
 }
@@ -86,7 +87,12 @@ export function openCookieSettings() {
 	try { localStorage.removeItem(CONSENT_KEY); } catch { /* storage is optional */ }
 	disableGoogleAnalytics();
 	deleteAnalyticsCookies();
+	clearMetaPixel();
 	emitConsentChange();
+}
+
+function clearMetaPixel() {
+	void import('$lib/meta-pixel').then(({ disableMetaPixel }) => disableMetaPixel());
 }
 
 function gtag(...args: unknown[]) {

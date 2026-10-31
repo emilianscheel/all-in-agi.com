@@ -45,6 +45,7 @@ Ohne Cal.com-Umgebungsvariablen läuft die Terminbuchung in der lokalen Entwickl
 - `SEED_ADMIN_NAME`: Anzeigename des Seed-Admins (Fallback: `ALL IN AGI Admin`)
 - `SEED_ADMIN_PASSWORD`: Seed-Passwort mit mindestens 8 Zeichen; es wird nur bis zur erfolgreichen Passkey-Einrichtung akzeptiert
 - `PUBLIC_GA_MEASUREMENT_ID`: öffentliche GA4 Measurement ID, derzeit `G-WD6MW6STST`; Analytics wird erst nach einer Cookie-Einwilligung im Browser geladen
+- `NEXT_PUBLIC_META_PIXEL_ID`: öffentliche Meta-Pixel-ID, derzeit `810076588239407`; das Pixel wird erst nach einer Cookie-Einwilligung im Browser geladen. In Vercel für Production (und Preview, falls Vorschauen messen sollen) setzen
 
 In der lokalen Entwicklung wird ein festes Development-Secret verwendet. Im Live-Betrieb verweigert die App das Erstellen und Öffnen von Plan-Links ohne eigenes Secret. Plan-Links enthalten die vollständige Konfiguration inklusive Kontakt- und Adressdaten; jede Person mit dem Link kann diese Daten nach dem Öffnen sehen. Eine Rotation des Secrets macht bestehende Links ungültig.
 

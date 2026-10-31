@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { activateAnalyticsForPath, getAnalyticsConsent, setAnalyticsConsent } from '$lib/analytics';
+	import { activateMetaPixel } from '$lib/meta-pixel';
 	import { localizedPath, ui, type Locale } from '$lib/i18n';
 	let { locale = 'de' }: { locale?: Locale } = $props();
 
@@ -11,7 +12,10 @@
 		const update = () => (consent = getAnalyticsConsent());
 		mounted = true;
 		update();
-		if (consent === 'granted') void activateAnalyticsForPath(location.pathname);
+		if (consent === 'granted') {
+			void activateAnalyticsForPath(location.pathname);
+			activateMetaPixel(location.pathname);
+		}
 		window.addEventListener('all-in-agi:analytics-consent-change', update);
 		return () => window.removeEventListener('all-in-agi:analytics-consent-change', update);
 	});
@@ -19,7 +23,10 @@
 	function choose(value: 'granted' | 'denied') {
 		setAnalyticsConsent(value);
 		consent = value;
-		if (value === 'granted') void activateAnalyticsForPath(location.pathname);
+		if (value === 'granted') {
+			void activateAnalyticsForPath(location.pathname);
+			activateMetaPixel(location.pathname);
+		}
 	}
 </script>
 

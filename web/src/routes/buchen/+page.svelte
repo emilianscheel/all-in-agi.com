@@ -51,6 +51,7 @@
     import PrepCallEditor from "$lib/config/PrepCallEditor.svelte";
     import SeoHead from "$lib/SeoHead.svelte";
     import { trackAnalyticsEvent } from "$lib/analytics";
+    import { trackEvent } from "$lib/meta-pixel";
     import { page } from "$app/state";
     import { localizedPath, stripLocale, type Locale } from "$lib/i18n";
 
@@ -411,6 +412,7 @@
                     }),
                 );
 			trackAnalyticsEvent("booking_completed");
+			trackEvent("Lead", { content_name: "booking" });
 			await goto(localizedPath(locale, "/buchen/erfolg"));
         } catch (error) {
             errors = [
