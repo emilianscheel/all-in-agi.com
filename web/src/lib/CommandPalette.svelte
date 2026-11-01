@@ -10,7 +10,7 @@
 	import { linkifyFaqAnswer } from '$lib/faq-rich-text';
 	import { ui, type Locale } from '$lib/i18n';
 
-	let { locale }: { locale: Locale } = $props();
+	let { locale, initialOpen = false }: { locale: Locale; initialOpen?: boolean } = $props();
 
 	type ChatMessage = {
 		id: string;
@@ -28,6 +28,7 @@
 	const listAnimator = createListReorderAnimator();
 
 	let open = $state(false);
+	$effect(() => { if (initialOpen) open = true; });
 	let closing = $state(false);
 	let query = $state('');
 	let messages = $state<ChatMessage[]>([]);

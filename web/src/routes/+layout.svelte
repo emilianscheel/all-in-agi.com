@@ -7,7 +7,6 @@
     import GtmFooter from "$lib/GtmFooter.svelte";
     import { gtmPaths } from "$lib/gtm-pages";
     import CookieConsent from "$lib/CookieConsent.svelte";
-    import CommandPalette from "$lib/CommandPalette.svelte";
     import { activateAnalyticsForPath, installBookingCtaTracking } from "$lib/analytics";
     import { activateMetaPixel, configureMetaPixel } from "$lib/meta-pixel";
     import { localizedPath, switchLocalePath, ui, type Locale } from "$lib/i18n";
@@ -38,6 +37,8 @@
     let userHref = $derived(localizedPath(locale, "/user"));
     let offerHref = $derived(localizedPath(locale, "/offer"));
     let offerLabel = $derived(locale === "en" ? "Offers" : "Angebote");
+    let CommandPaletteComponent = $state<(typeof import('$lib/CommandPalette.svelte'))['default'] | null>(null);
+    let commandPaletteLoading = false;
 
     onMount(() => {
         const removeHaptics = installGlobalHaptics();
@@ -50,9 +51,23 @@
             void activateAnalyticsForPath(pathname);
             activateMetaPixel(pathname);
         });
+        const loadCommandPalette = (event: KeyboardEvent) => {
+            if (CommandPaletteComponent || commandPaletteLoading || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
+            event.preventDefault();
+            commandPaletteLoading = true;
+            void import('$lib/CommandPalette.svelte').then(({ default: component }) => {
+                CommandPaletteComponent = component;
+            }).catch((error) => {
+                console.error('Could not load command palette', error);
+            }).finally(() => {
+                commandPaletteLoading = false;
+            });
+        };
+        window.addEventListener('keydown', loadCommandPalette);
         return () => {
             removeHaptics?.();
             removeCtaTracking();
+            window.removeEventListener('keydown', loadCommandPalette);
         };
     });
 
@@ -190,4 +205,6 @@
 
 {#if !presentationRoute && !adminNavigation}<CookieConsent {locale} />{/if}
 
-<CommandPalette {locale} />
+{#if CommandPaletteComponent}
+    <CommandPaletteComponent {locale} initialOpen />
+{/if}

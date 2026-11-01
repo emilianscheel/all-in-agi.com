@@ -24,6 +24,7 @@
 	let colorScheme: MediaQueryList | undefined;
 	let desktopPointer: MediaQueryList | undefined;
 	let resizeObserver: ResizeObserver | undefined;
+	let started = false;
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	const mapStyle = (dark: boolean) => `https://tiles.openfreemap.org/styles/${dark ? 'dark' : 'positron'}`;
 
@@ -115,7 +116,26 @@
 	}
 
 	$effect(() => { latitude; longitude; updatePosition(); });
-	onMount(initialize);
+	onMount(() => {
+		const start = () => {
+			if (started) return;
+			started = true;
+			observer?.disconnect();
+			void initialize();
+		};
+		const observer = 'IntersectionObserver' in window
+			? new IntersectionObserver(([entry]) => { if (entry.isIntersecting) start(); }, { rootMargin: '400px' })
+			: null;
+		if (observer) observer.observe(shell);
+		else start();
+		shell.addEventListener('pointerdown', start, { once: true });
+		shell.addEventListener('focusin', start, { once: true });
+		return () => {
+			observer?.disconnect();
+			shell.removeEventListener('pointerdown', start);
+			shell.removeEventListener('focusin', start);
+		};
+	});
 	onDestroy(() => { if (readyTimeout) clearTimeout(readyTimeout); resizeObserver?.disconnect(); colorScheme?.removeEventListener('change', updateMapTheme); map?.off('styleimagemissing', provideMissingStyleImage); map?.off('click', selectMapLocation); marker?.remove(); map?.remove(); });
 </script>
 

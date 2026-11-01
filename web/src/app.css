@@ -143,7 +143,7 @@ img { display: block; max-width: 100%; }
 	-webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 	mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
-.tool-carousel-track { display: flex; width: max-content; will-change: transform; animation: tool-carousel-scroll 180s linear infinite; }
+.tool-carousel-track { display: flex; width: max-content; will-change: transform; animation: tool-carousel-scroll 90s linear infinite; }
 .tool-carousel-group, .tool-carousel-set { display: flex; flex: none; align-items: center; }
 .tool-carousel-set { gap: clamp(30px, 4.5vw, 58px); padding-right: clamp(30px, 4.5vw, 58px); }
 .tool-carousel-item { min-width: clamp(68px, 7vw, 92px); }

@@ -51,7 +51,7 @@
     let contactFormOpen = $state(false);
 
     const carouselTools = CODING_TOOLS.filter((tool) => tool.icon && tool.href);
-    const carouselRepeats = [0, 1, 2, 3];
+    const carouselRepeats = [0, 1];
     let carouselLabel = $derived(
         `${locale === "en" ? "Coding tools used in the hackathon" : "Coding Tools im Hackathon"}: ${carouselTools.map((tool) => tool.label).join(", ")}`,
     );
@@ -399,7 +399,9 @@
     </div>
     <div class="hero-image">
         <img
-            src="/images/all-in-agi-event.webp"
+            src="/images/all-in-agi-event-2400.webp"
+            srcset="/images/all-in-agi-event-960.webp 960w, /images/all-in-agi-event-1600.webp 1600w, /images/all-in-agi-event-2400.webp 2400w"
+            sizes="100vw"
             alt={locale === "en"
                 ? "Team working together on a hackathon project"
                 : "Team arbeitet gemeinsam an einem Hackathon-Projekt"}
@@ -439,7 +441,7 @@
                                             aria-hidden={copy !== 0 || repetition !== 0}
                                             tabindex={copy === 0 && repetition === 0 ? 0 : -1}
                                         >
-                                            <img src={tool.icon} alt="" width="96" height="96" />
+                                            <img src={tool.icon} alt="" width="96" height="96" loading="lazy" decoding="async" fetchpriority="low" />
                                             <span>{tool.label}</span>
                                         </a>
                                     </div>
