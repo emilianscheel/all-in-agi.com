@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 import { analyticsPageLocation, isAnalyticsPath, sanitizeAnalyticsPath } from '$lib/analytics-paths';
+import { createGtagStub } from '$lib/analytics-gtag';
 
 export type AnalyticsConsent = 'granted' | 'denied';
 
@@ -95,6 +96,11 @@ function clearMetaPixel() {
 	void import('$lib/meta-pixel').then(({ disableMetaPixel }) => disableMetaPixel());
 }
 
+function installGtagStub() {
+	window.dataLayer ??= [];
+	window.gtag ??= createGtagStub(window.dataLayer);
+}
+
 function gtag(...args: unknown[]) {
 	window.gtag?.(...args);
 }
@@ -109,8 +115,7 @@ function loadGoogleAnalytics() {
 	if (loader) return loader;
 
 	enableGoogleAnalytics();
-	window.dataLayer ??= [];
-	window.gtag ??= (...args: unknown[]) => window.dataLayer?.push(args);
+	installGtagStub();
 	gtag('js', new Date());
 	gtag('config', id, { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false });
 
