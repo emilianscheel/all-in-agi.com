@@ -18,6 +18,6 @@ Alle Varianten zeigen das ALL-IN-AGI-Logo, `all-in-agi.com`, `go@all-in-agi.com`
 
 **QR-Tracking:** Alle Codes verlinken auf `https://all-in-agi.com/` mit `utm_source=flyer`, `utm_medium=offline`, `utm_campaign=berlin_nachbarschaft_2026` und je einem `utm_content=seite_a`, `seite_b` oder `seite_c`. Die Weiterleitung zur Sprachversion erhält die UTM-Werte. GA4 erfasst sie nach Analytics-Einwilligung; Ablehnung und nicht gescannte Flyer erscheinen nicht als Besuch.
 
-**Aktionsplan:** 200 Exemplare als Pilot drucken, zwei bis drei Büro- und Gewerbegebiete auswählen, persönlich verteilen und Ort sowie verteilte Stückzahl notieren. Nach zwei Wochen GA4-Sitzungen nach Kampagne und `utm_content` vergleichen; danach Text oder Verteilorte anpassen.
+**Aktionsplan:** 200 Exemplare als Pilot drucken, zwei bis drei Büro- und Gewerbegebiete auswählen, persönlich verteilen und Ort sowie verteilte Stückzahl notieren. Nach zwei Wochen GA4-Sitzungen nach Kampagne und `utm_content` vergleichen; danach Text oder Verteilorte anpassen. Routen ab Moosdorfstraße 10: [DISTRIBUTION.md](DISTRIBUTION.md).
 
 **Bearbeiten:** `node flyers/generate.mjs` erzeugt beide PDFs aus den drei Layouts und den QR-Links neu (`magick` und `gs` erforderlich).
