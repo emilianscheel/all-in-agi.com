@@ -1,12 +1,12 @@
-import { localizedPath, type Locale } from '$lib/i18n';
-import type { RequestHandler } from './$types';
+import { localizedPath, type Locale } from "$lib/i18n";
+import type { RequestHandler } from "./$types";
 
 function absolute(locale: Locale, internalPath: string) {
-	return `https://all-in-agi.com${localizedPath(locale, internalPath)}`;
+    return `https://all-in-agi.com${localizedPath(locale, internalPath)}`;
 }
 
 export const _llmsContent = {
-	de: (locale: Locale) => `# ALL IN AGI
+    de: (locale: Locale) => `# ALL IN AGI
 
 > ALL IN AGI organisiert moderierte Agentic Engineering Hackathons für Unternehmen – vor Ort in Deutschland oder online. Gemischte Teams aus Engineering, Product und Fachbereichen bauen mit aktuellen AI Coding Agents und Developer Tools einen funktionierenden Prototyp.
 
@@ -77,7 +77,7 @@ export const _llmsContent = {
 ## Buchung und Vorbereitung
 
 - Jede Anfrage enthält ein 30-minütiges Vorbereitungsgespräch (Use Cases, Teamzusammensetzung, Tool Stack, Rahmenbedingungen).
-- Termin über den Konfigurator anfragen: [Hackathon planen](${absolute(locale, '/buchen')}).
+- Termin über den Konfigurator anfragen: [Hackathon planen](${absolute(locale, "/buchen")}).
 - Eigene Ideen und besondere Anforderungen sind willkommen; das Standardformat wird an Use Cases angepasst.
 - Unverbindlicher Kontakt auch direkt per E-Mail oder Telefon.
 
@@ -92,20 +92,20 @@ export const _llmsContent = {
 - Was braucht ihr vor Ort? Raum, WLAN, Geräte, motivierte Builder; Präsentationstechnik optional von uns.
 - Was ist im Preis enthalten? Zwei Facilitators, Challenge Design, Demo, Follow-up, Pizza & Cookies, Winner Poster, Event-Fotos, Anreise DE; ab 4.000 € netto (15 Personen), 5.000 € (30), 6.000 € (50).
 - Vorbereitung und Buchung? 30-Minuten-Call, danach Anfrage über den Konfigurator.
-- Eigene Idee / Sonderanforderungen? Ja – Standardformat wird angepasst; Kontakt aufnehmen.
+- Eigene Idee / Sonderanforderungen? Ja – Standardformat wird angepasst; Kontaktieren.
 
 ## Kontakt und rechtliches
 
 - E-Mail: go@all-in-agi.com
 - Telefon: +49 152 57257750 (Anzeige oft 0152 57257750)
-- [Startseite](${absolute(locale, '/')})
-- [Hackathon planen](${absolute(locale, '/buchen')})
-- [AGB](${absolute(locale, '/agb')})
-- [Datenschutz](${absolute(locale, '/datenschutz')})
-- [Teilnehmer-Datenschutz](${absolute(locale, '/teilnehmer-datenschutz')})
-- [Impressum](${absolute(locale, '/impressum')})
+- [Startseite](${absolute(locale, "/")})
+- [Hackathon planen](${absolute(locale, "/buchen")})
+- [AGB](${absolute(locale, "/agb")})
+- [Datenschutz](${absolute(locale, "/datenschutz")})
+- [Teilnehmer-Datenschutz](${absolute(locale, "/teilnehmer-datenschutz")})
+- [Impressum](${absolute(locale, "/impressum")})
 `,
-	en: (locale: Locale) => `# ALL IN AGI
+    en: (locale: Locale) => `# ALL IN AGI
 
 > ALL IN AGI runs facilitated agentic engineering hackathons for companies—on site in Germany or online. Mixed teams from engineering, product, and business functions use current AI coding agents and developer tools to build a working prototype.
 
@@ -176,7 +176,7 @@ export const _llmsContent = {
 ## Booking and preparation
 
 - Every request includes a 30-minute preparation call (use cases, team composition, tool stack, constraints).
-- Request a date via the configurator: [Plan a hackathon](${absolute(locale, '/buchen')}).
+- Request a date via the configurator: [Plan a hackathon](${absolute(locale, "/buchen")}).
 - Your own ideas and special requirements are welcome; the standard format adapts to your use cases.
 - You can also contact us directly by email or phone with no obligation.
 
@@ -197,22 +197,22 @@ export const _llmsContent = {
 
 - Email: go@all-in-agi.com
 - Phone: +49 152 57257750 (often shown as 0152 57257750)
-- [Homepage](${absolute(locale, '/')})
-- [Plan a hackathon](${absolute(locale, '/buchen')})
-- [Terms and Conditions](${absolute(locale, '/agb')})
-- [Privacy](${absolute(locale, '/datenschutz')})
-- [Participant privacy](${absolute(locale, '/teilnehmer-datenschutz')})
-- [Legal notice](${absolute(locale, '/impressum')})
-`
+- [Homepage](${absolute(locale, "/")})
+- [Plan a hackathon](${absolute(locale, "/buchen")})
+- [Terms and Conditions](${absolute(locale, "/agb")})
+- [Privacy](${absolute(locale, "/datenschutz")})
+- [Participant privacy](${absolute(locale, "/teilnehmer-datenschutz")})
+- [Legal notice](${absolute(locale, "/impressum")})
+`,
 } as const;
 
 export const GET: RequestHandler = ({ locals }) => {
-	const locale = locals.locale ?? 'de';
-	return new Response(_llmsContent[locale](locale), {
-		headers: {
-			'content-type': 'text/plain; charset=utf-8',
-			'content-language': locale === 'en' ? 'en-US' : 'de-DE',
-			'cache-control': 'public, max-age=3600'
-		}
-	});
+    const locale = locals.locale ?? "de";
+    return new Response(_llmsContent[locale](locale), {
+        headers: {
+            "content-type": "text/plain; charset=utf-8",
+            "content-language": locale === "en" ? "en-US" : "de-DE",
+            "cache-control": "public, max-age=3600",
+        },
+    });
 };

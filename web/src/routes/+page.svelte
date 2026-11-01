@@ -529,7 +529,7 @@
                 rel="noreferrer"
                 data-analytics-event="booking_cta"
                 data-analytics-placement="custom-formats"
-                >{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a
+                >{locale === "en" ? "Contact us" : "Kontaktieren"}</a
             >
         </div>
     </div>
@@ -633,15 +633,36 @@
             <article class="price-card price-card-custom">
                 <h3>{locale === "en" ? "Whatever you need" : "Was Sie brauchen"}</h3>
                 <strong class="price-contact"
-                    ><a href="#contact">{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a></strong
+                    ><a href="#contact">{locale === "en" ? "Contact us" : "Kontaktieren"}</a
+                    ></strong
                 >
-                <span class="price-net-spacer" aria-hidden="true">{locale === "en" ? "net" : "netto"}</span>
+                <span class="price-net-spacer" aria-hidden="true"
+                    >{locale === "en" ? "net" : "netto"}</span
+                >
                 <ul>
-                    <li><UsersRound size={17} />{locale === "en" ? "Your team size" : "Ihre Teamgröße"}</li>
-                    <li><CalendarDays size={17} />{locale === "en" ? "Your schedule" : "Ihr Zeitplan"}</li>
-                    <li><Lightbulb size={17} />{locale === "en" ? "Your challenges" : "Ihre Challenges"}</li>
-                    <li><Presentation size={17} />{locale === "en" ? "Your sessions" : "Ihre Sessions"}</li>
-                    <li><MapPin size={17} />{locale === "en" ? "Your location" : "Ihr Standort"}</li>
+                    <li>
+                        <UsersRound size={17} />{locale === "en"
+                            ? "Your team size"
+                            : "Ihre Teamgröße"}
+                    </li>
+                    <li>
+                        <CalendarDays size={17} />{locale === "en"
+                            ? "Your schedule"
+                            : "Ihr Zeitplan"}
+                    </li>
+                    <li>
+                        <Lightbulb size={17} />{locale === "en"
+                            ? "Your challenges"
+                            : "Ihre Challenges"}
+                    </li>
+                    <li>
+                        <Presentation size={17} />{locale === "en"
+                            ? "Your sessions"
+                            : "Ihre Sessions"}
+                    </li>
+                    <li>
+                        <MapPin size={17} />{locale === "en" ? "Your location" : "Ihr Standort"}
+                    </li>
                     <li><PenTool size={17} />{locale === "en" ? "Your extras" : "Ihre Extras"}</li>
                 </ul>
             </article>
@@ -654,7 +675,7 @@
                 data-analytics-placement="pricing"
                 >{locale === "en" ? "Plan a hackathon" : "Hackathon planen"}</a
             ><a class="button-secondary" href="#contact"
-                >{locale === "en" ? "Contact us" : "Kontakt aufnehmen"}</a
+                >{locale === "en" ? "Contact us" : "Kontaktieren"}</a
             >
         </div>
     </div>
